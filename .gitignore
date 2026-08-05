@@ -1,0 +1,7 @@
+bin/
+obj/
+publish/
+client-publish/
+client-dist/
+*.user
+.vs/
