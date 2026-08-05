@@ -75,12 +75,12 @@
             .catch(err => console.error("Connection error:", err));
 
         // Receive live frame from a student client
-        connection.on("ReceiveScreenFrame", (connectionId, studentId, pcName, frameBase64) => {
+        connection.on("ReceiveScreenFrame", (connectionId, frame) => {
             let card = document.getElementById("card-" + connectionId);
-            if (!card) createStudentCard(connectionId, studentId, pcName);
+            if (!card) createStudentCard(connectionId, frame.studentId, frame.pcName);
 
             const img = document.getElementById("img-" + connectionId);
-            if (img) img.src = "data:image/jpeg;base64," + frameBase64;
+            if (img) img.src = "data:image/jpeg;base64," + frame.frameBase64;
 
             if (activeTargetConnectionId === connectionId) {
                 let image = new Image();
@@ -89,13 +89,13 @@
                     canvas.height = image.height;
                     ctx.drawImage(image, 0, 0);
                 };
-                image.src = "data:image/jpeg;base64," + frameBase64;
+                image.src = "data:image/jpeg;base64," + frame.frameBase64;
             }
         });
 
-        connection.on("StudentConnected", (connectionId, studentId, pcName) => {
-            if (!document.getElementById("card-" + connectionId)) {
-                createStudentCard(connectionId, studentId, pcName);
+        connection.on("StudentConnected", (student) => {
+            if (!document.getElementById("card-" + student.connectionId)) {
+                createStudentCard(student.connectionId, student.studentId, student.pcName);
             }
             onlineCount++;
             document.getElementById("onlineCount").textContent = onlineCount + " online";
@@ -155,7 +155,13 @@
             const scaleY = canvas.height / rect.height;
             const x = Math.round((e.clientX - rect.left) * scaleX);
             const y = Math.round((e.clientY - rect.top) * scaleY);
-            connection.invoke("SendRemoteInput", activeTargetConnectionId, type, x, y, e.button || 0, e.shiftKey);
+            connection.invoke("SendRemoteInput", activeTargetConnectionId, {
+                eventType: type,
+                x: x,
+                y: y,
+                keyCode: e.button || 0,
+                isShift: e.shiftKey
+            });
         }
 
         canvas.addEventListener("mousemove", (e) => sendInput("mousemove", e));
@@ -163,7 +169,13 @@
         canvas.addEventListener("mouseup", (e) => sendInput("mouseup", e));
         canvas.addEventListener("wheel", (e) => {
             if (!activeTargetConnectionId) return;
-            connection.invoke("SendRemoteInput", activeTargetConnectionId, "scroll", 0, 0, e.deltaY > 0 ? 1 : -1, false);
+            connection.invoke("SendRemoteInput", activeTargetConnectionId, {
+                eventType: "scroll",
+                x: 0,
+                y: 0,
+                keyCode: e.deltaY > 0 ? 1 : -1,
+                isShift: false
+            });
             e.preventDefault();
         }, { passive: false });
 
@@ -175,7 +187,13 @@
                 bootstrap.Modal.getInstance(document.getElementById("remoteControlModal"))?.hide();
                 return;
             }
-            connection.invoke("SendRemoteInput", activeTargetConnectionId, "keydown", 0, 0, e.keyCode, e.shiftKey);
+            connection.invoke("SendRemoteInput", activeTargetConnectionId, {
+                eventType: "keydown",
+                x: 0,
+                y: 0,
+                keyCode: e.keyCode,
+                isShift: e.shiftKey
+            });
             e.preventDefault();
         });
     </script>

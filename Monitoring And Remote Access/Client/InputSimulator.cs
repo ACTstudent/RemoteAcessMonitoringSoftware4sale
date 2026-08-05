@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using Shared.Contracts;
 
 namespace Client
 {
@@ -20,6 +21,11 @@ namespace Client
         private const uint MOUSEEVENTF_RIGHTUP = 0x0010;
         private const uint MOUSEEVENTF_WHEEL = 0x0800;
         private const uint KEYEVENTF_KEYUP = 0x0002;
+
+        public static void ProcessRemoteInput(RemoteInputMessage message)
+        {
+            ProcessRemoteInput(message.EventType, message.X, message.Y, message.KeyCode, message.IsShift);
+        }
 
         public static void ProcessRemoteInput(string eventType, int x, int y, int keyCode, bool isShift)
         {

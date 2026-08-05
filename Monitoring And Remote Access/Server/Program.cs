@@ -1,8 +1,13 @@
 using Microsoft.EntityFrameworkCore;
+using Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
+
+// Application services
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddSingleton<IMonitoringService, MonitoringService>();
 
 // Session for login state
 builder.Services.AddDistributedMemoryCache();

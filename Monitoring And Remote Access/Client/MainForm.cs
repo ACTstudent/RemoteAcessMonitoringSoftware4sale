@@ -1,6 +1,5 @@
-using System.Drawing.Imaging;
-using System.Runtime.InteropServices;
-using Microsoft.AspNetCore.SignalR.Client;
+using Client.Services;
+using Shared.Contracts;
 
 namespace Client
 {
@@ -9,7 +8,9 @@ namespace Client
         // Point this to your ASP.NET Core server's LAN IP (e.g. http://192.168.1.100:5000)
         private const string ServerUrl = "http://localhost:5000/remoteMonitoringHub";
 
-        private HubConnection? _hubConnection;
+        private readonly IScreenCaptureService _screenCaptureService = new ScreenCaptureService();
+
+        private IMonitoringHubClient? _hubClient;
         private bool _isStreaming = false;
         private CancellationTokenSource? _streamCts;
 
@@ -86,16 +87,13 @@ namespace Client
 
             try
             {
-                _hubConnection = new HubConnectionBuilder()
-                    .WithUrl(ServerUrl)
-                    .WithAutomaticReconnect()
-                    .Build();
+                var hubClient = new MonitoringHubClient();
+                hubClient.RemoteInputReceived += InputSimulator.ProcessRemoteInput;
 
-                _hubConnection.On<string, int, int, int, bool>("ExecuteRemoteInput",
-                    (eventType, x, y, keyCode, isShift) => InputSimulator.ProcessRemoteInput(eventType, x, y, keyCode, isShift));
+                await hubClient.StartAsync(ServerUrl);
+                await hubClient.RegisterStudentAsync(studentId, Environment.MachineName);
 
-                await _hubConnection.StartAsync();
-                await _hubConnection.InvokeAsync("RegisterStudent", studentId, Environment.MachineName);
+                _hubClient = hubClient;
 
                 lblStatus.Text = "Status: Connected & Streaming";
                 lblStatus.ForeColor = Color.Green;
@@ -119,10 +117,15 @@ namespace Client
             {
                 try
                 {
-                    if (_hubConnection?.State == HubConnectionState.Connected)
+                    if (_hubClient != null)
                     {
-                        string frame = CaptureScreenBase64();
-                        await _hubConnection.InvokeAsync("SendScreenFrame", studentId, Environment.MachineName, frame);
+                        var frame = new ScreenFrameMessage(
+                            studentId,
+                            Environment.MachineName,
+                            _screenCaptureService.CaptureBase64(),
+                            DateTime.Now);
+
+                        await _hubClient.SendScreenFrameAsync(frame);
                     }
                 }
                 catch
@@ -134,42 +137,11 @@ namespace Client
             }
         }
 
-        private string CaptureScreenBase64()
-        {
-            Rectangle bounds = Screen.PrimaryScreen!.Bounds;
-            using (Bitmap bitmap = new Bitmap(bounds.Width, bounds.Height))
-            {
-                using (Graphics g = Graphics.FromImage(bitmap))
-                {
-                    g.CopyFromScreen(Point.Empty, Point.Empty, bounds.Size);
-                }
-
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    ImageCodecInfo jpegEncoder = GetEncoder(ImageFormat.Jpeg);
-                    EncoderParameters encoderParams = new EncoderParameters(1);
-                    encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, 40L);
-
-                    bitmap.Save(ms, jpegEncoder, encoderParams);
-                    return Convert.ToBase64String(ms.ToArray());
-                }
-            }
-        }
-
-        private static ImageCodecInfo GetEncoder(ImageFormat format)
-        {
-            foreach (ImageCodecInfo codec in ImageCodecInfo.GetImageEncoders())
-            {
-                if (codec.FormatID == format.Guid) return codec;
-            }
-            throw new InvalidOperationException("JPEG encoder not found.");
-        }
-
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             _isStreaming = false;
             _streamCts?.Cancel();
-            _ = _hubConnection?.DisposeAsync();
+            _ = _hubClient?.DisposeAsync();
             base.OnFormClosing(e);
         }
     }
