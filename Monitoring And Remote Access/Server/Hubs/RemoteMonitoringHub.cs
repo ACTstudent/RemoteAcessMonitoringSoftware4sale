@@ -16,7 +16,6 @@ namespace Server.Hubs
         // Student Client sends a live screen frame
         public async Task SendScreenFrame(ScreenFrameMessage frame)
         {
-            // Broadcast frame to connected teacher/admin dashboard
             await Clients.Group(HubEventNames.TeachersGroup)
                 .SendAsync(HubEventNames.ReceiveScreenFrame, Context.ConnectionId, frame);
         }
@@ -36,11 +35,63 @@ namespace Server.Hubs
             await Groups.AddToGroupAsync(Context.ConnectionId, HubEventNames.TeachersGroup);
         }
 
-        // Teacher dashboard transmits mouse/keyboard event to a specific student connection
+        // Teacher transmits mouse/keyboard event to a specific student connection
         public async Task SendRemoteInput(string targetConnectionId, RemoteInputMessage input)
         {
             await Clients.Client(targetConnectionId)
                 .SendAsync(HubEventNames.ExecuteRemoteInput, input);
+        }
+
+        // ---- Teacher control commands ----
+
+        public async Task LockStudent(string targetConnectionId)
+        {
+            await Clients.Client(targetConnectionId)
+                .SendAsync(HubEventNames.LockStudent);
+        }
+
+        public async Task UnlockStudent(string targetConnectionId)
+        {
+            await Clients.Client(targetConnectionId)
+                .SendAsync(HubEventNames.UnlockStudent);
+        }
+
+        public async Task ForceLogout(string targetConnectionId)
+        {
+            await Clients.Client(targetConnectionId)
+                .SendAsync(HubEventNames.ForceLogout);
+            _monitoringService.UnregisterStudent(targetConnectionId);
+            await Clients.Group(HubEventNames.TeachersGroup)
+                .SendAsync(HubEventNames.StudentDisconnected, targetConnectionId);
+        }
+
+        // Broadcast the current session's frame to all students (screen broadcast)
+        public async Task BroadcastScreen(string frameBase64)
+        {
+            await Clients.Group(HubEventNames.StudentsGroup)
+                .SendAsync(HubEventNames.BroadcastScreen, new BroadcastMessage(frameBase64, DateTime.Now));
+        }
+
+        public async Task SendNotification(NotificationMessage notification)
+        {
+            await Clients.Group(HubEventNames.StudentsGroup)
+                .SendAsync(HubEventNames.SendNotification, notification);
+        }
+
+        // ---- Student status reporting ----
+
+        public async Task ReportIdleStatus(IdleStatusMessage status)
+        {
+            _monitoringService.ReportIdleStatus(status);
+            await Clients.Group(HubEventNames.TeachersGroup)
+                .SendAsync(HubEventNames.IdleStatusReceived, status);
+        }
+
+        public async Task ReportActiveApp(ActiveAppMessage app)
+        {
+            _monitoringService.ReportActiveApp(app);
+            await Clients.Group(HubEventNames.TeachersGroup)
+                .SendAsync(HubEventNames.ActiveAppReceived, app);
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)

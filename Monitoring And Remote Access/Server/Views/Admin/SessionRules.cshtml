@@ -1,0 +1,46 @@
+@model IEnumerable<Server.Models.SessionRule>
+@{
+    ViewData["Title"] = "Session Rules";
+    Layout = "_Layout";
+}
+
+<h4 class="fw-bold mb-4"><i class="bi bi-hourglass-split"></i> Set Default Session Rules</h4>
+
+<div class="card mb-4">
+    <div class="card-header fw-bold">Add Session Rule</div>
+    <div class="card-body">
+        <form method="post" action="/Admin/CreateSessionRule" class="row g-2">
+            <div class="col-md-3"><input name="Name" class="form-control" placeholder="Rule Name" required /></div>
+            <div class="col-md-2"><input name="MaxDurationMinutes" type="number" min="1" class="form-control" placeholder="Minutes" required /></div>
+            <div class="col-md-2"><label class="form-check-label">Pause Allowed</label><input type="checkbox" name="AllowPause" value="true" class="form-check-input ms-1" checked /></div>
+            <div class="col-md-2"><label class="form-check-label">Remote Control</label><input type="checkbox" name="AllowRemoteControl" value="true" class="form-check-input ms-1" checked /></div>
+            <div class="col-md-1"><label class="form-check-label">Default</label><input type="checkbox" name="IsDefault" value="true" class="form-check-input ms-1" /></div>
+            <div class="col-md-2"><button class="btn btn-primary w-100">Add Rule</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header fw-bold">Session Rules</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Name</th><th>Max Duration</th><th>Pause</th><th>Remote Control</th><th>Default</th><th>Active</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td>@r.Name</td>
+                        <td>@r.MaxDurationMinutes min</td>
+                        <td>@(r.AllowPause ? "Yes" : "No")</td>
+                        <td>@(r.AllowRemoteControl ? "Yes" : "No")</td>
+                        <td>@(r.IsDefault ? "Yes" : "No")</td>
+                        <td>@(r.IsActive ? "Yes" : "No")</td>
+                        <td>
+                            <form method="post" action="/Admin/DeleteSessionRule"><input type="hidden" name="id" value="@r.SessionRuleId" /><button class="btn btn-sm btn-danger">Delete</button></form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

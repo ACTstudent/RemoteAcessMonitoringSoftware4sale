@@ -1,0 +1,81 @@
+@model IEnumerable<Server.Models.LabSession>
+@{
+    ViewData["Title"] = "Reports";
+    Layout = "_Layout";
+}
+
+<h4 class="fw-bold mb-4"><i class="bi bi-bar-chart"></i> Administrative Reports</h4>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Total Sessions</div>
+                <div class="stat text-primary">@ViewBag.TotalSessions</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Total Lab Usage (minutes)</div>
+                <div class="stat text-success">@Math.Round((double)ViewBag.TotalMinutes)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Sessions by Teacher</div>
+                <div>
+                    @foreach (var kv in ViewBag.SessionsByTeacher)
+                    {
+                        <span class="badge bg-secondary me-1">@kv.Key: @kv.Value</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-bold">Resource Allocation Summary</div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Laboratory Station</th><th>Sessions</th></tr></thead>
+                    <tbody>
+                        @foreach (var kv in ViewBag.SessionsByStation)
+                        {
+                            <tr><td>@kv.Key</td><td>@kv.Value</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-bold">Lab Usage Report</div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Student</th><th>Teacher</th><th>Station</th><th>Start</th><th>End</th><th>Status</th></tr></thead>
+                    <tbody>
+                        @foreach (var s in Model.Take(30))
+                        {
+                            <tr>
+                                <td>@(s.Student?.Username ?? "?")</td>
+                                <td>@(s.Teacher?.Username ?? "-")</td>
+                                <td>@(s.Computer?.LaboratoryStation ?? s.PCName)</td>
+                                <td>@s.StartTime.ToString("MM/dd HH:mm")</td>
+                                <td>@(s.EndTime?.ToString("MM/dd HH:mm") ?? "-")</td>
+                                <td><span class="badge @(s.Status == "Running" ? "bg-success" : s.Status == "Paused" ? "bg-warning text-dark" : "bg-secondary")">@s.Status</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

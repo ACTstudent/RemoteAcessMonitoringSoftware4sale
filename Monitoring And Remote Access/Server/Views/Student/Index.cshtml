@@ -1,0 +1,98 @@
+@{
+    ViewData["Title"] = "Student Dashboard";
+    Layout = "_StudentLayout";
+    var s = ViewBag.CurrentSession as Server.Models.LabSession;
+}
+
+<h4 class="fw-bold mb-4"><i class="bi bi-layout-text-window"></i> Session Info</h4>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="text-muted small">Remaining Time</div>
+                <div class="stat text-success" id="countdown">@(ViewBag.Remaining) min</div>
+                <div class="small text-muted">auto-updates every minute</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Assigned Unit</div>
+                <div class="stat" id="assignedUnit">@(s?.Computer?.LaboratoryStation ?? "Unassigned")</div>
+                <div class="small text-muted">@(s?.StartTime.ToString("MM/dd HH:mm") ?? "no active session")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Session Status</div>
+                <div class="stat" id="sessionStatus">
+                    <span class="badge @(s?.Status == "Running" ? "bg-success" : s?.Status == "Paused" ? "bg-warning text-dark" : "bg-secondary")">@(s?.Status ?? "Ended")</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header fw-bold">Current Restrictions</div>
+            <div class="card-body">
+                @if (ViewBag.Rules != null && ((List<Server.Models.RestrictionRule>)ViewBag.Rules).Any())
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var r in ViewBag.Rules)
+                        {
+                            <li class="list-group-item bg-transparent text-light border-secondary"><span class="badge bg-secondary me-2">@r.RuleType</span>@r.Target</li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="text-muted small mb-0">No active restriction rules.</p>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header fw-bold">Blacklisted Sites/Apps</div>
+            <div class="card-body">
+                @if (ViewBag.Blacklist != null && ((List<Server.Models.BlacklistItem>)ViewBag.Blacklist).Any())
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var b in ViewBag.Blacklist)
+                        {
+                            <li class="list-group-item bg-transparent text-light border-secondary"><span class="badge bg-danger me-2">@b.TargetType</span>@b.Value</li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="text-muted small mb-0">No blacklisted items.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Refresh session status (countdown) every 30 seconds
+    async function refresh() {
+        try {
+            const r = await fetch("/Student/_SessionStatusJson");
+            const d = await r.json();
+            if (d.active) {
+                document.getElementById("countdown").textContent = (d.remaining ?? "-") + " min";
+                document.getElementById("sessionStatus").innerHTML = "<span class='badge " + (d.status === "Running" ? "bg-success" : "bg-warning text-dark") + "'>" + d.status + "</span>";
+                if (d.station) document.getElementById("assignedUnit").textContent = d.station;
+            }
+        } catch (e) { }
+    }
+    setInterval(refresh, 30000);
+</script>

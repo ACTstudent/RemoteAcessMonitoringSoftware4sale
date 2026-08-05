@@ -1,0 +1,49 @@
+@model IEnumerable<Server.Models.RestrictionRule>
+@{
+    ViewData["Title"] = "Restriction Rules";
+    Layout = "_Layout";
+}
+
+<h4 class="fw-bold mb-4"><i class="bi bi-slash-circle"></i> Define Global Restriction Rules</h4>
+
+<div class="card mb-4">
+    <div class="card-header fw-bold">Add Restriction</div>
+    <div class="card-body">
+        <form method="post" action="/Admin/CreateRestriction" class="row g-2">
+            <div class="col-md-2">
+                <select name="RuleType" class="form-select">
+                    <option value="Application">Application</option>
+                    <option value="Website">Website</option>
+                </select>
+            </div>
+            <div class="col-md-3"><input name="Target" class="form-control" placeholder="App name or URL" required /></div>
+            <div class="col-md-4"><input name="Description" class="form-control" placeholder="Description" /></div>
+            <div class="col-md-1"><label class="form-check-label">Global</label><input type="checkbox" name="IsGlobal" value="true" class="form-check-input ms-1" checked /></div>
+            <div class="col-md-2"><button class="btn btn-primary w-100">Add Rule</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header fw-bold">Restriction Rules</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Type</th><th>Target</th><th>Description</th><th>Global</th><th>Active</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td><span class="badge bg-secondary">@r.RuleType</span></td>
+                        <td>@r.Target</td>
+                        <td>@r.Description</td>
+                        <td>@(r.IsGlobal ? "Yes" : "No")</td>
+                        <td>@(r.IsActive ? "Yes" : "No")</td>
+                        <td>
+                            <form method="post" action="/Admin/DeleteRestriction"><input type="hidden" name="id" value="@r.RestrictionRuleId" /><button class="btn btn-sm btn-danger">Delete</button></form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

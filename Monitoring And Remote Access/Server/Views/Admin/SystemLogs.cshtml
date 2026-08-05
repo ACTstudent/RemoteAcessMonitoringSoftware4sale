@@ -1,0 +1,28 @@
+@model IEnumerable<Server.Models.SystemLog>
+@{
+    ViewData["Title"] = "System Logs";
+    Layout = "_Layout";
+}
+
+<h4 class="fw-bold mb-4"><i class="bi bi-bug"></i> View System Error Logs</h4>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Timestamp</th><th>Level</th><th>Message</th><th>Stack Trace</th></tr></thead>
+            <tbody>
+                @foreach (var l in Model)
+                {
+                    <tr>
+                        <td>@l.Timestamp.ToString("MM/dd/yyyy HH:mm:ss")</td>
+                        <td>
+                            <span class="badge @(l.Level == "Error" ? "bg-danger" : l.Level == "Warning" ? "bg-warning text-dark" : l.Level == "Critical" ? "bg-danger" : "bg-secondary")">@l.Level</span>
+                        </td>
+                        <td>@l.Message</td>
+                        <td class="text-muted small">@(l.StackTrace?.Length > 80 ? l.StackTrace.Substring(0, 80) + "..." : l.StackTrace)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

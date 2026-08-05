@@ -33,12 +33,20 @@ namespace Server.Controllers
                 case AccountRole.Student:
                     HttpContext.Session.SetInt32("StudentId", result.AccountId!.Value);
                     HttpContext.Session.SetString("FullName", result.DisplayName ?? "");
+                    HttpContext.Session.SetString("Role", "Student");
                     return RedirectToAction("Index", "Monitoring");
+
+                case AccountRole.Teacher:
+                    HttpContext.Session.SetInt32("TeacherId", result.AccountId!.Value);
+                    HttpContext.Session.SetString("TeacherName", result.DisplayName ?? "");
+                    HttpContext.Session.SetString("Role", "Teacher");
+                    return RedirectToAction("Dashboard", "Teacher");
 
                 case AccountRole.Admin:
                     HttpContext.Session.SetInt32("AdminId", result.AccountId!.Value);
                     HttpContext.Session.SetString("AdminName", result.DisplayName ?? "");
-                    return RedirectToAction("Index", "Monitoring");
+                    HttpContext.Session.SetString("Role", "Admin");
+                    return RedirectToAction("Index", "Admin");
 
                 default:
                     ViewBag.Error = result.Role == AccountRole.None

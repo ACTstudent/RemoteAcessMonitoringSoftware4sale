@@ -1,0 +1,74 @@
+@model IEnumerable<Server.Models.LabSession>
+@{
+    ViewData["Title"] = "Session Management";
+    Layout = "_TeacherLayout";
+}
+
+<h4 class="fw-bold mb-4"><i class="bi bi-play-circle"></i> Session Management</h4>
+
+<div class="card mb-4">
+    <div class="card-header fw-bold">Start Laboratory Session</div>
+    <div class="card-body">
+        <form method="post" action="/Teacher/StartSession" class="row g-2">
+            <div class="col-md-3">
+                <select name="studentId" class="form-select" required>
+                    <option value="" disabled selected>Select Student</option>
+                    @foreach (var s in ViewBag.Students)
+                    {
+                        <option value="@s.Id">@s.Username - @s.FullName</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="computerId" class="form-select">
+                    <option value="" selected>No station</option>
+                    @foreach (var c in ViewBag.Computers)
+                    {
+                        <option value="@c.ComputerId">@c.LaboratoryStation</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="sessionRuleId" class="form-select">
+                    <option value="" selected>Default rule</option>
+                    @foreach (var r in ViewBag.SessionRules)
+                    {
+                        <option value="@r.SessionRuleId">@r.Name (@r.MaxDurationMinutes min)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3"><button class="btn btn-success w-100">Start Session</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header fw-bold">Active &amp; Recent Sessions</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>#</th><th>Student</th><th>Station</th><th>Start</th><th>Status</th><th>Duration</th><th>Actions</th></tr></thead>
+            <tbody>
+                @foreach (var s in Model)
+                {
+                    <tr>
+                        <td>@s.Id</td>
+                        <td>@(s.Student?.Username ?? "?")</td>
+                        <td>@(s.Computer?.LaboratoryStation ?? s.PCName)</td>
+                        <td>@s.StartTime.ToString("MM/dd HH:mm")</td>
+                        <td><span class="badge @(s.Status == "Running" ? "bg-success" : s.Status == "Paused" ? "bg-warning text-dark" : "bg-secondary")">@s.Status</span></td>
+                        <td>@(s.EndTime.HasValue ? Math.Round((s.EndTime.Value - s.StartTime).TotalMinutes).ToString() + " min" : s.Status == "Running" ? "active" : "-")</td>
+                        <td class="d-flex gap-1">
+                            @if (s.Status != "Ended")
+                            {
+                                <form method="post" action="/Teacher/TogglePause"><input type="hidden" name="id" value="@s.Id" />
+                                    <button class="btn btn-sm @(s.Status == "Paused" ? "btn-success" : "btn-warning")">@(s.Status == "Paused" ? "Resume" : "Pause")</button></form>
+                                <form method="post" action="/Teacher/EndSession"><input type="hidden" name="id" value="@s.Id" />
+                                    <button class="btn btn-sm btn-danger">End</button></form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

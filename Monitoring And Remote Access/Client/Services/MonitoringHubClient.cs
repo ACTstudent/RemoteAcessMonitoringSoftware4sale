@@ -8,6 +8,11 @@ public class MonitoringHubClient : IMonitoringHubClient
     private HubConnection? _connection;
 
     public event Action<RemoteInputMessage>? RemoteInputReceived;
+    public event Action? Locked;
+    public event Action? Unlocked;
+    public event Action? ForceLogoutRequested;
+    public event Action<BroadcastMessage>? BroadcastReceived;
+    public event Action<NotificationMessage>? NotificationReceived;
 
     public async Task StartAsync(string serverUrl, CancellationToken cancellationToken = default)
     {
@@ -18,6 +23,13 @@ public class MonitoringHubClient : IMonitoringHubClient
 
         connection.On<RemoteInputMessage>(HubEventNames.ExecuteRemoteInput,
             message => RemoteInputReceived?.Invoke(message));
+        connection.On(HubEventNames.LockStudent, () => Locked?.Invoke());
+        connection.On(HubEventNames.UnlockStudent, () => Unlocked?.Invoke());
+        connection.On(HubEventNames.ForceLogout, () => ForceLogoutRequested?.Invoke());
+        connection.On<BroadcastMessage>(HubEventNames.BroadcastScreen,
+            message => BroadcastReceived?.Invoke(message));
+        connection.On<NotificationMessage>(HubEventNames.SendNotification,
+            message => NotificationReceived?.Invoke(message));
 
         await connection.StartAsync(cancellationToken);
         _connection = connection;
@@ -33,6 +45,18 @@ public class MonitoringHubClient : IMonitoringHubClient
     {
         EnsureConnected();
         await _connection!.InvokeAsync("SendScreenFrame", frame);
+    }
+
+    public async Task ReportIdleStatusAsync(IdleStatusMessage status)
+    {
+        EnsureConnected();
+        await _connection!.InvokeAsync("ReportIdleStatus", status);
+    }
+
+    public async Task ReportActiveAppAsync(ActiveAppMessage app)
+    {
+        EnsureConnected();
+        await _connection!.InvokeAsync("ReportActiveApp", app);
     }
 
     public ValueTask DisposeAsync()

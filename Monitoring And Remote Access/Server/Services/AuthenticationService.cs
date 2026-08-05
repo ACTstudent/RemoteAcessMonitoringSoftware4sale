@@ -32,11 +32,25 @@ public class AuthenticationService : IAuthenticationService
                 PCName = pcName,
                 IPAddress = ipAddress,
                 StartTime = DateTime.Now,
+                Status = "Running",
                 IsActive = true
             });
             await _context.SaveChangesAsync();
 
             return new LoginResult(AccountRole.Student, student.Id, student.FullName);
+        }
+
+        var teacher = await _context.Teachers
+            .FirstOrDefaultAsync(t => t.Username == username && t.PasswordHash == password);
+
+        if (teacher != null)
+        {
+            if (teacher.Status != "Active")
+            {
+                return new LoginResult(AccountRole.Invalid, null, null);
+            }
+
+            return new LoginResult(AccountRole.Teacher, teacher.TeacherId, $"{teacher.FirstName} {teacher.LastName}");
         }
 
         var admin = await _context.Admins
@@ -61,6 +75,7 @@ public class AuthenticationService : IAuthenticationService
         foreach (var session in activeSessions)
         {
             session.IsActive = false;
+            session.Status = "Ended";
             session.EndTime = DateTime.Now;
         }
 

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Server.Services;
 
 namespace Server.Controllers
 {
@@ -6,7 +7,10 @@ namespace Server.Controllers
     {
         public IActionResult Index()
         {
-            return View();
+            // Route to the appropriate dashboard by role
+            if (HttpContext.IsTeacher()) return RedirectToAction("Dashboard", "Teacher");
+            if (HttpContext.IsAdmin()) return RedirectToAction("Index", "Admin");
+            return RedirectToAction("Index", "Student");
         }
     }
 }

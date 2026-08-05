@@ -1,0 +1,48 @@
+@model IEnumerable<Server.Models.Computer>
+@{
+    ViewData["Title"] = "Computer Profiles";
+    Layout = "_Layout";
+}
+
+<h4 class="fw-bold mb-4"><i class="bi bi-pc-display"></i> Manage Computer Profiles</h4>
+
+<div class="card mb-4">
+    <div class="card-header fw-bold">Add Computer</div>
+    <div class="card-body">
+        <form method="post" action="/Admin/CreateComputer" class="row g-2">
+            <div class="col-md-4"><input name="LaboratoryStation" class="form-control" placeholder="e.g. Unit 1 / Lab A" required /></div>
+            <div class="col-md-3">
+                <select name="Status" class="form-select">
+                    <option>Available</option>
+                    <option>In Use</option>
+                    <option>Maintenance</option>
+                </select>
+            </div>
+            <div class="col-md-3"><input name="AssignedTo" class="form-control" placeholder="Assigned To (optional)" /></div>
+            <div class="col-md-2"><button class="btn btn-primary w-100">Add</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header fw-bold">Computer List</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>ID</th><th>Laboratory Station</th><th>Status</th><th>Assigned To</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var c in Model)
+                {
+                    <tr>
+                        <td>@c.ComputerId</td>
+                        <td>@c.LaboratoryStation</td>
+                        <td>@c.Status</td>
+                        <td>@c.AssignedTo</td>
+                        <td>
+                            <form method="post" action="/Admin/DeleteComputer"><input type="hidden" name="id" value="@c.ComputerId" /><button class="btn btn-sm btn-danger">Delete</button></form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,53 @@
+@model IEnumerable<Server.Models.RestrictionRule>
+@{
+    ViewData["Title"] = "Access Restrictions";
+    Layout = "_TeacherLayout";
+}
+
+<h4 class="fw-bold mb-4"><i class="bi bi-slash-circle"></i> Access Restriction Control</h4>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-bold">Apply Application Restrictions</div>
+            <div class="card-body">
+                <form method="post" action="/Teacher/SendNotification" class="row g-2">
+                    <input type="hidden" name="type" value="Warning" />
+                    <input type="hidden" name="title" value="Application restriction" />
+                    <div class="col-12"><input name="message" class="form-control" placeholder="Describe the application restriction to broadcast" required /></div>
+                    <div class="col-12"><button class="btn btn-warning w-100">Broadcast App Restriction</button></div>
+                </form>
+                <hr />
+                <a class="btn btn-outline-primary w-100" href="/Teacher/Monitoring">Manage via Live Monitoring</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-bold">Apply Website Restrictions (Current Session)</div>
+            <div class="card-body">
+                <form method="post" action="/Teacher/SendNotification" class="row g-2">
+                    <input type="hidden" name="type" value="Alert" />
+                    <input type="hidden" name="title" value="Website restriction" />
+                    <div class="col-12"><input name="message" class="form-control" placeholder="Describe the website restriction to broadcast" required /></div>
+                    <div class="col-12"><button class="btn btn-danger w-100">Broadcast Website Restriction</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-2">
+    <div class="card-header fw-bold">Global Restriction Rules</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Type</th><th>Target</th><th>Description</th></tr></thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr><td><span class="badge bg-secondary">@r.RuleType</span></td><td>@r.Target</td><td>@r.Description</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

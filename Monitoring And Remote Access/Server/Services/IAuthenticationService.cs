@@ -1,4 +1,6 @@
-using Shared.Contracts;
+using Microsoft.EntityFrameworkCore;
+using Server.Data;
+using Server.Models;
 
 namespace Server.Services;
 
@@ -7,6 +9,7 @@ public enum AccountRole
     None,
     Invalid,
     Student,
+    Teacher,
     Admin
 }
 
