@@ -27,21 +27,29 @@
             <tbody>
                 @foreach (var s in Model)
                 {
+                    var formId = "s-update-" + s.Id;
                     <tr>
-                        <form method="post" action="/Admin/UpdateStudent">
-                            <input type="hidden" name="Id" value="@s.Id" />
-                            <td>@s.Id</td>
-                            <td><input class="form-control form-control-sm" name="StudentNumber" value="@s.StudentNumber" /></td>
-                            <td><input class="form-control form-control-sm" name="FullName" value="@s.FullName" /></td>
-                            <td><input class="form-control form-control-sm" name="Username" value="@s.Username" /></td>
-                            <td class="d-flex gap-1">
-                                <button class="btn btn-sm btn-success">Save</button>
-                        </form>
-                                <form method="post" action="/Admin/DeleteStudent"><input type="hidden" name="id" value="@s.Id" /><button class="btn btn-sm btn-danger">Delete</button></form>
-                            </td>
+                        <td>@s.Id</td>
+                        <td><input class="form-control form-control-sm" form="@formId" name="StudentNumber" value="@s.StudentNumber" /></td>
+                        <td><input class="form-control form-control-sm" form="@formId" name="FullName" value="@s.FullName" /></td>
+                        <td><input class="form-control form-control-sm" form="@formId" name="Username" value="@s.Username" /></td>
+                        <td class="d-flex gap-1">
+                            <button form="@formId" class="btn btn-sm btn-success">Save</button>
+                            <form method="post" action="/Admin/DeleteStudent">
+                                <input type="hidden" name="id" value="@s.Id" />
+                                <button class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </td>
                     </tr>
                 }
             </tbody>
         </table>
     </div>
 </div>
+
+@foreach (var s in Model)
+{
+    <form id="s-update-@s.Id" method="post" action="/Admin/UpdateStudent">
+        <input type="hidden" name="Id" value="@s.Id" />
+    </form>
+}

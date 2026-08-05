@@ -138,9 +138,9 @@ namespace Client
                         {
                             _lastIdleReported = isIdle;
                             await _hubClient.ReportIdleStatusAsync(new IdleStatusMessage(
-                                connectionId: "",
-                                studentId: "",
-                                pcName: Environment.MachineName,
+                                ConnectionId: "",
+                                StudentId: "",
+                                PcName: Environment.MachineName,
                                 IsIdle: isIdle,
                                 Timestamp: DateTime.Now));
                         }
@@ -152,9 +152,9 @@ namespace Client
                             if (!string.IsNullOrEmpty(appName))
                             {
                                 await _hubClient.ReportActiveAppAsync(new ActiveAppMessage(
-                                    connectionId: "",
-                                    studentId: "",
-                                    pcName: Environment.MachineName,
+                                    ConnectionId: "",
+                                    StudentId: "",
+                                    PcName: Environment.MachineName,
                                     ApplicationName: appName,
                                     Timestamp: DateTime.Now));
                             }

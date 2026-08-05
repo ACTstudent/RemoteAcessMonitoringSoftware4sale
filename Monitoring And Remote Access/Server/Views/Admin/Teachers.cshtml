@@ -35,23 +35,39 @@
             <tbody>
                 @foreach (var t in Model)
                 {
+                    var formId = "t-update-" + t.TeacherId;
                     <tr>
-                        <form method="post" action="/Admin/UpdateTeacher">
-                            <input type="hidden" name="TeacherId" value="@t.TeacherId" />
-                            <td>@t.TeacherId</td>
-                            <td><input class="form-control form-control-sm" name="FirstName" value="@t.FirstName" /> <input class="form-control form-control-sm" name="LastName" value="@t.LastName" /></td>
-                            <td><input class="form-control form-control-sm" name="Username" value="@t.Username" /></td>
-                            <td><input class="form-control form-control-sm" name="Email" value="@t.Email" /></td>
-                            <td><input class="form-control form-control-sm" name="ContactNumber" value="@t.ContactNumber" /></td>
-                            <td><select name="Status" class="form-select form-select-sm"><option selected="@(t.Status == "Active")">Active</option><option selected="@(t.Status == "Inactive")">Inactive</option></select></td>
-                            <td class="d-flex gap-1">
-                                <button class="btn btn-sm btn-success">Save</button>
-                        </form>
-                                <form method="post" action="/Admin/DeleteTeacher"><input type="hidden" name="id" value="@t.TeacherId" /><button class="btn btn-sm btn-danger">Delete</button></form>
-                            </td>
+                        <td>@t.TeacherId</td>
+                        <td>
+                            <input class="form-control form-control-sm mb-1" form="@formId" name="FirstName" value="@t.FirstName" />
+                            <input class="form-control form-control-sm" form="@formId" name="LastName" value="@t.LastName" />
+                        </td>
+                        <td><input class="form-control form-control-sm" form="@formId" name="Username" value="@t.Username" /></td>
+                        <td><input class="form-control form-control-sm" form="@formId" name="Email" value="@t.Email" /></td>
+                        <td><input class="form-control form-control-sm" form="@formId" name="ContactNumber" value="@t.ContactNumber" /></td>
+                        <td>
+                            <select name="Status" form="@formId" class="form-select form-select-sm">
+                                <option value="Active" selected="@(t.Status == "Active")">Active</option>
+                                <option value="Inactive" selected="@(t.Status == "Inactive")">Inactive</option>
+                            </select>
+                        </td>
+                        <td class="d-flex gap-1">
+                            <button form="@formId" class="btn btn-sm btn-success">Save</button>
+                            <form method="post" action="/Admin/DeleteTeacher">
+                                <input type="hidden" name="id" value="@t.TeacherId" />
+                                <button class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </td>
                     </tr>
                 }
             </tbody>
         </table>
     </div>
 </div>
+
+@foreach (var t in Model)
+{
+    <form id="t-update-@t.TeacherId" method="post" action="/Admin/UpdateTeacher">
+        <input type="hidden" name="TeacherId" value="@t.TeacherId" />
+    </form>
+}
