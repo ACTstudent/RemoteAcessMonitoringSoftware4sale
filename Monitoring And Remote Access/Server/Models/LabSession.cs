@@ -1,0 +1,26 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace Server.Models
+{
+    public class LabSession
+    {
+        [Key]
+        public int Id { get; set; }
+
+        public int StudentId { get; set; }
+        public Student? Student { get; set; }
+
+        [Required]
+        [StringLength(50)]
+        public string PCName { get; set; } = string.Empty;
+
+        [StringLength(50)]
+        public string IPAddress { get; set; } = string.Empty;
+
+        public DateTime StartTime { get; set; } = DateTime.Now;
+
+        public DateTime? EndTime { get; set; }
+
+        public bool IsActive { get; set; } = true;
+    }
+}

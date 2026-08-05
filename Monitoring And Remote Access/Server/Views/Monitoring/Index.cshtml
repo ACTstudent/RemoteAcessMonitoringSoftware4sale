@@ -1,0 +1,183 @@
+@{
+    ViewData["Title"] = "Live Lab Monitor";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <style>
+        body { background-color: #12141a; color: #e6e6e6; }
+        .stream-img { height: 140px; width: 100%; object-fit: contain; background-color: #000; }
+        .card { background-color: #1c1f27; border: 1px solid #2a2e38; }
+        .card-header { background-color: #232733; border-bottom: 1px solid #2a2e38; }
+        #remoteCanvas { max-width: 100%; cursor: crosshair; }
+        .placeholder-box {
+            height: 140px; width: 100%; display: flex; align-items: center; justify-content: center;
+            background: repeating-linear-gradient(45deg, #1c1f27, #1c1f27 10px, #21242e 10px, #21242e 20px);
+            color: #5a6072; font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid mt-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="mb-0"><i class="bi bi-display"></i> Live Lab Monitor</h3>
+            <div>
+                <span class="badge bg-success me-2" id="onlineCount">0 online</span>
+                <a href="/Account/Logout" class="btn btn-sm btn-outline-danger">Logout</a>
+            </div>
+        </div>
+
+        <div id="studentGrid" class="row row-cols-1 row-cols-md-3 row-cols-lg-5 g-3">
+            <!-- Student cards injected dynamically -->
+        </div>
+    </div>
+
+    <!-- Remote Control Modal -->
+    <div class="modal fade" id="remoteControlModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content" style="background-color: #1c1f27; color: #e6e6e6;">
+                <div class="modal-header py-2">
+                    <h5 class="modal-title" id="remoteModalTitle">Remote Access</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="closeRemoteControl()"></button>
+                </div>
+                <div class="modal-body text-center p-1 position-relative">
+                    <canvas id="remoteCanvas" tabindex="0" class="border border-secondary w-100"></canvas>
+                    <div id="remoteHint" class="small text-muted mt-2">
+                        Tip: move mouse to control cursor. Click to send clicks. Type to send keyboard. Press ESC inside modal to close.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@8.0.0/dist/browser/signalr.min.js"></script>
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/remoteMonitoringHub")
+            .withAutomaticReconnect()
+            .build();
+
+        const canvas = document.getElementById("remoteCanvas");
+        const ctx = canvas.getContext("2d");
+        let activeTargetConnectionId = null;
+        let onlineCount = 0;
+
+        connection.start()
+            .then(() => connection.invoke("RegisterTeacher"))
+            .catch(err => console.error("Connection error:", err));
+
+        // Receive live frame from a student client
+        connection.on("ReceiveScreenFrame", (connectionId, studentId, pcName, frameBase64) => {
+            let card = document.getElementById("card-" + connectionId);
+            if (!card) createStudentCard(connectionId, studentId, pcName);
+
+            const img = document.getElementById("img-" + connectionId);
+            if (img) img.src = "data:image/jpeg;base64," + frameBase64;
+
+            if (activeTargetConnectionId === connectionId) {
+                let image = new Image();
+                image.onload = () => {
+                    canvas.width = image.width;
+                    canvas.height = image.height;
+                    ctx.drawImage(image, 0, 0);
+                };
+                image.src = "data:image/jpeg;base64," + frameBase64;
+            }
+        });
+
+        connection.on("StudentConnected", (connectionId, studentId, pcName) => {
+            if (!document.getElementById("card-" + connectionId)) {
+                createStudentCard(connectionId, studentId, pcName);
+            }
+            onlineCount++;
+            document.getElementById("onlineCount").textContent = onlineCount + " online";
+        });
+
+        connection.on("StudentDisconnected", (connectionId) => {
+            const card = document.getElementById("card-" + connectionId);
+            if (card) card.remove();
+            if (onlineCount > 0) onlineCount--;
+            document.getElementById("onlineCount").textContent = onlineCount + " online";
+            if (activeTargetConnectionId === connectionId) {
+                bootstrap.Modal.getInstance(document.getElementById("remoteControlModal"))?.hide();
+                activeTargetConnectionId = null;
+            }
+        });
+
+        function createStudentCard(connectionId, studentId, pcName) {
+            const grid = document.getElementById("studentGrid");
+            const html = `
+                <div class="col" id="card-${connectionId}">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header p-2 d-flex justify-content-between align-items-center">
+                            <small class="fw-bold text-truncate">${pcName}</small>
+                            <span class="badge bg-success">Online</span>
+                        </div>
+                        <div id="ph-${connectionId}" class="placeholder-box">Waiting for stream...</div>
+                        <img id="img-${connectionId}" class="stream-img d-none" />
+                        <div class="card-body p-2 text-center">
+                            <small class="d-block text-muted mb-2 text-truncate">${studentId}</small>
+                            <button class="btn btn-sm btn-primary w-100"
+                                    onclick="openRemoteControl('${connectionId}', '${studentId}', '${pcName}')">
+                                <i class="bi bi-mouse"></i> Remote Access
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+            grid.insertAdjacentHTML("beforeend", html);
+        }
+
+        function openRemoteControl(connectionId, studentId, pcName) {
+            activeTargetConnectionId = connectionId;
+            document.getElementById("remoteModalTitle").innerText = `Remote Access - ${pcName} (${studentId})`;
+            const modal = new bootstrap.Modal(document.getElementById("remoteControlModal"));
+            modal.show();
+            canvas.focus();
+        }
+
+        function closeRemoteControl() {
+            activeTargetConnectionId = null;
+        }
+
+        // ---- Remote input capture (mouse) ----
+        function sendInput(type, e) {
+            if (!activeTargetConnectionId) return;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = Math.round((e.clientX - rect.left) * scaleX);
+            const y = Math.round((e.clientY - rect.top) * scaleY);
+            connection.invoke("SendRemoteInput", activeTargetConnectionId, type, x, y, e.button || 0, e.shiftKey);
+        }
+
+        canvas.addEventListener("mousemove", (e) => sendInput("mousemove", e));
+        canvas.addEventListener("mousedown", (e) => sendInput("mousedown", e));
+        canvas.addEventListener("mouseup", (e) => sendInput("mouseup", e));
+        canvas.addEventListener("wheel", (e) => {
+            if (!activeTargetConnectionId) return;
+            connection.invoke("SendRemoteInput", activeTargetConnectionId, "scroll", 0, 0, e.deltaY > 0 ? 1 : -1, false);
+            e.preventDefault();
+        }, { passive: false });
+
+        // ---- Remote input capture (keyboard) ----
+        canvas.addEventListener("keydown", (e) => {
+            if (!activeTargetConnectionId) return;
+            if (e.key === "Escape") {
+                closeRemoteControl();
+                bootstrap.Modal.getInstance(document.getElementById("remoteControlModal"))?.hide();
+                return;
+            }
+            connection.invoke("SendRemoteInput", activeTargetConnectionId, "keydown", 0, 0, e.keyCode, e.shiftKey);
+            e.preventDefault();
+        });
+    </script>
+</body>
+</html>
