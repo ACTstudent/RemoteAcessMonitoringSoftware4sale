@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Student Accounts";
     Layout = "_Layout";
+    var computers = ViewBag.Computers as List<Server.Models.Computer> ?? new List<Server.Models.Computer>();
 }
 
 <h4 class="fw-bold mb-4"><i class="bi bi-people"></i> Manage Student Accounts</h4>
@@ -20,19 +21,36 @@
 </div>
 
 <div class="card">
-    <div class="card-header fw-bold">Student List</div>
+    <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+        <span>Student List &amp; Workstation Mapping</span>
+        <input id="studentSearch" class="form-control form-control-sm w-25" placeholder="Search name / number / username..." />
+    </div>
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead><tr><th>ID</th><th>Student No.</th><th>Name</th><th>Username</th><th></th></tr></thead>
+        <table class="table table-hover mb-0" id="studentTable">
+            <thead><tr><th>ID</th><th>Student No.</th><th>Name</th><th>Username</th><th>Assigned Workstation</th><th></th></tr></thead>
             <tbody>
                 @foreach (var s in Model)
                 {
                     var formId = "s-update-" + s.Id;
+                    var assigned = computers.FirstOrDefault(c => c.AssignedTo == s.Id.ToString());
                     <tr>
                         <td>@s.Id</td>
                         <td><input class="form-control form-control-sm" form="@formId" name="StudentNumber" value="@s.StudentNumber" /></td>
                         <td><input class="form-control form-control-sm" form="@formId" name="FullName" value="@s.FullName" /></td>
                         <td><input class="form-control form-control-sm" form="@formId" name="Username" value="@s.Username" /></td>
+                        <td>
+                            <form method="post" action="/Admin/AssignComputer" class="d-flex gap-1 align-items-center">
+                                <input type="hidden" name="studentId" value="@s.Id" />
+                                <select name="computerId" class="form-select form-select-sm">
+                                    <option value="">-- Unassigned --</option>
+                                    @foreach (var c in computers.Where(c => c.AssignedTo == s.Id.ToString() || c.AssignedTo == null))
+                                    {
+                                        <option value="@c.ComputerId" selected="@(c.AssignedTo == s.Id.ToString())">@c.LaboratoryStation</option>
+                                    }
+                                </select>
+                                <button class="btn btn-sm btn-outline-light">Map</button>
+                            </form>
+                        </td>
                         <td class="d-flex gap-1">
                             <button form="@formId" class="btn btn-sm btn-success">Save</button>
                             <form method="post" action="/Admin/DeleteStudent">
@@ -53,3 +71,13 @@
         <input type="hidden" name="Id" value="@s.Id" />
     </form>
 }
+
+<script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById("studentSearch").addEventListener("input", function () {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll("#studentTable tbody tr").forEach(tr => {
+            tr.style.display = tr.textContent.toLowerCase().includes(q) ? "" : "none";
+        });
+    });
+</script>

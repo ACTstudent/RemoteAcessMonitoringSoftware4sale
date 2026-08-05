@@ -1,95 +1,84 @@
-# Remote Access Monitoring Software (CAMS)
+# CAMS — Computer Account Management System
 
-Computer Account Management System for Pardo Elementary School — a remote lab monitoring system with:
+**Pardo Elementary School Laboratory Management System**
 
-- **WinForms Student Client** — streams the student's screen, receives remote control, lock/unlock, broadcasts, and teacher notifications; reports idle status and the active application.
-- **ASP.NET Core Server** — SignalR hub, EF Core, session-based auth, role dashboards.
-- **Admin portal** (`/Admin`) — teacher/student accounts, roles & permissions, computer profiles, restriction rules, website/app blacklists, session rules, LAN config, reports, audit trail, system logs.
-- **Teacher portal** (`/Teacher`) — session start/pause/end, live monitoring grid, remote control (lock/unlock/force logout), screen broadcast, app tracker, idle monitor, access restrictions, classroom records.
-- **Student portal** (`/Student`) — session info with remaining-time countdown, assigned unit, alert center, account settings.
+A LAN-based classroom management and monitoring application built with ASP.NET Core, SignalR, and WinForms. Automates student account tracking, enforces access restrictions, and replaces manual logbooks for 45-minute laboratory sessions.
+
+## Features
+
+| Module | Details |
+|---|---|
+| **Real-time Monitoring** | Live screen streaming (SignalR ~12 FPS), idle/active status, active app tracker |
+| **Remote Control** | Lock/unlock, force logout, remote mouse/keyboard, shutdown workstation |
+| **Teacher Control Panel** | Global session Start/Pause/End, multi-monitor grid, workstation action drawer, screen broadcast, infraction alert badge |
+| **Student Client** | WinForms agent with sticky toolbar, elapsed-time display, restriction enforcement (app kill + website warning) |
+| **Access Restrictions** | Block (blacklist) or Allow (whitelist) rules for apps and websites; violations flashed to teacher instantly |
+| **Account Management** | Admin CRUD for student/teacher accounts, workstation mapping matrix |
+| **Roles & Permissions** | Admin, Teacher, Student — role-based dashboards with permission enforcement |
+| **Audit Trail** | Login attempts (success/fail), account changes, restriction violations, global session actions logged |
+| **Reports & Export** | Session records, usage logs, top apps table, audit logs — all CSV-exportable with date-range filter |
+| **Security** | PBKDF2 password hashing, station binding (student must log in from assigned workstation) |
+| **LAN-Only** | All static assets vendored locally (no CDN), WebSocket for real-time comms over intranet |
 
 ## Solution layout
 
 ```
-Monitoring And Remote Access/
-├── RemoteMonitoring.sln
-├── Shared/          # Shared contracts library (DTOs + hub event names)
-├── Server/          # ASP.NET Core web app (SignalR hub, controllers, views)
-├── Client/          # WinForms student client
-└── DIAGRAMS/        # System diagrams (flowchart, message flow, ERD, menu structure)
+CAMS/
+├── CAMS-Guide.md          # Full user & developer guide
+├── LICENSE                # MIT
+├── README.md              # This file
+├── DEPLOYMENT.md          # Server deployment walkthrough
+├── publish.ps1             # Server publish script
+├── publish-client.ps1      # Student client publish + installer builder
+├── client-installer.iss    # Inno Setup wizard template
+├── DIAGRAMS/               # System diagrams (flowchart, ERD, menu, SignalR flow)
+└── Monitoring And Remote Access/
+    ├── RemoteMonitoring.sln
+    ├── Shared/             # DTOs + SignalR event constants
+    ├── Server/             # ASP.NET Core MVC + SignalR hub + EF Core
+    │   ├── wwwroot/lib/    # Vendored Bootstrap & SignalR
+    │   └── Views/           # Razor pages (Admin, Teacher, Student)
+    └── Client/             # WinForms student agent (.NET 8)
 ```
 
-## Prerequisites
-
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) (build & run)
-- [SQL Server](https://www.microsoft.com/sql-server/sql-server-downloads) or SQL Server LocalDB (the default connection string uses `(localdb)\mssqllocaldb`)
-
-## Build
+## Quick start
 
 ```powershell
 cd "Monitoring And Remote Access"
 dotnet restore
 dotnet build RemoteMonitoring.sln
+dotnet run --project Server
 ```
 
-## Publish (deploy the server)
+Server is at `http://localhost:5000`.
 
-Run the included publish script, or manually:
+## Default accounts (password hashed)
 
-```powershell
-cd "Monitoring And Remote Access"
-dotnet publish Server\Server.csproj -c Release -o ..\publish
-```
-
-The publish output is a self-contained server folder. Copy it to the server PC and run `Server.exe` (see `DEPLOYMENT.md`).
-
-## Database
-
-The schema is created/migrated with EF Core:
-
-```powershell
-cd "Monitoring And Remote Access"
-dotnet tool install --global dotnet-ef
-dotnet ef database update --project Server
-```
-
-> **Note:** the codebase uses `UseSqlServer`. If you prefer SQLite, switch the provider in `Program.cs` and the package in `Server.csproj`.
-
-## Default seeded accounts
-
-| Role | Username | Password |
-| --- | --- | --- |
+| Role | Username | Password (before hashing) |
+|---|---|---|
 | Admin | `admin` | `admin123` |
 | Teacher | `teacher1` | `teacher123` |
 | Student | `student1` | `student123` |
 
-Change these before production use — passwords are stored as plain text in this prototype.
+## Database
 
-## Client configuration
+to `appsettings.json`:
+- `"DatabaseProvider": "Sqlite"` — zero-install, file-based `CAMS.db`
+- `"DatabaseProvider": "SqlServer"` — LocalDB / full SQL Server
+- `"DatabaseProvider": "MySql"` — MySQL (`Pomelo.EntityFrameworkCore.MySql`)
 
-The student client connects to `http://localhost:5000/remoteMonitoringHub` (see `Client/MainForm.cs`). Point it at your server's LAN IP, e.g. `http://192.168.1.100:5000/remoteMonitoringHub`.
+The schema autocrche via `EnsureCreated()` on first run.
 
-## Client installer (download & setup wizard)
+## Configuration
 
-Build a self-contained client + an Inno Setup installer that students can download and run:
+- **Client URL**: edit `Client/Client-settings.json` with the server LAN address, then rebuild
+- **Teacher panel**: open `http://<server-ip>:5000/Teacher/Monitoring` in a browser
+- **Student client**: launch `Client.exe` (or `dotnet run --project Client`)
 
-1. Install [Inno Setup 6](https://jrsoftware.org/isdl.php) (required to compile the wizard).
-2. Run from the repo root:
+## License
 
-   ```powershell
-   .\publish-client.ps1
-   ```
+MIT — see `LICENSE`.
 
-   This publishes the client as a self-contained single `.exe` (no .NET install needed on student PCs) and builds **`client-dist\CAMS-Client-Setup.exe`**.
+## Documentation
 
-3. Host that installer on your server/LAN share; students run it and follow the wizard (Next → Install → Finish), then launch the client.
-
-## Running
-
-```powershell
-# Server (listens on http://localhost:5000)
-dotnet run --project Server
-
-# Client
-dotnet run --project Client
-```
+Full user guide, flowchart, and SignalR event legend in **`CAMS-Guide.md`**.

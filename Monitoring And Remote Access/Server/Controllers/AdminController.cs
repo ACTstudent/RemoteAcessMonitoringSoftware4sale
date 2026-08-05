@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
@@ -9,6 +10,7 @@ namespace Server.Controllers
     public class AdminController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly PasswordHasher<object> _hasher = new();
 
         public AdminController(ApplicationDbContext context)
         {
@@ -56,6 +58,7 @@ namespace Server.Controllers
         public async Task<IActionResult> CreateTeacher(Teacher teacher)
         {
             if (!CheckAccess()) return Denied();
+            teacher.PasswordHash = _hasher.HashPassword(null, teacher.PasswordHash);
             _context.Teachers.Add(teacher);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateTeacher", $"Created teacher {teacher.Username}");
@@ -66,6 +69,7 @@ namespace Server.Controllers
         public async Task<IActionResult> UpdateTeacher(Teacher teacher)
         {
             if (!CheckAccess()) return Denied();
+            teacher.PasswordHash = _hasher.HashPassword(null, teacher.PasswordHash);
             _context.Teachers.Update(teacher);
             await _context.SaveChangesAsync();
             await AuditAsync("UpdateTeacher", $"Updated teacher {teacher.Username}");
@@ -90,6 +94,7 @@ namespace Server.Controllers
         public async Task<IActionResult> Students()
         {
             if (!CheckAccess()) return Denied();
+            ViewBag.Computers = await _context.Computers.ToListAsync();
             return View(await _context.Students.ToListAsync());
         }
 
@@ -97,6 +102,7 @@ namespace Server.Controllers
         public async Task<IActionResult> CreateStudent(Student student)
         {
             if (!CheckAccess()) return Denied();
+            student.PasswordHash = _hasher.HashPassword(null, student.PasswordHash);
             _context.Students.Add(student);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateStudent", $"Created student {student.Username}");
@@ -188,6 +194,7 @@ namespace Server.Controllers
             {
                 _context.RestrictionRules.Remove(rule);
                 await _context.SaveChangesAsync();
+                await AuditAsync("DeleteRestriction", $"Removed restriction on {rule.Target}");
             }
             return RedirectToAction("Restrictions");
         }
@@ -206,7 +213,7 @@ namespace Server.Controllers
             _context.BlacklistItems.Add(item);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateBlacklist", $"Blacklisted {item.TargetType}: {item.Value}");
-            return RedirectToAction("Blacklists");
+            return RedirectToAction(nameof(Blacklists));
         }
 
         [HttpPost]
@@ -218,8 +225,9 @@ namespace Server.Controllers
             {
                 _context.BlacklistItems.Remove(item);
                 await _context.SaveChangesAsync();
+                await AuditAsync("DeleteBlacklist", $"Removed blacklist {item.TargetType}: {item.Value}");
             }
-            return RedirectToAction("Blacklists");
+            return RedirectToAction(nameof(Blacklists));
         }
 
         // ---------- Session rules ----------
@@ -317,26 +325,77 @@ namespace Server.Controllers
             {
                 _context.Computers.Remove(computer);
                 await _context.SaveChangesAsync();
+                await AuditAsync("DeleteComputer", $"Removed {computer.LaboratoryStation}");
             }
-            return RedirectToAction("Computers");
+            return RedirectToAction(nameof(Computers));
+        }
+
+        // ---------- Workstation-to-Student mapping ----------
+        [HttpPost]
+        public async Task<IActionResult> AssignComputer(int studentId, int? computerId)
+        {
+            if (!CheckAccess()) return Denied();
+
+            // Un-assign the student from any previously assigned workstation
+            var previous = await _context.Computers
+                .FirstOrDefaultAsync(c => c.AssignedTo == studentId.ToString());
+            if (previous != null)
+            {
+                previous.AssignedTo = null;
+                if (previous.Status == "Assigned") previous.Status = "Available";
+            }
+
+            if (computerId.HasValue)
+            {
+                var computer = await _context.Computers.FindAsync(computerId.Value);
+                if (computer != null)
+                {
+                    computer.AssignedTo = studentId.ToString();
+                    computer.Status = "Assigned";
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            await AuditAsync("AssignComputer",
+                computerId.HasValue ? $"Assigned student {studentId} to workstation {computerId}" : $"Unassigned student {studentId}");
+            return RedirectToAction("Students");
         }
 
         // ---------- Reports ----------
-        public async Task<IActionResult> Reports()
+        public async Task<IActionResult> Reports(DateTime? from, DateTime? to)
         {
             if (!CheckAccess()) return Denied();
+
+            var fromDate = from ?? DateTime.Now.AddDays(-30);
+            var toDate = to ?? DateTime.Now.AddDays(1);
 
             var sessions = await _context.LabSessions
                 .Include(s => s.Student)
                 .Include(s => s.Teacher)
                 .Include(s => s.Computer)
+                .Where(s => s.StartTime >= fromDate && s.StartTime < toDate)
                 .OrderByDescending(s => s.StartTime)
                 .Take(500)
                 .ToListAsync();
 
+            var usage = await _context.UsageLogs
+                .Where(u => u.Timestamp >= fromDate && u.Timestamp < toDate)
+                .OrderByDescending(u => u.Timestamp)
+                .Take(500)
+                .ToListAsync();
+
+            ViewBag.FromDate = fromDate.ToString("yyyy-MM-dd");
+            ViewBag.ToDate = toDate.ToString("yyyy-MM-dd");
             ViewBag.TotalSessions = sessions.Count;
             ViewBag.TotalMinutes = sessions.Sum(s =>
                 (s.EndTime.HasValue ? (s.EndTime.Value - s.StartTime).TotalMinutes : 0));
+            ViewBag.TopApps = usage
+                .GroupBy(u => u.AppName)
+                .OrderByDescending(g => g.Count())
+                .Take(10)
+                .Select(g => new { App = g.Key, Count = g.Count() })
+                .ToList();
+            ViewBag.UsageLogs = usage;
             ViewBag.SessionsByTeacher = sessions
                 .GroupBy(s => s.Teacher?.Username ?? "Unknown")
                 .ToDictionary(g => g.Key, g => g.Count());
@@ -352,6 +411,77 @@ namespace Server.Controllers
         {
             if (!CheckAccess()) return Denied();
             return View(await _context.AuditLogs.OrderByDescending(a => a.Timestamp).Take(500).ToListAsync());
+        }
+
+        // ---------- Export audit trail as CSV ----------
+        public async Task<IActionResult> ExportAuditCsv()
+        {
+            if (!CheckAccess()) return Denied();
+            var logs = await _context.AuditLogs.OrderByDescending(a => a.Timestamp).Take(2000).ToListAsync();
+
+            var csv = new System.Text.StringBuilder();
+            csv.AppendLine("Timestamp,User Type,User ID,Action,Details,IP Address");
+            foreach (var l in logs)
+            {
+                csv.AppendLine($"{l.Timestamp:yyyy-MM-dd HH:mm:ss},{Csv(l.UserType)},{l.UserId},{Csv(l.Action)},{Csv(l.Details)},{Csv(l.IpAddress)}");
+            }
+
+            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()),
+                "text/csv; charset=utf-8",
+                $"CAMS-AuditLog-{DateTime.Now:yyyyMMdd-HHmm}.csv");
+        }
+
+        // ---------- Export usage report as CSV ----------
+        public async Task<IActionResult> ExportReportsCsv()
+        {
+            if (!CheckAccess()) return Denied();
+            var sessions = await _context.LabSessions
+                .Include(s => s.Student)
+                .Include(s => s.Teacher)
+                .Include(s => s.Computer)
+                .OrderByDescending(s => s.StartTime)
+                .Take(2000)
+                .ToListAsync();
+
+            var csv = new System.Text.StringBuilder();
+            csv.AppendLine("Student,Teacher,Station,Start Time,End Time,Duration (min),Status");
+            foreach (var s in sessions)
+            {
+                var duration = s.EndTime.HasValue ? Math.Round((s.EndTime.Value - s.StartTime).TotalMinutes, 1) : 0;
+                csv.AppendLine($"{Csv(s.Student?.FullName)},{Csv(s.Teacher?.Username ?? "System")},{Csv(s.Computer?.LaboratoryStation ?? s.PCName)},{s.StartTime:yyyy-MM-dd HH:mm},{s.EndTime?.ToString("yyyy-MM-dd HH:mm")},{duration},{s.Status}");
+            }
+
+            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()),
+                "text/csv; charset=utf-8",
+                $"CAMS-UsageReport-{DateTime.Now:yyyyMMdd-HHmm}.csv");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportUsageCsv(DateTime? from, DateTime? to)
+        {
+            if (!CheckAccess()) return Denied();
+            var fromDate = from ?? DateTime.Now.AddDays(-30);
+            var toDate = to ?? DateTime.Now.AddDays(1);
+            var logs = await _context.UsageLogs
+                .Where(u => u.Timestamp >= fromDate && u.Timestamp < toDate)
+                .OrderByDescending(u => u.Timestamp)
+                .Take(1000)
+                .ToListAsync();
+
+            var csv = new System.Text.StringBuilder();
+            csv.AppendLine("Timestamp,Student ID,PC,Application");
+            foreach (var l in logs)
+                csv.AppendLine($"{l.Timestamp:yyyy-MM-dd HH:mm:ss},{l.StudentId},{Csv(l.PcName)},{Csv(l.AppName)}");
+
+            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()),
+                "text/csv; charset=utf-8",
+                $"CAMS-UsageLog-{DateTime.Now:yyyyMMdd-HHmm}.csv");
+        }
+
+        private static string Csv(string? value)
+        {
+            var v = value ?? "";
+            return "\"" + v.Replace("\"", "\"\"") + "\"";
         }
 
         // ---------- System error logs ----------

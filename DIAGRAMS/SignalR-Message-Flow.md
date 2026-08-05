@@ -38,6 +38,18 @@ flowchart TD
     D2 -- "SendRemoteInput(targetConnId, RemoteInputMessage)" --> H
     H -- "ExecuteRemoteInput(RemoteInputMessage)" --> C1
     C1 --> C3
+    D2 -- "SendWarningPopup(id, NotificationMessage)" --> H
+    H -- "SendWarningPopup(NotificationMessage)" --> C1
+    D2 -- "ShutdownStudent(connectionId)" --> H
+    H -- "ShutdownStudent" --> C1
+    C1 -- "ReportInfraction(InfractionMessage)" --> H
+    H -- "InfractionDetected(InfractionMessage)" --> D1
+    H -- "GlobalSessionState(GlobalSessionMessage)" --> C1
+    H -- "GlobalSessionState(GlobalSessionMessage)" --> D1
+    H -- "SessionEnded" --> C1
+    H -- "SessionEnded" --> D2
+    D1 -- "BroadcastScreen(frameBase64)" --> H
+    H -- "BroadcastScreen(BroadcastMessage)" --> C1
 ```
 
 ## Event reference
@@ -51,3 +63,14 @@ flowchart TD
 | Server → Dashboard | `StudentConnected` / `StudentDisconnected` | Server hub | `StudentConnectionMessage` / `connectionId` | Add / remove student cards |
 | Dashboard → Server | `SendRemoteInput` | Teacher dashboard | `targetConnectionId`, `RemoteInputMessage` | Forward a mouse/keyboard event to one student |
 | Server → Client | `ExecuteRemoteInput` | Server hub | `RemoteInputMessage` | Target the specific student connection; handled by `InputSimulator` |
+| Dashboard → Server | `SendWarningPopup` | Teacher dashboard | `targetConnectionId`, `NotificationMessage` | Send a warning dialog to a student or all students |
+| Dashboard → Server | `ShutdownStudent` | Teacher dashboard | `connectionId` | Remotely shut down a student workstation |
+| Client → Server | `ReportInfraction` | Student client | `InfractionMessage` | Report a blocked app/site attempt to the teacher |
+| Server → Dashboard | `InfractionDetected` | Server hub | `InfractionMessage` | Flash the violation card and increment the alert badge |
+| Server → Client | `GlobalSessionState` | Server hub | `GlobalSessionMessage` | Push start/pause/ended state with elapsed seconds |
+| Server → Client | `SessionEnded` | Server hub | — | Force logout + lock when teacher/admin ends the session |
+| Client → Server | `FetchRestrictions` | Student client | — | Pull the active restriction rules after login |
+| Server → Client | `RestrictionsReceived` | Server hub | `List<RestrictionRuleMessage>` | Deliver whitelist/blacklist rules to the client |
+| Server → Client | `SendWarningPopup` | Server hub | `NotificationMessage` | Show a warning popup on one or all student screens |
+| Dashboard → Server | `BroadcastScreen` | Teacher dashboard | frameBase64 string | Send the teacher's own screen to all students |
+| Server → Client | `BroadcastScreen` | Server hub | `BroadcastMessage` | Render the teacher's screen on student clients |

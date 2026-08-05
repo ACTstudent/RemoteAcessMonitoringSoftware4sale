@@ -4,7 +4,31 @@
     Layout = "_Layout";
 }
 
-<h4 class="fw-bold mb-4"><i class="bi bi-bar-chart"></i> Administrative Reports</h4>
+<h4 class="fw-bold mb-4 d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-bar-chart"></i> Administrative Reports</span>
+    <div class="d-flex gap-2">
+        <a href="/Admin/ExportReportsCsv?from=@ViewBag.FromDate&to=@ViewBag.ToDate" class="btn btn-sm btn-outline-light"><i class="bi bi-download"></i> Session CSV</a>
+        <a href="/Admin/ExportUsageCsv?from=@ViewBag.FromDate&to=@ViewBag.ToDate" class="btn btn-sm btn-outline-light"><i class="bi bi-download"></i> Usage CSV</a>
+    </div>
+</h4>
+
+<div class="card mb-4">
+    <div class="card-body p-3">
+        <form method="get" action="/Admin/Reports" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="small text-muted">From</label>
+                <input type="date" name="from" class="form-control form-control-sm" value="@ViewBag.FromDate" />
+            </div>
+            <div class="col-md-3">
+                <label class="small text-muted">To</label>
+                <input type="date" name="to" class="form-control form-control-sm" value="@ViewBag.ToDate" />
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-sm btn-primary w-100">Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <div class="row g-3 mb-4">
     <div class="col-md-4">
@@ -32,10 +56,50 @@
                     {
                         <span class="badge bg-secondary me-1">@kv.Key: @kv.Value</span>
                     }
-                </div>
-            </div>
+</div>
         </div>
     </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header fw-bold">Top Apps (date range)</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Application</th><th>Count</th></tr></thead>
+            <tbody>
+                @if (ViewBag.TopApps != null)
+                {
+                    foreach (var app in ViewBag.TopApps)
+                    {
+                        <tr><td>@app.App</td><td>@app.Count</td></tr>
+                    }
+                }
+                else
+                {
+                    <tr><td colspan="2" class="text-muted text-center">No usage data.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header fw-bold">Usage Logs</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Timestamp</th><th>Student ID</th><th>PC</th><th>App</th></tr></thead>
+            <tbody>
+                @if (ViewBag.UsageLogs != null)
+                {
+                    foreach (var u in (ViewBag.UsageLogs as System.Collections.Generic.IEnumerable<Server.Models.UsageLog>).Take(50))
+                    {
+                        <tr><td>@u.Timestamp.ToString("MM/dd HH:mm")</td><td>@u.StudentId</td><td>@u.PcName</td><td>@u.AppName</td></tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
 </div>
 
 <div class="row g-3 mb-4">

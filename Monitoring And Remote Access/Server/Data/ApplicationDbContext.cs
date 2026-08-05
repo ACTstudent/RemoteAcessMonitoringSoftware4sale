@@ -1,3 +1,4 @@
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Server.Models;
 
@@ -24,10 +25,13 @@ namespace Server.Data
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
         public DbSet<SystemLog> SystemLogs { get; set; } = null!;
         public DbSet<Notification> Notifications { get; set; } = null!;
+        public DbSet<UsageLog> UsageLogs { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            var hasher = new PasswordHasher<object>();
 
             modelBuilder.Entity<Role>()
                 .HasMany(r => r.Permissions)
@@ -39,7 +43,7 @@ namespace Server.Data
             {
                 Id = 1,
                 Username = "admin",
-                PasswordHash = "admin123",
+                PasswordHash = hasher.HashPassword(null, "admin123"),
                 FullName = "System Administrator"
             });
 
@@ -50,7 +54,7 @@ namespace Server.Data
                 StudentNumber = "STU-2026-001",
                 FullName = "John Doe",
                 Username = "student1",
-                PasswordHash = "student123"
+                PasswordHash = hasher.HashPassword(null, "student123")
             });
 
             // Seed sample Teacher
@@ -61,7 +65,7 @@ namespace Server.Data
                 LastName = "Santos",
                 Email = "maria.santos@pardo.edu.ph",
                 Username = "teacher1",
-                PasswordHash = "teacher123",
+                PasswordHash = hasher.HashPassword(null, "teacher123"),
                 ContactNumber = "09171234567",
                 Status = "Active"
             });

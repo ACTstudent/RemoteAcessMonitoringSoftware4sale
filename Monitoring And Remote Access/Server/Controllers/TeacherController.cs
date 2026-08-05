@@ -9,10 +9,12 @@ namespace Server.Controllers
     public class TeacherController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly SessionManagerService _sessionManager;
 
-        public TeacherController(ApplicationDbContext context)
+        public TeacherController(ApplicationDbContext context, SessionManagerService sessionManager)
         {
             _context = context;
+            _sessionManager = sessionManager;
         }
 
         private bool CheckAccess() => HttpContext.IsTeacher();
@@ -38,7 +40,15 @@ namespace Server.Controllers
             if (!CheckAccess()) return Denied();
             ViewBag.RunningSessions = await _context.LabSessions.CountAsync(s => s.Status == "Running");
             ViewBag.ActiveStudents = await _context.LabSessions.CountAsync(s => s.IsActive);
+            ViewBag.GlobalSession = _sessionManager.Snapshot();
             return View();
+        }
+
+        // ---------- Global session state (JSON for the control panel header) ----------
+        public IActionResult GlobalSessionState()
+        {
+            if (!CheckAccess()) return Denied();
+            return Json(_sessionManager.Snapshot());
         }
 
         // ---------- Session management (start/pause/end) ----------
@@ -155,6 +165,7 @@ namespace Server.Controllers
         public IActionResult Monitoring()
         {
             if (!CheckAccess()) return Denied();
+            ViewBag.GlobalSession = _sessionManager.Snapshot();
             return View();
         }
 
@@ -200,6 +211,37 @@ namespace Server.Controllers
                 s.EndTime.HasValue ? (s.EndTime.Value - s.StartTime).TotalMinutes : 0);
 
             return View(sessions);
+        }
+
+        // ---------- Export classroom records as CSV ----------
+        public async Task<IActionResult> ExportRecordsCsv()
+        {
+            if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            var sessions = await _context.LabSessions
+                .Include(s => s.Student)
+                .Include(s => s.Computer)
+                .Where(s => s.TeacherId == teacherId)
+                .OrderByDescending(s => s.StartTime)
+                .ToListAsync();
+
+            var csv = new System.Text.StringBuilder();
+            csv.AppendLine("Student Number,Student Name,Station,Start Time,End Time,Duration (min),Status");
+            foreach (var s in sessions)
+            {
+                var duration = s.EndTime.HasValue ? Math.Round((s.EndTime.Value - s.StartTime).TotalMinutes, 1) : 0;
+                csv.AppendLine($"{Csv(s.Student?.StudentNumber)},{Csv(s.Student?.FullName)},{Csv(s.Computer?.LaboratoryStation ?? s.PCName)},{s.StartTime:yyyy-MM-dd HH:mm},{s.EndTime?.ToString("yyyy-MM-dd HH:mm")},{duration},{s.Status}");
+            }
+
+            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()),
+                "text/csv; charset=utf-8",
+                $"CAMS-Classroom-Records-{DateTime.Now:yyyyMMdd-HHmm}.csv");
+        }
+
+        private static string Csv(string? value)
+        {
+            var v = value ?? "";
+            return "\"" + v.Replace("\"", "\"\"") + "\"";
         }
 
         // ---------- Notifications ----------

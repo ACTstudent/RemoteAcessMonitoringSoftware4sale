@@ -13,6 +13,11 @@ public class MonitoringHubClient : IMonitoringHubClient
     public event Action? ForceLogoutRequested;
     public event Action<BroadcastMessage>? BroadcastReceived;
     public event Action<NotificationMessage>? NotificationReceived;
+    public event Action<GlobalSessionMessage>? GlobalSessionStateReceived;
+    public event Action? SessionEnded;
+    public event Action? ShutdownRequested;
+    public event Action<NotificationMessage>? WarningPopupReceived;
+    public event Action<List<RestrictionRuleMessage>>? RestrictionsReceived;
 
     public async Task StartAsync(string serverUrl, CancellationToken cancellationToken = default)
     {
@@ -30,6 +35,14 @@ public class MonitoringHubClient : IMonitoringHubClient
             message => BroadcastReceived?.Invoke(message));
         connection.On<NotificationMessage>(HubEventNames.SendNotification,
             message => NotificationReceived?.Invoke(message));
+        connection.On<GlobalSessionMessage>(HubEventNames.GlobalSessionState,
+            message => GlobalSessionStateReceived?.Invoke(message));
+        connection.On(HubEventNames.SessionEnded, () => SessionEnded?.Invoke());
+        connection.On(HubEventNames.ShutdownStudent, () => ShutdownRequested?.Invoke());
+        connection.On<NotificationMessage>(HubEventNames.SendWarningPopup,
+            message => WarningPopupReceived?.Invoke(message));
+        connection.On<List<RestrictionRuleMessage>>(HubEventNames.RestrictionsReceived,
+            rules => RestrictionsReceived?.Invoke(rules));
 
         await connection.StartAsync(cancellationToken);
         _connection = connection;
@@ -57,6 +70,18 @@ public class MonitoringHubClient : IMonitoringHubClient
     {
         EnsureConnected();
         await _connection!.InvokeAsync("ReportActiveApp", app);
+    }
+
+    public async Task FetchRestrictionsAsync()
+    {
+        EnsureConnected();
+        await _connection!.InvokeAsync("FetchRestrictions");
+    }
+
+    public async Task ReportInfractionAsync(InfractionMessage infraction)
+    {
+        EnsureConnected();
+        await _connection!.InvokeAsync("ReportInfraction", infraction);
     }
 
     public ValueTask DisposeAsync()

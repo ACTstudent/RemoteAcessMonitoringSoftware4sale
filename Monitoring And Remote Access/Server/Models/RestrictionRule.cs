@@ -18,6 +18,9 @@ namespace Server.Models
         [StringLength(500)]
         public string Description { get; set; } = string.Empty;
 
+        [StringLength(20)]
+        public string Mode { get; set; } = "Block"; // Block | Allow (whitelist)
+
         public bool IsGlobal { get; set; } = true;
 
         public bool IsActive { get; set; } = true;

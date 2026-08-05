@@ -80,9 +80,8 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Refresh session status (countdown) every 30 seconds
+    // Refresh the per-student session status (own LabSession countdown) every 30 seconds
     async function refresh() {
         try {
             const r = await fetch("/Student/_SessionStatusJson");

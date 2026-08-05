@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
@@ -9,6 +10,7 @@ namespace Server.Controllers
     public class StudentController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly PasswordHasher<object> _hasher = new();
 
         public StudentController(ApplicationDbContext context)
         {
@@ -37,6 +39,11 @@ namespace Server.Controllers
             {
                 var elapsed = (DateTime.Now - session.StartTime).TotalMinutes;
                 ViewBag.Remaining = Math.Max(0, session.MaxDurationMinutes.Value - (int)elapsed);
+            }
+
+            if (session?.Computer?.LaboratoryStation != null)
+            {
+                HttpContext.Session.SetString("AssignedUnit", session.Computer.LaboratoryStation);
             }
 
             ViewBag.CurrentSession = session;
@@ -80,13 +87,13 @@ namespace Server.Controllers
             var student = await _context.Students.FindAsync(studentId);
             if (student == null) return RedirectToAction("Login", "Account");
 
-            if (student.PasswordHash != currentPassword)
+            if (_hasher.VerifyHashedPassword(null, student.PasswordHash, currentPassword) != PasswordVerificationResult.Success)
             {
                 ViewBag.Error = "Current password is incorrect.";
                 return View("Settings");
             }
 
-            student.PasswordHash = newPassword;
+            student.PasswordHash = _hasher.HashPassword(null, newPassword);
             await _context.SaveChangesAsync();
             ViewBag.Success = "Password updated successfully.";
             return View("Settings");

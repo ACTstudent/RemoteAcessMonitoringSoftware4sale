@@ -22,4 +22,21 @@ public static class HubEventNames
     public const string IdleStatusReceived = "IdleStatusReceived";
     public const string ReportActiveApp = "ReportActiveApp";
     public const string ActiveAppReceived = "ActiveAppReceived";
+
+    // Global session management
+    public const string GlobalStartSession = "GlobalStartSession";
+    public const string GlobalPauseSession = "GlobalPauseSession";
+    public const string GlobalEndSession = "GlobalEndSession";
+    public const string GlobalSessionState = "GlobalSessionState";
+    public const string SessionEnded = "SessionEnded";
+
+    // Restriction enforcement
+    public const string FetchRestrictions = "FetchRestrictions";
+    public const string RestrictionsReceived = "RestrictionsReceived";
+    public const string ReportInfraction = "ReportInfraction";
+    public const string InfractionDetected = "InfractionDetected";
+
+    // Remote workstation commands
+    public const string ShutdownStudent = "ShutdownStudent";
+    public const string SendWarningPopup = "SendWarningPopup";
 }
