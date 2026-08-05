@@ -1,7 +1,10 @@
 bin/
 obj/
 publish/
+server-publish/
+server-dist/
 client-publish/
 client-dist/
 *.user
 .vs/
+*.db

@@ -1,86 +1,92 @@
-# Deployment Guide (Server Side)
+# Deployment Guide
 
-How to install and run the CAMS server on a lab machine.
+## Easy Install (Recommended)
 
-## 1. Install prerequisites on the server PC
+Run the publish script on a machine with the .NET 8 SDK and Inno Setup 6:
 
-1. **.NET 8 Hosting Bundle / SDK** — https://dotnet.microsoft.com/download/dotnet/8.0
-2. **SQL Server** (Express is fine) — https://www.microsoft.com/sql-server/sql-server-downloads
+```powershell
+.\publish.ps1
+```
 
-## 2. Publish the server
+This creates **`server-dist\CAMS-Server-Setup.exe`** — copy it to the server PC and run the wizard.
 
-Run `.\publish.ps1` from the repo root (or):
+The wizard does everything:
+- Installs to `%LOCALAPPDATA%\CAMS Server`
+- Opens Windows Firewall port **5000**
+- Optionally starts the server automatically with Windows
+- Launches the server after install
+
+**No database setup needed** — SQLite auto-creates `CAMS.db` next to `Server.exe` on first run.
+
+## Publishing the client installer
+
+From the same build machine:
+
+```powershell
+.\publish-client.ps1
+```
+
+This creates **`client-dist\CAMS-Client-Setup.exe`** — a self-contained installer (no .NET required on student PCs). Students run the wizard, enter the server address when asked, and the client is ready.
+
+## Manual folder install (fallback)
+
+If you can't build installers, do the folder-copy approach:
+
+### Server
 
 ```powershell
 cd "Monitoring And Remote Access"
 dotnet publish Server\Server.csproj -c Release -o ..\publish
 ```
 
-This creates a `publish\` folder containing `Server.exe` and all dependencies.
+Copy the `publish\` folder to the server PC. Open `appsettings.json` and verify `DatabaseProvider` is set:
 
-## 3. Copy to the server PC
+| Provider | Config | Notes |
+|---|---|---|
+| **Sqlite** (default) | `"DatabaseProvider": "Sqlite"` | Zero-install, file-based `CAMS.db` — recommended |
+| **SqlServer** | `"DatabaseProvider": "SqlServer"` | Requires SQL Server or LocalDB |
+| **MySql** | `"DatabaseProvider": "MySql"` | Requires MySQL server |
 
-Copy the entire `publish\` folder to the server, e.g. `C:\CAMS\publish`.
+Then run `Server.exe` from the publish folder.
 
-## 4. Configure the database
-
-Edit `publish\appsettings.json`:
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=LAB-PC\\SQLEXPRESS;Database=MonitoringDb;Trusted_Connection=True;MultipleActiveResultSets=true"
-  }
-}
-```
-
-Replace `LAB-PC\SQLEXPRESS` with your SQL Server instance name.
-
-Create/apply the database schema (run once, from the machine with the SDK and the source):
+### Client
 
 ```powershell
-cd "Monitoring And Remote Access"
-dotnet tool install --global dotnet-ef
-dotnet ef database update --project Server
+cd "Monitoring And Remote Access\Client"
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ..\..\client-publish
 ```
 
-## 5. Run the server
-
-```powershell
-cd C:\CAMS\publish
-.\Server.exe
-```
-
-The server listens on `http://localhost:5000` and exposes:
-- Admin portal: `http://<server-ip>:5000/Admin`
-- Teacher portal: `http://<server-ip>:5000/Teacher`
-- SignalR hub: `http://<server-ip>:5000/remoteMonitoringHub`
-
-## 6. Point the client at the server
-
-Edit `Client\MainForm.cs` and set:
-
-```csharp
-private const string ServerUrl = "http://<server-ip>:5000/remoteMonitoringHub";
-```
-
-Rebuild and redeploy the client.
-
-## Optional: run as a Windows Service
-
-So the server survives reboots and starts automatically:
-
-```powershell
-sc create CAMS binPath= "C:\CAMS\publish\Server.exe" start= auto
-sc start CAMS
-```
-
-Or use IIS with the ASP.NET Core Module.
+Copy `client-publish\` to each student PC. Edit `client-settings.json` with the server address, then run `Client.exe`.
 
 ## Firewall
 
-Allow inbound TCP port **5000** on the server so LAN clients can connect:
+The server installer opens port 5000 automatically. To do it manually:
 
 ```powershell
-netsh advfirewall firewall add rule name="CAMS" dir=in action=allow protocol=TCP localport=5000
+netsh advfirewall firewall add rule name="CAMS Server" dir=in action=allow protocol=TCP localport=5000
+```
+
+## URLs
+
+| URL | Role |
+|---|---|
+| `http://<server-ip>:5000/Account/Login` | Login page |
+| `http://<server-ip>:5000/Admin` | Admin dashboard |
+| `http://<server-ip>:5000/Teacher/Monitoring` | Teacher monitoring panel |
+| `http://<server-ip>:5000/Student` | Student portal |
+| `http://<server-ip>:5000/remoteMonitoringHub` | SignalR hub (client connects here) |
+
+## Default accounts (change these)
+
+| Role | Username | Password |
+|---|---|---|
+| Admin | `admin` | `admin123` |
+| Teacher | `teacher1` | `teacher123` |
+| Student | `student1` | `student123` |
+
+## Optional: run as a Windows Service
+
+```powershell
+sc create CAMS binPath= "%LOCALAPPDATA%\CAMS Server\Server.exe" start= auto
+sc start CAMS
 ```
