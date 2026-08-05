@@ -8,7 +8,7 @@ A LAN-based classroom management and monitoring application built with ASP.NET C
 
 ## Easy Installation
 
-Build both installers on **one machine** (teacher's PC or lab server) — student PCs only need the wizard, no .NET install required.
+Double-click **`build-installers.bat`** — one script builds everything.
 
 ### Prerequisites (build machine only)
 
@@ -17,37 +17,42 @@ Build both installers on **one machine** (teacher's PC or lab server) — studen
 | .NET 8 SDK | https://dotnet.microsoft.com/download/dotnet/8.0 |
 | Inno Setup 6 | https://jrsoftware.org/isdl.php |
 
-### A. Server side — the lab PC
+### One-click build
 
-Run from the repo root:
-
-```powershell
-.\publish.ps1
+```
+build-installers.bat
 ```
 
-Two outputs:
-- `server-publish\` — raw folder (manual fallback)
-- **`server-dist\CAMS-Server-Setup.exe`** ← copy this to the lab/teacher PC (requires Windows admin for install)
+Or from PowerShell:
 
-**Run the wizard → done.** SQLite auto-creates the database on first launch, no SQL Server needed. Firewall port 5000 is opened automatically.
+```powershell
+.\build-installers.ps1
+```
 
-After install, open the server dashboard:
+Two `.exe` installers come out:
+
+| Installer | Where to run |
+|---|---|
+| **`server-dist\CAMS-Server-Setup.exe`** | The teacher/lab PC (one install — the server) |
+| **`client-dist\CAMS-Client-Setup.exe`** | Every student PC |
+
+### A. Server install
+
+Copy `server-dist\CAMS-Server-Setup.exe` to the lab PC, run the wizard → done.
+
+SQLite auto-creates the database on first launch — no SQL Server needed. Firewall port 5000 is opened automatically.
+
+After install:
 ```
 http://localhost:5000/Admin          (admin panel)
 http://localhost:5000/Teacher/Monitoring  (teacher panel)
 ```
 
-### B. Client side — each student PC
+### B. Client install
 
-```powershell
-.\publish-client.ps1
-```
+Distribute `client-dist\CAMS-Client-Setup.exe` to every student PC. No .NET install required — the client is self-contained.
 
-This creates **`client-dist\CAMS-Client-Setup.exe`** — a self-contained installer (no .NET needed on student PCs).
-
-Distribute it to every student machine. The wizard asks for the **server address** (e.g. `http://192.168.1.100:5000/remoteMonitoringHub`).
-
-Student runs: Next → enters server IP → Install → Finish. Client launches and connects.
+Student runs: Next → enters the server IP → Install → Finish. Client connects automatically.
 
 ---
 
@@ -59,11 +64,13 @@ CAMS/
 ├── LICENSE                    # MIT
 ├── README.md                  # This file
 ├── DEPLOYMENT.md              # Deployment guide
-├── publish.ps1                # Server publish + installer builder
-├── publish-client.ps1         # Client publish + installer builder
+├── build-installers.bat       # ← Double-click this to build both .exe installers
+├── build-installers.ps1       # One-shot script (server + client publish + Inno Setup)
+├── publish.ps1                # Server-only publish + installer
+├── publish-client.ps1         # Client-only publish + installer
 ├── server-installer.iss       # Inno Setup wizard for server
 ├── client-installer.iss       # Inno Setup wizard for client
-├── start-server.bat           # Manual launcher (open Server folder, double-click)
+├── start-server.bat           # Manual launcher (open publish folder, double-click)
 ├── DIAGRAMS/                  # System diagrams
 └── Monitoring And Remote Access/
     ├── RemoteMonitoring.sln
