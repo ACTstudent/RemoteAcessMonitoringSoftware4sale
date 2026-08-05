@@ -6,53 +6,118 @@ A LAN-based classroom management and monitoring application built with ASP.NET C
 
 ---
 
-## Easy Installation
+## Easy Installation — Step-by-Step
 
-Double-click **`build-installers.bat`** — one script builds everything.
+### Overview
 
-### Prerequisites (build machine only)
+One build machine produces two `.exe` wizards. No .NET or SQL Server needed on student PCs.
+
+---
+
+### Step 1: Install prerequisites on the build machine
+
+Download and install both:
 
 | Tool | Download |
 |---|---|
 | .NET 8 SDK | https://dotnet.microsoft.com/download/dotnet/8.0 |
 | Inno Setup 6 | https://jrsoftware.org/isdl.php |
 
-### One-click build
+---
+
+### Step 2: Build both installers
+
+Open the `CAMS` folder, **double-click**:
 
 ```
 build-installers.bat
 ```
 
-Or from PowerShell:
+A PowerShell window opens and runs all steps automatically:
+1. Builds the solution
+2. Publishes the server
+3. Publishes the client (self-contained, single `.exe`)
+4. Compiles both Inno Setup wizards
 
-```powershell
-.\build-installers.ps1
-```
+When it finishes, two `.exe` installers are created:
 
-Two `.exe` installers come out:
-
-| Installer | Where to run |
+| Installer | Purpose |
 |---|---|
-| **`server-dist\CAMS-Server-Setup.exe`** | The teacher/lab PC (one install — the server) |
-| **`client-dist\CAMS-Client-Setup.exe`** | Every student PC |
+| `server-dist\CAMS-Server-Setup.exe` | Run on the **teacher/lab PC** (the server) |
+| `client-dist\CAMS-Client-Setup.exe` | Run on **each student PC** |
 
-### A. Server install
+---
 
-Copy `server-dist\CAMS-Server-Setup.exe` to the lab PC, run the wizard → done.
+### Step 3: Install the server (teacher/lab PC)
 
-SQLite auto-creates the database on first launch — no SQL Server needed. Firewall port 5000 is opened automatically.
+1. Copy `server-dist\CAMS-Server-Setup.exe` to the teacher's computer (e.g. via USB or network share).
+2. **Double-click** the installer.
+3. Click **Next** → **Install** → **Finish**.
 
-After install:
-```
-http://localhost:5000/Admin          (admin panel)
-http://localhost:5000/Teacher/Monitoring  (teacher panel)
-```
+The wizard automatically:
+- Installs to `%LOCALAPPDATA%\CAMS Server`
+- Opens Windows Firewall port **5000**
+- Creates a desktop shortcut
+- Launches the server after install
 
-### B. Client install
+4. After install, open a browser and go to:
+   ```
+   http://localhost:5000/Admin
+   ```
+   Log in as:
+   | Role | Username | Password |
+   |---|---|---|
+   | Admin | `admin` | `admin123` |
+   | Teacher | `teacher1` | `teacher123` |
 
-Distribute `client-dist\CAMS-Client-Setup.exe` to every student PC. No .NET install required — the client is self-contained.
+   > **Note about SQLite:** No database installation is required. SQLite automatically creates
+   > the database file (`CAMS.db`) next to `Server.exe` the first time the server starts.
+   > No SQL Server, no manual setup — it just works.
 
-Student runs: Next → enters the server IP → Install → Finish. Client connects automatically.
+5. (Optional) Find the server's LAN IP address so students can connect:
+   ```powershell
+   ipconfig
+   ```
+   Look for `IPv4 Address` (e.g., `192.168.1.100`). The server hub URL will be:
+   ```
+   http://192.168.1.100:5000/remoteMonitoringHub
+   ```
+
+---
+
+### Step 4: Install on each student PC
+
+1. Copy `client-dist\CAMS-Client-Setup.exe` to each student machine (USB, shared folder, or LAN).
+2. **Double-click** the installer on each PC.
+3. **Click Next** until you reach the **"Server Address"** page.
+4. Enter the server's LAN IP:
+   ```
+   http://192.168.1.100:5000/remoteMonitoringHub
+   ```
+5. Click **Next** → **Install** → **Finish**.
+
+The client launches automatically and connects to the server.
+
+> **No .NET install needed on student PCs** — `Client.exe` is a self-contained single file.
+
+---
+
+### Step 5: Start class
+
+1. **Teacher:** open `http://localhost:5000/Teacher/Monitoring` → log in → click **Start Session**.
+2. **Students:** the client is already running (auto-connected). They log in with their student credentials.
+3. Teacher can now monitor screens, lock workstations, broadcast messages, and enforce restrictions.
+
+---
+
+### Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| "Windows protected your PC" when running installer | Click "More info" → "Run anyway" |
+| Client can't connect | Verify the server IP is correct; check firewall on the server PC |
+| Server won't start | Make sure .NET 8 Runtime is installed on the server PC (included if you ran the SDK, otherwise get it from https://dotnet.microsoft.com/download/dotnet/8.0) |
+| Port 5000 blocked | Run on server: `netsh advfirewall firewall add rule name="CAMS" dir=in action=allow protocol=TCP localport=5000` |
 
 ---
 
@@ -82,28 +147,18 @@ CAMS/
 
 ## Quick start (developer)
 
+If you're editing code, run the server directly:
+
 ```powershell
 cd "Monitoring And Remote Access"
-dotnet restore
-dotnet build RemoteMonitoring.sln
 dotnet run --project Server
 ```
 
 Server: `http://localhost:5000`
 
-## Default accounts
+## Database providers
 
-| Role | Username | Password |
-|---|---|---|
-| Admin | `admin` | `admin123` |
-| Teacher | `teacher1` | `teacher123` |
-| Student | `student1` | `student123` |
-
-Passwords are hashed (PBKDF2); seeds use hashed values. Change these in the Admin portal after first login.
-
-## Database
-
-Edit `server/app-settings.json` to switch providers:
+Edit `Monitoring And Remote Access\Server\appsettings.json` to switch providers:
 
 | Provider | Config | Install needed |
 |---|---|---|
@@ -112,18 +167,6 @@ Edit `server/app-settings.json` to switch providers:
 | MySql | `"DatabaseProvider": "MySql"` | MySQL server |
 
 Schema is auto-created via `EnsureCreated()` on first run.
-
-## Client configuration
-
-If installing manually (no installer), edit `client-publish.\client-settings.json` before distributing:
-
-```json
-{
-  "ServerUrl": "http://192.168.1.100:5000/remoteMonitoringHub"
-}
-```
-
-The installer wizard handles this during setup — no manual edit needed.
 
 ## License
 
