@@ -10,11 +10,11 @@ A LAN-based classroom management and monitoring application built with ASP.NET C
 
 | Installer | Download |
 |---|---|
-| **CAMS Server** | [CAMS-Server-Setup.exe](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Setup.exe) — run on the teacher/lab PC |
-| **CAMS Student Client** | [CAMS-Client-Setup.exe](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe) — run on each student PC |
+| **CAMS Server** | [CAMS-Server-Portable.zip](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Portable.zip) -- extract and run `Server.exe` on the teacher/lab PC |
+| **CAMS Student Client** | [CAMS-Client-Portable.zip](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Portable.zip) -- extract and run `client-portable.bat` on each student PC |
 
-> One-click installers. No .NET or SQL Server needed on student PCs.
-> The server installs to `%LOCALAPPDATA%\CAMS Server` and auto-creates the database via SQLite.
+> Portable bundles. Extract anywhere, no install required. No .NET or SQL Server needed on student PCs (client is self-contained).
+> The server auto-creates the database via SQLite on first run.
 
 ---
 
