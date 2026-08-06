@@ -50,6 +50,8 @@
                 <ul class="nav nav-pills flex-column gap-1">
                     <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")" href="/Teacher/Dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Sessions" ? "active" : "")" href="/Teacher/Sessions"><i class="bi bi-play-circle"></i> Session Management</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Students" ? "active" : "")" href="/Teacher/Students"><i class="bi bi-people"></i> Students</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Computers" ? "active" : "")" href="/Teacher/Computers"><i class="bi bi-pc-display"></i> Computers</a></li>
                     <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Monitoring" ? "active" : "")" href="/Teacher/Monitoring"><i class="bi bi-camera-video"></i> Live Monitoring</a></li>
                     <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Restrictions" ? "active" : "")" href="/Teacher/Restrictions"><i class="bi bi-slash-circle"></i> Access Restrictions</a></li>
                     <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Records" ? "active" : "")" href="/Teacher/Records"><i class="bi bi-journal"></i> Classroom Records</a></li>

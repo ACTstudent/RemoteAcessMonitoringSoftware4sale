@@ -1,0 +1,55 @@
+@model IEnumerable<Server.Models.Student>
+@{
+    ViewData["Title"] = "Student Records";
+    Layout = "_Layout";
+}
+
+<h4 class="fw-bold mb-4"><i class="bi bi-people"></i> Student Records</h4>
+
+<div class="card mb-4">
+    <div class="card-header fw-bold">Add Student</div>
+    <div class="card-body">
+        <form method="post" action="/Teacher/CreateStudent" class="row g-2">
+            <div class="col-md-3"><input name="StudentNumber" class="form-control" placeholder="Student Number" required /></div>
+            <div class="col-md-3"><input name="FullName" class="form-control" placeholder="Full Name" required /></div>
+            <div class="col-md-3"><input name="Username" class="form-control" placeholder="Username" required /></div>
+            <div class="col-md-3"><input name="PasswordHash" class="form-control" placeholder="Password" required /></div>
+            <div class="col-md-3"><button class="btn btn-primary w-100">Add Student</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header fw-bold">All Students</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Student Number</th><th>Full Name</th><th>Username</th><th>Actions</th></tr></thead>
+            <tbody>
+                @foreach (var s in Model)
+                {
+                    var formId = "s-update-" + s.Id;
+                    <tr>
+                        <td><input class="form-control form-control-sm" form="@formId" name="StudentNumber" value="@s.StudentNumber" /></td>
+                        <td><input class="form-control form-control-sm" form="@formId" name="FullName" value="@s.FullName" /></td>
+                        <td><input class="form-control form-control-sm" form="@formId" name="Username" value="@s.Username" /></td>
+                        <td>
+                            <form id="@formId" method="post" action="/Teacher/UpdateStudent" style="display:inline">
+                                <input type="hidden" name="Id" value="@s.Id" />
+                                <button class="btn btn-sm btn-outline-light me-1">Save</button>
+                            </form>
+                            <form method="post" action="/Teacher/DeleteStudent" style="display:inline"
+                                  onsubmit="return confirm('Delete @s.FullName?')">
+                                <input type="hidden" name="studentId" value="@s.Id" />
+                                <button class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="4" class="text-muted text-center">No students found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

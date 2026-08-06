@@ -14,6 +14,7 @@ namespace Server.Hubs
         private readonly SessionManagerService _sessionManager;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ConcurrentDictionary<string, string> _lastLoggedApp = new();
+        private static readonly ConcurrentDictionary<string, string> _connectionRoles = new();
 
         public RemoteMonitoringHub(
             IMonitoringService monitoringService,
@@ -23,6 +24,13 @@ namespace Server.Hubs
             _monitoringService = monitoringService;
             _sessionManager = sessionManager;
             _scopeFactory = scopeFactory;
+        }
+
+        private bool IsTeacher => _connectionRoles.TryGetValue(Context.ConnectionId, out var r) && r == "Teacher";
+
+        private void RequireTeacher()
+        {
+            if (!IsTeacher) throw new HubException("Only teachers can perform this action.");
         }
 
         // Student Client sends a live screen frame
@@ -35,6 +43,7 @@ namespace Server.Hubs
         // Student Client registers upon login
         public async Task RegisterStudent(string studentId, string pcName)
         {
+            _connectionRoles[Context.ConnectionId] = "Student";
             var student = _monitoringService.RegisterStudent(Context.ConnectionId, studentId, pcName);
             await Groups.AddToGroupAsync(Context.ConnectionId, HubEventNames.StudentsGroup);
             await Clients.Group(HubEventNames.TeachersGroup)
@@ -48,6 +57,7 @@ namespace Server.Hubs
         // Teacher dashboard joins monitoring group
         public async Task RegisterTeacher()
         {
+            _connectionRoles[Context.ConnectionId] = "Teacher";
             await Groups.AddToGroupAsync(Context.ConnectionId, HubEventNames.TeachersGroup);
             await Clients.Client(Context.ConnectionId)
                 .SendAsync(HubEventNames.GlobalSessionState, _sessionManager.Snapshot());
@@ -64,18 +74,21 @@ namespace Server.Hubs
 
         public async Task LockStudent(string targetConnectionId)
         {
+            RequireTeacher();
             await Clients.Client(targetConnectionId)
                 .SendAsync(HubEventNames.LockStudent);
         }
 
         public async Task UnlockStudent(string targetConnectionId)
         {
+            RequireTeacher();
             await Clients.Client(targetConnectionId)
                 .SendAsync(HubEventNames.UnlockStudent);
         }
 
         public async Task ForceLogout(string targetConnectionId)
         {
+            RequireTeacher();
             await Clients.Client(targetConnectionId)
                 .SendAsync(HubEventNames.ForceLogout);
             _monitoringService.UnregisterStudent(targetConnectionId);
@@ -86,6 +99,7 @@ namespace Server.Hubs
         // Remotely shut down a student workstation
         public async Task ShutdownStudent(string targetConnectionId)
         {
+            RequireTeacher();
             await Clients.Client(targetConnectionId)
                 .SendAsync(HubEventNames.ShutdownStudent);
         }
@@ -93,6 +107,7 @@ namespace Server.Hubs
         // Send a warning popup to one student (or all if target is empty)
         public async Task SendWarningPopup(string targetConnectionId, NotificationMessage warning)
         {
+            RequireTeacher();
             try
             {
                 using var scope = _scopeFactory.CreateScope();
@@ -117,12 +132,14 @@ namespace Server.Hubs
         // Broadcast the current session's frame to all students (screen broadcast)
         public async Task BroadcastScreen(string frameBase64)
         {
+            RequireTeacher();
             await Clients.Group(HubEventNames.StudentsGroup)
                 .SendAsync(HubEventNames.BroadcastScreen, new BroadcastMessage(frameBase64, DateTime.Now));
         }
 
         public async Task SendNotification(NotificationMessage notification)
         {
+            RequireTeacher();
             try
             {
                 using var scope = _scopeFactory.CreateScope();
@@ -140,6 +157,7 @@ namespace Server.Hubs
 
         public async Task GlobalStartSession()
         {
+            RequireTeacher();
             var existing = _sessionManager.Snapshot();
             if (existing.Status == "Ended") _sessionManager.StartSession();
             else _sessionManager.StartSession();
@@ -148,12 +166,14 @@ namespace Server.Hubs
 
         public async Task GlobalPauseSession()
         {
+            RequireTeacher();
             _sessionManager.PauseSession();
             await Task.CompletedTask;
         }
 
         public async Task GlobalEndSession()
         {
+            RequireTeacher();
             _sessionManager.EndSession();
             await Task.CompletedTask;
         }
@@ -220,6 +240,7 @@ namespace Server.Hubs
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
+            _connectionRoles.TryRemove(Context.ConnectionId, out _);
             var student = _monitoringService.UnregisterStudent(Context.ConnectionId);
             if (student != null)
             {

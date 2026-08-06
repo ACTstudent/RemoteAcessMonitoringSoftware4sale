@@ -1,0 +1,43 @@
+@model IEnumerable<Server.Models.Computer>
+@{
+    ViewData["Title"] = "Computer Profiles";
+    Layout = "_Layout";
+}
+
+<h4 class="fw-bold mb-4"><i class="bi bi-pc-display"></i> Computer Profiles</h4>
+
+<div class="card">
+    <div class="card-header fw-bold">All Workstations</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Station</th><th>Status</th><th>Assigned To</th><th>Actions</th></tr></thead>
+            <tbody>
+                @foreach (var c in Model)
+                {
+                    var formId = "comp-update-" + c.ComputerId;
+                    <tr>
+                        <td><input class="form-control form-control-sm" form="@formId" name="LaboratoryStation" value="@c.LaboratoryStation" /></td>
+                        <td>
+                            <select name="Status" form="@formId" class="form-select form-select-sm">
+                                <option value="Available" selected="@(c.Status == "Available")">Available</option>
+                                <option value="Maintenance" selected="@(c.Status == "Maintenance")">Maintenance</option>
+                            </select>
+                        </td>
+                        <td>@c.AssignedTo ?? "—"</td>
+                        <td>
+                            <form id="@formId" method="post" action="/Teacher/UpdateComputer" style="display:inline">
+                                <input type="hidden" name="ComputerId" value="@c.ComputerId" />
+                                <input type="hidden" name="AssignedTo" value="@c.AssignedTo" />
+                                <button class="btn btn-sm btn-outline-light">Save</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="4" class="text-muted text-center">No computers configured.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

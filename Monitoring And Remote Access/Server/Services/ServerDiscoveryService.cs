@@ -33,12 +33,13 @@ public class ServerDiscoveryService : BackgroundService
 
         _logger.LogInformation($"[Discovery] Broadcasting on UDP:{BroadcastPort} — {payload.ServerUrl}");
 
+        using var udpClient = new UdpClient { EnableBroadcast = true };
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                using var client = new UdpClient { EnableBroadcast = true };
-                await client.SendAsync(data, data.Length, BroadcastEndpoint);
+                await udpClient.SendAsync(data, data.Length, BroadcastEndpoint);
             }
             catch (Exception ex)
             {

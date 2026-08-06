@@ -244,6 +244,78 @@ namespace Server.Controllers
             return "\"" + v.Replace("\"", "\"\"") + "\"";
         }
 
+        // ---------- Student Management ----------
+        public async Task<IActionResult> Students()
+        {
+            if (!CheckAccess()) return Denied();
+            var students = await _context.Students.OrderBy(s => s.FullName).ToListAsync();
+            return View(students);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateStudent(Student student)
+        {
+            if (!CheckAccess()) return Denied();
+            var hasher = new Microsoft.AspNetCore.Identity.PasswordHasher<object>();
+            student.PasswordHash = hasher.HashPassword(null, student.PasswordHash);
+            _context.Students.Add(student);
+            await _context.SaveChangesAsync();
+            await AuditAsync("CreateStudent", $"Created student {student.StudentNumber} - {student.FullName}");
+            return RedirectToAction("Students");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateStudent(Student student)
+        {
+            if (!CheckAccess()) return Denied();
+            var existing = await _context.Students.FindAsync(student.Id);
+            if (existing == null) return RedirectToAction("Students");
+            existing.FullName = student.FullName;
+            existing.Username = student.Username;
+            existing.StudentNumber = student.StudentNumber;
+            await _context.SaveChangesAsync();
+            await AuditAsync("UpdateStudent", $"Updated student {student.StudentNumber}");
+            return RedirectToAction("Students");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteStudent(int studentId)
+        {
+            if (!CheckAccess()) return Denied();
+            var existing = await _context.Students.FindAsync(studentId);
+            if (existing != null)
+            {
+                _context.Students.Remove(existing);
+                await _context.SaveChangesAsync();
+                await AuditAsync("DeleteStudent", $"Deleted student {existing.StudentNumber}");
+            }
+            return RedirectToAction("Students");
+        }
+
+        // ---------- Computer Management ----------
+        public async Task<IActionResult> Computers()
+        {
+            if (!CheckAccess()) return Denied();
+            var computers = await _context.Computers.OrderBy(c => c.LaboratoryStation).ToListAsync();
+            return View(computers);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateComputer(Computer computer)
+        {
+            if (!CheckAccess()) return Denied();
+            var existing = await _context.Computers.FindAsync(computer.ComputerId);
+            if (existing != null)
+            {
+                existing.LaboratoryStation = computer.LaboratoryStation;
+                existing.Status = computer.Status;
+                existing.AssignedTo = computer.AssignedTo;
+                await _context.SaveChangesAsync();
+                await AuditAsync("UpdateComputer", $"Updated computer {computer.LaboratoryStation}");
+            }
+            return RedirectToAction("Computers");
+        }
+
         // ---------- Notifications ----------
         [HttpPost]
         public async Task<IActionResult> SendNotification(string type, string title, string message)

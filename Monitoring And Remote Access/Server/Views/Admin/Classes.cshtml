@@ -1,0 +1,79 @@
+@model IEnumerable<Server.Models.Class>
+@{
+    ViewData["Title"] = "Class Management";
+    Layout = "_Layout";
+}
+
+<h4 class="fw-bold mb-4"><i class="bi bi-diagram-3"></i> Class Management</h4>
+
+<div class="card mb-4">
+    <div class="card-header fw-bold">Create New Class</div>
+    <div class="card-body">
+        <form method="post" action="/Admin/CreateClass" class="row g-2">
+            <div class="col-md-3"><input name="ClassName" class="form-control" placeholder="Class Name" required /></div>
+            <div class="col-md-2"><input name="Section" class="form-control" placeholder="Section" /></div>
+            <div class="col-md-2"><input name="Subject" class="form-control" placeholder="Subject" /></div>
+            <div class="col-md-2"><input name="GradeLevel" class="form-control" placeholder="Grade Level" /></div>
+            <div class="col-md-2"><input name="Schedule" class="form-control" placeholder="Schedule (e.g. M/W/F 8:00-9:30)" /></div>
+            <div class="col-md-1"><button class="btn btn-primary w-100">Create</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header fw-bold">All Classes</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Name</th><th>Section</th><th>Subject</th><th>Grade</th><th>Schedule</th><th>Students</th><th>Actions</th></tr></thead>
+            <tbody>
+                @foreach (var c in Model.Where(c => !c.IsArchived))
+                {
+                    <tr>
+                        <td>@c.ClassName</td>
+                        <td>@c.Section</td>
+                        <td>@c.Subject</td>
+                        <td>@c.GradeLevel</td>
+                        <td>@c.Schedule</td>
+                        <td>@c.ClassStudents.Count</td>
+                        <td>
+                            <a href="/Admin/ClassDetails/@c.ClassId" class="btn btn-sm btn-outline-light me-1">Students</a>
+                            <form method="post" action="/Admin/ArchiveClass" style="display:inline">
+                                <input type="hidden" name="id" value="@c.ClassId" />
+                                <button class="btn btn-sm btn-outline-danger">Archive</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any(c => !c.IsArchived))
+                {
+                    <tr><td colspan="7" class="text-muted text-center">No active classes. Create one above.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (Model.Any(c => c.IsArchived))
+{
+    <div class="card mt-4">
+        <div class="card-header fw-bold text-muted">Archived Classes</div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 text-muted">
+                <thead><tr><th>Name</th><th>Section</th><th>Subject</th><th>Grade</th><th>Schedule</th><th>Students</th></tr></thead>
+                <tbody>
+                    @foreach (var cls in Model.Where(c => c.IsArchived))
+                    {
+                        <tr>
+                            <td>@cls.ClassName</td>
+                            <td>@cls.Section</td>
+                            <td>@cls.Subject</td>
+                            <td>@cls.GradeLevel</td>
+                            <td>@cls.Schedule</td>
+                            <td>@cls.ClassStudents.Count</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

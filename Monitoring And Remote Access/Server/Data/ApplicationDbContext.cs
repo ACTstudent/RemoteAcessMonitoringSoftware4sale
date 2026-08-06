@@ -26,6 +26,8 @@ namespace Server.Data
         public DbSet<SystemLog> SystemLogs { get; set; } = null!;
         public DbSet<Notification> Notifications { get; set; } = null!;
         public DbSet<UsageLog> UsageLogs { get; set; } = null!;
+        public DbSet<Class> Classes { get; set; } = null!;
+        public DbSet<ClassStudent> ClassStudents { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -38,7 +40,15 @@ namespace Server.Data
                 .WithMany(p => p.Roles)
                 .UsingEntity(j => j.ToTable("RolePermissions"));
 
-            // Seed initial Admin user
+            modelBuilder.Entity<ClassStudent>()
+                .HasOne(cs => cs.Class)
+                .WithMany(c => c.ClassStudents)
+                .HasForeignKey(cs => cs.ClassId);
+
+            modelBuilder.Entity<ClassStudent>()
+                .HasOne(cs => cs.Student)
+                .WithMany()
+                .HasForeignKey(cs => cs.StudentId);
             modelBuilder.Entity<Admin>().HasData(new Admin
             {
                 Id = 1,

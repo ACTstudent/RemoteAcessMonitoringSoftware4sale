@@ -4,7 +4,10 @@ using Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute());
+});
 
 // Application services
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
