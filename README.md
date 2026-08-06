@@ -45,6 +45,7 @@ When it finishes, two `.exe` installers are created:
 |---|---|
 | `server-dist\CAMS-Server-Setup.exe` | Run on the **teacher/lab PC** (the server) |
 | `client-dist\CAMS-Client-Setup.exe` | Run on **each student PC** |
+| `client-publish\` | Portable client folder — copy to a network share for instant access |
 
 ---
 
@@ -74,29 +75,26 @@ The wizard automatically:
    > the database file (`CAMS.db`) next to `Server.exe` the first time the server starts.
    > No SQL Server, no manual setup — it just works.
 
-5. (Optional) Find the server's LAN IP address so students can connect:
-   ```powershell
-   ipconfig
-   ```
-   Look for `IPv4 Address` (e.g., `192.168.1.100`). The server hub URL will be:
-   ```
-   http://192.168.1.100:5000/remoteMonitoringHub
-   ```
+   > **Auto-discovery:** The server broadcasts its address on the LAN automatically.
+   > Student clients find it without any IP configuration.
 
 ---
 
 ### Step 4: Install on each student PC
 
-1. Copy `client-dist\CAMS-Client-Setup.exe` to each student machine (USB, shared folder, or LAN).
-2. **Double-click** the installer on each PC.
-3. **Click Next** until you reach the **"Server Address"** page.
-4. Enter the server's LAN IP:
-   ```
-   http://192.168.1.100:5000/remoteMonitoringHub
-   ```
-5. Click **Next** → **Install** → **Finish**.
+**Option A — Installer (recommended for permanent lab PCs):**
 
-The client launches automatically and connects to the server.
+1. Copy `client-dist\CAMS-Client-Setup.exe` to each student PC.
+2. **Double-click** the installer.
+3. Click **Next** until the **"Server Address"** page.
+4. The address is usually auto-filled by discovery. If not, enter the server IP — ask your teacher or use `http://192.168.1.100:5000/remoteMonitoringHub`.
+5. Click **Install** → **Finish**.
+
+**Option B — Portable (no install needed):**
+
+1. Copy the entire `client-publish\` folder to a network share (e.g., `\\server\CAMS\`).
+2. Students navigate to the share and **double-click `client-portable.bat`**.
+3. The client discovers the server automatically — no configuration, no installer.
 
 > **No .NET install needed on student PCs** — `Client.exe` is a self-contained single file.
 
@@ -115,9 +113,11 @@ The client launches automatically and connects to the server.
 | Problem | Fix |
 |---|---|
 | "Windows protected your PC" when running installer | Click "More info" → "Run anyway" |
-| Client can't connect | Verify the server IP is correct; check firewall on the server PC |
-| Server won't start | Make sure .NET 8 Runtime is installed on the server PC (included if you ran the SDK, otherwise get it from https://dotnet.microsoft.com/download/dotnet/8.0) |
-| Port 5000 blocked | Run on server: `netsh advfirewall firewall add rule name="CAMS" dir=in action=allow protocol=TCP localport=5000` |
+| Client can't connect (server not found) | Make sure the server is running. Client auto-discovers it on the LAN. If still failing, click "Enter server IP manually" on the error dialog. |
+| Client can't connect (port blocked) | Run on server: `netsh advfirewall firewall add rule name="CAMS" dir=in action=allow protocol=TCP localport=5000` |
+| Auto-discovery not working | Client falls back to `client-settings.json`. Edit it manually or use the installer's IP page. |
+| Deploy to 30+ PCs at once (silent install) | `client-dist\CAMS-Client-Setup.exe /VERYSILENT /ServerIP="http://192.168.1.100:5000/remoteMonitoringHub"` |
+| Server won't start | Make sure .NET 8 Runtime is installed on the server PC |
 
 ---
 
@@ -136,6 +136,7 @@ CAMS/
 ├── server-installer.iss       # Inno Setup wizard for server
 ├── client-installer.iss       # Inno Setup wizard for client
 ├── start-server.bat           # Manual launcher (open publish folder, double-click)
+├── client-portable.bat        # Portable client launcher (no install needed)
 ├── DIAGRAMS/                  # System diagrams
 └── Monitoring And Remote Access/
     ├── RemoteMonitoring.sln

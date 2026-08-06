@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using Client.Services;
@@ -8,22 +9,23 @@ namespace Client
 {
     public partial class MainForm : Form
     {
-        private static string ServerUrl
+        private static async Task<string> GetServerUrlAsync()
         {
-            get
+            var discovered = await ServerDiscoveryClient.DiscoverAsync(4000);
+            if (discovered != null)
+                return discovered;
+
+            try
             {
-                try
+                var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "client-settings.json");
+                if (File.Exists(path))
                 {
-                    var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "client-settings.json");
-                    if (File.Exists(path))
-                    {
-                        var json = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
-                        return json.RootElement.TryGetProperty("ServerUrl", out var u) ? u.GetString() ?? "http://localhost:5000/remoteMonitoringHub" : "http://localhost:5000/remoteMonitoringHub";
-                    }
+                    var json = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+                    return json.RootElement.TryGetProperty("ServerUrl", out var u) ? u.GetString() ?? "http://localhost:5000/remoteMonitoringHub" : "http://localhost:5000/remoteMonitoringHub";
                 }
-                catch { }
-                return "http://localhost:5000/remoteMonitoringHub";
             }
+            catch { }
+            return "http://localhost:5000/remoteMonitoringHub";
         }
 
         private readonly IScreenCaptureService _screenCaptureService = new ScreenCaptureService();
@@ -192,7 +194,11 @@ namespace Client
             }
 
             btnLogin.Enabled = false;
-            lblStatus.Text = "Status: Connecting...";
+            lblStatus.Text = "Status: Searching for server...";
+
+            var serverUrl = await GetServerUrlAsync();
+
+            lblStatus.Text = $"Status: Connecting to {serverUrl}...";
 
             try
             {
@@ -209,7 +215,7 @@ namespace Client
                 hubClient.ShutdownRequested += () => this.Invoke(OnShutdownRequested);
                 hubClient.RestrictionsReceived += rules => this.Invoke(() => OnRestrictionsReceived(rules));
 
-                await hubClient.StartAsync(ServerUrl);
+                await hubClient.StartAsync(serverUrl);
                 await hubClient.RegisterStudentAsync(studentId, Environment.MachineName);
                 await hubClient.FetchRestrictionsAsync();
 
@@ -227,13 +233,90 @@ namespace Client
                 _ = Task.Run(() => StatusReportLoop(_streamCts.Token));
                 _ = Task.Run(() => RestrictionEnforcementLoop(_streamCts.Token));
             }
+            catch (SocketException)
+            {
+                lblStatus.Text = "Status: Server not found";
+                lblStatus.ForeColor = Color.Red;
+                btnLogin.Enabled = true;
+                var choice = MessageBox.Show(
+                    "Cannot reach the server.\n\nMake sure the teacher has started CAMS Server and you are on the same network.\n\nWould you like to enter the server IP manually?",
+                    "Connection Failed", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                if (choice == DialogResult.Yes)
+                    ShowServerUrlDialog();
+            }
+            catch (HttpRequestException)
+            {
+                lblStatus.Text = "Status: Server not reachable";
+                lblStatus.ForeColor = Color.Red;
+                btnLogin.Enabled = true;
+                var choice = MessageBox.Show(
+                    "The server was found but is not responding.\n\nIt may still be starting. Try again in a few seconds, or enter the server IP manually.",
+                    "Connection Failed", MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning);
+                if (choice == DialogResult.Retry)
+                    BtnLogin_Click(null, EventArgs.Empty);
+            }
             catch (Exception ex)
             {
                 lblStatus.Text = "Status: Connection failed";
                 lblStatus.ForeColor = Color.Red;
                 btnLogin.Enabled = true;
-                MessageBox.Show($"Connection error:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                var choice = MessageBox.Show(
+                    $"Connection error:\n\n{ex.Message}\n\nWould you like to enter the server IP manually?",
+                    "Error", MessageBoxButtons.YesNo, MessageBoxIcon.Error);
+                if (choice == DialogResult.Yes)
+                    ShowServerUrlDialog();
             }
+        }
+
+        private void ShowServerUrlDialog()
+        {
+            var prompt = new Form
+            {
+                Text = "Enter Server Address",
+                Width = 450,
+                Height = 180,
+                StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                ShowInTaskbar = false
+            };
+            var lbl = new Label
+            {
+                Text = "Server URL (e.g. http://192.168.1.100:5000/remoteMonitoringHub):",
+                Location = new Point(14, 18),
+                AutoSize = true
+            };
+            var txt = new TextBox
+            {
+                Text = "http://localhost:5000/remoteMonitoringHub",
+                Location = new Point(14, 45),
+                Width = 400
+            };
+            var btnOk = new Button
+            {
+                Text = "Save & Retry",
+                Location = new Point(250, 80),
+                Size = new Size(100, 30),
+                BackColor = Color.FromArgb(13, 110, 253),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat
+            };
+            btnOk.Click += (_, _) =>
+            {
+                try
+                {
+                    var settingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "client-settings.json");
+                    var json = "{\n  \"ServerUrl\": \"" + txt.Text.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"\n}";
+                    File.WriteAllText(settingsPath, json);
+                    ServerDiscoveryClient.ResetCache();
+                }
+                catch { }
+                prompt.Close();
+                BtnLogin_Click(null, EventArgs.Empty);
+            };
+            prompt.Controls.AddRange(new Control[] { lbl, txt, btnOk });
+            prompt.ShowDialog(this);
         }
 
         private void OnSessionStateChanged(GlobalSessionMessage state)

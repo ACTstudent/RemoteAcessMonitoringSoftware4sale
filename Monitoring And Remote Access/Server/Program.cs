@@ -10,6 +10,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddSingleton<IMonitoringService, MonitoringService>();
 builder.Services.AddSingleton<SessionManagerService>();
+builder.Services.AddHostedService<ServerDiscoveryService>();
 
 // Session for login state
 builder.Services.AddDistributedMemoryCache();

@@ -78,6 +78,10 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host "  Client published to client-publish\" -ForegroundColor Green
 
+# Copy the portable launcher into the client publish folder
+Copy-Item -Path (Join-Path $root "client-portable.bat") -Destination $clientPub -Force
+Write-Host "  Portable launcher copied to client-publish\" -ForegroundColor Green
+
 # ---- 4. Build installers (Inno Setup) ----
 if (-not $iscc) {
     Write-Host ""

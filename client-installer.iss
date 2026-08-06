@@ -1,6 +1,8 @@
 ; CAMS Student Client - Inno Setup installer definition
 ; Builds "CAMS-Client-Setup.exe" - a download-and-run installation wizard.
 ; Requires Inno Setup 6: https://jrsoftware.org/isdl.php
+;
+; Silent deploy:  CAMS-Client-Setup.exe /VERYSILENT /ServerIP="http://192.168.1.100:5000/remoteMonitoringHub"
 
 #define MyAppName "CAMS Student Client"
 #define MyAppVersion "2.0.0"
@@ -18,6 +20,8 @@ AppSupportURL={#MyAppURL}
 DefaultDirName={localappdata}\CAMS Student Client
 DefaultGroupName=CAMS
 DisableProgramGroupPage=yes
+DisableWelcomePage=no
+DisableDirPage=no
 OutputBaseFilename=CAMS-Client-Setup
 Compression=lzma2
 SolidCompression=yes
@@ -32,7 +36,6 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-; The published client output is copied here by publish-client.ps1.
 Source: "client-publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
@@ -45,14 +48,24 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 [Code]
 var
   ServerUrlPage: TInputQueryWizardPage;
+  ServerUrlOverride: string;
+
+function InitializeSetup: Boolean;
+begin
+  ServerUrlOverride := ExpandConstant('{param:ServerIP}');
+  Result := True;
+end;
 
 procedure InitializeWizard;
 begin
-  ServerUrlPage := CreateInputQueryPage(wpSelectDir,
-    'Server Address', 'Enter the CAMS server URL',
-    'Your teacher will give you this address, e.g. http://192.168.1.100:5000/remoteMonitoringHub');
-  ServerUrlPage.Add('Server URL:', False);
-  ServerUrlPage.Values[0] := 'http://localhost:5000/remoteMonitoringHub';
+  if ServerUrlOverride = '' then
+  begin
+    ServerUrlPage := CreateInputQueryPage(wpSelectDir,
+      'Server Address', 'Enter the CAMS server URL',
+      'Your teacher will give you this address, e.g. http://192.168.1.100:5000/remoteMonitoringHub');
+    ServerUrlPage.Add('Server URL:', False);
+    ServerUrlPage.Values[0] := 'http://localhost:5000/remoteMonitoringHub';
+  end;
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
@@ -62,7 +75,11 @@ var
 begin
   if CurStep = ssPostInstall then
   begin
-    ServerUrl := ServerUrlPage.Values[0];
+    if ServerUrlOverride <> '' then
+      ServerUrl := ServerUrlOverride
+    else
+      ServerUrl := ServerUrlPage.Values[0];
+
     SettingsPath := ExpandConstant('{app}\client-settings.json');
     if not FileExists(SettingsPath) then
     begin
