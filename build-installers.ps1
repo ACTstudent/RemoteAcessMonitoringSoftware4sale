@@ -1,10 +1,10 @@
-# CAMS — Build both installers in one shot
+# CAMS -- Build both installers in one shot
 # Double-click build-installers.bat or run:  .\build-installers.ps1
 #
 # Requires: .NET 8 SDK + Inno Setup 6 (https://jrsoftware.org/isdl.php)
 # Output:
-#   server-dist\CAMS-Server-Setup.exe   — run on the teacher/lab PC
-#   client-dist\CAMS-Client-Setup.exe   — run on each student PC
+#   server-dist\CAMS-Server-Setup.exe   -- run on the teacher/lab PC
+#   client-dist\CAMS-Client-Setup.exe   -- run on each student PC
 
 $ErrorActionPreference = "Stop"
 $root = $PSScriptRoot
@@ -61,7 +61,7 @@ if ($LASTEXITCODE -ne 0) {
     Pause
     exit $LASTEXITCODE
 }
-Write-Host "  Server published to server-publish\" -ForegroundColor Green
+Write-Host "  Server published to server-publish" -ForegroundColor Green
 
 # ---- 3. Publish client (self-contained) ----
 Write-Host ""
@@ -76,19 +76,19 @@ if ($LASTEXITCODE -ne 0) {
     pause
     exit $LASTEXITCODE
 }
-Write-Host "  Client published to client-publish\" -ForegroundColor Green
+Write-Host "  Client published to client-publish" -ForegroundColor Green
 
 # Copy the portable launcher into the client publish folder
 Copy-Item -Path (Join-Path $root "client-portable.bat") -Destination $clientPub -Force
-Write-Host "  Portable launcher copied to client-publish\" -ForegroundColor Green
+Write-Host "  Portable launcher copied to client-publish" -ForegroundColor Green
 
 # ---- 4. Build installers (Inno Setup) ----
 if (-not $iscc) {
     Write-Host ""
     Write-Host "========================================" -ForegroundColor Yellow
-    Write-Host " DONE (no installers — Inno Setup missing)" -ForegroundColor Yellow
-    Write-Host " server-publish\  — copy this folder to the server PC" -ForegroundColor Cyan
-    Write-Host " client-publish\  — copy this folder to each student PC" -ForegroundColor Cyan
+    Write-Host " DONE (no installers -- Inno Setup missing)" -ForegroundColor Yellow
+    Write-Host " server-publish  -- copy this folder to the server PC" -ForegroundColor Cyan
+    Write-Host " client-publish  -- copy this folder to each student PC" -ForegroundColor Cyan
     Write-Host "========================================" -ForegroundColor Yellow
     pause
     exit 0
@@ -130,10 +130,10 @@ Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "  Server installer:" -ForegroundColor Cyan
 Write-Host "    $(Get-ChildItem $serverDist -Filter *.exe | Select-Object -ExpandProperty FullName)" -ForegroundColor White
-Write-Host "    → Copy to the lab teacher PC and run it." -ForegroundColor DarkGray
+Write-Host "    --> Copy to the lab teacher PC and run it." -ForegroundColor DarkGray
 Write-Host ""
 Write-Host "  Client installer:" -ForegroundColor Cyan
 Write-Host "    $(Get-ChildItem $clientDist -Filter *.exe | Select-Object -ExpandProperty FullName)" -ForegroundColor White
-Write-Host "    → Distribute to each student PC." -ForegroundColor DarkGray
+Write-Host "    --> Distribute to each student PC." -ForegroundColor DarkGray
 Write-Host ""
 pause
