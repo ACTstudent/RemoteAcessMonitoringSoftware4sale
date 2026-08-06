@@ -96,4 +96,26 @@ app.MapControllerRoute(
 
 app.MapHub<Server.Hubs.RemoteMonitoringHub>("/remoteMonitoringHub");
 
+var url = "http://localhost:5000/";
+Console.WriteLine($"[CAMS] Server starting. Opening {url}...");
+
+_ = Task.Run(async () =>
+{
+    await Task.Delay(1500);
+    try
+    {
+        var psi = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = url,
+            UseShellExecute = true
+        };
+        System.Diagnostics.Process.Start(psi);
+        Console.WriteLine("[CAMS] Browser opened.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[CAMS] Could not open browser: {ex.Message}");
+    }
+});
+
 app.Run();
