@@ -6,7 +6,7 @@
 ;   iscc /oserver-dist server-installer.iss
 
 #define MyAppName "CAMS Server"
-#define MyAppVersion "2.0.0"
+#define MyAppVersion "2.5.0"
 #define MyAppExeName "Server.exe"
 #define MyAppPublisher "CAMS"
 
@@ -45,7 +45,7 @@ Name: "{group}\Server Dashboard (Teacher)"; Filename: "http://localhost:5000/Tea
 Name: "{autodesktop}\{#MyAppName}";       Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: desktopicon
 
 [Registry]
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "CAMS Server"; ValueData: """{app}\{#MyAppExeName}"""; Flags: uninsdeletevalue; Tasks: runstarts
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "CAMS Server"; ValueData: """{app}\{#MyAppExeName}"""; Flags: uninsdeletevalue; Tasks: autostart
 
 [Run]
 Filename: "netsh.exe"; Parameters: "advfirewall firewall add rule name=""CAMS Server"" dir=in action=allow protocol=TCP localport=5000"; Flags: runhidden; StatusMsg: "Opening firewall port 5000..."

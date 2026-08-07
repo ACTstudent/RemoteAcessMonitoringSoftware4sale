@@ -1,0 +1,57 @@
+name: Full Build & Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test-and-build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+
+      - name: Run xUnit tests
+        run: dotnet test "Monitoring And Remote Access\Server.Tests\Server.Tests.csproj" -c Release --verbosity minimal
+
+      - name: Build solution
+        run: dotnet build "Monitoring And Remote Access\RemoteMonitoring.sln" -c Release
+
+      - name: Publish server
+        run: dotnet publish "Monitoring And Remote Access\Server\Server.csproj" -c Release -o server-publish
+
+      - name: Publish client (self-contained, single-file)
+        run: dotnet publish "Monitoring And Remote Access\Client\Client.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o client-publish
+
+      - name: Copy portable launcher
+        run: Copy-Item client-portable.bat -Destination client-publish\ -Force
+
+      - name: Build server installer
+        run: & '${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe' "/O:server-dist" server-installer.iss
+
+      - name: Build client installer
+        run: & '${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe' "/O:client-dist" client-installer.iss
+
+      - name: Package portable zips
+        run: |
+          Compress-Archive -Path server-publish\* -DestinationPath server-dist\CAMS-Server-Portable.zip
+          Compress-Archive -Path client-publish\* -DestinationPath client-dist\CAMS-Client-Portable.zip
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: CAMS-Installers-v2.5
+          path: |
+            server-dist/CAMS-Server-Setup.exe
+            server-dist/CAMS-Server-Portable.zip
+            client-dist/CAMS-Client-Setup.exe
+            client-dist/CAMS-Client-Portable.zip

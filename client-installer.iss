@@ -5,7 +5,7 @@
 ; Silent deploy:  CAMS-Client-Setup.exe /VERYSILENT /ServerIP="http://192.168.1.100:5000/remoteMonitoringHub"
 
 #define MyAppName "CAMS Student Client"
-#define MyAppVersion "2.0.0"
+#define MyAppVersion "2.5.0"
 #define MyAppExeName "Client.exe"
 #define MyAppPublisher "CAMS"
 #define MyAppURL "https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale"
@@ -83,8 +83,8 @@ begin
     SettingsPath := ExpandConstant('{app}\client-settings.json');
     if not FileExists(SettingsPath) then
     begin
-      ServerUrl := StringChange(ServerUrl, '\', '\\');
-      ServerUrl := StringChange(ServerUrl, '"', '\"');
+      StringChangeEx(ServerUrl, '\', '\\', True);
+      StringChangeEx(ServerUrl, '"', '\"', True);
       SaveStringToFile(SettingsPath,
         '{' + #13#10 +
         '  "ServerUrl": "' + ServerUrl + '"' + #13#10 +
