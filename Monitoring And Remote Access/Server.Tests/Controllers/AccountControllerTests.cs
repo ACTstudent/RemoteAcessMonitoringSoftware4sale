@@ -1,0 +1,106 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Moq;
+using Server.Controllers;
+using Server.Services;
+
+namespace Server.Tests.Controllers;
+
+public class AccountControllerTests
+{
+    private readonly Mock<IAuthenticationService> _authMock;
+    private readonly AccountController _controller;
+
+    public AccountControllerTests()
+    {
+        _authMock = new Mock<IAuthenticationService>();
+        _controller = new AccountController(_authMock.Object);
+
+        var httpContext = new DefaultHttpContext();
+        httpContext.Connection.RemoteIpAddress = System.Net.IPAddress.Parse("127.0.0.1");
+        httpContext.Session = new FakeSession();
+
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = httpContext
+        };
+    }
+
+    [Fact]
+    public void Login_Get_ReturnsView()
+    {
+        var result = _controller.Login();
+        Assert.IsType<ViewResult>(result);
+    }
+
+    [Fact]
+    public async Task LoginPost_InvalidCredentials_ReturnsViewWithError()
+    {
+        _authMock.Setup(a => a.LoginAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new LoginResult(AccountRole.Invalid, null, null));
+
+        var result = await _controller.Login("baduser", "badpass");
+        Assert.IsType<ViewResult>(result);
+    }
+
+    [Fact]
+    public async Task LoginPost_AdminRole_RedirectsToAdminIndex()
+    {
+        _authMock.Setup(a => a.LoginAsync("admin", "pass", It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new LoginResult(AccountRole.Admin, 1, "Boss"));
+
+        var result = await _controller.Login("admin", "pass");
+
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Admin", redirect.ControllerName);
+        Assert.Equal("Index", redirect.ActionName);
+    }
+
+    [Fact]
+    public async Task LoginPost_TeacherRole_RedirectsToTeacherDashboard()
+    {
+        _authMock.Setup(a => a.LoginAsync("teacher", "pass", It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new LoginResult(AccountRole.Teacher, 1, "Ms. Jane"));
+
+        var result = await _controller.Login("teacher", "pass");
+
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Teacher", redirect.ControllerName);
+        Assert.Equal("Dashboard", redirect.ActionName);
+    }
+
+    [Fact]
+    public async Task LoginPost_StudentRole_RedirectsToMonitoringIndex()
+    {
+        _authMock.Setup(a => a.LoginAsync("student", "pass", It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new LoginResult(AccountRole.Student, 1, "John"));
+
+        var result = await _controller.Login("student", "pass");
+
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Monitoring", redirect.ControllerName);
+        Assert.Equal("Index", redirect.ActionName);
+    }
+
+    [Fact]
+    public async Task Logout_ClearsSessionAndRedirects()
+    {
+        var result = await _controller.Logout();
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Login", redirect.ActionName);
+    }
+}
+
+internal sealed class FakeSession : ISession
+{
+    private readonly Dictionary<string, byte[]> _store = new();
+    public bool IsAvailable => true;
+    public string Id => Guid.NewGuid().ToString();
+    public IEnumerable<string> Keys => _store.Keys;
+    public void Clear() => _store.Clear();
+    public Task CommitAsync(CancellationToken ct) => Task.CompletedTask;
+    public Task LoadAsync(CancellationToken ct) => Task.CompletedTask;
+    public void Remove(string key) => _store.Remove(key);
+    public void Set(string key, byte[] value) => _store[key] = value;
+    public bool TryGetValue(string key, out byte[] value) => _store.TryGetValue(key, out value!);
+}
