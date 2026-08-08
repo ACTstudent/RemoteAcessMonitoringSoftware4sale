@@ -1,5 +1,5 @@
 # CAMS - Validate the built installers
-# Run after build-everything.ps1; checks integrity of 4 output files.
+# Run after build-everything.ps1; checks integrity of 2 output files.
 #
 # Usage:  powershell -File test-installer.ps1
 
@@ -19,12 +19,10 @@ Write-Host ""
 $serverDist = Join-Path $Root "server-dist"
 $clientDist = Join-Path $Root "client-dist"
 
-# ---- Check 1: All files exist ----
+# ---- Check 1: Both .exe files exist ----
 $checks = @(
     @{Label="Server installer"; Path=Join-Path $serverDist "CAMS-Server-Setup.exe"},
-    @{Label="Client installer"; Path=Join-Path $clientDist "CAMS-Client-Setup.exe"},
-    @{Label="Server portable zip"; Path=Join-Path $serverDist "CAMS-Server-Portable.zip"},
-    @{Label="Client portable zip"; Path=Join-Path $clientDist "CAMS-Client-Portable.zip"}
+    @{Label="Client installer"; Path=Join-Path $clientDist "CAMS-Client-Setup.exe"}
 )
 
 foreach ($c in $checks) {
@@ -35,40 +33,6 @@ foreach ($c in $checks) {
         Write-Host "  [FAIL] $($c.Label)  -- file not found: $($c.Path)" -ForegroundColor Red
         $failed++
     }
-}
-
-# ---- Check 2: Zip integrity ----
-Write-Host ""
-Write-Host "  Checking zip integrity..." -ForegroundColor Cyan
-
-try {
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    $temp = Join-Path $env:TEMP "cams-test-$([Guid]::NewGuid().ToString('N'))"
-    New-Item -ItemType Directory -Force -Path $temp | Out-Null
-
-    $svrZip = Join-Path $serverDist "CAMS-Server-Portable.zip"
-    [System.IO.Compression.ZipFile]::ExtractToDirectory($svrZip, (Join-Path $temp "server"))
-    if (Test-Path (Join-Path $temp "server\Server.exe")) {
-        Write-Host "  [PASS] Server.zip contains Server.exe" -ForegroundColor Green
-    } else {
-        Write-Host "  [FAIL] Server.zip missing Server.exe" -ForegroundColor Red
-        $failed++
-    }
-
-    $cliZip = Join-Path $clientDist "CAMS-Client-Portable.zip"
-    [System.IO.Compression.ZipFile]::ExtractToDirectory($cliZip, (Join-Path $temp "client"))
-    if (Test-Path (Join-Path $temp "client\Client.exe")) {
-        Write-Host "  [PASS] Client.zip contains Client.exe" -ForegroundColor Green
-    } else {
-        Write-Host "  [FAIL] Client.zip missing Client.exe" -ForegroundColor Red
-        $failed++
-    }
-
-    Remove-Item $temp -Recurse -Force
-
-} catch {
-    Write-Host "  [FAIL] Zip extract error: $_" -ForegroundColor Red
-    $failed++
 }
 
 # ---- Done ----

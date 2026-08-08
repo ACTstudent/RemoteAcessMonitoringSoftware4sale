@@ -6,16 +6,16 @@ A LAN-based classroom management and monitoring application built with ASP.NET C
 
 ---
 
-## Download (pre-built — just extract and run)
+## Download (pre-built installers — just double-click)
 
-No .NET SDK, no Inno Setup, no compiling. Download the zip, extract, use it.
+No .NET SDK, no compiling. Download the `.exe`, double-click, done.
 
-| Bundle | Download | What to do |
+| Installer | Download | For |
 |---|---|---|
-| **CAMS Server** | [CAMS-Server-Portable.zip](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Portable.zip) | Extract anywhere on the teacher/lab PC. Double-click `Server.exe`. |
-| **CAMS Student Client** | [CAMS-Client-Portable.zip](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Portable.zip) | Extract anywhere on each student PC. Double-click `client-portable.bat`. |
+| **CAMS Server Setup** | [CAMS-Server-Setup.exe](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Setup.exe) | Teacher / lab PC |
+| **CAMS Client Setup** | [CAMS-Client-Setup.exe](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe) | Each student PC |
 
-> **Client is self-contained** — no .NET or SQL Server needed on student PCs at all.
+> **Client is self-contained** — no .NET or SQL Server needed on student PCs.
 > **Server auto-creates** the database (`CAMS.db`) via SQLite on first run — zero database setup.
 > **Auto-discovery** — the server broadcasts via UDP on the LAN. Student clients find it automatically.
 
@@ -25,9 +25,16 @@ No .NET SDK, no Inno Setup, no compiling. Download the zip, extract, use it.
 
 ### 1. Start the server
 
-After extracting `CAMS-Server-Portable.zip`, double-click `Server.exe` on the teacher PC.
+Download `CAMS-Server-Setup.exe` on the teacher/lab PC and **double-click it**.
 
-Open a browser and go to `http://localhost:5000/Admin`. Log in:
+The installer:
+- Installs to `%LOCALAPPDATA%\CAMS Server`
+- Creates Start Menu shortcuts
+- Opens firewall port 5000 automatically
+- Launches the server automatically when finished
+- Opens the browser to the dashboard
+
+Log in:
 
 | Role | Username | Password |
 |---|---|---|
@@ -39,15 +46,20 @@ Open a browser and go to `http://localhost:5000/Admin`. Log in:
 
 ### 2. Start the student clients
 
-After extracting `CAMS-Client-Portable.zip` on each student PC, double-click `client-portable.bat`.
+On each student PC, download `CAMS-Client-Setup.exe` and **double-click it**.
 
-The client auto-discovers the server on the LAN (UDP broadcast) — no IP configuration needed. Students log in with their student credentials.
+The installer:
+- Installs to `%LOCALAPPDATA%\CAMS Student Client`
+- Prompts for the server address (e.g., `http://192.168.1.100:5000/remoteMonitoringHub`)
+- Launches the client automatically when finished
+
+The client auto-discovers the server on the LAN (UDP broadcast) — if auto-discovery fails, just type the server IP during install. Students log in with their student credentials.
 
 ### 3. Begin class
 
-- **Teacher:** open `http://localhost:5000/Teacher/Monitoring` → log in → click **Start Session**.
-- **Students:** already connected via the client — log in and their screens appear on the monitoring grid.
-- Teacher can monitor screens, lock workstations, broadcast messages, enforce restrictions, and view reports.
+- **Teacher:** open `http://localhost:5000/Teacher/Monitoring` → log in → click **Start Session**
+- **Students:** already connected via the client — log in and their screens appear on the monitoring grid
+- Teacher can monitor screens, lock workstations, broadcast messages, enforce restrictions, and view reports
 
 ---
 
@@ -64,32 +76,32 @@ If you only want to **use** CAMS, skip this — use the download links above. Th
 
 ### Build
 
-Open the `CAMS` folder and **double-click**:
+Open the `CAMS` folder in PowerShell and run:
 
-```
-build-installers.bat
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File build-everything.ps1
 ```
 
-This runs four steps automatically:
-1. Builds the solution (`RemoteMonitoring.sln`)
-2. Publishes the server to `server-publish\`
-3. Publishes the client (self-contained, single `.exe`) to `client-publish\`
-4. Compiles both Inno Setup wizards to `server-dist\` and `client-dist\`
+This runs six steps automatically:
+1. Runs 47 xUnit tests
+2. Builds the solution (`RemoteMonitoring.sln`)
+3. Publishes the server to `server-publish\`
+4. Publishes the client (self-contained, single `.exe`) to `client-publish\`
+5. Compiles both Inno Setup wizards to `server-dist\` and `client-dist\`
 
 Outputs:
 
 | Output | Purpose |
 |---|---|
-| `server-dist\CAMS-Server-Setup.exe` | Inno Setup wizerd — run on the teacher/lab PC |
-| `client-dist\CAMS-Client-Setup.exe` | Inno Setup wizerd — run on each student PC |
-| `client-publish\` | Portable client folder — copy to a network share for instant access |
+| `server-dist\CAMS-Server-Setup.exe` | Inno Setup wizard — run on the teacher/lab PC |
+| `client-dist\CAMS-Client-Setup.exe` | Inno Setup wizard — run on each student PC |
 
-If Inno Setup is not installed, installer executables are skipped but the portable folders are still created.
+If Inno Setup is not installed, the script exits with an error and tells you to install it first.
 
 ### After building
 
-- **Distribute the server installer or portable folder** to the teacher PC. Run `Server.exe` or the installer.
-- **Distribute to each student PC**: copy `client-publish\` or run `CAMS-Client-Setup.exe`.
+- Copy `server-dist\CAMS-Server-Setup.exe` to the teacher PC and run it.
+- Copy `client-dist\CAMS-Client-Setup.exe` to each student PC and run it.
 - Follow the **How to Use** section above.
 
 ---
@@ -100,7 +112,7 @@ If Inno Setup is not installed, installer executables are skipped but the portab
 |---|---|
 | "Windows protected your PC" message | Click "More info" and "Run anyway" |
 | Client not connecting | Ensure the server is running on the same LAN. The client auto-discovers it. Open firewall port 5000 on the server PC |
-| Auto-discovery not working | Client falls back to `client-settings.json`. Edit it with the server IP if needed |
+| Auto-discovery not working | Client falls back to manual IP entry during install. Edit `client-settings.json` in the install folder if needed |
 | Server cannot start | Make sure .NET 8 Runtime is installed on the server PC: https://dotnet.microsoft.com/download/dotnet/8.0 |
 | Port 5000 blocked | Run on server PC: `netsh advfirewall firewall add rule name="CAMS" dir=in action=allow protocol=TCP localport=5000` |
 | Silent deployment to 30+ PCs | See DEPLOYMENT.md for `/VERYSILENT` network deployment |
@@ -115,14 +127,11 @@ CAMS/
 ├── LICENSE                    # MIT
 ├── README.md                  # This file
 ├── DEPLOYMENT.md              # Deployment guide
-├── build-installers.bat       # One-click build (server + client publisher)
-├── build-installers.ps1       # One-shot build script
-├── publish.ps1                # Server-only publisher. Installer
-├── publish-client.ps1         # Client-only publish + wizer installer
-├── server-installer.iss       # Inno Setup wizer for server
-├── client-installer.iss       # Inno Setup wizer for client
+├── build-everything.ps1       # One-shot build (tests + publish + installers)
+├── test-installer.ps1         # Validate built installers
+├── server-installer.iss       # Inno Setup wizard for server
+├── client-installer.iss       # Inno Setup wizard for client
 ├── start-server.bat           # Manual server launcher
-├── client-portable.bat       # Portable client launcher (no install)
 ├── DIAGRAMS/                  # System diagrams
 └── Monitoring And Remote Access/
     ├── RemoteMonitoring.sln

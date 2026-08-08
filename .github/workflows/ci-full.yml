@@ -32,19 +32,11 @@ jobs:
       - name: Publish client (self-contained, single-file)
         run: dotnet publish "Monitoring And Remote Access\Client\Client.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o client-publish
 
-      - name: Copy portable launcher
-        run: Copy-Item client-portable.bat -Destination client-publish\ -Force
-
       - name: Build server installer
         run: & '${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe' "/O:server-dist" server-installer.iss
 
       - name: Build client installer
         run: & '${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe' "/O:client-dist" client-installer.iss
-
-      - name: Package portable zips
-        run: |
-          Compress-Archive -Path server-publish\* -DestinationPath server-dist\CAMS-Server-Portable.zip
-          Compress-Archive -Path client-publish\* -DestinationPath client-dist\CAMS-Client-Portable.zip
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -52,6 +44,4 @@ jobs:
           name: CAMS-Installers-v2.5
           path: |
             server-dist/CAMS-Server-Setup.exe
-            server-dist/CAMS-Server-Portable.zip
             client-dist/CAMS-Client-Setup.exe
-            client-dist/CAMS-Client-Portable.zip
