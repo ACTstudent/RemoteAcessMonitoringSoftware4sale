@@ -6,18 +6,16 @@ A LAN-based classroom management and monitoring application built with ASP.NET C
 
 ---
 
-## Download (pre-built installers — just double-click)
+## Download (pre-built — no .NET SDK or compiling needed)
 
-No .NET SDK, no compiling. Download the `.exe`, double-click, done.
+Grab the ready-to-run package for your machine from the [latest release](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest):
 
-| Installer | Download | For |
+| Package | Download | For |
 |---|---|---|
-| **CAMS Server Setup** | [CAMS-Server-Setup.exe](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Setup.exe) | Teacher / lab PC |
-| **CAMS Client Setup** | [CAMS-Client-Setup.exe](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe) | Each student PC |
+| **CAMS Server (portable)** | [CAMS-Server-Portable.zip](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Portable.zip) | Teacher / lab PC |
+| **CAMS Student Client (portable)** | [CAMS-Client-Portable.zip](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Portable.zip) | Each student PC |
 
-> **Client is self-contained** — no .NET or SQL Server needed on student PCs.
-> **Server auto-creates** the database (`CAMS.db`) via SQLite on first run — zero database setup.
-> **Auto-discovery** — the server broadcasts via UDP on the LAN. Student clients find it automatically.
+Both are **self-contained and portable**: download, unzip, and run the `.exe` inside — no .NET install needed on any PC. The server auto-creates its database on first run; student clients auto-discover the server on the LAN.
 
 ---
 
@@ -25,14 +23,12 @@ No .NET SDK, no compiling. Download the `.exe`, double-click, done.
 
 ### 1. Start the server
 
-Download `CAMS-Server-Setup.exe` on the teacher/lab PC and **double-click it**.
+Download `CAMS-Server-Portable.zip` on the teacher/lab PC, unzip it, and run the server `.exe` inside.
 
-The installer:
-- Installs to `%LOCALAPPDATA%\CAMS Server`
-- Creates Start Menu shortcuts
+On first launch, the server:
+- Auto-creates its database
 - Opens firewall port 5000 automatically
-- Launches the server automatically when finished
-- Opens the browser to the dashboard
+- Launches the dashboard in your browser
 
 Log in:
 
@@ -46,14 +42,9 @@ Log in:
 
 ### 2. Start the student clients
 
-On each student PC, download `CAMS-Client-Setup.exe` and **double-click it**.
+On each student PC, download `CAMS-Client-Portable.zip`, unzip it, and run the client `.exe` inside.
 
-The installer:
-- Installs to `%LOCALAPPDATA%\CAMS Student Client`
-- Prompts for the server address (e.g., `http://192.168.1.100:5000/remoteMonitoringHub`)
-- Launches the client automatically when finished
-
-The client auto-discovers the server on the LAN (UDP broadcast) — if auto-discovery fails, just type the server IP during install. Students log in with their student credentials.
+The client auto-discovers the server on the LAN (UDP broadcast) — if auto-discovery fails, just type the server IP in the client settings. Students log in with their student credentials.
 
 ### 3. Begin class
 
