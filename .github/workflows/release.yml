@@ -77,14 +77,14 @@ jobs:
           }
 
       - name: Build server installer
+        shell: cmd
         run: |
-          & "${{ steps.iscc.outputs.path }}" "/O:server-dist" server-installer.iss
-          if ($LASTEXITCODE -ne 0) { throw "Server installer build failed with exit code $LASTEXITCODE" }
+          "${{ steps.iscc.outputs.path }}" /O:server-dist server-installer.iss
 
       - name: Build client installer
+        shell: cmd
         run: |
-          & "${{ steps.iscc.outputs.path }}" "/O:client-dist" client-installer.iss
-          if ($LASTEXITCODE -ne 0) { throw "Client installer build failed with exit code $LASTEXITCODE" }
+          "${{ steps.iscc.outputs.path }}" /O:client-dist client-installer.iss
 
       - name: Verify installer output
         run: |
