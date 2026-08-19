@@ -50,21 +50,40 @@ jobs:
       - name: Publish client (self-contained, single-file)
         run: dotnet publish "Monitoring And Remote Access\Client\Client.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o client-publish
 
+      - name: Find Inno Setup
+        id: iscc
+        run: |
+          $paths = @(
+            "${env:ProgramFiles}\Inno Setup 6\ISCC.exe",
+            "${env:LOCALAPPDATA}\Programs\Inno Setup 6\ISCC.exe",
+            "C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
+            "C:\Program Files\Inno Setup 6\ISCC.exe"
+          )
+          foreach ($p in $paths) {
+            if (Test-Path $p) {
+              Write-Host "Found ISCC at: $p"
+              "path=$p" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
+              exit 0
+            }
+          }
+          Write-Host "Searching entire drive..."
+          $found = Get-ChildItem -Path C:\ -Filter ISCC.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($found) {
+            Write-Host "Found ISCC at: $($found.FullName)"
+            "path=$($found.FullName)" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
+          } else {
+            Write-Error "ISCC.exe not found anywhere"
+            exit 1
+          }
+
       - name: Build server installer
         run: |
-          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-          if (!(Test-Path $iscc)) { $iscc = "$env:ProgramFiles\Inno Setup 6\ISCC.exe" }
-          if (!(Test-Path $iscc)) { throw "ISCC.exe not found" }
-          Write-Host "Using $iscc"
-          & $iscc "/O:server-dist" server-installer.iss
+          & "${{ steps.iscc.outputs.path }}" "/O:server-dist" server-installer.iss
           if ($LASTEXITCODE -ne 0) { throw "Server installer build failed with exit code $LASTEXITCODE" }
 
       - name: Build client installer
         run: |
-          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-          if (!(Test-Path $iscc)) { $iscc = "$env:ProgramFiles\Inno Setup 6\ISCC.exe" }
-          if (!(Test-Path $iscc)) { throw "ISCC.exe not found" }
-          & $iscc "/O:client-dist" client-installer.iss
+          & "${{ steps.iscc.outputs.path }}" "/O:client-dist" client-installer.iss
           if ($LASTEXITCODE -ne 0) { throw "Client installer build failed with exit code $LASTEXITCODE" }
 
       - name: Verify installer output
