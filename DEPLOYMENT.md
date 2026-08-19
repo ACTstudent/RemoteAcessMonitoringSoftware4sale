@@ -2,13 +2,15 @@
 
 ## Easy Install (Recommended)
 
-Run the publish script on a machine with the .NET 8 SDK and Inno Setup 6:
+Download the installer wizards directly from the [latest release](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest).
+
+Or build them from source on a machine with the .NET 8 SDK and Inno Setup 6:
 
 ```powershell
-.\publish.ps1
+.\build-everything.ps1
 ```
 
-This creates **`server-dist\CAMS-Server-Setup.exe`** — copy it to the server PC and run the wizard.
+This creates **`server-dist\CAMS-Server-Setup.exe`** and **`client-dist\CAMS-Client-Setup.exe`** — copy them to the target PCs and run the wizards.
 
 The wizard does everything:
 - Installs to `%LOCALAPPDATA%\CAMS Server`
@@ -20,13 +22,7 @@ The wizard does everything:
 
 ## Publishing the client installer
 
-From the same build machine:
-
-```powershell
-.\publish-client.ps1
-```
-
-This creates **`client-dist\CAMS-Client-Setup.exe`** — a self-contained installer (no .NET required on student PCs). Students run the wizard, enter the server address when asked, and the client is ready.
+The `build-everything.ps1` script builds both server and client installers. The client installer is **`client-dist\CAMS-Client-Setup.exe`** — a self-contained installer (no .NET required on student PCs). Students run the wizard, enter the server address when asked, and the client is ready.
 
 ## Manual folder install (fallback)
 

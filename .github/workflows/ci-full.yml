@@ -38,10 +38,3 @@ jobs:
       - name: Build client installer
         run: & '${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe' "/O:client-dist" client-installer.iss
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: CAMS-Installers-v2.5
-          path: |
-            server-dist/CAMS-Server-Setup.exe
-            client-dist/CAMS-Client-Setup.exe
