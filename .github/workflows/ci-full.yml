@@ -33,8 +33,10 @@ jobs:
         run: dotnet publish "Monitoring And Remote Access\Client\Client.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o client-publish
 
       - name: Build server installer
-        run: & '${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe' "/O:server-dist" server-installer.iss
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/O:server-dist" server-installer.iss
 
       - name: Build client installer
-        run: & '${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe' "/O:client-dist" client-installer.iss
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/O:client-dist" client-installer.iss
 
