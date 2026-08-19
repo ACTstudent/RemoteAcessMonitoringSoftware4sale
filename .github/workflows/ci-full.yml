@@ -59,12 +59,18 @@ jobs:
           }
 
       - name: Build server installer
-        shell: cmd
         run: |
-          "${{ steps.iscc.outputs.path }}" /O:server-dist server-installer.iss
+          $iscc = "${{ steps.iscc.outputs.path }}"
+          Write-Host "Running: $iscc /O:server-dist server-installer.iss"
+          $output = & cmd /c "`"$iscc`" /O:server-dist server-installer.iss 2>&1"
+          $output | ForEach-Object { Write-Host $_ }
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
 
       - name: Build client installer
-        shell: cmd
         run: |
-          "${{ steps.iscc.outputs.path }}" /O:client-dist client-installer.iss
+          $iscc = "${{ steps.iscc.outputs.path }}"
+          Write-Host "Running: $iscc /O:client-dist client-installer.iss"
+          $output = & cmd /c "`"$iscc`" /O:client-dist client-installer.iss 2>&1"
+          $output | ForEach-Object { Write-Host $_ }
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
 
