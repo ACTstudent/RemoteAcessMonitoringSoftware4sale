@@ -52,11 +52,20 @@ jobs:
 
       - name: Build server installer
         run: |
-          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/O:server-dist" server-installer.iss
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (!(Test-Path $iscc)) { $iscc = "$env:ProgramFiles\Inno Setup 6\ISCC.exe" }
+          if (!(Test-Path $iscc)) { throw "ISCC.exe not found" }
+          Write-Host "Using $iscc"
+          & $iscc "/O:server-dist" server-installer.iss
+          if ($LASTEXITCODE -ne 0) { throw "Server installer build failed with exit code $LASTEXITCODE" }
 
       - name: Build client installer
         run: |
-          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/O:client-dist" client-installer.iss
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (!(Test-Path $iscc)) { $iscc = "$env:ProgramFiles\Inno Setup 6\ISCC.exe" }
+          if (!(Test-Path $iscc)) { throw "ISCC.exe not found" }
+          & $iscc "/O:client-dist" client-installer.iss
+          if ($LASTEXITCODE -ne 0) { throw "Client installer build failed with exit code $LASTEXITCODE" }
 
       - name: Verify installer output
         run: |
