@@ -9,40 +9,42 @@ public static class ServerDiscoveryClient
     private const int DiscoveryPort = 5001;
     private static string? _cachedUrl;
 
-    public static async Task<string?> DiscoverAsync(int timeoutMs = 4000)
+    public static async Task<string?> DiscoverAsync(int timeoutMs = 4000, int retries = 3)
     {
         if (_cachedUrl != null)
             return _cachedUrl;
 
-        try
+        for (int attempt = 0; attempt < retries; attempt++)
         {
-            using var client = new UdpClient(DiscoveryPort)
-            {
-                EnableBroadcast = true
-            };
-            client.Client.ReceiveTimeout = timeoutMs;
-            client.Client.SendTimeout = timeoutMs;
-
-            var cts = new CancellationTokenSource(timeoutMs);
-
             try
             {
-                var result = await client.ReceiveAsync(cts.Token);
-                var json = System.Text.Encoding.UTF8.GetString(result.Buffer);
+                using var client = new UdpClient();
+                client.EnableBroadcast = true;
+                client.Client.Bind(new IPEndPoint(IPAddress.Any, 0));
 
-                using var doc = JsonDocument.Parse(json);
-                if (doc.RootElement.TryGetProperty("serverUrl", out var url) &&
-                    doc.RootElement.TryGetProperty("appName", out var name) &&
-                    name.GetString() == "CAMS")
+                var cts = new CancellationTokenSource(timeoutMs);
+
+                try
                 {
-                    _cachedUrl = url.GetString();
-                    return _cachedUrl;
+                    var result = await client.ReceiveAsync(cts.Token);
+                    var json = System.Text.Encoding.UTF8.GetString(result.Buffer);
+
+                    using var doc = JsonDocument.Parse(json);
+                    if (doc.RootElement.TryGetProperty("serverUrl", out var url) &&
+                        doc.RootElement.TryGetProperty("appName", out var name) &&
+                        name.GetString() == "CAMS")
+                    {
+                        _cachedUrl = url.GetString();
+                        return _cachedUrl;
+                    }
                 }
+                catch (OperationCanceledException) { }
+                catch (SocketException) { }
             }
-            catch (OperationCanceledException) { }
             catch (SocketException) { }
+
+            await Task.Delay(500);
         }
-        catch (SocketException) { }
 
         return null;
     }

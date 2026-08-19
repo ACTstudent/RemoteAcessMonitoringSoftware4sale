@@ -52,18 +52,29 @@ public class ServerDiscoveryService : BackgroundService
 
     private static string? GetLocalIpAddress()
     {
+        string? fallback = null;
+
         foreach (var nic in NetworkInterface.GetAllNetworkInterfaces())
         {
             if (nic.OperationalStatus != OperationalStatus.Up) continue;
             if (nic.NetworkInterfaceType == NetworkInterfaceType.Loopback) continue;
+            if (nic.NetworkInterfaceType == NetworkInterfaceType.Tunnel) continue;
+
+            var isLan = nic.NetworkInterfaceType == NetworkInterfaceType.Ethernet
+                     || nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211;
 
             foreach (var addr in nic.GetIPProperties().UnicastAddresses)
             {
-                if (addr.Address.AddressFamily == AddressFamily.InterNetwork)
+                if (addr.Address.AddressFamily != AddressFamily.InterNetwork) continue;
+                if (IPAddress.IsLoopback(addr.Address)) continue;
+
+                if (isLan)
                     return addr.Address.ToString();
+
+                fallback ??= addr.Address.ToString();
             }
         }
-        return null;
+        return fallback;
     }
 
     private record DiscoveryPayload(string ServerUrl, string AppName);

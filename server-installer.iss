@@ -49,5 +49,6 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 
 [Run]
 Filename: "netsh.exe"; Parameters: "advfirewall firewall add rule name=""CAMS Server"" dir=in action=allow protocol=TCP localport=5000"; Flags: runhidden; StatusMsg: "Opening firewall port 5000..."
+Filename: "netsh.exe"; Parameters: "advfirewall firewall add rule name=""CAMS Discovery"" dir=in action=allow protocol=UDP localport=5001"; Flags: runhidden; StatusMsg: "Opening firewall port 5001 for auto-discovery..."
 Filename: "netsh.exe"; Parameters: "http add urlacl url=http://+:5000/ user=""Users"""; Flags: runhidden; StatusMsg: "Reserving HTTP namespace for non-admin listeners..."
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent

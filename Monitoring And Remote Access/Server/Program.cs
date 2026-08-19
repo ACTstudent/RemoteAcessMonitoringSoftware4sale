@@ -96,8 +96,9 @@ app.MapControllerRoute(
 
 app.MapHub<Server.Hubs.RemoteMonitoringHub>("/remoteMonitoringHub");
 
-var url = "http://localhost:5000/";
-Console.WriteLine($"[CAMS] Server starting. Opening {url}...");
+var listenUrl = "http://0.0.0.0:5000/";
+var browseUrl = "http://localhost:5000/";
+Console.WriteLine($"[CAMS] Server starting. Listening on {listenUrl}...");
 
 _ = Task.Run(async () =>
 {
@@ -106,7 +107,7 @@ _ = Task.Run(async () =>
     {
         var psi = new System.Diagnostics.ProcessStartInfo
         {
-            FileName = url,
+            FileName = browseUrl,
             UseShellExecute = true
         };
         System.Diagnostics.Process.Start(psi);
@@ -118,4 +119,5 @@ _ = Task.Run(async () =>
     }
 });
 
+app.Urls.Add(listenUrl);
 app.Run();

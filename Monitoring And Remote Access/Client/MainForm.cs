@@ -11,7 +11,7 @@ namespace Client
     {
         private static async Task<string> GetServerUrlAsync()
         {
-            var discovered = await ServerDiscoveryClient.DiscoverAsync(4000);
+            var discovered = await ServerDiscoveryClient.DiscoverAsync(4000, 5);
             if (discovered != null)
                 return discovered;
 
