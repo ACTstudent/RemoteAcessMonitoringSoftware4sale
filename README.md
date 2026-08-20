@@ -1,198 +1,93 @@
-# CAMS — Computer Account Management System
+# 🖥️ CAMS — Computer Account Management System
+### Pardo Elementary School Laboratory Management System
 
-**Pardo Elementary School Laboratory Management System**
+[![Build Status](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/actions/workflows/ci-full.yml/badge.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/actions/workflows/ci-full.yml)
+[![Release Version](https://img.shields.io/github/v/release/ACTstudent/RemoteAcessMonitoringSoftware4sale?include_prereleases&color=blue)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A LAN-based classroom management and monitoring application built with ASP.NET Core, SignalR, and WinForms. Automates student account tracking, enforces access restrictions, and replaces manual logbooks for 45-minute laboratory sessions.
-
----
-
-## System Scope & Core Functions
-
-CAMS is engineered to streamline computer laboratory management through the following modules and capabilities:
-
-- **1. Live Classroom Monitoring & Control**
-  - Real-time student screen and activity monitoring grid on the teacher dashboard.
-  - Remote workstation locking, screen broadcasting, and alert messaging.
-  - Session lifecycle management (Start Session, End Session, timer countdown for 45-minute lab intervals).
-
-- **2. LAN Auto-Discovery & Networking**
-  - Automatic server discovery via UDP broadcast across local area networks (LAN).
-  - Seamless fallback to manual IP entry during installation or in complex subnet environments.
-  - High-performance real-time communication powered by ASP.NET Core SignalR hubs.
-
-- **3. Role-Based Access Control (RBAC)**
-  - **Administrator Portal:** Manage system accounts, roles, permissions, audit logs, system configurations, and database providers (SQLite, SQL Server, MySQL).
-  - **Teacher Portal:** Monitor active lab sessions, enforce class rules, view student attendance, and generate session records/reports.
-  - **Student Client Agent:** Lightweight WinForms agent running silently on student workstations, reporting status and enforcing lab restrictions.
-
-- **4. Security, Restrictions & Blacklisting**
-  - Application and URL restriction rules enforcement during active lab sessions.
-  - Automated database initialization and schema creation via Entity Framework Core (`EnsureCreated()`).
-  - Automated Windows Firewall port management (Ports 5000 and 5001).
-
-- **5. Zero-Friction Deployment & Packaging**
-  - Self-contained zero-prompt installer wizards (`CAMS-Server-Setup.exe` and `CAMS-Client-Setup.exe`) requiring no prior .NET runtime or SDK installation.
-  - Complete automated build and release pipeline with xUnit test suites (47 passing tests).
+**CAMS** is a robust, LAN-based classroom management and real-time monitoring application built with **ASP.NET Core, SignalR, and WinForms**. It automates student account tracking, enforces strict laboratory access restrictions, and replaces traditional manual logbooks for 45-minute computer laboratory sessions.
 
 ---
 
-## Download (pre-built — no .NET SDK or compiling needed)
+## 📥 Quick Downloads (v2.5.2)
 
-[![Download Server](https://img.shields.io/badge/Download-CAMS_Server_Setup.exe-blue)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Server-Setup.exe)
-[![Download Client](https://img.shields.io/badge/Download-CAMS_Client_Setup.exe-green)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Client-Setup.exe)
+No .NET SDK or compilation required. Download the pre-built installer or source code package:
 
-| Package | Download | For |
-|---|---|---|
-| **CAMS Server Installer** | [CAMS-Server-Setup.exe](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Server-Setup.exe) | Teacher / lab PC |
-| **CAMS Student Client Installer** | [CAMS-Client-Setup.exe](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Client-Setup.exe) | Each student PC |
-| **Server Source Code (ZIP)** | [CAMS-Server-Source.zip](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Server-Source.zip) | Server source code |
-| **Client Source Code (ZIP)** | [CAMS-Client-Source.zip](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Client-Source.zip) | Client source code |
-
-Both are **self-contained installer wizards**: download and run the `.exe` — the wizard handles everything (no .NET install needed on any PC). The server auto-creates its database on first run; student clients auto-discover the server on the LAN.
-
-> **Note:** After downloading, right-click the `.exe` → **Properties** → check **Unblock** → **Apply** → **OK**. Then run the installer. (See [Troubleshooting](#troubleshooting))
-
-> **Direct v2.5.2 download links:** [Server EXE](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Server-Setup.exe) | [Client EXE](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Client-Setup.exe)
+| Package | Download Link | Description / Target |
+| :--- | :--- | :--- |
+| **CAMS Server Setup** | [📥 CAMS-Server-Setup.exe](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Server-Setup.exe) | Teacher / Lab Control PC |
+| **CAMS Student Client** | [📥 CAMS-Client-Setup.exe](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Client-Setup.exe) | Student Workstations |
+| **Server Source Code** | [📦 CAMS-Server-Source.zip](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Server-Source.zip) | ASP.NET Core MVC Backend |
+| **Client Source Code** | [📦 CAMS-Client-Source.zip](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Client-Source.zip) | WinForms Student Agent |
 
 ---
 
-## How to Use
+## 🚀 Core Features & System Scope
 
-### 1. Start the server
-
-Download `CAMS-Server-Setup.exe` on the teacher/lab PC and run the installer wizard. The wizard will:
-- Install the server to `%LOCALAPPDATA%\CAMS Server`
-- Open Windows Firewall port 5000 automatically
-- Optionally start the server automatically with Windows
-- Launch the server after install
-
-Log in:
-
-| Role | Username | Password |
-|---|---|---|
-| Admin | `admin` | `admin123` |
-| Teacher | `teacher1` | `teacher123` |
-| Student | `student1` | `student123` |
-
-> Change passwords in the Admin portal after first login.
-
-### 2. Start the student clients
-
-On each student PC, download `CAMS-Client-Setup.exe` and run the installer wizard. During installation, you'll be prompted to enter the server address (your teacher will provide this).
-
-The client auto-discovers the server on the LAN (UDP broadcast) — if auto-discovery fails, just type the server IP in the client settings. Students log in with their student credentials.
-
-### 3. Begin class
-
-- **Teacher:** open `http://localhost:5000/Teacher/Monitoring` → log in → click **Start Session**
-- **Students:** already connected via the client — log in and their screens appear on the monitoring grid
-- Teacher can monitor screens, lock workstations, broadcast messages, enforce restrictions, and view reports
+- **Real-Time Live Monitoring:** High-performance screen monitoring grid on the teacher dashboard via SignalR websockets.
+- **LAN Auto-Discovery:** Automatic server broadcasting over UDP so student clients connect instantly without manual IP configuration.
+- **Role-Based Access Control (RBAC):** Dedicated portals and permissions for Administrators, Teachers, and Students.
+- **Lab Session Automation:** 45-minute lab session countdown timers, automated attendance logs, and workstation locking.
+- **Security & Policy Enforcement:** Application and URL restriction blacklisting during active lab sessions.
+- **Zero-Friction Deployment:** Self-contained installer wizards with automated database creation (`EnsureCreated()`) and Windows Firewall configuration.
 
 ---
 
-## Build From Source (if you want to customize)
+## 📖 Installation & Usage
 
-If you only want to **use** CAMS, skip this — use the download links above. This section is for developers who want to modify the code.
+### 1. Server Setup (Teacher / Lab PC)
+1. Download and run `CAMS-Server-Setup.exe`.
+2. The installer automatically provisions the app in `%LOCALAPPDATA%\CAMS Server`, opens firewall ports `5000` & `5001`, and launches the dashboard.
+3. Log in with default credentials:
+   - **Admin:** `admin` / `admin123`
+   - **Teacher:** `teacher1` / `teacher123`
+   - **Student:** `student1` / `student123`
+
+### 2. Client Setup (Student PCs)
+1. Download and run `CAMS-Client-Setup.exe` on each student workstation.
+2. The client auto-discovers the server on the LAN and connects automatically.
+3. Students log in using their assigned credentials.
+
+---
+
+## 🛠️ Developer Guide (Build From Source)
 
 ### Prerequisites
+- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [Inno Setup 6](https://jrsoftware.org/isdl.php)
 
-| Tool | Download |
-|---|---|
-| .NET 8 SDK | https://dotnet.microsoft.com/download/dotnet/8.0 |
-| Inno Setup 6 | https://jrsoftware.org/isdl.php |
-
-### Build
-
-Open the `CAMS` folder in PowerShell and run:
-
+### One-Shot Build Pipeline
+Open PowerShell in the repository root and run:
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File build-everything.ps1
 ```
-
-This runs six steps automatically:
-1. Runs 47 xUnit tests
+This script automatically:
+1. Executes unit tests (`xUnit`)
 2. Builds the solution (`RemoteMonitoring.sln`)
-3. Publishes the server to `server-publish\`
-4. Publishes the client (self-contained, single `.exe`) to `client-publish\`
-5. Compiles both Inno Setup wizards to `server-dist\` and `client-dist\`
-
-Outputs:
-
-| Output | Purpose |
-|---|---|
-| `server-dist\CAMS-Server-Setup.exe` | Inno Setup wizard — run on the teacher/lab PC |
-| `client-dist\CAMS-Client-Setup.exe` | Inno Setup wizard — run on each student PC |
-
-If Inno Setup is not installed, the script exits with an error and tells you to install it first.
-
-### After building
-
-- Copy `server-dist\CAMS-Server-Setup.exe` to the teacher PC and run it.
-- Copy `client-dist\CAMS-Client-Setup.exe` to each student PC and run it.
-- Follow the **How to Use** section above.
+3. Publishes server & client binaries
+4. Compiles Inno Setup installers into `server-dist\` and `client-dist\`
 
 ---
 
-## Troubleshooting
+## 📂 Repository Architecture
 
-| Problem | Solution |
-|---|---|
-| "Windows protected your PC" message | Click "More info" and "Run anyway" |
-| Client not connecting | Ensure the server is running on the same LAN. The client auto-discovers it. Open firewall port 5000 on the server PC |
-| Auto-discovery not working | Client falls back to manual IP entry during install. Edit `client-settings.json` in the install folder if needed |
-| Server cannot start | Make sure .NET 8 Runtime is installed on the server PC: https://dotnet.microsoft.com/download/dotnet/8.0 |
-| Port 5000 blocked | Run on server PC: `netsh advfirewall firewall add rule name="CAMS" dir=in action=allow protocol=TCP localport=5000` |
-| Silent deployment to 30+ PCs | See DEPLOYMENT.md for `/VERYSILENT` network deployment |
-
----
-
-## Solution layout
-
-```
+```text
 CAMS/
-├── CAMS-Guide.md              # Full user & developer guide
-├── LICENSE                    # MIT
-├── README.md                  # This file
-├── DEPLOYMENT.md              # Deployment guide
-├── build-everything.ps1       # One-shot build (tests + publish + installers)
-├── test-installer.ps1         # Validate built installers
-├── server-installer.iss       # Inno Setup wizard for server
-├── client-installer.iss       # Inno Setup wizard for client
-├── start-server.bat           # Manual server launcher
-├── DIAGRAMS/                  # System diagrams
+├── CAMS-Guide.md              # Comprehensive user & developer guide
+├── DEPLOYMENT.md              # Network deployment & silent install guide
+├── build-everything.ps1       # Automated build & packaging script
+├── test-installer.ps1         # Installer validation script
+├── server-installer.iss       # Inno Setup configuration (Server)
+├── client-installer.iss       # Inno Setup configuration (Client)
 └── Monitoring And Remote Access/
-    ├── RemoteMonitoring.sln
-    ├── Shared/                # DTOs + SignalR event constants
-    ├── Server/                # ASP.NET Core MVC + SignalR hub + EF Core
-    │   └── wwwroot/lib/       # Vendored Bootstrap & SignalR (LAN-only)
-    └── Client/                # WinForms student agent (.NET 8)
+    ├── RemoteMonitoring.sln   # Main solution file
+    ├── Shared/                # DTOs & SignalR event contracts
+    ├── Server/                # ASP.NET Core MVC + SignalR Hub + EF Core
+    └── Client/                # WinForms Student Agent (.NET 8)
 ```
 
-## Quick start (developer)
+---
 
-```powershell
-cd "Monitoring And Remote Access"
-dotnet run --project Server
-```
+## 📝 License
 
-Server is at `http://localhost:5000`. Database auto-creates on first run.
-
-## Database providers
-
-Edit `Monitoring And Remote Access\Server\appsettings.json`:
-
-| Provider | Config | Setup needed |
-|---|---|---|
-| **Sqlite** (default) | `"DatabaseProvider": "Sqlite"` | Nothing |
-| SqlServer | `"DatabaseProvider": "SqlServer"` | SQL Server / LocalDB |
-| MySql | `"DatabaseProvider": "MySql"` | MySQL server |
-
-Schema is auto-created on first run via `EnsureCreated()`.
-
-## License
-
-MIT — see `LICENSE`.
-
-## Documentation
-
-Full user guide, flowchart, and SignalR event legend in **`CAMS-Guide.md`**. Deployment details in **`DEPLOYMENT.md`**.
+Distributed under the **MIT License**. See `LICENSE` for details.
