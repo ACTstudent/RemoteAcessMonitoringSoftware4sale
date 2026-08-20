@@ -11,6 +11,8 @@ permissions:
 jobs:
   build:
     runs-on: windows-latest
+    env:
+      ISCC_PATH: "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,28 +22,26 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Find Inno Setup
+      - name: Verify/Install Inno Setup
         run: |
-          $isccPath = @(
-            "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
-            "C:\Program Files\Inno Setup 6\ISCC.exe"
-            "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-            "${env:ProgramFiles}\Inno Setup 6\ISCC.exe"
-          ) | Where-Object { Test-Path $_ } | Select-Object -First 1
-          if (-not $isccPath) {
-            Write-Host "Inno Setup not found, installing via Chocolatey..."
-            choco install innosetup -y --version 6.2.2 --no-progress
-            $isccPath = @(
-              "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
-              "C:\Program Files\Inno Setup 6\ISCC.exe"
-            ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not (Test-Path $env:ISCC_PATH)) {
+            $alt = "C:\Program Files\Inno Setup 6\ISCC.exe"
+            if (Test-Path $alt) {
+              echo "ISCC_PATH=$alt" >> $GITHUB_ENV
+            } else {
+              Write-Host "Installing Inno Setup via Chocolatey..."
+              choco install innosetup -y --version 6.2.2 --no-progress
+              if (Test-Path $env:ISCC_PATH) {
+                # already set
+              } elseif (Test-Path $alt) {
+                echo "ISCC_PATH=$alt" >> $GITHUB_ENV
+              } else {
+                Write-Host "ERROR: ISCC.exe not found"
+                exit 1
+              }
+            }
           }
-          if (-not $isccPath) {
-            Write-Host "ERROR: Inno Setup ISCC.exe not found after install"
-            exit 1
-          }
-          Write-Host "Found ISCC at: $isccPath"
-          echo "ISCC_PATH=$isccPath" >> $GITHUB_ENV
+          Write-Host "Using ISCC: $env:ISCC_PATH"
 
       - name: Build solution
         run: |
@@ -68,8 +68,15 @@ jobs:
           $serverDist = Join-Path $root "server-dist"
           $clientDist = Join-Path $root "client-dist"
           New-Item -ItemType Directory -Force -Path $serverDist, $clientDist | Out-Null
+          Write-Host "Building server installer..."
           & $iscc "/o$serverDist" (Join-Path $root "server-installer.iss")
+          Write-Host "Building client installer..."
           & $iscc "/o$clientDist" (Join-Path $root "client-installer.iss")
+
+      - name: Verify outputs
+        run: |
+          ls server-dist/
+          ls client-dist/
 
       - name: Unblock installers
         run: |
