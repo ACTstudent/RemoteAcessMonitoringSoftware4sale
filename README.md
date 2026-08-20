@@ -6,6 +6,36 @@ A LAN-based classroom management and monitoring application built with ASP.NET C
 
 ---
 
+## System Scope & Core Functions
+
+CAMS is engineered to streamline computer laboratory management through the following modules and capabilities:
+
+- **1. Live Classroom Monitoring & Control**
+  - Real-time student screen and activity monitoring grid on the teacher dashboard.
+  - Remote workstation locking, screen broadcasting, and alert messaging.
+  - Session lifecycle management (Start Session, End Session, timer countdown for 45-minute lab intervals).
+
+- **2. LAN Auto-Discovery & Networking**
+  - Automatic server discovery via UDP broadcast across local area networks (LAN).
+  - Seamless fallback to manual IP entry during installation or in complex subnet environments.
+  - High-performance real-time communication powered by ASP.NET Core SignalR hubs.
+
+- **3. Role-Based Access Control (RBAC)**
+  - **Administrator Portal:** Manage system accounts, roles, permissions, audit logs, system configurations, and database providers (SQLite, SQL Server, MySQL).
+  - **Teacher Portal:** Monitor active lab sessions, enforce class rules, view student attendance, and generate session records/reports.
+  - **Student Client Agent:** Lightweight WinForms agent running silently on student workstations, reporting status and enforcing lab restrictions.
+
+- **4. Security, Restrictions & Blacklisting**
+  - Application and URL restriction rules enforcement during active lab sessions.
+  - Automated database initialization and schema creation via Entity Framework Core (`EnsureCreated()`).
+  - Automated Windows Firewall port management (Ports 5000 and 5001).
+
+- **5. Zero-Friction Deployment & Packaging**
+  - Self-contained zero-prompt installer wizards (`CAMS-Server-Setup.exe` and `CAMS-Client-Setup.exe`) requiring no prior .NET runtime or SDK installation.
+  - Complete automated build and release pipeline with xUnit test suites (47 passing tests).
+
+---
+
 ## Download (pre-built — no .NET SDK or compiling needed)
 
 [![Download Server](https://img.shields.io/badge/Download-CAMS_Server_Setup.exe-blue)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Server-Setup.exe)

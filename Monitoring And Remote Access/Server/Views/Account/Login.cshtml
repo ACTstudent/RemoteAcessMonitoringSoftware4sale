@@ -25,6 +25,7 @@
                         }
 
                         <form method="post" action="/Account/Login">
+                            @Html.AntiForgeryToken()
                             <div class="mb-3">
                                 <label class="form-label">Username</label>
                                 <input type="text" name="username" class="form-control" placeholder="student1" required />
