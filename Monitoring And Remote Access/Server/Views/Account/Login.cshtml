@@ -1,0 +1,48 @@
+@{
+    ViewData["Title"] = "Login";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Student Monitoring</title>
+    <link href="~/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="bg-dark d-flex align-items-center" style="min-height: 100vh;">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-4">
+                <div class="card shadow-lg border-0 rounded-4">
+                    <div class="card-body p-4">
+                        <h3 class="text-center mb-4 fw-bold">Lab Login</h3>
+
+                        @if (!string.IsNullOrEmpty(ViewBag.Error))
+                        {
+                            <div class="alert alert-danger py-2">@ViewBag.Error</div>
+                        }
+
+                        <form method="post" action="/Account/Login">
+                            <div class="mb-3">
+                                <label class="form-label">Username</label>
+                                <input type="text" name="username" class="form-control" placeholder="student1" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <input type="password" name="password" class="form-control" placeholder="••••••" required />
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Log In</button>
+                        </form>
+
+                        <p class="text-center text-muted mt-3 small">
+                            Only registered accounts can log in.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

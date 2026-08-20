@@ -1,0 +1,128 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - CAMS Student</title>
+    <link href="~/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        body { background-color: #12141a; color: #e6e6e6; }
+        .card { background-color: #1c1f27; border: 1px solid #2a2e38; }
+        .card-header { background-color: #232733; border-bottom: 1px solid #2a2e38; }
+        .nav-link { color: #b6bac6; }
+        .nav-link.active { background-color: #3b82f6; color: #fff; }
+        .nav-link:hover { color: #fff; }
+        .stat { font-size: 1.6rem; font-weight: 700; }
+        .list-group-item { background-color: transparent; border-color: #2a2e38; color: #e6e6e6; }
+        .student-toolbar { position: sticky; top: 0; z-index: 1030; background-color: #1a1d24; border-bottom: 1px solid #2a2e38; }
+        .toolbar-timer { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; color: #22c55e; }
+        .toolbar-timer.warn { color: #f59e0b; }
+        .toolbar-timer.expired { color: #ef4444; }
+    </style>
+</head>
+<body>
+    @* Sticky overlay toolbar: assigned unit, student profile, countdown timer *@
+    <div class="student-toolbar">
+        <div class="container-fluid d-flex align-items-center justify-content-between py-2 gap-3 flex-wrap">
+            <div class="d-flex align-items-center gap-3">
+                <span class="fw-bold"><i class="bi bi-pc-display"></i> <span id="toolbarUnit">@(ViewContext.HttpContext.Session.GetString("AssignedUnit") ?? "Unit -")</span></span>
+                <span class="badge bg-primary" id="toolbarSession">No Session</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="small text-muted"><i class="bi bi-person-circle"></i> @ViewContext.HttpContext.Session.GetString("FullName")</span>
+                <span class="toolbar-timer" id="toolbarTimer">--:--</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-2 col-md-3 pt-3">
+                <ul class="nav nav-pills flex-column gap-1">
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")" href="/Student"><i class="bi bi-info-circle"></i> Session Info</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Alerts" ? "active" : "")" href="/Student/Alerts"><i class="bi bi-bell"></i> Alert Center</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Settings" ? "active" : "")" href="/Student/Settings"><i class="bi bi-gear"></i> Account Settings</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-10 col-md-9 pt-3 pb-5">
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+
+    @* Warning / notification popup modal *@
+    <div class="modal fade" id="alertModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-danger">
+                <div class="modal-header py-2" id="alertModalHeader">
+                    <h5 class="modal-title fw-bold" id="alertModalTitle">Warning</h5>
+                </div>
+                <div class="modal-body" id="alertModalBody">-</div>
+                <div class="modal-footer py-2">
+                    <button class="btn btn-sm btn-danger" data-bs-dismiss="modal">I Understand</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="~/lib/signalr/signalr.min.js"></script>
+    <script>
+        // Shared student overlay behavior: countdown sync, warnings, hard timeout
+        const conn = new signalR.HubConnectionBuilder().withUrl("/remoteMonitoringHub").withAutomaticReconnect().build();
+        let sStatus = "None";
+        let sElapsed = 0;
+        const tTimer = document.getElementById("toolbarTimer");
+        const tSession = document.getElementById("toolbarSession");
+        const alertModalEl = document.getElementById("alertModal");
+
+        function fmt(sec) {
+            const m = Math.floor(sec / 60), s = sec % 60;
+            return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+        }
+        function render() {
+            tTimer.textContent = fmt(Math.max(0, sElapsed));
+            tTimer.classList.remove("expired", "warn");
+            tSession.textContent = sStatus;
+            tSession.className = "badge " + (sStatus === "Running" ? "bg-success" : sStatus === "Paused" ? "bg-warning text-dark" : "bg-secondary");
+        }
+        setInterval(() => { if (sStatus === "Running") { sElapsed++; render(); } }, 1000);
+        render();
+
+        conn.on("GlobalSessionState", (state) => {
+            sStatus = state.status;
+            if (state.status === "Running") sElapsed = state.elapsedSeconds;
+            render();
+        });
+        conn.on("SessionEnded", () => {
+            sStatus = "Ended"; sElapsed = 0; render();
+            alert("The laboratory session has been ended by the teacher. You will be logged out.");
+            location.href = "/Account/Logout";
+        });
+        conn.on("SendWarningPopup", (w) => {
+            document.getElementById("alertModalHeader").classList.add("bg-danger");
+            document.getElementById("alertModalTitle").textContent = w.title || "Warning";
+            document.getElementById("alertModalBody").innerHTML = escapeHtml(w.message || "");
+            new bootstrap.Modal(alertModalEl).show();
+        });
+        conn.on("SendNotification", (n) => {
+            document.getElementById("alertModalHeader").classList.remove("bg-danger");
+            document.getElementById("alertModalTitle").textContent = n.title || "Notification";
+            document.getElementById("alertModalBody").innerHTML = escapeHtml(n.message || "");
+            new bootstrap.Modal(alertModalEl).show();
+        });
+        conn.on("BroadcastScreen", (b) => {
+            document.getElementById("alertModalHeader").classList.remove("bg-danger");
+            document.getElementById("alertModalTitle").textContent = "Teacher Screen Broadcast";
+            document.getElementById("alertModalBody").innerHTML = "The teacher is sharing their screen on this unit. Watch the broadcast window on the Student Client.";
+            new bootstrap.Modal(alertModalEl).show();
+        });
+
+        function escapeHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+        conn.start().catch(console.error);
+    </script>
+</body>
+</html>

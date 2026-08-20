@@ -1,0 +1,59 @@
+@model IEnumerable<Server.Models.LabSession>
+@{
+    ViewData["Title"] = "Classroom Records";
+    Layout = "_TeacherLayout";
+}
+
+<h4 class="fw-bold mb-4"><i class="bi bi-journal"></i> Classroom Records</h4>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Total Sessions</div>
+                <div class="stat text-primary">@ViewBag.TotalSessions</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Total Lab Usage</div>
+                <div class="stat text-success">@Math.Round((double)ViewBag.TotalMinutes) min</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Simple Class Report</div>
+                <div class="mt-2">
+                    <a href="#" class="btn btn-sm btn-outline-primary" onclick="window.print()">Print / Export Report</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header fw-bold">Session Usage Logs</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Student</th><th>Station</th><th>Start</th><th>End</th><th>Duration</th><th>Status</th></tr></thead>
+            <tbody>
+                @foreach (var s in Model)
+                {
+                    var dur = s.EndTime.HasValue ? (int)Math.Round((s.EndTime.Value - s.StartTime).TotalMinutes) : 0;
+                    <tr>
+                        <td>@(s.Student?.Username ?? "?")</td>
+                        <td>@(s.Computer?.LaboratoryStation ?? s.PCName)</td>
+                        <td>@s.StartTime.ToString("MM/dd/yyyy HH:mm")</td>
+                        <td>@(s.EndTime?.ToString("MM/dd/yyyy HH:mm") ?? "-")</td>
+                        <td>@dur min</td>
+                        <td><span class="badge @(s.Status == "Running" ? "bg-success" : s.Status == "Paused" ? "bg-warning text-dark" : "bg-secondary")">@s.Status</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

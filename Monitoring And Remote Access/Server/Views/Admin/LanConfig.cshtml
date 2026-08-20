@@ -1,0 +1,45 @@
+@model Server.Models.LanConfiguration
+@{
+    ViewData["Title"] = "LAN Configuration";
+    Layout = "_Layout";
+}
+
+<h4 class="fw-bold mb-4"><i class="bi bi-router"></i> LAN Configuration Settings</h4>
+
+<div class="card">
+    <div class="card-header fw-bold">Network Settings</div>
+    <div class="card-body">
+        <form method="post" action="/Admin/SaveLanConfig" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Server Address</label>
+                <input name="ServerAddress" class="form-control" value="@Model.ServerAddress" placeholder="192.168.1.100" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Server Port</label>
+                <input name="ServerPort" type="number" class="form-control" value="@Model.ServerPort" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Gateway</label>
+                <input name="Gateway" class="form-control" value="@Model.Gateway" placeholder="192.168.1.1" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">DHCP Range Start</label>
+                <input name="DhcpRangeStart" class="form-control" value="@Model.DhcpRangeStart" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">DHCP Range End</label>
+                <input name="DhcpRangeEnd" class="form-control" value="@Model.DhcpRangeEnd" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">DNS Server</label>
+                <input name="DnsServer" class="form-control" value="@Model.DnsServer" />
+            </div>
+            <div class="col-12">
+                <label class="form-check-label"><input type="checkbox" name="IsActive" value="true" class="form-check-input me-1" checked="@Model.IsActive" />Active</label>
+            </div>
+            <div class="col-12">
+                <button class="btn btn-primary">Save Configuration</button>
+            </div>
+        </form>
+    </div>
+</div>

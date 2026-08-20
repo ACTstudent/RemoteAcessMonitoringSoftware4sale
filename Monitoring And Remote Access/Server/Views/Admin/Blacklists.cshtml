@@ -1,0 +1,47 @@
+@model IEnumerable<Server.Models.BlacklistItem>
+@{
+    ViewData["Title"] = "Blacklists";
+    Layout = "_Layout";
+}
+
+<h4 class="fw-bold mb-4"><i class="bi bi-ban"></i> Manage Website/App Blacklists</h4>
+
+<div class="card mb-4">
+    <div class="card-header fw-bold">Add to Blacklist</div>
+    <div class="card-body">
+        <form method="post" action="/Admin/CreateBlacklist" class="row g-2">
+            <div class="col-md-2">
+                <select name="TargetType" class="form-select">
+                    <option value="Website">Website</option>
+                    <option value="Application">Application</option>
+                </select>
+            </div>
+            <div class="col-md-4"><input name="Value" class="form-control" placeholder="URL or app name" required /></div>
+            <div class="col-md-4"><input name="Reason" class="form-control" placeholder="Reason" /></div>
+            <div class="col-md-2"><button class="btn btn-danger w-100">Blacklist</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header fw-bold">Blacklist Items</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Type</th><th>Value</th><th>Reason</th><th>Active</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var b in Model)
+                {
+                    <tr>
+                        <td><span class="badge bg-danger">@b.TargetType</span></td>
+                        <td>@b.Value</td>
+                        <td>@b.Reason</td>
+                        <td>@(b.IsActive ? "Yes" : "No")</td>
+                        <td>
+                            <form method="post" action="/Admin/DeleteBlacklist"><input type="hidden" name="id" value="@b.BlacklistItemId" /><button class="btn btn-sm btn-danger">Delete</button></form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

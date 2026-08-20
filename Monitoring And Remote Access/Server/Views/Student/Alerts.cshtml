@@ -1,0 +1,39 @@
+@model IEnumerable<Server.Models.Notification>
+@{
+    ViewData["Title"] = "Alert Center";
+    Layout = "_StudentLayout";
+}
+
+<h4 class="fw-bold mb-4"><i class="bi bi-bell"></i> Alert Center</h4>
+
+@if (!Model.Any())
+{
+    <div class="card"><div class="card-body text-muted">No notifications yet.</div></div>
+}
+
+<div class="row g-3">
+    @foreach (var n in Model)
+    {
+        <div class="col-md-6">
+            <div class="card @(n.IsRead ? "opacity-50" : "")">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge @(n.Type == "Warning" ? "bg-warning text-dark" : n.Type == "Alert" ? "bg-danger" : "bg-info text-dark") me-2">@n.Type</span>
+                        <strong>@n.Title</strong>
+                    </div>
+                    <small class="text-muted">@n.CreatedAt.ToString("MM/dd HH:mm")</small>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">@n.Message</p>
+                    @if (!n.IsRead)
+                    {
+                        <form method="post" action="/Student/MarkRead" class="mt-2">
+                            <input type="hidden" name="id" value="@n.NotificationId" />
+                            <button class="btn btn-sm btn-outline-light">Mark as read</button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>

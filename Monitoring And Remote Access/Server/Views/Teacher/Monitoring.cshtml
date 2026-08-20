@@ -1,0 +1,399 @@
+@{
+    ViewData["Title"] = "Live Monitoring";
+    Layout = "_TeacherLayout";
+    var gs = ViewBag.GlobalSession as Shared.Contracts.GlobalSessionMessage;
+    var gsStatus = gs?.Status ?? "None";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h4 class="fw-bold mb-0"><i class="bi bi-camera-video"></i> Live Monitoring</h4>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span class="badge bg-success me-1" id="onlineCount">0 online</span>
+
+        <span class="badge" id="sessionBadge">@gsStatus</span>
+        <span class="session-timer" id="sessionTimer"></span>
+        <button class="btn btn-sm btn-success" id="btnStartSession"><i class="bi bi-play-fill"></i> Start</button>
+        <button class="btn btn-sm btn-warning text-dark" id="btnPauseSession"><i class="bi bi-pause-fill"></i> Pause</button>
+        <button class="btn btn-sm btn-danger" id="btnEndSession"><i class="bi bi-stop-fill"></i> End Session</button>
+
+        <div class="dropdown">
+            <button class="btn btn-sm btn-outline-light position-relative" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-bell"></i> Alerts
+                <span class="badge bg-danger rounded-pill d-none" id="alertBadge">0</span>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end alert-dropdown p-0" style="background-color:#1c1f27;">
+                <div class="card-header fw-bold small py-2 px-3">Restriction Violations</div>
+                <div id="alertList" class="p-0"><div class="text-muted small p-3">No violations yet.</div></div>
+            </div>
+        </div>
+
+        <button class="btn btn-sm btn-outline-light" id="btnBroadcast"><i class="bi bi-broadcast"></i> Broadcast</button>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header fw-bold small">Active Application Tracker</div>
+            <div class="card-body p-2" id="appTracker">
+                <div class="text-muted small">No application data yet...</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header fw-bold small">Idle/Active Status Monitor</div>
+            <div class="card-body p-2" id="idleMonitor">
+                <div class="text-muted small">No status data yet...</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header fw-bold small">Broadcast Notification</div>
+            <div class="card-body p-2">
+                <div class="input-group input-group-sm">
+                    <select id="notifType" class="form-select form-select-sm">
+                        <option>Warning</option>
+                        <option>Alert</option>
+                        <option>Info</option>
+                    </select>
+                    <input id="notifMsg" class="form-control form-control-sm" placeholder="Message" />
+                    <button class="btn btn-warning btn-sm" id="btnNotify">Notify</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="studentGrid" class="row row-cols-1 row-cols-md-3 row-cols-lg-5 g-3"></div>
+
+@* Remote control modal *@
+<div class="modal fade" id="remoteControlModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content" style="background-color: #1c1f27; color: #e6e6e6;">
+            <div class="modal-header py-2">
+                <h5 class="modal-title" id="remoteModalTitle">Remote Access</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="closeRemoteControl()"></button>
+            </div>
+            <div class="modal-body text-center p-1 position-relative">
+                <canvas id="remoteCanvas" tabindex="0" class="border border-secondary w-100"></canvas>
+                <div id="remoteHint" class="small text-muted mt-2">Tip: move mouse to control cursor. Click to send clicks. Type to send keyboard. Press ESC to close.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Workstation Action Drawer *@
+<div class="offcanvas offcanvas-end" tabindex="-1" id="actionDrawer" aria-labelledby="drawerTitle">
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title fw-bold" id="drawerTitle">Workstation Actions</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="avatar" id="drawerAvatar">?</div>
+            <div>
+                <div class="fw-bold" id="drawerName">-</div>
+                <div class="small text-muted" id="drawerSid">-</div>
+                <span class="badge bg-success" id="drawerStatus">Online</span>
+            </div>
+        </div>
+        <div class="d-grid gap-2">
+            <button class="btn btn-warning" id="btnLock"><i class="bi bi-lock-fill"></i> Lock Screen</button>
+            <button class="btn btn-outline-light" id="btnUnlock"><i class="bi bi-unlock"></i> Unlock</button>
+            <button class="btn btn-danger" id="btnLogout"><i class="bi bi-box-arrow-right"></i> Log Out</button>
+            <button class="btn btn-dark" id="btnShutdown"><i class="bi bi-power"></i> Shut Down</button>
+            <button class="btn btn-primary" id="btnRemoteAccess"><i class="bi bi-mouse"></i> Remote Access</button>
+            <button class="btn btn-info text-dark" id="btnBroadcastTeacher"><i class="bi bi-broadcast"></i> Broadcast Teacher Screen</button>
+        </div>
+        <hr class="border-secondary" />
+        <div class="fw-bold small mb-2">Send Warning Popup</div>
+        <div class="input-group input-group-sm mb-2">
+            <input id="warnMsg" class="form-control form-control-sm" placeholder="Warning message..." />
+        </div>
+        <div class="d-grid gap-2">
+            <button class="btn btn-sm btn-danger" id="btnWarn"><i class="bi bi-exclamation-triangle"></i> Send Warning</button>
+        </div>
+    </div>
+</div>
+
+<script src="~/lib/signalr/signalr.min.js"></script>
+<script>
+    const connection = new signalR.HubConnectionBuilder().withUrl("/remoteMonitoringHub").withAutomaticReconnect().build();
+    const canvas = document.getElementById("remoteCanvas");
+    const ctx = canvas.getContext("2d");
+    let activeTargetConnectionId = null;
+    let onlineCount = 0;
+    let infractionCount = 0;
+    let sessionElapsed = 0;
+    let sessionStatus = "@gsStatus";
+
+    connection.start().then(() => connection.invoke("RegisterTeacher")).catch(console.error);
+
+    // ---------- Global session countdown ----------
+    const sessionTimerEl = document.getElementById("sessionTimer");
+    const sessionBadgeEl = document.getElementById("sessionBadge");
+    function fmt(sec) {
+        const m = Math.floor(sec / 60), s = sec % 60;
+        return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+    }
+    function renderSession() {
+        sessionTimerEl.textContent = fmt(Math.max(0, sessionElapsed));
+        sessionTimerEl.classList.remove("warn", "expired");
+        sessionBadgeEl.className = "badge " + (sessionStatus === "Running" ? "bg-success" : sessionStatus === "Paused" ? "bg-warning text-dark" : sessionStatus === "Ended" ? "bg-danger" : "bg-secondary");
+        sessionBadgeEl.textContent = sessionStatus;
+    }
+    setInterval(() => {
+        if (sessionStatus === "Running") { sessionElapsed++; renderSession(); }
+    }, 1000);
+    renderSession();
+
+    connection.on("GlobalSessionState", (state) => {
+        sessionStatus = state.status;
+        sessionElapsed = state.status === "Running" ? state.elapsedSeconds : sessionElapsed;
+        renderSession();
+        if (state.status === "Ended") {
+            // When the session is ended by the teacher, show a notification
+            const badge = document.getElementById("alertBadge");
+            if (badge) { badge.textContent = "!"; badge.classList.remove("d-none"); }
+        }
+    });
+
+    document.getElementById("btnStartSession").addEventListener("click", () => connection.invoke("GlobalStartSession"));
+    document.getElementById("btnPauseSession").addEventListener("click", () => connection.invoke("GlobalPauseSession"));
+    document.getElementById("btnEndSession").addEventListener("click", () => connection.invoke("GlobalEndSession"));
+
+    // ---------- Infraction alerts ----------
+    const alertBadge = document.getElementById("alertBadge");
+    const alertList = document.getElementById("alertList");
+    connection.on("InfractionDetected", (inf) => {
+        infractionCount++;
+        alertBadge.textContent = infractionCount;
+        alertBadge.classList.remove("d-none");
+
+        const card = document.getElementById("card-" + inf.connectionId);
+        if (card) {
+            card.classList.add("flash-infraction");
+            setTimeout(() => card.classList.remove("flash-infraction"), 2200);
+        }
+
+        const empty = alertList.querySelector(".text-muted");
+        if (empty) empty.remove();
+        const el = document.createElement("div");
+        el.className = "d-flex align-items-start gap-2 px-3 py-2 border-bottom border-secondary small";
+        el.innerHTML = `<i class="bi bi-exclamation-triangle-fill text-danger mt-1"></i>
+            <div><b>${escapeHtml(inf.pcName)}</b> (${escapeHtml(inf.studentId)})
+            <div class="text-danger">${escapeHtml(inf.targetType)}: ${escapeHtml(inf.target)}</div>
+            <div class="text-muted">${new Date(inf.timestamp).toLocaleTimeString()}</div></div>`;
+        alertList.prepend(el);
+    });
+
+    // ---------- Live frames ----------
+    connection.on("ReceiveScreenFrame", (cid, frame) => {
+        const card = document.getElementById("card-" + cid);
+        if (!card) createStudentCard(cid, frame.studentId, frame.pcName);
+        const img = document.getElementById("img-" + cid);
+        if (img) img.src = "data:image/jpeg;base64," + frame.frameBase64;
+        const ph = document.getElementById("ph-" + cid);
+        if (ph) { ph.classList.add("d-none"); img.classList.remove("d-none"); }
+        if (activeTargetConnectionId === cid) {
+            const image = new Image();
+            image.onload = () => { canvas.width = image.width; canvas.height = image.height; ctx.drawImage(image, 0, 0); };
+            image.src = "data:image/jpeg;base64," + frame.frameBase64;
+        }
+    });
+
+    connection.on("StudentConnected", (student) => {
+        if (!document.getElementById("card-" + student.connectionId)) createStudentCard(student.connectionId, student.studentId, student.pcName);
+        onlineCount++; document.getElementById("onlineCount").textContent = onlineCount + " online";
+    });
+
+    connection.on("StudentDisconnected", (cid) => {
+        const card = document.getElementById("card-" + cid);
+        if (card) {
+            const statusEl = document.getElementById("status-" + cid);
+            if (statusEl) { statusEl.className = "badge bg-secondary"; statusEl.textContent = "Disconnected"; }
+            const img = document.getElementById("img-" + cid);
+            if (img) { img.classList.add("d-none"); document.getElementById("ph-" + cid)?.classList.remove("d-none"); }
+        }
+        if (onlineCount > 0) onlineCount--;
+        document.getElementById("onlineCount").textContent = onlineCount + " online";
+        if (activeTargetConnectionId === cid) { bootstrap.Modal.getInstance(document.getElementById("remoteControlModal"))?.hide(); activeTargetConnectionId = null; }
+        removeFromTracker(cid);
+    });
+
+    // ---------- Status / idle / app ----------
+    connection.on("ActiveAppReceived", (app) => {
+        const line = document.getElementById("app-" + app.connectionId);
+        if (!line) {
+            const el = document.createElement("div");
+            el.id = "app-" + app.connectionId;
+            el.className = "app-item mb-1 small d-flex justify-content-between align-items-center";
+            document.getElementById("appTracker").appendChild(el);
+        }
+        document.getElementById("app-" + app.connectionId).innerHTML =
+            `<span><b>${escapeHtml(app.pcName)}</b></span><span class="text-muted">${escapeHtml(app.applicationName)}</span>`;
+        const cardApp = document.getElementById("appline-" + app.connectionId);
+        if (cardApp) cardApp.textContent = app.applicationName;
+    });
+
+    connection.on("IdleStatusReceived", (status) => {
+        const line = document.getElementById("idle-" + status.connectionId);
+        if (!line) {
+            const el = document.createElement("div");
+            el.id = "idle-" + status.connectionId;
+            el.className = "idle-item mb-1 small d-flex justify-content-between align-items-center";
+            document.getElementById("idleMonitor").appendChild(el);
+        }
+        document.getElementById("idle-" + status.connectionId).innerHTML =
+            `<span><b>${escapeHtml(status.pcName)}</b></span><span class="badge ${status.isIdle ? 'bg-warning text-dark' : 'bg-success'}">${status.isIdle ? 'Idle' : 'Active'}</span>`;
+        const statusEl = document.getElementById("status-" + status.connectionId);
+        if (statusEl) {
+            statusEl.className = "badge " + (status.isIdle ? "bg-warning text-dark" : "bg-success");
+            statusEl.textContent = status.isIdle ? "Idle" : "Active";
+        }
+    });
+
+    function removeFromTracker(cid) {
+        const a = document.getElementById("app-" + cid); if (a) a.remove();
+        const i = document.getElementById("idle-" + cid); if (i) i.remove();
+    }
+
+    function escapeHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+    // ---------- Workstation cards ----------
+    function createStudentCard(cid, sid, pc) {
+        const grid = document.getElementById("studentGrid");
+        const initial = (sid || "?").charAt(0).toUpperCase();
+        const html = `
+            <div class="col">
+                <div class="card h-100 shadow-sm workstation-card" id="card-${cid}" onclick="openDrawer('${cid}','${sid}','${pc}')">
+                    <div class="card-header p-2 d-flex justify-content-between align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-2 text-truncate">
+                            <div class="avatar">${escapeHtml(initial)}</div>
+                            <small class="fw-bold text-truncate">${escapeHtml(pc)}</small>
+                        </div>
+                        <span class="badge bg-success" id="status-${cid}">Active</span>
+                    </div>
+                    <div class="placeholder-box" id="ph-${cid}">Waiting for stream...</div>
+                    <img id="img-${cid}" class="stream-img d-none" />
+                    <div class="card-body p-2">
+                        <small class="d-block text-muted text-truncate">${escapeHtml(sid)}</small>
+                        <small class="d-block text-truncate" id="appline-${cid}" style="color:#8b93a7;">-</small>
+                    </div>
+                </div>
+            </div>`;
+        grid.insertAdjacentHTML("beforeend", html);
+    }
+
+    // ---------- Workstation Action Drawer ----------
+    let drawerTarget = null;
+    function openDrawer(cid, sid, pc) {
+        drawerTarget = cid;
+        document.getElementById("drawerAvatar").textContent = (sid || "?").charAt(0).toUpperCase();
+        document.getElementById("drawerName").textContent = pc;
+        document.getElementById("drawerSid").textContent = sid;
+        bootstrap.Offcanvas.getOrCreateInstance(document.getElementById("actionDrawer")).show();
+    }
+    function closeDrawer() { bootstrap.Offcanvas.getInstance(document.getElementById("actionDrawer"))?.hide(); drawerTarget = null; }
+
+    document.getElementById("btnLock").addEventListener("click", () => { if (drawerTarget) connection.invoke("LockStudent", drawerTarget); });
+    document.getElementById("btnUnlock").addEventListener("click", () => { if (drawerTarget) connection.invoke("UnlockStudent", drawerTarget); });
+    document.getElementById("btnLogout").addEventListener("click", () => { if (drawerTarget) connection.invoke("ForceLogout", drawerTarget); });
+    document.getElementById("btnShutdown").addEventListener("click", () => { if (drawerTarget) connection.invoke("ShutdownStudent", drawerTarget); });
+    document.getElementById("btnRemoteAccess").addEventListener("click", () => {
+        closeDrawer();
+        if (drawerTarget) openRemoteControl(drawerTarget, document.getElementById("drawerSid").textContent, document.getElementById("drawerName").textContent);
+    });
+    document.getElementById("btnBroadcastTeacher").addEventListener("click", toggleTeacherBroadcast);
+    document.getElementById("btnWarn").addEventListener("click", () => {
+        const msg = document.getElementById("warnMsg").value;
+        if (!msg || !drawerTarget) return;
+        connection.invoke("SendWarningPopup", drawerTarget, { type: "Warning", title: "Teacher Warning", message: msg, timestamp: new Date() });
+        document.getElementById("warnMsg").value = "";
+    });
+
+    // Broadcast teacher's own screen to all students (getDisplayMedia)
+    let broadcasting = false;
+    let broadcastVideo = null;
+    async function toggleTeacherBroadcast() {
+        const btn = document.getElementById("btnBroadcastTeacher");
+        if (broadcasting) {
+            broadcasting = false;
+            broadcastVideo?.srcObject?.getTracks().forEach(t => t.stop());
+            btn.innerHTML = '<i class="bi bi-broadcast"></i> Broadcast Teacher Screen';
+            btn.classList.remove("btn-danger"); btn.classList.add("btn-info");
+            return;
+        }
+        try {
+            const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            broadcasting = true;
+            btn.innerHTML = '<i class="bi bi-stop-fill"></i> Stop Broadcasting';
+            btn.classList.remove("btn-info"); btn.classList.add("btn-danger");
+            broadcastVideo = document.createElement("video");
+            broadcastVideo.srcObject = stream;
+            broadcastVideo.muted = true;
+            await broadcastVideo.play();
+            const bc = document.createElement("canvas");
+            const bctx = bc.getContext("2d");
+            const loop = async () => {
+                if (!broadcasting) return;
+                bc.width = broadcastVideo.videoWidth || 1280;
+                bc.height = broadcastVideo.videoHeight || 720;
+                bctx.drawImage(broadcastVideo, 0, 0);
+                const data = bc.toDataURL("image/jpeg", 0.35).split(",")[1];
+                await connection.invoke("BroadcastScreen", data).catch(() => {});
+                setTimeout(loop, 250);
+            };
+            loop();
+        } catch (e) { /* user cancelled the picker */ }
+    }
+
+    // Static broadcast button in header uses the teacher screen too
+    document.getElementById("btnBroadcast").addEventListener("click", toggleTeacherBroadcast);
+
+    document.getElementById("btnNotify").addEventListener("click", () => {
+        const msg = document.getElementById("notifMsg").value;
+        if (!msg) return;
+        connection.invoke("SendNotification", {
+            type: document.getElementById("notifType").value,
+            title: "Teacher notification",
+            message: msg,
+            timestamp: new Date()
+        });
+        document.getElementById("notifMsg").value = "";
+    });
+
+    // ---------- Remote control ----------
+    function openRemoteControl(cid, sid, pc) {
+        activeTargetConnectionId = cid;
+        document.getElementById("remoteModalTitle").innerText = `Remote Access - ${pc} (${sid})`;
+        new bootstrap.Modal(document.getElementById("remoteControlModal")).show();
+        canvas.focus();
+    }
+    function closeRemoteControl() { activeTargetConnectionId = null; }
+
+    function sendInput(type, e) {
+        if (!activeTargetConnectionId) return;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
+        const x = Math.round((e.clientX - rect.left) * scaleX), y = Math.round((e.clientY - rect.top) * scaleY);
+        connection.invoke("SendRemoteInput", activeTargetConnectionId, { eventType: type, x, y, keyCode: e.button || 0, isShift: e.shiftKey });
+    }
+
+    canvas.addEventListener("mousemove", (e) => sendInput("mousemove", e));
+    canvas.addEventListener("mousedown", (e) => sendInput("mousedown", e));
+    canvas.addEventListener("mouseup", (e) => sendInput("mouseup", e));
+    canvas.addEventListener("wheel", (e) => {
+        if (!activeTargetConnectionId) return;
+        connection.invoke("SendRemoteInput", activeTargetConnectionId, { eventType: "scroll", x: 0, y: 0, keyCode: e.deltaY > 0 ? 1 : -1, isShift: false });
+        e.preventDefault();
+    }, { passive: false });
+    canvas.addEventListener("keydown", (e) => {
+        if (!activeTargetConnectionId) return;
+        if (e.key === "Escape") { closeRemoteControl(); bootstrap.Modal.getInstance(document.getElementById("remoteControlModal"))?.hide(); return; }
+        connection.invoke("SendRemoteInput", activeTargetConnectionId, { eventType: "keydown", x: 0, y: 0, keyCode: e.keyCode, isShift: e.shiftKey });
+        e.preventDefault();
+    });
+</script>

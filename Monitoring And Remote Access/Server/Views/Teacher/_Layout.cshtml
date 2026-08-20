@@ -1,0 +1,67 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - CAMS Teacher</title>
+    <link href="~/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        body { background-color: #12141a; color: #e6e6e6; }
+        .card { background-color: #1c1f27; border: 1px solid #2a2e38; }
+        .card-header { background-color: #232733; border-bottom: 1px solid #2a2e38; }
+        .table { color: #e6e6e6; --bs-table-bg: transparent; }
+        .table thead th { color: #9aa0b0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .nav-link { color: #b6bac6; }
+        .nav-link.active { background-color: #3b82f6; color: #fff; }
+        .nav-link:hover { color: #fff; }
+        .stat { font-size: 1.6rem; font-weight: 700; }
+        .stream-img { height: 130px; width: 100%; object-fit: contain; background-color: #000; }
+        .placeholder-box { height: 130px; width: 100%; display: flex; align-items: center; justify-content: center; background: repeating-linear-gradient(45deg, #1c1f27, #1c1f27 10px, #21242e 10px, #21242e 20px); color: #5a6072; font-size: 0.85rem; }
+        .session-timer { font-size: 1.9rem; font-weight: 700; font-variant-numeric: tabular-nums; color: #22c55e; }
+        .session-timer.warn { color: #f59e0b; }
+        .session-timer.expired { color: #ef4444; }
+        .workstation-card { cursor: pointer; transition: border-color .2s, transform .15s; }
+        .workstation-card:hover { border-color: #3b82f6; transform: translateY(-2px); }
+        .workstation-card.flash-infraction { border-color: #ef4444 !important; box-shadow: 0 0 0 3px rgba(239,68,68,.35); animation: flashbg 0.6s ease 3; }
+        @@keyframes flashbg { 0%,100% { background-color: #1c1f27; } 50% { background-color: rgba(239,68,68,.25); } }
+        .avatar { width: 38px; height: 38px; border-radius: 50%; background-color: #3b82f6; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+        .alert-dropdown { max-height: 320px; overflow-y: auto; width: 360px; }
+        .offcanvas { background-color: #1c1f27; color: #e6e6e6; }
+        .form-select, .form-control, .input-group-text { background-color: #232733; color: #e6e6e6; border-color: #2a2e38; }
+        .btn-outline-light { --bs-btn-border-color: #3a3f4d; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark navbar-expand-lg" style="background-color:#1a1d24;">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/Teacher/Dashboard"><i class="bi bi-person-workspace"></i> CAMS Teacher</a>
+            <div class="d-flex align-items-center gap-2 text-light">
+                <span class="small">@ViewContext.HttpContext.Session.GetString("TeacherName")</span>
+                <a href="/Account/Logout" class="btn btn-sm btn-outline-danger">Logout</a>
+            </div>
+        </div>
+    </nav>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-2 col-md-3 pt-3">
+                <ul class="nav nav-pills flex-column gap-1">
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")" href="/Teacher/Dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Sessions" ? "active" : "")" href="/Teacher/Sessions"><i class="bi bi-play-circle"></i> Session Management</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Students" ? "active" : "")" href="/Teacher/Students"><i class="bi bi-people"></i> Students</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Computers" ? "active" : "")" href="/Teacher/Computers"><i class="bi bi-pc-display"></i> Computers</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Monitoring" ? "active" : "")" href="/Teacher/Monitoring"><i class="bi bi-camera-video"></i> Live Monitoring</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Restrictions" ? "active" : "")" href="/Teacher/Restrictions"><i class="bi bi-slash-circle"></i> Access Restrictions</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Records" ? "active" : "")" href="/Teacher/Records"><i class="bi bi-journal"></i> Classroom Records</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-10 col-md-9 pt-3 pb-5">
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+    <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

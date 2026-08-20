@@ -1,0 +1,38 @@
+@{
+    ViewData["Title"] = "Teacher Dashboard";
+    Layout = "_TeacherLayout";
+}
+
+<h4 class="fw-bold mb-4"><i class="bi bi-speedometer2"></i> Teacher Dashboard</h4>
+
+<div class="row g-3">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Running Sessions</div>
+                <div class="stat text-success">@ViewBag.RunningSessions</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Active Students</div>
+                <div class="stat text-primary">@ViewBag.ActiveStudents</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-bold">Quick Actions</div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-6"><a class="btn btn-outline-primary w-100" href="/Teacher/Sessions">Session Management</a></div>
+                    <div class="col-6"><a class="btn btn-outline-primary w-100" href="/Teacher/Monitoring">Live Monitoring</a></div>
+                    <div class="col-6"><a class="btn btn-outline-secondary w-100" href="/Teacher/Restrictions">Access Restrictions</a></div>
+                    <div class="col-6"><a class="btn btn-outline-secondary w-100" href="/Teacher/Records">Classroom Records</a></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,77 @@
+@model Server.Models.Class
+@{
+    ViewData["Title"] = "Class Details – " + Model.ClassName;
+    Layout = "_Layout";
+}
+
+<h4 class="fw-bold mb-4">
+    <a href="/Admin/Classes" class="text-decoration-none text-light">&larr; Classes</a> /
+    <span>@Model.ClassName</span>
+</h4>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card"><div class="card-header small text-muted">Section</div><div class="card-body fw-bold">@Model.Section</div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card"><div class="card-header small text-muted">Subject</div><div class="card-body fw-bold">@Model.Subject</div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card"><div class="card-header small text-muted">Grade Level</div><div class="card-body fw-bold">@Model.GradeLevel</div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card"><div class="card-header small text-muted">Schedule</div><div class="card-body fw-bold">@Model.Schedule</div></div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header fw-bold">Enrolled Students (@Model.ClassStudents.Count)</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Student Number</th><th>Name</th><th>Enrolled</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var cs in Model.ClassStudents.OrderBy(cs => cs.Student?.FullName))
+                {
+                    <tr>
+                        <td>@cs.Student?.StudentNumber</td>
+                        <td>@cs.Student?.FullName</td>
+                        <td>@cs.EnrolledAt.ToString("yyyy-MM-dd")</td>
+                        <td>
+                            <form method="post" action="/Admin/RemoveStudent" style="display:inline">
+                                <input type="hidden" name="classId" value="@Model.ClassId" />
+                                <input type="hidden" name="studentId" value="@cs.StudentId" />
+                                <button class="btn btn-sm btn-outline-danger">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.ClassStudents.Any())
+                {
+                    <tr><td colspan="4" class="text-muted text-center">No students enrolled. Add one below.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header fw-bold">Add Student to Class</div>
+    <div class="card-body">
+        <form method="post" action="/Admin/EnrollStudent" class="row g-2 align-items-end">
+            <input type="hidden" name="classId" value="@Model.ClassId" />
+            <div class="col-md-10">
+                <select name="studentId" class="form-select" required>
+                    <option value="">-- Select a student --</option>
+                    @foreach (var s in (ViewBag.AllStudents as IEnumerable<Server.Models.Student>) ?? new List<Server.Models.Student>())
+                    {
+                        @if (!Model.ClassStudents.Any(cs => cs.StudentId == s.Id))
+                        {
+                            <option value="@s.Id">@s.StudentNumber — @s.FullName</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-2"><button class="btn btn-primary w-100">Enroll</button></div>
+        </form>
+    </div>
+</div>

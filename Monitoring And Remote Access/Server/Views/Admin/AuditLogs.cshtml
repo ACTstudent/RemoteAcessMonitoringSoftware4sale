@@ -1,0 +1,31 @@
+@model IEnumerable<Server.Models.AuditLog>
+@{
+    ViewData["Title"] = "Audit Trail";
+    Layout = "_Layout";
+}
+
+<h4 class="fw-bold mb-4 d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-journal-text"></i> View Basic Audit Trail</span>
+    <a href="/Admin/ExportAuditCsv" class="btn btn-sm btn-outline-light"><i class="bi bi-download"></i> Export CSV</a>
+</h4>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Timestamp</th><th>User Type</th><th>User ID</th><th>Action</th><th>Details</th><th>IP</th></tr></thead>
+            <tbody>
+                @foreach (var a in Model)
+                {
+                    <tr>
+                        <td>@a.Timestamp.ToString("MM/dd/yyyy HH:mm:ss")</td>
+                        <td><span class="badge bg-info text-dark">@a.UserType</span></td>
+                        <td>@a.UserId</td>
+                        <td>@a.Action</td>
+                        <td>@a.Details</td>
+                        <td>@a.IpAddress</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

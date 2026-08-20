@@ -1,0 +1,32 @@
+@{
+    ViewData["Title"] = "Account Settings";
+    Layout = "_StudentLayout";
+}
+
+<h4 class="fw-bold mb-4"><i class="bi bi-gear"></i> Account Settings</h4>
+
+<div class="card">
+    <div class="card-header fw-bold">Manage Profile / Reset Password</div>
+    <div class="card-body">
+        @if (!string.IsNullOrEmpty(ViewBag.Error))
+        {
+            <div class="alert alert-danger">@ViewBag.Error</div>
+        }
+        @if (!string.IsNullOrEmpty(ViewBag.Success))
+        {
+            <div class="alert alert-success">@ViewBag.Success</div>
+        }
+
+        <form method="post" action="/Student/ResetPassword">
+            <div class="mb-3">
+                <label class="form-label">Current Password</label>
+                <input type="password" name="currentPassword" class="form-control" required />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">New Password</label>
+                <input type="password" name="newPassword" class="form-control" minlength="4" required />
+            </div>
+            <button class="btn btn-primary">Reset Password</button>
+        </form>
+    </div>
+</div>

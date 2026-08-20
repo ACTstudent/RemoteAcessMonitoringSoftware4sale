@@ -1,0 +1,68 @@
+@model IEnumerable<Server.Models.RestrictionRule>
+@{
+    ViewData["Title"] = "Restriction Rules";
+    Layout = "_Layout";
+}
+
+<h4 class="fw-bold mb-4"><i class="bi bi-slash-circle"></i> Whitelist / Blacklist Restriction Manager</h4>
+
+<div class="card mb-4">
+    <div class="card-header fw-bold">Add Restriction Rule</div>
+    <div class="card-body">
+        <form method="post" action="/Admin/CreateRestriction" class="row g-2">
+            <div class="col-md-2">
+                <select name="RuleType" class="form-select">
+                    <option value="Application">Application</option>
+                    <option value="Website">Website</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="Mode" class="form-select">
+                    <option value="Block" selected>Block</option>
+                    <option value="Allow">Allow (whitelist)</option>
+                </select>
+            </div>
+            <div class="col-md-3"><input name="Target" class="form-control" placeholder="App name or URL" required /></div>
+            <div class="col-md-3"><input name="Description" class="form-control" placeholder="Description" /></div>
+            <div class="col-md-2"><button class="btn btn-primary w-100">Add Rule</button></div>
+        </form>
+        <div class="text-muted small mt-2">
+            <b>Block</b> — student is stopped from running/opening the target (violations alert the teacher).
+            <b>Allow (whitelist)</b> — student may only use targets on the allow list; everything else triggers a violation.
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header fw-bold">Restriction Rules</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Type</th><th>Mode</th><th>Target</th><th>Description</th><th>Global</th><th>Active</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td><span class="badge bg-secondary">@r.RuleType</span></td>
+                        <td>
+                            @if (r.Mode == "Allow")
+                            {
+                                <span class="badge bg-success">Allow</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Block</span>
+                            }
+                        </td>
+                        <td>@r.Target</td>
+                        <td>@r.Description</td>
+                        <td>@(r.IsGlobal ? "Yes" : "No")</td>
+                        <td>@(r.IsActive ? "Yes" : "No")</td>
+                        <td>
+                            <form method="post" action="/Admin/DeleteRestriction"><input type="hidden" name="id" value="@r.RestrictionRuleId" /><button class="btn btn-sm btn-danger">Delete</button></form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,60 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - CAMS Admin</title>
+    <link href="~/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet" />
+    <style>
+        body { background-color: #12141a; color: #e6e6e6; }
+        .card { background-color: #1c1f27; border: 1px solid #2a2e38; }
+        .card-header { background-color: #232733; border-bottom: 1px solid #2a2e38; }
+        .table { color: #e6e6e6; --bs-table-bg: transparent; }
+        .table thead th { color: #9aa0b0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .nav-link { color: #b6bac6; }
+        .nav-link.active { background-color: #3b82f6; color: #fff; }
+        .nav-link:hover { color: #fff; }
+        .stat { font-size: 1.6rem; font-weight: 700; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark navbar-expand-lg" style="background-color:#1a1d24;">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/Admin"><i class="bi bi-shield-lock"></i> CAMS Administrator</a>
+            <div class="d-flex align-items-center gap-2 text-light">
+                <span class="small">@ViewContext.HttpContext.Session.GetString("AdminName")</span>
+                <a href="/Account/Logout" class="btn btn-sm btn-outline-danger">Logout</a>
+            </div>
+        </div>
+    </nav>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-2 col-md-3 pt-3">
+                <ul class="nav nav-pills flex-column gap-1">
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")" href="/Admin"><i class="bi bi-grid"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Teachers" ? "active" : "")" href="/Admin/Teachers"><i class="bi bi-person-badge"></i> Teacher Accounts</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Students" ? "active" : "")" href="/Admin/Students"><i class="bi bi-people"></i> Student Accounts</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() is "Classes" or "ClassDetails" ? "active" : "")" href="/Admin/Classes"><i class="bi bi-diagram-3"></i> Classes</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Roles" ? "active" : "")" href="/Admin/Roles"><i class="bi bi-key"></i> Roles &amp; Permissions</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Computers" ? "active" : "")" href="/Admin/Computers"><i class="bi bi-pc-display"></i> Computer Profiles</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Restrictions" ? "active" : "")" href="/Admin/Restrictions"><i class="bi bi-slash-circle"></i> Restriction Rules</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Blacklists" ? "active" : "")" href="/Admin/Blacklists"><i class="bi bi-ban"></i> Blacklists</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "SessionRules" ? "active" : "")" href="/Admin/SessionRules"><i class="bi bi-hourglass-split"></i> Session Rules</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "LanConfig" ? "active" : "")" href="/Admin/LanConfig"><i class="bi bi-router"></i> LAN Configuration</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Reports" ? "active" : "")" href="/Admin/Reports"><i class="bi bi-bar-chart"></i> Reports</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "AuditLogs" ? "active" : "")" href="/Admin/AuditLogs"><i class="bi bi-journal-text"></i> Audit Trail</a></li>
+                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "SystemLogs" ? "active" : "")" href="/Admin/SystemLogs"><i class="bi bi-bug"></i> System Logs</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-10 col-md-9 pt-3 pb-5">
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+    <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
