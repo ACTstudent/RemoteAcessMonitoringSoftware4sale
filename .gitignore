@@ -5,6 +5,7 @@ server-publish/
 server-dist/
 client-publish/
 client-dist/
+dist/
 *.user
 .vs/
 *.db
