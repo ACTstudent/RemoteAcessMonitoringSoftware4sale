@@ -1,0 +1,64 @@
+name: Build & Release CAMS Installers
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install Inno Setup 6
+        run: |
+          choco install innosetup -y --version 6.2.2
+          echo "C:\Program Files (x86)\Inno Setup 6" >> $GITHUB_PATH
+
+      - name: Build solution
+        run: |
+          cd "Monitoring And Remote Access"
+          dotnet build RemoteMonitoring.sln -c Release -v q
+
+      - name: Publish server
+        run: |
+          cd "Monitoring And Remote Access"
+          dotnet publish Server/Server.csproj -c Release -o ../../server-publish -v q
+
+      - name: Publish client (self-contained, single-file)
+        run: |
+          cd "Monitoring And Remote Access"
+          dotnet publish Client/Client.csproj -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:EnableCompressionInSingleFile=true -p:PublishReadyToRun=true `
+            -o ../../client-publish -v q
+
+      - name: Build installers with Inno Setup
+        run: |
+          New-Item -ItemType Directory -Force -Path server-dist, client-dist | Out-Null
+          iscc /oserver-dist server-installer.iss
+          iscc /oclient-dist client-installer.iss
+
+      - name: Unblock installers
+        run: |
+          Get-ChildItem -Path server-dist, client-dist -Recurse -Include *.exe | ForEach-Object { Unblock-File $_.FullName -ErrorAction SilentlyContinue }
+
+      - name: Create Release & Upload
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            server-dist/CAMS-Server-Setup.exe
+            client-dist/CAMS-Client-Setup.exe
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
