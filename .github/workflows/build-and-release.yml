@@ -20,9 +20,9 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Install Inno Setup 6
+      - name: Find Inno Setup
+        id: iscc
         run: |
-          # Inno Setup is pre-installed on windows-latest, but let's verify
           $isccPath = @(
             "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
             "C:\Program Files\Inno Setup 6\ISCC.exe"
@@ -42,7 +42,7 @@ jobs:
             exit 1
           }
           Write-Host "Found ISCC at: $isccPath"
-          echo "ISCC_PATH=$isccPath" >> $GITHUB_ENV
+          echo "path=$isccPath" >> $GITHUB_OUTPUT
 
       - name: Build solution
         run: |
@@ -64,10 +64,13 @@ jobs:
 
       - name: Build installers with Inno Setup
         run: |
-          New-Item -ItemType Directory -Force -Path server-dist, client-dist | Out-Null
-          $iscc = $env:ISCC_PATH
-          & $iscc "/oserver-dist" "server-installer.iss"
-          & $iscc "/oclient-dist" "client-installer.iss"
+          $iscc = "${{ steps.iscc.outputs.path }}"
+          $root = $PSScriptRoot
+          $serverDist = Join-Path $root "server-dist"
+          $clientDist = Join-Path $root "client-dist"
+          New-Item -ItemType Directory -Force -Path $serverDist, $clientDist | Out-Null
+          & $iscc "/o$serverDist" (Join-Path $root "server-installer.iss")
+          & $iscc "/o$clientDist" (Join-Path $root "client-installer.iss")
 
       - name: Unblock installers
         run: |
