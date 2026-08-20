@@ -21,7 +21,6 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Find Inno Setup
-        id: iscc
         run: |
           $isccPath = @(
             "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
@@ -42,7 +41,7 @@ jobs:
             exit 1
           }
           Write-Host "Found ISCC at: $isccPath"
-          echo "path=$isccPath" >> $GITHUB_OUTPUT
+          echo "ISCC_PATH=$isccPath" >> $GITHUB_ENV
 
       - name: Build solution
         run: |
@@ -64,7 +63,7 @@ jobs:
 
       - name: Build installers with Inno Setup
         run: |
-          $iscc = "${{ steps.iscc.outputs.path }}"
+          $iscc = $env:ISCC_PATH
           $root = $PSScriptRoot
           $serverDist = Join-Path $root "server-dist"
           $clientDist = Join-Path $root "client-dist"
