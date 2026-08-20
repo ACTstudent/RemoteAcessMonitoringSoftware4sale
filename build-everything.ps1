@@ -7,7 +7,7 @@
 
 $ErrorActionPreference = "Stop"
 $root = $PSScriptRoot
-$version = "2.5.0"
+$version = "2.5.2"
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Magenta
