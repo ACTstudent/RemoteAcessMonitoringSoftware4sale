@@ -8,14 +8,17 @@ A LAN-based classroom management and monitoring application built with ASP.NET C
 
 ## Download (pre-built — no .NET SDK or compiling needed)
 
-Grab the installer wizard for your machine from the [latest release](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/tag/v2.5.1):
+[![Download Server](https://img.shields.io/badge/Download-CAMS_Server_Setup.exe-blue)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Server-Setup.exe)
+[![Download Client](https://img.shields.io/badge/Download-CAMS_Client_Setup.exe-green)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Client-Setup.exe)
 
 | Package | Download | For |
 |---|---|---|
-| **CAMS Server Installer** | [CAMS-Server-Setup.exe](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.1/CAMS-Server-Setup.exe) | Teacher / lab PC |
-| **CAMS Student Client Installer** | [CAMS-Client-Setup.exe](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.1/CAMS-Client-Setup.exe) | Each student PC |
+| **CAMS Server Installer** | [CAMS-Server-Setup.exe](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Server-Setup.exe) | Teacher / lab PC |
+| **CAMS Student Client Installer** | [CAMS-Client-Setup.exe](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Client-Setup.exe) | Each student PC |
 
 Both are **self-contained installer wizards**: download and run the `.exe` — the wizard handles everything (no .NET install needed on any PC). The server auto-creates its database on first run; student clients auto-discover the server on the LAN.
+
+> **Note:** After downloading, right-click the `.exe` → **Properties** → check **Unblock** → **Apply** → **OK**. Then run the installer. (See [Troubleshooting](#troubleshooting))
 
 ---
 
