@@ -45,6 +45,36 @@ namespace Server.Hubs
         {
             _connectionRoles[Context.ConnectionId] = "Student";
             var student = _monitoringService.RegisterStudent(Context.ConnectionId, studentId, pcName);
+
+            // Auto-create or update computer profile in DB
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                var computer = await db.Computers.FirstOrDefaultAsync(c => c.LaboratoryStation == pcName);
+                if (computer == null)
+                {
+                    computer = new Computer
+                    {
+                        LaboratoryStation = pcName,
+                        Status = "Online",
+                        AssignedTo = studentId
+                    };
+                    db.Computers.Add(computer);
+                }
+                else
+                {
+                    computer.Status = "Online";
+                    computer.AssignedTo = studentId;
+                    db.Computers.Update(computer);
+                }
+                await db.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CAMS] Error auto-registering computer profile: {ex.Message}");
+            }
+
             await Groups.AddToGroupAsync(Context.ConnectionId, HubEventNames.StudentsGroup);
             await Clients.Group(HubEventNames.TeachersGroup)
                 .SendAsync(HubEventNames.StudentConnected, student);
