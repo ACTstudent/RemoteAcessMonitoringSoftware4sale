@@ -22,8 +22,27 @@ jobs:
 
       - name: Install Inno Setup 6
         run: |
-          choco install innosetup -y --version 6.2.2
-          echo "C:\Program Files (x86)\Inno Setup 6" >> $GITHUB_PATH
+          # Inno Setup is pre-installed on windows-latest, but let's verify
+          $isccPath = @(
+            "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+            "C:\Program Files\Inno Setup 6\ISCC.exe"
+            "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+            "${env:ProgramFiles}\Inno Setup 6\ISCC.exe"
+          ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $isccPath) {
+            Write-Host "Inno Setup not found, installing via Chocolatey..."
+            choco install innosetup -y --version 6.2.2 --no-progress
+            $isccPath = @(
+              "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+              "C:\Program Files\Inno Setup 6\ISCC.exe"
+            ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+          }
+          if (-not $isccPath) {
+            Write-Host "ERROR: Inno Setup ISCC.exe not found after install"
+            exit 1
+          }
+          Write-Host "Found ISCC at: $isccPath"
+          echo "ISCC_PATH=$isccPath" >> $GITHUB_ENV
 
       - name: Build solution
         run: |
@@ -46,8 +65,9 @@ jobs:
       - name: Build installers with Inno Setup
         run: |
           New-Item -ItemType Directory -Force -Path server-dist, client-dist | Out-Null
-          iscc /oserver-dist server-installer.iss
-          iscc /oclient-dist client-installer.iss
+          $iscc = $env:ISCC_PATH
+          & $iscc "/oserver-dist" "server-installer.iss"
+          & $iscc "/oclient-dist" "client-installer.iss"
 
       - name: Unblock installers
         run: |
