@@ -26,6 +26,7 @@ No .NET SDK or compilation required. Download the pre-built installer or source 
 
 - **Real-Time Live Monitoring:** High-performance screen monitoring grid on the teacher dashboard via SignalR websockets.
 - **LAN Auto-Discovery:** Automatic server broadcasting over UDP so student clients connect instantly without manual IP configuration.
+- **Automatic Computer Profile Registration:** Student workstations automatically register and provision computer profiles on the server upon client connection.
 - **Role-Based Access Control (RBAC):** Dedicated portals and permissions for Administrators, Teachers, and Students.
 - **Lab Session Automation:** 45-minute lab session countdown timers, automated attendance logs, and workstation locking.
 - **Security & Policy Enforcement:** Application and URL restriction blacklisting during active lab sessions.
