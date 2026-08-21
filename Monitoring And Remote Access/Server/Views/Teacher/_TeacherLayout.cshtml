@@ -1,0 +1,108 @@
+@using Microsoft.AspNetCore.Http
+@{
+    var currentPath = Context.Request.Path.Value ?? "";
+    var role = Context.Session.GetString("Role");
+    var username = Context.Session.GetString("Username") ?? "Admin";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Pardo Elementary School</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/pro.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="app-wrapper">
+        <!-- Dark Green Sidebar -->
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <img src="~/images/pardo_logo.png" alt="Pardo Elementary School Cebu City" class="school-logo-img" />
+            </div>
+
+            <nav class="sidebar-nav">
+                <a asp-page="/Index" class="nav-item-custom @(currentPath == "/" || currentPath.StartsWith("/Index") ? "active" : "")">
+                    <i class="bi bi-grid-fill"></i>
+                    <span>Dashboard</span>
+                </a>
+
+                <div class="sidebar-label">Management</div>
+
+                @if (role == "Admin")
+                {
+                    <a asp-page="/Teachers/Index" class="nav-item-custom @(currentPath.StartsWith("/Teachers") ? "active" : "")">
+                        <i class="bi bi-person-badge-fill"></i>
+                        <span>Teacher Management</span>
+                    </a>
+                }
+
+                <a asp-page="/ClassManagement/Index" class="nav-item-custom @(currentPath.StartsWith("/ClassManagement") ? "active" : "")">
+                    <i class="bi bi-folder-fill"></i>
+                    <span>Class Management</span>
+                </a>
+
+                <a asp-page="/Students/Index" class="nav-item-custom @(currentPath.StartsWith("/Students") ? "active" : "")">
+                    <i class="bi bi-mortarboard-fill"></i>
+                    <span>Student Management</span>
+                </a>
+
+                @if (role == "Admin" || role == "Teacher")
+                {
+                    <a asp-page="/ComputerProfiles/Index" class="nav-item-custom @(currentPath.StartsWith("/ComputerProfiles") ? "active" : "")">
+                        <i class="bi bi-pc-display"></i>
+                        <span>Computer Profile</span>
+                    </a>
+                }
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="app-main">
+            <!-- Top Header Navbar -->
+            <header class="app-header">
+                <button class="btn-toggle-sidebar" id="sidebarToggle" type="button" aria-label="Toggle Navigation">
+                    <i class="bi bi-list"></i>
+                </button>
+
+                <div class="d-flex align-items-center gap-3">
+                    @if (Context.Session.GetString("Username") != null)
+                    {
+                        <div class="user-profile-badge">
+                            <span>@username</span>
+                            <div class="user-avatar-circle">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                        </div>
+                        <a asp-page="/Account/Logout" class="btn btn-outline-danger btn-sm rounded-pill ms-2" title="Logout">
+                            <i class="bi bi-box-arrow-right"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-page="/Account/Login" class="btn btn-sm btn-success rounded-pill px-3">Login</a>
+                    }
+                </div>
+            </header>
+
+            <!-- Body Content -->
+            <main role="main" class="content-padding">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        document.getElementById('sidebarToggle')?.addEventListener('click', function () {
+            document.getElementById('appSidebar')?.classList.toggle('show');
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
