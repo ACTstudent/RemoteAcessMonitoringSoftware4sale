@@ -366,9 +366,18 @@ namespace Server.Controllers
         {
             if (!CheckAccess()) return Denied();
             var classes = await _context.Classes
+                .Include(c => c.Teacher)
+                .Include(c => c.Students)
                 .Include(c => c.ClassStudents)
+                    .ThenInclude(cs => cs.Student)
                 .OrderBy(c => c.ClassName)
                 .ToListAsync();
+
+            ViewBag.TeacherList = await _context.Teachers
+                .Where(t => t.Status == "Active" || string.IsNullOrEmpty(t.Status))
+                .OrderBy(t => t.FirstName)
+                .ToListAsync();
+
             return View(classes);
         }
 
@@ -376,10 +385,20 @@ namespace Server.Controllers
         public async Task<IActionResult> CreateClass(Class cls)
         {
             if (!CheckAccess()) return Denied();
+            if (string.IsNullOrWhiteSpace(cls.ClassName))
+            {
+                TempData["ErrorMessage"] = "Section Name is required.";
+                return RedirectToAction("Classes");
+            }
+
             cls.CreatedAt = DateTime.Now;
+            cls.Status = string.IsNullOrWhiteSpace(cls.Status) ? "Active" : cls.Status;
+            cls.AcademicYear = string.IsNullOrWhiteSpace(cls.AcademicYear) ? "2026-2027" : cls.AcademicYear;
+            
             _context.Classes.Add(cls);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateClass", $"Created class '{cls.ClassName}'");
+            TempData["Message"] = $"Class '{cls.ClassName}' created successfully!";
             return RedirectToAction("Classes");
         }
 
@@ -389,14 +408,58 @@ namespace Server.Controllers
             if (!CheckAccess()) return Denied();
             var existing = await _context.Classes.FindAsync(cls.ClassId);
             if (existing == null) return RedirectToAction("Classes");
-            existing.ClassName = cls.ClassName;
-            existing.Section = cls.Section;
-            existing.Subject = cls.Subject;
-            existing.GradeLevel = cls.GradeLevel;
-            existing.Schedule = cls.Schedule;
+
+            string oldName = existing.ClassName;
+            existing.ClassName = string.IsNullOrWhiteSpace(cls.ClassName) ? existing.ClassName : cls.ClassName.Trim();
+            existing.Section = string.IsNullOrWhiteSpace(cls.Section) ? existing.Section : cls.Section.Trim();
+            existing.Subject = string.IsNullOrWhiteSpace(cls.Subject) ? existing.Subject : cls.Subject.Trim();
+            existing.GradeLevel = string.IsNullOrWhiteSpace(cls.GradeLevel) ? existing.GradeLevel : cls.GradeLevel.Trim();
+            existing.Schedule = string.IsNullOrWhiteSpace(cls.Schedule) ? existing.Schedule : cls.Schedule.Trim();
+            existing.AcademicYear = string.IsNullOrWhiteSpace(cls.AcademicYear) ? existing.AcademicYear : cls.AcademicYear.Trim();
+            existing.Status = string.IsNullOrWhiteSpace(cls.Status) ? existing.Status : cls.Status.Trim();
+            existing.TeacherId = cls.TeacherId;
+
+            // Sync enrolled students grade section and adviser
+            var enrolledStudents = await _context.Students
+                .Where(s => s.ClassId == existing.ClassId || (s.GradeSection != null && s.GradeSection == oldName))
+                .ToListAsync();
+
+            foreach (var st in enrolledStudents)
+            {
+                st.ClassId = existing.ClassId;
+                st.GradeSection = existing.ClassName;
+                st.AdviserId = existing.TeacherId;
+            }
+
             await _context.SaveChangesAsync();
-            await AuditAsync("UpdateClass", $"Updated class '{cls.ClassName}'");
+            await AuditAsync("UpdateClass", $"Updated class '{existing.ClassName}'");
+            TempData["Message"] = $"Class '{existing.ClassName}' updated successfully!";
             return RedirectToAction("Classes");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AssignTeacher(int classId, int? teacherId)
+        {
+            if (!CheckAccess()) return Denied();
+            var cls = await _context.Classes.FindAsync(classId);
+            if (cls != null)
+            {
+                cls.TeacherId = teacherId;
+                var enrolledStudents = await _context.Students
+                    .Where(s => s.ClassId == cls.ClassId || (s.GradeSection != null && s.GradeSection == cls.ClassName))
+                    .ToListAsync();
+
+                foreach (var st in enrolledStudents)
+                {
+                    st.AdviserId = teacherId;
+                    st.ClassId = cls.ClassId;
+                }
+
+                await _context.SaveChangesAsync();
+                await AuditAsync("AssignTeacher", $"Assigned teacher {teacherId} to class '{cls.ClassName}'");
+                TempData["Message"] = "Teacher assigned successfully to the class!";
+            }
+            return RedirectToAction("ClassDetails", new { id = classId });
         }
 
         [HttpPost]
@@ -406,9 +469,40 @@ namespace Server.Controllers
             var existing = await _context.Classes.FindAsync(id);
             if (existing != null)
             {
-                existing.IsArchived = true;
+                existing.IsArchived = !existing.IsArchived;
+                existing.Status = existing.IsArchived ? "Archived" : "Active";
                 await _context.SaveChangesAsync();
-                await AuditAsync("ArchiveClass", $"Archived class '{existing.ClassName}'");
+                await AuditAsync("ArchiveClass", $"Updated class status for '{existing.ClassName}' to {existing.Status}");
+                TempData["Message"] = $"Class '{existing.ClassName}' status updated to {existing.Status}.";
+            }
+            return RedirectToAction("Classes");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteClass(int classId)
+        {
+            if (!CheckAccess()) return Denied();
+            var targetClass = await _context.Classes.FindAsync(classId);
+            if (targetClass != null)
+            {
+                var enrolledStudents = await _context.Students
+                    .Where(s => s.ClassId == targetClass.ClassId || (s.GradeSection != null && s.GradeSection == targetClass.ClassName))
+                    .ToListAsync();
+
+                foreach (var st in enrolledStudents)
+                {
+                    st.ClassId = null;
+                    st.GradeSection = string.Empty;
+                    st.AdviserId = null;
+                }
+
+                var joinRecords = await _context.ClassStudents.Where(cs => cs.ClassId == targetClass.ClassId).ToListAsync();
+                _context.ClassStudents.RemoveRange(joinRecords);
+
+                _context.Classes.Remove(targetClass);
+                await _context.SaveChangesAsync();
+                await AuditAsync("DeleteClass", $"Deleted class '{targetClass.ClassName}'");
+                TempData["Message"] = $"Class '{targetClass.ClassName}' deleted successfully!";
             }
             return RedirectToAction("Classes");
         }
@@ -417,25 +511,146 @@ namespace Server.Controllers
         {
             if (!CheckAccess()) return Denied();
             var cls = await _context.Classes
+                .Include(c => c.Teacher)
+                .Include(c => c.Students)
                 .Include(c => c.ClassStudents)
                     .ThenInclude(cs => cs.Student)
                 .FirstOrDefaultAsync(c => c.ClassId == id);
             if (cls == null) return RedirectToAction("Classes");
+
+            var enrolledList = await _context.Students
+                .Include(s => s.Adviser)
+                .Where(s => s.ClassId == cls.ClassId || (s.GradeSection != null && s.GradeSection == cls.ClassName) || cls.ClassStudents.Any(cs => cs.StudentId == s.Id))
+                .ToListAsync();
+
+            ViewBag.EnrolledStudents = enrolledList;
+            ViewBag.AvailableTeachers = await _context.Teachers.Where(t => t.Status == "Active" || string.IsNullOrEmpty(t.Status)).ToListAsync();
             ViewBag.AllStudents = await _context.Students.OrderBy(s => s.FullName).ToListAsync();
             return View(cls);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddStudentToClass(int classId, string firstName, string lastName, string? username, string? password)
+        {
+            if (!CheckAccess()) return Denied();
+            var cls = await _context.Classes.FindAsync(classId);
+            if (cls == null) return RedirectToAction("Classes");
+
+            if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
+            {
+                TempData["ErrorMessage"] = "First Name and Last Name are required.";
+                return RedirectToAction("ClassDetails", new { id = classId });
+            }
+
+            string uName = string.IsNullOrWhiteSpace(username)
+                ? $"{firstName.ToLower().Replace(" ", "")}.{lastName.ToLower().Replace(" ", "")}"
+                : username.Trim();
+            string pwd = string.IsNullOrWhiteSpace(password) ? "student123" : password.Trim();
+
+            var student = new Student
+            {
+                StudentNumber = $"STU-{DateTime.Now:yyyy}-{new Random().Next(100, 999)}",
+                FirstName = firstName.Trim(),
+                LastName = lastName.Trim(),
+                FullName = $"{firstName.Trim()} {lastName.Trim()}",
+                Username = uName,
+                PasswordHash = _hasher.HashPassword(null, pwd),
+                Status = "Active",
+                GradeSection = cls.ClassName,
+                ClassId = cls.ClassId,
+                AdviserId = cls.TeacherId
+            };
+
+            _context.Students.Add(student);
+            await _context.SaveChangesAsync();
+
+            _context.ClassStudents.Add(new ClassStudent { ClassId = cls.ClassId, StudentId = student.Id });
+            await _context.SaveChangesAsync();
+
+            await AuditAsync("AddStudentToClass", $"Added student {student.FullName} to {cls.ClassName}");
+            TempData["Message"] = $"Student '{student.FullName}' added successfully!";
+            return RedirectToAction("ClassDetails", new { id = classId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> BulkAddStudents(int classId, List<string> bulkFirstNames, List<string> bulkLastNames, List<string> bulkUserNames, List<string> bulkPasswords)
+        {
+            if (!CheckAccess()) return Denied();
+            var cls = await _context.Classes.FindAsync(classId);
+            if (cls == null) return RedirectToAction("Classes");
+
+            if (bulkFirstNames == null || !bulkFirstNames.Any(f => !string.IsNullOrWhiteSpace(f)))
+            {
+                TempData["ErrorMessage"] = "Please fill in at least one student's First Name and Last Name.";
+                return RedirectToAction("ClassDetails", new { id = classId });
+            }
+
+            int addedCount = 0;
+            for (int i = 0; i < bulkFirstNames.Count; i++)
+            {
+                string fName = bulkFirstNames[i]?.Trim() ?? "";
+                string lName = (i < bulkLastNames.Count ? bulkLastNames[i]?.Trim() : "") ?? "";
+                string uName = (i < bulkUserNames.Count ? bulkUserNames[i]?.Trim() : "") ?? "";
+                string pwd = (i < bulkPasswords.Count ? bulkPasswords[i]?.Trim() : "") ?? "";
+
+                if (string.IsNullOrWhiteSpace(fName) && string.IsNullOrWhiteSpace(lName)) continue;
+                if (string.IsNullOrWhiteSpace(fName)) fName = "Student";
+                if (string.IsNullOrWhiteSpace(lName)) lName = "Student";
+
+                if (string.IsNullOrWhiteSpace(uName))
+                {
+                    uName = $"{fName.ToLower().Replace(" ", "")}.{lName.ToLower().Replace(" ", "")}{new Random().Next(100, 999)}";
+                }
+                if (string.IsNullOrWhiteSpace(pwd)) pwd = "student123";
+
+                var student = new Student
+                {
+                    StudentNumber = $"STU-{DateTime.Now:yyyy}-{new Random().Next(100, 999)}",
+                    FirstName = fName,
+                    LastName = lName,
+                    FullName = $"{fName} {lName}",
+                    Username = uName,
+                    PasswordHash = _hasher.HashPassword(null, pwd),
+                    Status = "Active",
+                    GradeSection = cls.ClassName,
+                    ClassId = cls.ClassId,
+                    AdviserId = cls.TeacherId
+                };
+
+                _context.Students.Add(student);
+                await _context.SaveChangesAsync();
+
+                _context.ClassStudents.Add(new ClassStudent { ClassId = cls.ClassId, StudentId = student.Id });
+                await _context.SaveChangesAsync();
+                addedCount++;
+            }
+
+            await AuditAsync("BulkAddStudents", $"Bulk added {addedCount} students to {cls.ClassName}");
+            TempData["Message"] = $"Successfully bulk added {addedCount} student(s) to {cls.ClassName}!";
+            return RedirectToAction("ClassDetails", new { id = classId });
         }
 
         [HttpPost]
         public async Task<IActionResult> EnrollStudent(int classId, int studentId)
         {
             if (!CheckAccess()) return Denied();
-            var exists = await _context.ClassStudents
-                .AnyAsync(cs => cs.ClassId == classId && cs.StudentId == studentId);
-            if (!exists)
+            var cls = await _context.Classes.FindAsync(classId);
+            var student = await _context.Students.FindAsync(studentId);
+            if (cls != null && student != null)
             {
-                _context.ClassStudents.Add(new ClassStudent { ClassId = classId, StudentId = studentId });
+                student.ClassId = cls.ClassId;
+                student.GradeSection = cls.ClassName;
+                student.AdviserId = cls.TeacherId;
+
+                var exists = await _context.ClassStudents.AnyAsync(cs => cs.ClassId == classId && cs.StudentId == studentId);
+                if (!exists)
+                {
+                    _context.ClassStudents.Add(new ClassStudent { ClassId = classId, StudentId = studentId });
+                }
+
                 await _context.SaveChangesAsync();
                 await AuditAsync("EnrollStudent", $"Enrolled student {studentId} in class {classId}");
+                TempData["Message"] = $"Student '{student.FullName}' enrolled in {cls.ClassName}!";
             }
             return RedirectToAction("ClassDetails", new { id = classId });
         }
@@ -444,14 +659,23 @@ namespace Server.Controllers
         public async Task<IActionResult> RemoveStudent(int classId, int studentId)
         {
             if (!CheckAccess()) return Denied();
-            var cs = await _context.ClassStudents
-                .FirstOrDefaultAsync(cs => cs.ClassId == classId && cs.StudentId == studentId);
+            var student = await _context.Students.FindAsync(studentId);
+            if (student != null)
+            {
+                student.ClassId = null;
+                student.GradeSection = string.Empty;
+                student.AdviserId = null;
+            }
+
+            var cs = await _context.ClassStudents.FirstOrDefaultAsync(cs => cs.ClassId == classId && cs.StudentId == studentId);
             if (cs != null)
             {
                 _context.ClassStudents.Remove(cs);
-                await _context.SaveChangesAsync();
-                await AuditAsync("RemoveStudent", $"Removed student {studentId} from class {classId}");
             }
+
+            await _context.SaveChangesAsync();
+            await AuditAsync("RemoveStudent", $"Removed student {studentId} from class {classId}");
+            TempData["Message"] = "Student removed from class.";
             return RedirectToAction("ClassDetails", new { id = classId });
         }
 

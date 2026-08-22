@@ -30,6 +30,12 @@ namespace Server.Models
 
         public string Status { get; set; } = "Active";
 
+        // Navigation: one Teacher manages many Students as Adviser
+        public ICollection<Student> Students { get; set; } = new List<Student>();
+
+        // Navigation: one Teacher manages many Classes as Instructor / Adviser
+        public ICollection<Class> Classes { get; set; } = new List<Class>();
+
         public ICollection<LabSession> LabSessions { get; set; } = new List<LabSession>();
     }
 }

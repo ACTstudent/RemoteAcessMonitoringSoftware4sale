@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Server.Models;
 
@@ -49,22 +49,32 @@ namespace Server.Data
                 .HasOne(cs => cs.Student)
                 .WithMany()
                 .HasForeignKey(cs => cs.StudentId);
+
+            // Relationships matching pro CRUD model
+            modelBuilder.Entity<Class>()
+                .HasOne(c => c.Teacher)
+                .WithMany(t => t.Classes)
+                .HasForeignKey(c => c.TeacherId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Student>()
+                .HasOne(s => s.Class)
+                .WithMany(c => c.Students)
+                .HasForeignKey(s => s.ClassId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Student>()
+                .HasOne(s => s.Adviser)
+                .WithMany(t => t.Students)
+                .HasForeignKey(s => s.AdviserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             modelBuilder.Entity<Admin>().HasData(new Admin
             {
                 Id = 1,
                 Username = "admin",
                 PasswordHash = hasher.HashPassword(null, "admin123"),
                 FullName = "System Administrator"
-            });
-
-            // Seed sample Student
-            modelBuilder.Entity<Student>().HasData(new Student
-            {
-                Id = 1,
-                StudentNumber = "STU-2026-001",
-                FullName = "John Doe",
-                Username = "student1",
-                PasswordHash = hasher.HashPassword(null, "student123")
             });
 
             // Seed sample Teacher
@@ -78,6 +88,36 @@ namespace Server.Data
                 PasswordHash = hasher.HashPassword(null, "teacher123"),
                 ContactNumber = "09171234567",
                 Status = "Active"
+            });
+
+            // Seed sample Class Section matching pro
+            modelBuilder.Entity<Class>().HasData(new Class
+            {
+                ClassId = 1,
+                ClassName = "Grade 6 - Sapphire",
+                Section = "Sapphire",
+                Subject = "Computer Education",
+                GradeLevel = "Grade 6",
+                Schedule = "MWF 8:00 AM - 9:00 AM",
+                AcademicYear = "2026-2027",
+                Status = "Active",
+                TeacherId = 1
+            });
+
+            // Seed sample Student matching pro
+            modelBuilder.Entity<Student>().HasData(new Student
+            {
+                Id = 1,
+                StudentNumber = "STU-2026-001",
+                FirstName = "John",
+                LastName = "Doe",
+                FullName = "John Doe",
+                Username = "student1",
+                PasswordHash = hasher.HashPassword(null, "student123"),
+                Status = "Active",
+                GradeSection = "Grade 6 - Sapphire",
+                ClassId = 1,
+                AdviserId = 1
             });
 
             // Seed roles
