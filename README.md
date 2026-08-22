@@ -3,7 +3,7 @@
 A LAN-based classroom management, real-time screen monitoring, and computer laboratory control system built for **Pardo Elementary School (Cebu City)**.
 
 [![Build Status](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/actions/workflows/ci-full.yml/badge.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/actions/workflows/ci-full.yml)
-[![Release](https://img.shields.io/github/v/release/ACTstudent/RemoteAcessMonitoringSoftware4sale?include_prereleases&color=emerald)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest)
+[![Release](https://img.shields.io/badge/Release-v2.5.3-emerald.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale)
 [![.NET](https://img.shields.io/badge/.NET-8.0-blueviolet)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![UI: Dark Emerald](https://img.shields.io/badge/UI-Dark%20Emerald-0B3C26)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -18,18 +18,23 @@ Featuring an official **Dark Emerald (`#0B3C26` / `#18181b` / `#10B981`) Design 
 
 ---
 
-## 📦 Direct Downloads (v2.5.3 - Dark Emerald UI)
+## 📦 Latest Installer Downloads (v2.5.3 - Tracked Binaries)
 
-Pre-built installer setup executables tracked directly in the repository:
+Pre-built installer setup executables tracked directly in the repository with complete **Dark Emerald UI**, **Primary Multi-Role Login**, and **`pro` CRUD Relationships**:
 
-| Package | Direct Download Link | Repository File Path | Target / Description |
-| :--- | :--- | :--- | :--- |
-| **CAMS Server Setup** | [📥 **Download CAMS-Server-Setup.exe**](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/raw/main/server-dist/CAMS-Server-Setup.exe) | [`server-dist/CAMS-Server-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/blob/main/server-dist/CAMS-Server-Setup.exe) | Teacher / Lab Control PC Installer (Includes Clean Installation Feature & Dark Emerald Web Portal) |
-| **CAMS Student Client** | [📥 **Download CAMS-Client-Setup.exe**](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/raw/main/client-dist/CAMS-Client-Setup.exe) | [`client-dist/CAMS-Client-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/blob/main/client-dist/CAMS-Client-Setup.exe) | Student Workstation Agent Installer (Includes Clean Installation Feature) |
+| Package | Direct Download Link | Repository File Path | Target / Description | File Size |
+| :--- | :--- | :--- | :--- | :--- |
+| **CAMS Server Setup** | [📥 **Download CAMS-Server-Setup.exe**](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/raw/main/server-dist/CAMS-Server-Setup.exe) | [`server-dist/CAMS-Server-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/blob/main/server-dist/CAMS-Server-Setup.exe) | Teacher / Lab Control PC Installer (Includes Clean Installation Feature & Dark Emerald Web Portal) | ~15 MB |
+| **CAMS Student Client** | [📥 **Download CAMS-Client-Setup.exe**](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/raw/main/client-dist/CAMS-Client-Setup.exe) | [`client-dist/CAMS-Client-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/blob/main/client-dist/CAMS-Client-Setup.exe) | Student Workstation Agent Installer (Includes Clean Installation Feature) | ~64 MB |
 
 ---
 
-## ✨ Key Features & UI System
+## ✨ Key Features & Primary Logic Systems
+
+### 🔑 Primary Multi-Role Login Authentication (`pro` Aligned)
+- **Role Routing**: Single entry point (`/Account/Login`) supporting **Admin**, **Teacher**, and **Student** login credentials.
+- **Session Management**: Automatically stores `Username`, `Role`, `AdminId`/`TeacherId`/`StudentId`, and `DisplayName` sessions for seamless authorization and auditing.
+- **Default Credentials**: Default seed accounts (`admin`/`admin123`, `teacher1`/`teacher123`, `student1`/`student123`) configured out-of-the-box.
 
 ### 🎨 Dark Emerald UI Design System (Figma & `pro` Aligned)
 - **Theme Palette**: Deep forest green (`#0B3C26`), slate dark (`#18181b`), emerald accents (`#10B981`), and soft slate backgrounds (`#F8FAFC`).
@@ -42,10 +47,11 @@ Pre-built installer setup executables tracked directly in the repository:
 - **Teacher Broadcast**: One-click screen broadcasting from the teacher's PC to all student monitors.
 - **Infraction Alerting**: Automatic application tracking, idle state detection, and warning popup overlays.
 
-### 📂 Integrated Class & Computer Profile Management
-- **Class Management**: Advisory and instructor section setup, subject schedules, academic year tracking, Create Class modals, and student roster enrollment in both Admin (`/Admin/Classes`) and Teacher (`/Teacher/Classes`) portals.
-- **Computer Profiles**: Station mapping (Station #, IP, MAC address, Assigned Room) and live station status badges (`Available`, `In Use`, `Maintenance`).
-- **Teacher & Student Accounts**: Full RBAC account directory with modal dialog creation and LRN/Student ID mapping.
+### 📂 Integrated Class & Computer Profile Management (`pro` Relationships)
+- **`Class` Section Model**: Section Name, Academic Year (`2026-2027`), Status (`Active`/`Archived`), assigned `Teacher` (Adviser/Instructor), and direct `Students` roster collection.
+- **`Student` Record Model**: `FirstName`, `LastName`, `FullName`, `Username`, `PasswordHash`, `Status`, `GradeSection`, Foreign Keys to `Class` and `Teacher` (Adviser).
+- **`Teacher` Record Model**: `FirstName`, `LastName`, `Email`, `ContactNumber`, `Status`, navigation collections for advised `Students` and assigned `Classes`.
+- **Complete CRUD Operations**: Single/Bulk student registration, class section creation/editing, instructor assignment, student unenrollment, and section archiving in Admin (`/Admin/Classes`) and Teacher (`/Teacher/Classes`) portals.
 
 ### ⏱ Timed Lab Sessions & Security Policies
 - **Lab Sessions**: Timed 45-minute laboratory sessions with real-time countdown timers and automated attendance logs.
@@ -87,7 +93,7 @@ Pre-built installer setup executables tracked directly in the repository:
 | **Client Agent** | WinForms (.NET 8), self-contained desktop process |
 | **Database** | SQLite via EF Core (`EnsureCreated()`) |
 | **Discovery** | UDP Broadcast |
-| **Tests & Packaging** | xUnit, Inno Setup 6 |
+| **Tests & Packaging** | xUnit (47/47 passing tests), Inno Setup 6 |
 
 ---
 
