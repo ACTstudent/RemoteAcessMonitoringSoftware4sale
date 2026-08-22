@@ -1,12 +1,9 @@
 ; CAMS Server - Inno Setup installer definition
 ; Builds "CAMS-Server-Setup.exe" - installs the server, opens the firewall,
-; and optionally launches the server on startup.
-; Requires Inno Setup 6: https://jrsoftware.org/isdl.php
-; Compile via publish.ps1 (automated) or manually:
-;   iscc /oserver-dist server-installer.iss
+; performs clean installation, and optionally launches the server on startup.
 
 #define MyAppName "CAMS Server"
-#define MyAppVersion "2.5.0"
+#define MyAppVersion "2.5.2"
 #define MyAppExeName "Server.exe"
 #define MyAppPublisher "CAMS"
 
@@ -27,13 +24,24 @@ WizardStyle=modern
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 PrivilegesRequired=admin
+CloseApplications=yes
+CloseApplicationsFilter=*.exe
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
+Name: "cleaninstall"; Description: "Clean installation (remove all old binary files & cached assets before installing)"; GroupDescription: "Installation Options:"; Flags: checkedonce
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-Name: "autostart";     Description: "Start the server automatically when Windows starts"; GroupDescription: "Startup:"; Flags: unchecked
+Name: "autostart"; Description: "Start the server automatically when Windows starts"; GroupDescription: "Startup:"; Flags: unchecked
+
+[InstallDelete]
+Type: filesandordirs; Name: "{app}\runtimes"; Tasks: cleaninstall
+Type: filesandordirs; Name: "{app}\wwwroot"; Tasks: cleaninstall
+Type: files; Name: "{app}\*.dll"; Tasks: cleaninstall
+Type: files; Name: "{app}\*.exe"; Tasks: cleaninstall
+Type: files; Name: "{app}\*.json"; Tasks: cleaninstall
+Type: files; Name: "{app}\*.pdb"; Tasks: cleaninstall
 
 [Files]
 Source: "server-publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs

@@ -2,7 +2,13 @@ using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Services;
 
-var builder = WebApplication.CreateBuilder(args);
+Directory.SetCurrentDirectory(AppContext.BaseDirectory);
+
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    ContentRootPath = AppContext.BaseDirectory
+});
 
 builder.Services.AddControllersWithViews();
 
@@ -24,8 +30,8 @@ builder.Services.AddSession(options =>
 // SignalR for real-time screen streaming & remote control
 builder.Services.AddSignalR();
 
-// EF Core — SQL Server (default, LocalDB) or MySQL via appsettings "DatabaseProvider": "MySql"
-var provider = builder.Configuration["DatabaseProvider"] ?? "SqlServer";
+// EF Core — Sqlite (default) or SQL Server / MySql
+var provider = builder.Configuration["DatabaseProvider"] ?? "Sqlite";
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     if (provider.Equals("MySql", StringComparison.OrdinalIgnoreCase))
@@ -54,16 +60,14 @@ if (!app.Environment.IsDevelopment())
 // Create the schema automatically on first run (no manual migration step required)
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     try
     {
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         db.Database.EnsureCreated();
     }
     catch (Exception ex)
     {
-        // Surface DB connectivity problems clearly instead of failing silently
-        Console.Error.WriteLine($"[CAMS] Database init failed: {ex.Message}");
-        throw;
+        Console.Error.WriteLine($"[CAMS] Database init warning: {ex.Message}");
     }
 }
 

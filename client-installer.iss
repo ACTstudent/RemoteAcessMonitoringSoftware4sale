@@ -1,11 +1,8 @@
 ; CAMS Student Client - Inno Setup installer definition
-; Builds "CAMS-Client-Setup.exe" - a download-and-run installation wizard.
-; Requires Inno Setup 6: https://jrsoftware.org/isdl.php
-;
-; Silent deploy:  CAMS-Client-Setup.exe /VERYSILENT /ServerIP="http://192.168.1.100:5000/remoteMonitoringHub"
+; Builds "CAMS-Client-Setup.exe" - a clean installation wizard.
 
 #define MyAppName "CAMS Student Client"
-#define MyAppVersion "2.5.0"
+#define MyAppVersion "2.5.2"
 #define MyAppExeName "Client.exe"
 #define MyAppPublisher "CAMS"
 #define MyAppURL "https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale"
@@ -28,12 +25,22 @@ SolidCompression=yes
 WizardStyle=modern
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
+CloseApplications=yes
+CloseApplicationsFilter=*.exe
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
+Name: "cleaninstall"; Description: "Clean installation (remove all old binary files before installing)"; GroupDescription: "Installation Options:"; Flags: checkedonce
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+
+[InstallDelete]
+Type: filesandordirs; Name: "{app}\runtimes"; Tasks: cleaninstall
+Type: files; Name: "{app}\*.dll"; Tasks: cleaninstall
+Type: files; Name: "{app}\*.exe"; Tasks: cleaninstall
+Type: files; Name: "{app}\*.json"; Tasks: cleaninstall
+Type: files; Name: "{app}\*.pdb"; Tasks: cleaninstall
 
 [Files]
 Source: "client-publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
