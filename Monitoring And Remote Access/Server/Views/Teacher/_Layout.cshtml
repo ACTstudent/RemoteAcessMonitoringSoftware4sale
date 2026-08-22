@@ -12,7 +12,7 @@
     <title>@ViewData["Title"] - CAMS Teacher | Pardo Elementary School</title>
     <link href="~/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
     <link href="~/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet" />
-    <link href="~/css/site.css" rel="stylesheet" />
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
 </head>
 <body>
     <div class="app-wrapper">
@@ -48,6 +48,11 @@
                 </a>
 
                 <div class="sidebar-label">Classroom Management</div>
+
+                <a href="/Teacher/Classes" class="nav-item-custom @(currentAction == "Classes" || currentAction == "ClassDetails" ? "active" : "")">
+                    <i class="bi bi-folder-fill"></i>
+                    <span>Class Management</span>
+                </a>
 
                 <a href="/Teacher/Students" class="nav-item-custom @(currentAction == "Students" ? "active" : "")">
                     <i class="bi bi-people-fill"></i>

@@ -334,5 +334,70 @@ namespace Server.Controllers
             var svc = HttpContext.RequestServices.GetService(typeof(IMonitoringService)) as IMonitoringService;
             return Json(new { Ok = true });
         }
+
+        // ---------- Class Management ----------
+        public async Task<IActionResult> Classes()
+        {
+            if (!CheckAccess()) return Denied();
+            var classes = await _context.Classes
+                .Include(c => c.ClassStudents)
+                .OrderBy(c => c.ClassName)
+                .ToListAsync();
+            ViewBag.TeacherList = await _context.Teachers.OrderBy(t => t.FirstName).ToListAsync();
+            return View(classes);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateClass(Class cls)
+        {
+            if (!CheckAccess()) return Denied();
+            cls.CreatedAt = DateTime.Now;
+            _context.Classes.Add(cls);
+            await _context.SaveChangesAsync();
+            await AuditAsync("CreateClass", $"Created class '{cls.ClassName}'");
+            return RedirectToAction("Classes");
+        }
+
+        public async Task<IActionResult> ClassDetails(int id)
+        {
+            if (!CheckAccess()) return Denied();
+            var cls = await _context.Classes
+                .Include(c => c.ClassStudents)
+                    .ThenInclude(cs => cs.Student)
+                .FirstOrDefaultAsync(c => c.ClassId == id);
+            if (cls == null) return RedirectToAction("Classes");
+            ViewBag.AllStudents = await _context.Students.OrderBy(s => s.FullName).ToListAsync();
+            return View(cls);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EnrollStudent(int classId, int studentId)
+        {
+            if (!CheckAccess()) return Denied();
+            var exists = await _context.ClassStudents
+                .AnyAsync(cs => cs.ClassId == classId && cs.StudentId == studentId);
+            if (!exists)
+            {
+                _context.ClassStudents.Add(new ClassStudent { ClassId = classId, StudentId = studentId });
+                await _context.SaveChangesAsync();
+                await AuditAsync("EnrollStudent", $"Enrolled student {studentId} in class {classId}");
+            }
+            return RedirectToAction("ClassDetails", new { id = classId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RemoveStudent(int classId, int studentId)
+        {
+            if (!CheckAccess()) return Denied();
+            var cs = await _context.ClassStudents
+                .FirstOrDefaultAsync(cs => cs.ClassId == classId && cs.StudentId == studentId);
+            if (cs != null)
+            {
+                _context.ClassStudents.Remove(cs);
+                await _context.SaveChangesAsync();
+                await AuditAsync("RemoveStudent", $"Removed student {studentId} from class {classId}");
+            }
+            return RedirectToAction("ClassDetails", new { id = classId });
+        }
     }
-}
+}
