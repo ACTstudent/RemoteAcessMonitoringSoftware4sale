@@ -1,11 +1,12 @@
 bin/
 obj/
 publish/
-server-publish/
-server-dist/
-client-publish/
-client-dist/
-dist/
 *.user
 .vs/
 *.db
+*.db-shm
+*.db-wal
+
+# Allow tracked installers in server-dist and client-dist
+!server-dist/*.exe
+!client-dist/*.exe
