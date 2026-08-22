@@ -18,16 +18,14 @@ Featuring an official **Dark Emerald (`#0B3C26` / `#18181b` / `#10B981`) Design 
 
 ---
 
-## 📦 Downloads (v2.5.2)
+## 📦 Direct Downloads (v2.5.3 - Dark Emerald UI)
 
-Pre-built installer executables and source packages for the latest release:
+Pre-built installer setup executables tracked directly in the repository:
 
-| Package | Download Link | Target / Description |
-| :--- | :--- | :--- |
-| **CAMS Server Setup** | [`CAMS-Server-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Server-Setup.exe) | Teacher / Lab Control PC Installer (Includes Clean Installation Feature & Dark Emerald Web Portal) |
-| **CAMS Student Client** | [`CAMS-Client-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Client-Setup.exe) | Student Workstation Agent Installer (Includes Clean Installation Feature) |
-| **Server Source Code** | [`CAMS-Server-Source.zip`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Server-Source.zip) | ASP.NET Core MVC + SignalR Source Package |
-| **Client Source Code** | [`CAMS-Client-Source.zip`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Client-Source.zip) | WinForms Student Agent Source Package |
+| Package | Direct Download Link | Repository File Path | Target / Description |
+| :--- | :--- | :--- | :--- |
+| **CAMS Server Setup** | [📥 **Download CAMS-Server-Setup.exe**](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/raw/main/server-dist/CAMS-Server-Setup.exe) | [`server-dist/CAMS-Server-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/blob/main/server-dist/CAMS-Server-Setup.exe) | Teacher / Lab Control PC Installer (Includes Clean Installation Feature & Dark Emerald Web Portal) |
+| **CAMS Student Client** | [📥 **Download CAMS-Client-Setup.exe**](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/raw/main/client-dist/CAMS-Client-Setup.exe) | [`client-dist/CAMS-Client-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/blob/main/client-dist/CAMS-Client-Setup.exe) | Student Workstation Agent Installer (Includes Clean Installation Feature) |
 
 ---
 
@@ -96,7 +94,7 @@ Pre-built installer executables and source packages for the latest release:
 ## 🚀 Quick Start & Login Credentials
 
 ### 1. Server Setup (Teacher / Lab PC)
-1. Download and run [`CAMS-Server-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Server-Setup.exe).
+1. Download and run [`CAMS-Server-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/raw/main/server-dist/CAMS-Server-Setup.exe).
 2. The installer performs a clean installation to `%LOCALAPPDATA%\CAMS Server`, opens firewall ports `5000` & `5001`, and launches the web portal.
 3. Default Portal Login Credentials:
 
@@ -109,7 +107,7 @@ Pre-built installer executables and source packages for the latest release:
 > **Security Note:** Change all default passwords before deploying on a production network.
 
 ### 2. Student Client Setup (Student PCs)
-1. Download and run [`CAMS-Client-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Client-Setup.exe) on each workstation.
+1. Download and run [`CAMS-Client-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/raw/main/client-dist/CAMS-Client-Setup.exe) on each workstation.
 2. The client auto-discovers the CAMS server on the local network over UDP.
 
 ---
