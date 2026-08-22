@@ -667,9 +667,10 @@ namespace Server.Controllers
                 .FirstOrDefaultAsync(c => c.ClassId == id);
             if (cls == null) return RedirectToAction("Classes");
 
+            var classStudentIds = cls.ClassStudents.Select(cs => cs.StudentId).ToList();
             var enrolledList = await _context.Students
                 .Include(s => s.Adviser)
-                .Where(s => s.ClassId == cls.ClassId || (s.GradeSection != null && s.GradeSection == cls.ClassName) || cls.ClassStudents.Any(cs => cs.StudentId == s.Id))
+                .Where(s => s.ClassId == cls.ClassId || (s.GradeSection != null && s.GradeSection == cls.ClassName) || classStudentIds.Contains(s.Id))
                 .ToListAsync();
 
             ViewBag.EnrolledStudents = enrolledList;

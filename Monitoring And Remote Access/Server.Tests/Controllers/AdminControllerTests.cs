@@ -50,6 +50,15 @@ public class AdminControllerTests
     }
 
     [Fact]
+    public async Task Index_AuthorizedUser_ReturnsViewWithCounts()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var result = await controller.Index();
+        Assert.IsType<ViewResult>(result);
+    }
+
+    [Fact]
     public async Task Teachers_CRUD_WorksFlawlessly()
     {
         using var db = GetDbContext();
@@ -93,6 +102,16 @@ public class AdminControllerTests
         var deleteResult = await controller.DeleteTeacher(teacher.TeacherId);
         Assert.IsType<RedirectToActionResult>(deleteResult);
         Assert.Null(await db.Teachers.FindAsync(teacher.TeacherId));
+    }
+
+    [Fact]
+    public async Task CreateTeacher_EmptyUsername_ReturnsErrorMessage()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var result = await controller.CreateTeacher(new Teacher { Username = "" });
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Teachers", redirect.ActionName);
     }
 
     [Fact]
@@ -153,6 +172,16 @@ public class AdminControllerTests
     }
 
     [Fact]
+    public async Task CreateStudent_EmptyUsername_ReturnsErrorMessage()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var result = await controller.CreateStudent(new Student { Username = "" });
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Students", redirect.ActionName);
+    }
+
+    [Fact]
     public async Task Classes_CRUD_WorksFlawlessly()
     {
         using var db = GetDbContext();
@@ -193,6 +222,16 @@ public class AdminControllerTests
     }
 
     [Fact]
+    public async Task CreateClass_EmptyClassName_ReturnsErrorMessage()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var result = await controller.CreateClass(new Class { ClassName = "" });
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Classes", redirect.ActionName);
+    }
+
+    [Fact]
     public async Task Computers_CRUD_WorksFlawlessly()
     {
         using var db = GetDbContext();
@@ -228,6 +267,103 @@ public class AdminControllerTests
     }
 
     [Fact]
+    public async Task CreateComputer_EmptyStation_ReturnsErrorMessage()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var result = await controller.CreateComputer(new Computer { LaboratoryStation = "" });
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Computers", redirect.ActionName);
+    }
+
+    [Fact]
+    public async Task Roles_CRUD_WorksFlawlessly()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+
+        // 1. Create Role
+        var createResult = await controller.CreateRole(new Role { Name = "Lab Assistant", Description = "Assistant role" });
+        Assert.IsType<RedirectToActionResult>(createResult);
+
+        var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == "Lab Assistant");
+        Assert.NotNull(role);
+
+        // 2. Delete Role
+        var deleteResult = await controller.DeleteRole(role.RoleId);
+        Assert.IsType<RedirectToActionResult>(deleteResult);
+        Assert.Null(await db.Roles.FindAsync(role.RoleId));
+    }
+
+    [Fact]
+    public async Task CreateRole_EmptyName_ReturnsErrorMessage()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var result = await controller.CreateRole(new Role { Name = "" });
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Roles", redirect.ActionName);
+    }
+
+    [Fact]
+    public async Task Restrictions_CRUD_WorksFlawlessly()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+
+        // 1. Create Restriction
+        var createResult = await controller.CreateRestriction(new RestrictionRule { RuleType = "BlockWebsite", Target = "facebook.com" });
+        Assert.IsType<RedirectToActionResult>(createResult);
+
+        var rule = await db.RestrictionRules.FirstOrDefaultAsync(r => r.Target == "facebook.com");
+        Assert.NotNull(rule);
+
+        // 2. Delete Restriction
+        var deleteResult = await controller.DeleteRestriction(rule.RestrictionRuleId);
+        Assert.IsType<RedirectToActionResult>(deleteResult);
+        Assert.Null(await db.RestrictionRules.FindAsync(rule.RestrictionRuleId));
+    }
+
+    [Fact]
+    public async Task Blacklists_CRUD_WorksFlawlessly()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+
+        // 1. Create Blacklist
+        var createResult = await controller.CreateBlacklist(new BlacklistItem { TargetType = "Process", Value = "game.exe" });
+        Assert.IsType<RedirectToActionResult>(createResult);
+
+        var item = await db.BlacklistItems.FirstOrDefaultAsync(b => b.Value == "game.exe");
+        Assert.NotNull(item);
+
+        // 2. Delete Blacklist
+        var deleteResult = await controller.DeleteBlacklist(item.BlacklistItemId);
+        Assert.IsType<RedirectToActionResult>(deleteResult);
+        Assert.Null(await db.BlacklistItems.FindAsync(item.BlacklistItemId));
+    }
+
+    [Fact]
+    public async Task SessionRules_CRUD_WorksFlawlessly()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+
+        // 1. Create Session Rule
+        var createResult = await controller.CreateSessionRule(new SessionRule { Name = "Exam Rule", MaxDurationMinutes = 60, IsDefault = true });
+        Assert.IsType<RedirectToActionResult>(createResult);
+
+        var rule = await db.SessionRules.FirstOrDefaultAsync(r => r.Name == "Exam Rule");
+        Assert.NotNull(rule);
+        Assert.True(rule.IsDefault);
+
+        // 2. Delete Session Rule
+        var deleteResult = await controller.DeleteSessionRule(rule.SessionRuleId);
+        Assert.IsType<RedirectToActionResult>(deleteResult);
+        Assert.Null(await db.SessionRules.FindAsync(rule.SessionRuleId));
+    }
+
+    [Fact]
     public async Task LanConfig_Save_WorksFlawlessly()
     {
         using var db = GetDbContext();
@@ -249,5 +385,84 @@ public class AdminControllerTests
         Assert.NotNull(config);
         Assert.Equal("192.168.1.100", config.ServerAddress);
         Assert.Equal(5000, config.ServerPort);
+    }
+
+    [Fact]
+    public async Task ExportAuditCsv_ReturnsFileResult()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        db.AuditLogs.Add(new AuditLog { Action = "Test", Details = "Testing audit", Timestamp = DateTime.Now });
+        await db.SaveChangesAsync();
+
+        var result = await controller.ExportAuditCsv();
+        var fileResult = Assert.IsType<FileContentResult>(result);
+        Assert.Equal("text/csv; charset=utf-8", fileResult.ContentType);
+    }
+
+    [Fact]
+    public async Task ExportReportsCsv_ReturnsFileResult()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        db.LabSessions.Add(new LabSession { StartTime = DateTime.Now, Status = "Ended" });
+        await db.SaveChangesAsync();
+
+        var result = await controller.ExportReportsCsv();
+        var fileResult = Assert.IsType<FileContentResult>(result);
+        Assert.Equal("text/csv; charset=utf-8", fileResult.ContentType);
+    }
+
+    [Fact]
+    public async Task ExportUsageCsv_ReturnsFileResult()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        db.UsageLogs.Add(new UsageLog { AppName = "chrome.exe", Timestamp = DateTime.Now });
+        await db.SaveChangesAsync();
+
+        var result = await controller.ExportUsageCsv(null, null);
+        var fileResult = Assert.IsType<FileContentResult>(result);
+        Assert.Equal("text/csv; charset=utf-8", fileResult.ContentType);
+    }
+
+    [Fact]
+    public async Task ClassDetails_ReturnsViewResult()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var cls = new Class { ClassName = "Grade 8 - Daisy" };
+        db.Classes.Add(cls);
+        await db.SaveChangesAsync();
+
+        var result = await controller.ClassDetails(cls.ClassId);
+        Assert.IsType<ViewResult>(result);
+    }
+
+    [Fact]
+    public async Task EnrollAndRemoveStudent_WorksFlawlessly()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+
+        var cls = new Class { ClassName = "Grade 9 - Lily" };
+        var student = new Student { FullName = "Maria Clara", Username = "mclara", PasswordHash = "hash" };
+        db.Classes.Add(cls);
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+
+        // 1. Enroll
+        var enrollResult = await controller.EnrollStudent(cls.ClassId, student.Id);
+        Assert.IsType<RedirectToActionResult>(enrollResult);
+
+        var enrolled = await db.Students.FindAsync(student.Id);
+        Assert.Equal(cls.ClassId, enrolled?.ClassId);
+
+        // 2. Remove
+        var removeResult = await controller.RemoveStudent(cls.ClassId, student.Id);
+        Assert.IsType<RedirectToActionResult>(removeResult);
+
+        var removed = await db.Students.FindAsync(student.Id);
+        Assert.Null(removed?.ClassId);
     }
 }

@@ -60,6 +60,33 @@ public class TeacherControllerTests
     }
 
     [Fact]
+    public async Task Dashboard_AuthorizedUser_ReturnsView()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var result = await controller.Dashboard();
+        Assert.IsType<ViewResult>(result);
+    }
+
+    [Fact]
+    public void GlobalSessionState_ReturnsJson()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var result = controller.GlobalSessionState();
+        Assert.IsType<JsonResult>(result);
+    }
+
+    [Fact]
+    public async Task Sessions_ReturnsViewWithData()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var result = await controller.Sessions();
+        Assert.IsType<ViewResult>(result);
+    }
+
+    [Fact]
     public async Task Session_StartPauseEnd_WorksFlawlessly()
     {
         using var db = GetDbContext();
@@ -147,6 +174,16 @@ public class TeacherControllerTests
     }
 
     [Fact]
+    public async Task CreateStudent_EmptyUsername_ReturnsErrorMessage()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var result = await controller.CreateStudent(new Student { Username = "" });
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Students", redirect.ActionName);
+    }
+
+    [Fact]
     public async Task Teacher_ClassCRUD_WorksFlawlessly()
     {
         using var db = GetDbContext();
@@ -178,5 +215,94 @@ public class TeacherControllerTests
 
         var enrolled = await db.ClassStudents.Where(cs => cs.ClassId == cls.ClassId).ToListAsync();
         Assert.Equal(2, enrolled.Count);
+    }
+
+    [Fact]
+    public async Task CreateClass_EmptyClassName_ReturnsErrorMessage()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var result = await controller.CreateClass(new Class { ClassName = "" });
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Classes", redirect.ActionName);
+    }
+
+    [Fact]
+    public async Task UpdateComputer_StatusUpdated()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+
+        var comp = new Computer { LaboratoryStation = "Station-05", Status = "Available" };
+        db.Computers.Add(comp);
+        await db.SaveChangesAsync();
+
+        var result = await controller.UpdateComputer(new Computer { ComputerId = comp.ComputerId, LaboratoryStation = "Station-05", Status = "Maintenance" });
+        Assert.IsType<RedirectToActionResult>(result);
+
+        var updated = await db.Computers.FindAsync(comp.ComputerId);
+        Assert.Equal("Maintenance", updated?.Status);
+    }
+
+    [Fact]
+    public async Task SendNotification_AddsNotification()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+
+        var result = await controller.SendNotification("Warning", "Time Up", "Please save your work.");
+        Assert.IsType<JsonResult>(result);
+
+        var notification = await db.Notifications.FirstOrDefaultAsync(n => n.Title == "Time Up");
+        Assert.NotNull(notification);
+    }
+
+    [Fact]
+    public async Task ExportRecordsCsv_ReturnsFileResult()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+
+        db.LabSessions.Add(new LabSession { TeacherId = 1, StartTime = DateTime.Now, Status = "Ended" });
+        await db.SaveChangesAsync();
+
+        var result = await controller.ExportRecordsCsv();
+        var fileResult = Assert.IsType<FileContentResult>(result);
+        Assert.Equal("text/csv; charset=utf-8", fileResult.ContentType);
+    }
+
+    [Fact]
+    public async Task ClassDetails_ReturnsViewResult()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+
+        var cls = new Class { ClassName = "Grade 10 - Acacia" };
+        db.Classes.Add(cls);
+        await db.SaveChangesAsync();
+
+        var result = await controller.ClassDetails(cls.ClassId);
+        Assert.IsType<ViewResult>(result);
+    }
+
+    [Fact]
+    public async Task EnrollAndRemoveStudent_WorksFlawlessly()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+
+        var cls = new Class { ClassName = "Grade 11 - STEM A" };
+        var student = new Student { FullName = "Apolinario Mabini", Username = "amabini", PasswordHash = "hash" };
+        db.Classes.Add(cls);
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+
+        // 1. Enroll
+        var enrollResult = await controller.EnrollStudent(cls.ClassId, student.Id);
+        Assert.IsType<RedirectToActionResult>(enrollResult);
+
+        // 2. Remove
+        var removeResult = await controller.RemoveStudent(cls.ClassId, student.Id);
+        Assert.IsType<RedirectToActionResult>(removeResult);
     }
 }
