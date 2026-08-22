@@ -51,28 +51,54 @@ namespace Server.Controllers
         public async Task<IActionResult> Teachers()
         {
             if (!CheckAccess()) return Denied();
-            return View(await _context.Teachers.ToListAsync());
+            return View(await _context.Teachers.OrderBy(t => t.LastName).ThenBy(t => t.FirstName).ToListAsync());
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateTeacher(Teacher teacher)
         {
             if (!CheckAccess()) return Denied();
-            teacher.PasswordHash = _hasher.HashPassword(null, teacher.PasswordHash);
+            
+            if (string.IsNullOrWhiteSpace(teacher.Username))
+            {
+                TempData["ErrorMessage"] = "Username is required.";
+                return RedirectToAction("Teachers");
+            }
+
+            teacher.FirstName = string.IsNullOrWhiteSpace(teacher.FirstName) ? teacher.Username : teacher.FirstName.Trim();
+            teacher.LastName = string.IsNullOrWhiteSpace(teacher.LastName) ? "Teacher" : teacher.LastName.Trim();
+            teacher.Status = string.IsNullOrWhiteSpace(teacher.Status) ? "Active" : teacher.Status.Trim();
+            teacher.PasswordHash = _hasher.HashPassword(null, string.IsNullOrWhiteSpace(teacher.PasswordHash) ? "teacher123" : teacher.PasswordHash);
+            
             _context.Teachers.Add(teacher);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateTeacher", $"Created teacher {teacher.Username}");
+            TempData["Message"] = $"Teacher '{teacher.FirstName} {teacher.LastName}' registered successfully!";
             return RedirectToAction("Teachers");
         }
 
         [HttpPost]
-        public async Task<IActionResult> UpdateTeacher(Teacher teacher)
+        public async Task<IActionResult> UpdateTeacher(Teacher teacher, string? newPassword)
         {
             if (!CheckAccess()) return Denied();
-            teacher.PasswordHash = _hasher.HashPassword(null, teacher.PasswordHash);
-            _context.Teachers.Update(teacher);
+            var existing = await _context.Teachers.FindAsync(teacher.TeacherId);
+            if (existing == null) return RedirectToAction("Teachers");
+
+            existing.FirstName = string.IsNullOrWhiteSpace(teacher.FirstName) ? existing.FirstName : teacher.FirstName.Trim();
+            existing.LastName = string.IsNullOrWhiteSpace(teacher.LastName) ? existing.LastName : teacher.LastName.Trim();
+            existing.Username = string.IsNullOrWhiteSpace(teacher.Username) ? existing.Username : teacher.Username.Trim();
+            existing.Email = string.IsNullOrWhiteSpace(teacher.Email) ? existing.Email : teacher.Email.Trim();
+            existing.ContactNumber = string.IsNullOrWhiteSpace(teacher.ContactNumber) ? existing.ContactNumber : teacher.ContactNumber.Trim();
+            existing.Status = string.IsNullOrWhiteSpace(teacher.Status) ? existing.Status : teacher.Status.Trim();
+
+            if (!string.IsNullOrWhiteSpace(newPassword))
+            {
+                existing.PasswordHash = _hasher.HashPassword(null, newPassword.Trim());
+            }
+
             await _context.SaveChangesAsync();
-            await AuditAsync("UpdateTeacher", $"Updated teacher {teacher.Username}");
+            await AuditAsync("UpdateTeacher", $"Updated teacher {existing.Username}");
+            TempData["Message"] = $"Teacher '{existing.FirstName} {existing.LastName}' updated successfully!";
             return RedirectToAction("Teachers");
         }
 
@@ -83,9 +109,16 @@ namespace Server.Controllers
             var teacher = await _context.Teachers.FindAsync(id);
             if (teacher != null)
             {
+                var classes = await _context.Classes.Where(c => c.TeacherId == id).ToListAsync();
+                foreach (var c in classes) c.TeacherId = null;
+
+                var students = await _context.Students.Where(s => s.AdviserId == id).ToListAsync();
+                foreach (var st in students) st.AdviserId = null;
+
                 _context.Teachers.Remove(teacher);
                 await _context.SaveChangesAsync();
                 await AuditAsync("DeleteTeacher", $"Deleted teacher {teacher.Username}");
+                TempData["Message"] = $"Teacher '{teacher.Username}' deleted successfully!";
             }
             return RedirectToAction("Teachers");
         }
@@ -95,27 +128,76 @@ namespace Server.Controllers
         {
             if (!CheckAccess()) return Denied();
             ViewBag.Computers = await _context.Computers.ToListAsync();
-            return View(await _context.Students.ToListAsync());
+            return View(await _context.Students.OrderBy(s => s.FullName).ToListAsync());
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateStudent(Student student)
         {
             if (!CheckAccess()) return Denied();
-            student.PasswordHash = _hasher.HashPassword(null, student.PasswordHash);
+
+            if (string.IsNullOrWhiteSpace(student.Username))
+            {
+                TempData["ErrorMessage"] = "Username is required.";
+                return RedirectToAction("Students");
+            }
+
+            string rawPassword = string.IsNullOrWhiteSpace(student.PasswordHash) ? "student123" : student.PasswordHash;
+            student.PasswordHash = _hasher.HashPassword(null, rawPassword);
+            student.Status = string.IsNullOrWhiteSpace(student.Status) ? "Active" : student.Status;
+
+            if (string.IsNullOrWhiteSpace(student.StudentNumber))
+            {
+                student.StudentNumber = $"STU-{DateTime.Now:yyyy}-{new Random().Next(100, 999)}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(student.FullName))
+            {
+                student.FullName = student.FullName.Trim();
+                var parts = student.FullName.Split(' ', 2);
+                student.FirstName = parts.Length > 0 ? parts[0] : "Student";
+                student.LastName = parts.Length > 1 ? parts[1] : "";
+            }
+            else
+            {
+                student.FirstName = string.IsNullOrWhiteSpace(student.FirstName) ? "Student" : student.FirstName.Trim();
+                student.LastName = string.IsNullOrWhiteSpace(student.LastName) ? "" : student.LastName.Trim();
+                student.FullName = $"{student.FirstName} {student.LastName}".Trim();
+            }
+
             _context.Students.Add(student);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateStudent", $"Created student {student.Username}");
+            TempData["Message"] = $"Student '{student.FullName}' created successfully!";
             return RedirectToAction("Students");
         }
 
         [HttpPost]
-        public async Task<IActionResult> UpdateStudent(Student student)
+        public async Task<IActionResult> UpdateStudent(Student student, string? newPassword)
         {
             if (!CheckAccess()) return Denied();
-            _context.Students.Update(student);
+            var existing = await _context.Students.FindAsync(student.Id);
+            if (existing == null) return RedirectToAction("Students");
+
+            existing.StudentNumber = string.IsNullOrWhiteSpace(student.StudentNumber) ? existing.StudentNumber : student.StudentNumber.Trim();
+            existing.Username = string.IsNullOrWhiteSpace(student.Username) ? existing.Username : student.Username.Trim();
+
+            if (!string.IsNullOrWhiteSpace(student.FullName))
+            {
+                existing.FullName = student.FullName.Trim();
+                var parts = student.FullName.Trim().Split(' ', 2);
+                existing.FirstName = parts.Length > 0 ? parts[0] : "";
+                existing.LastName = parts.Length > 1 ? parts[1] : "";
+            }
+
+            if (!string.IsNullOrWhiteSpace(newPassword))
+            {
+                existing.PasswordHash = _hasher.HashPassword(null, newPassword.Trim());
+            }
+
             await _context.SaveChangesAsync();
-            await AuditAsync("UpdateStudent", $"Updated student {student.Username}");
+            await AuditAsync("UpdateStudent", $"Updated student {existing.Username}");
+            TempData["Message"] = $"Student '{existing.FullName}' updated successfully!";
             return RedirectToAction("Students");
         }
 
@@ -126,9 +208,20 @@ namespace Server.Controllers
             var student = await _context.Students.FindAsync(id);
             if (student != null)
             {
+                var computer = await _context.Computers.FirstOrDefaultAsync(c => c.AssignedTo == id.ToString());
+                if (computer != null)
+                {
+                    computer.AssignedTo = null;
+                    if (computer.Status == "Assigned") computer.Status = "Available";
+                }
+
+                var joinRecords = await _context.ClassStudents.Where(cs => cs.StudentId == id).ToListAsync();
+                _context.ClassStudents.RemoveRange(joinRecords);
+
                 _context.Students.Remove(student);
                 await _context.SaveChangesAsync();
                 await AuditAsync("DeleteStudent", $"Deleted student {student.Username}");
+                TempData["Message"] = $"Student '{student.Username}' deleted successfully!";
             }
             return RedirectToAction("Students");
         }
@@ -148,9 +241,15 @@ namespace Server.Controllers
         public async Task<IActionResult> CreateRole(Role role)
         {
             if (!CheckAccess()) return Denied();
+            if (string.IsNullOrWhiteSpace(role.Name))
+            {
+                TempData["ErrorMessage"] = "Role name is required.";
+                return RedirectToAction("Roles");
+            }
             _context.Roles.Add(role);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateRole", $"Created role {role.Name}");
+            TempData["Message"] = $"Role '{role.Name}' created successfully!";
             return RedirectToAction("Roles");
         }
 
@@ -164,6 +263,7 @@ namespace Server.Controllers
                 _context.Roles.Remove(role);
                 await _context.SaveChangesAsync();
                 await AuditAsync("DeleteRole", $"Deleted role {role.Name}");
+                TempData["Message"] = $"Role '{role.Name}' deleted successfully!";
             }
             return RedirectToAction("Roles");
         }
@@ -179,9 +279,16 @@ namespace Server.Controllers
         public async Task<IActionResult> CreateRestriction(RestrictionRule rule)
         {
             if (!CheckAccess()) return Denied();
+            if (string.IsNullOrWhiteSpace(rule.Target))
+            {
+                TempData["ErrorMessage"] = "Target is required for restriction rule.";
+                return RedirectToAction("Restrictions");
+            }
+            rule.CreatedAt = DateTime.Now;
             _context.RestrictionRules.Add(rule);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateRestriction", $"Added restriction on {rule.Target}");
+            TempData["Message"] = $"Restriction rule on '{rule.Target}' saved!";
             return RedirectToAction("Restrictions");
         }
 
@@ -195,6 +302,7 @@ namespace Server.Controllers
                 _context.RestrictionRules.Remove(rule);
                 await _context.SaveChangesAsync();
                 await AuditAsync("DeleteRestriction", $"Removed restriction on {rule.Target}");
+                TempData["Message"] = $"Restriction rule removed.";
             }
             return RedirectToAction("Restrictions");
         }
@@ -210,9 +318,16 @@ namespace Server.Controllers
         public async Task<IActionResult> CreateBlacklist(BlacklistItem item)
         {
             if (!CheckAccess()) return Denied();
+            if (string.IsNullOrWhiteSpace(item.Value))
+            {
+                TempData["ErrorMessage"] = "Blacklist value is required.";
+                return RedirectToAction(nameof(Blacklists));
+            }
+            item.CreatedAt = DateTime.Now;
             _context.BlacklistItems.Add(item);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateBlacklist", $"Blacklisted {item.TargetType}: {item.Value}");
+            TempData["Message"] = $"Blacklist entry '{item.Value}' created!";
             return RedirectToAction(nameof(Blacklists));
         }
 
@@ -226,6 +341,7 @@ namespace Server.Controllers
                 _context.BlacklistItems.Remove(item);
                 await _context.SaveChangesAsync();
                 await AuditAsync("DeleteBlacklist", $"Removed blacklist {item.TargetType}: {item.Value}");
+                TempData["Message"] = "Blacklist entry deleted.";
             }
             return RedirectToAction(nameof(Blacklists));
         }
@@ -241,14 +357,21 @@ namespace Server.Controllers
         public async Task<IActionResult> CreateSessionRule(SessionRule rule)
         {
             if (!CheckAccess()) return Denied();
+            if (string.IsNullOrWhiteSpace(rule.Name))
+            {
+                TempData["ErrorMessage"] = "Session rule name is required.";
+                return RedirectToAction("SessionRules");
+            }
             if (rule.IsDefault)
             {
                 var defaults = _context.SessionRules.Where(s => s.IsDefault);
                 foreach (var d in defaults) d.IsDefault = false;
             }
+            rule.CreatedAt = DateTime.Now;
             _context.SessionRules.Add(rule);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateSessionRule", $"Created session rule {rule.Name}");
+            TempData["Message"] = $"Session rule '{rule.Name}' created!";
             return RedirectToAction("SessionRules");
         }
 
@@ -261,6 +384,7 @@ namespace Server.Controllers
             {
                 _context.SessionRules.Remove(rule);
                 await _context.SaveChangesAsync();
+                TempData["Message"] = "Session rule deleted.";
             }
             return RedirectToAction("SessionRules");
         }
@@ -296,6 +420,7 @@ namespace Server.Controllers
             }
             await _context.SaveChangesAsync();
             await AuditAsync("SaveLanConfig", "Updated LAN configuration");
+            TempData["Message"] = "LAN Configuration saved successfully!";
             return RedirectToAction("LanConfig");
         }
 
@@ -303,16 +428,40 @@ namespace Server.Controllers
         public async Task<IActionResult> Computers()
         {
             if (!CheckAccess()) return Denied();
-            return View(await _context.Computers.ToListAsync());
+            return View(await _context.Computers.OrderBy(c => c.LaboratoryStation).ToListAsync());
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateComputer(Computer computer)
         {
             if (!CheckAccess()) return Denied();
+            if (string.IsNullOrWhiteSpace(computer.LaboratoryStation))
+            {
+                TempData["ErrorMessage"] = "Laboratory station name is required.";
+                return RedirectToAction("Computers");
+            }
+            computer.Status = string.IsNullOrWhiteSpace(computer.Status) ? "Available" : computer.Status;
             _context.Computers.Add(computer);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateComputer", $"Added {computer.LaboratoryStation}");
+            TempData["Message"] = $"Workstation '{computer.LaboratoryStation}' added!";
+            return RedirectToAction("Computers");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateComputer(Computer computer)
+        {
+            if (!CheckAccess()) return Denied();
+            var existing = await _context.Computers.FindAsync(computer.ComputerId);
+            if (existing != null)
+            {
+                existing.LaboratoryStation = string.IsNullOrWhiteSpace(computer.LaboratoryStation) ? existing.LaboratoryStation : computer.LaboratoryStation.Trim();
+                existing.Status = string.IsNullOrWhiteSpace(computer.Status) ? existing.Status : computer.Status.Trim();
+                existing.AssignedTo = computer.AssignedTo;
+                await _context.SaveChangesAsync();
+                await AuditAsync("UpdateComputer", $"Updated computer {existing.LaboratoryStation}");
+                TempData["Message"] = $"Workstation '{existing.LaboratoryStation}' updated successfully!";
+            }
             return RedirectToAction("Computers");
         }
 
@@ -326,6 +475,7 @@ namespace Server.Controllers
                 _context.Computers.Remove(computer);
                 await _context.SaveChangesAsync();
                 await AuditAsync("DeleteComputer", $"Removed {computer.LaboratoryStation}");
+                TempData["Message"] = $"Workstation '{computer.LaboratoryStation}' deleted.";
             }
             return RedirectToAction(nameof(Computers));
         }
@@ -336,7 +486,6 @@ namespace Server.Controllers
         {
             if (!CheckAccess()) return Denied();
 
-            // Un-assign the student from any previously assigned workstation
             var previous = await _context.Computers
                 .FirstOrDefaultAsync(c => c.AssignedTo == studentId.ToString());
             if (previous != null)
@@ -358,6 +507,7 @@ namespace Server.Controllers
             await _context.SaveChangesAsync();
             await AuditAsync("AssignComputer",
                 computerId.HasValue ? $"Assigned student {studentId} to workstation {computerId}" : $"Unassigned student {studentId}");
+            TempData["Message"] = "Workstation assignment updated successfully!";
             return RedirectToAction("Students");
         }
 
@@ -419,7 +569,6 @@ namespace Server.Controllers
             existing.Status = string.IsNullOrWhiteSpace(cls.Status) ? existing.Status : cls.Status.Trim();
             existing.TeacherId = cls.TeacherId;
 
-            // Sync enrolled students grade section and adviser
             var enrolledStudents = await _context.Students
                 .Where(s => s.ClassId == existing.ClassId || (s.GradeSection != null && s.GradeSection == oldName))
                 .ToListAsync();
@@ -800,20 +949,6 @@ namespace Server.Controllers
         {
             var v = value ?? "";
             return "\"" + v.Replace("\"", "\"\"") + "\"";
-        }
-
-        // ---------- System error logs ----------
-        public async Task<IActionResult> SystemLogs()
-        {
-            if (!CheckAccess()) return Denied();
-            return View(await _context.SystemLogs.OrderByDescending(l => l.Timestamp).Take(500).ToListAsync());
-        }
-
-        public async Task<IActionResult> LogSystem(string level, string message)
-        {
-            _context.SystemLogs.Add(new SystemLog { Level = level, Message = message });
-            await _context.SaveChangesAsync();
-            return Ok();
         }
     }
 }

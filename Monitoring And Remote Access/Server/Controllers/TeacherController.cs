@@ -29,7 +29,8 @@ namespace Server.Controllers
                 UserId = HttpContext.Session.GetInt32("TeacherId"),
                 Action = action,
                 Details = details,
-                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString()
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                Timestamp = DateTime.Now
             });
             await _context.SaveChangesAsync();
         }
@@ -104,6 +105,7 @@ namespace Server.Controllers
             }
             await _context.SaveChangesAsync();
             await AuditAsync("StartSession", $"Started session for student {studentId}");
+            TempData["Message"] = "Lab Session started successfully!";
             return RedirectToAction("Sessions");
         }
 
@@ -121,7 +123,6 @@ namespace Server.Controllers
                 }
                 else if (session.Status == "Paused")
                 {
-                    // Offset elapsed paused time against the start time
                     if (session.PauseTime.HasValue)
                     {
                         session.StartTime = session.StartTime.Add(DateTime.Now - session.PauseTime.Value);
@@ -131,6 +132,7 @@ namespace Server.Controllers
                 }
                 await _context.SaveChangesAsync();
                 await AuditAsync("TogglePause", $"Session {id} -> {session.Status}");
+                TempData["Message"] = $"Session status toggled to {session.Status}.";
             }
             return RedirectToAction("Sessions");
         }
@@ -157,6 +159,7 @@ namespace Server.Controllers
                 }
                 await _context.SaveChangesAsync();
                 await AuditAsync("EndSession", $"Ended session {id}");
+                TempData["Message"] = "Lab Session ended successfully!";
             }
             return RedirectToAction("Sessions");
         }
@@ -256,25 +259,70 @@ namespace Server.Controllers
         public async Task<IActionResult> CreateStudent(Student student)
         {
             if (!CheckAccess()) return Denied();
+            if (string.IsNullOrWhiteSpace(student.Username))
+            {
+                TempData["ErrorMessage"] = "Username is required.";
+                return RedirectToAction("Students");
+            }
+
             var hasher = new Microsoft.AspNetCore.Identity.PasswordHasher<object>();
-            student.PasswordHash = hasher.HashPassword(null, student.PasswordHash);
+            string rawPassword = string.IsNullOrWhiteSpace(student.PasswordHash) ? "student123" : student.PasswordHash;
+            student.PasswordHash = hasher.HashPassword(null, rawPassword);
+            student.Status = string.IsNullOrWhiteSpace(student.Status) ? "Active" : student.Status;
+
+            if (string.IsNullOrWhiteSpace(student.StudentNumber))
+            {
+                student.StudentNumber = $"STU-{DateTime.Now:yyyy}-{new Random().Next(100, 999)}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(student.FullName))
+            {
+                student.FullName = student.FullName.Trim();
+                var parts = student.FullName.Split(' ', 2);
+                student.FirstName = parts.Length > 0 ? parts[0] : "Student";
+                student.LastName = parts.Length > 1 ? parts[1] : "";
+            }
+            else
+            {
+                student.FirstName = string.IsNullOrWhiteSpace(student.FirstName) ? "Student" : student.FirstName.Trim();
+                student.LastName = string.IsNullOrWhiteSpace(student.LastName) ? "" : student.LastName.Trim();
+                student.FullName = $"{student.FirstName} {student.LastName}".Trim();
+            }
+
             _context.Students.Add(student);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateStudent", $"Created student {student.StudentNumber} - {student.FullName}");
+            TempData["Message"] = $"Student '{student.FullName}' registered successfully!";
             return RedirectToAction("Students");
         }
 
         [HttpPost]
-        public async Task<IActionResult> UpdateStudent(Student student)
+        public async Task<IActionResult> UpdateStudent(Student student, string? newPassword)
         {
             if (!CheckAccess()) return Denied();
             var existing = await _context.Students.FindAsync(student.Id);
             if (existing == null) return RedirectToAction("Students");
-            existing.FullName = student.FullName;
-            existing.Username = student.Username;
-            existing.StudentNumber = student.StudentNumber;
+
+            existing.StudentNumber = string.IsNullOrWhiteSpace(student.StudentNumber) ? existing.StudentNumber : student.StudentNumber.Trim();
+            existing.Username = string.IsNullOrWhiteSpace(student.Username) ? existing.Username : student.Username.Trim();
+
+            if (!string.IsNullOrWhiteSpace(student.FullName))
+            {
+                existing.FullName = student.FullName.Trim();
+                var parts = student.FullName.Trim().Split(' ', 2);
+                existing.FirstName = parts.Length > 0 ? parts[0] : "";
+                existing.LastName = parts.Length > 1 ? parts[1] : "";
+            }
+
+            if (!string.IsNullOrWhiteSpace(newPassword))
+            {
+                var hasher = new Microsoft.AspNetCore.Identity.PasswordHasher<object>();
+                existing.PasswordHash = hasher.HashPassword(null, newPassword.Trim());
+            }
+
             await _context.SaveChangesAsync();
             await AuditAsync("UpdateStudent", $"Updated student {student.StudentNumber}");
+            TempData["Message"] = $"Student '{existing.FullName}' updated successfully!";
             return RedirectToAction("Students");
         }
 
@@ -285,9 +333,20 @@ namespace Server.Controllers
             var existing = await _context.Students.FindAsync(studentId);
             if (existing != null)
             {
+                var computer = await _context.Computers.FirstOrDefaultAsync(c => c.AssignedTo == studentId.ToString());
+                if (computer != null)
+                {
+                    computer.AssignedTo = null;
+                    if (computer.Status == "Assigned") computer.Status = "Available";
+                }
+
+                var joinRecords = await _context.ClassStudents.Where(cs => cs.StudentId == studentId).ToListAsync();
+                _context.ClassStudents.RemoveRange(joinRecords);
+
                 _context.Students.Remove(existing);
                 await _context.SaveChangesAsync();
                 await AuditAsync("DeleteStudent", $"Deleted student {existing.StudentNumber}");
+                TempData["Message"] = $"Student '{existing.FullName}' removed from roster.";
             }
             return RedirectToAction("Students");
         }
@@ -307,11 +366,12 @@ namespace Server.Controllers
             var existing = await _context.Computers.FindAsync(computer.ComputerId);
             if (existing != null)
             {
-                existing.LaboratoryStation = computer.LaboratoryStation;
-                existing.Status = computer.Status;
+                existing.LaboratoryStation = string.IsNullOrWhiteSpace(computer.LaboratoryStation) ? existing.LaboratoryStation : computer.LaboratoryStation.Trim();
+                existing.Status = string.IsNullOrWhiteSpace(computer.Status) ? existing.Status : computer.Status.Trim();
                 existing.AssignedTo = computer.AssignedTo;
                 await _context.SaveChangesAsync();
-                await AuditAsync("UpdateComputer", $"Updated computer {computer.LaboratoryStation}");
+                await AuditAsync("UpdateComputer", $"Updated computer {existing.LaboratoryStation}");
+                TempData["Message"] = $"Workstation '{existing.LaboratoryStation}' status updated!";
             }
             return RedirectToAction("Computers");
         }
@@ -330,8 +390,6 @@ namespace Server.Controllers
                 CreatedAt = DateTime.Now
             });
             await _context.SaveChangesAsync();
-
-            var svc = HttpContext.RequestServices.GetService(typeof(IMonitoringService)) as IMonitoringService;
             return Json(new { Ok = true });
         }
 
@@ -369,7 +427,6 @@ namespace Server.Controllers
             cls.Status = string.IsNullOrWhiteSpace(cls.Status) ? "Active" : cls.Status;
             cls.AcademicYear = string.IsNullOrWhiteSpace(cls.AcademicYear) ? "2026-2027" : cls.AcademicYear;
 
-            // Default to logged in teacher if no teacher explicitly assigned
             if (!cls.TeacherId.HasValue)
             {
                 cls.TeacherId = HttpContext.Session.GetInt32("TeacherId");
@@ -399,7 +456,6 @@ namespace Server.Controllers
             existing.Status = string.IsNullOrWhiteSpace(cls.Status) ? existing.Status : cls.Status.Trim();
             existing.TeacherId = cls.TeacherId;
 
-            // Sync enrolled students grade section and adviser
             var enrolledStudents = await _context.Students
                 .Where(s => s.ClassId == existing.ClassId || (s.GradeSection != null && s.GradeSection == oldName))
                 .ToListAsync();
@@ -522,7 +578,6 @@ namespace Server.Controllers
                 return RedirectToAction("ClassDetails", new { id = classId });
             }
 
-            var hasher = new Microsoft.AspNetCore.Identity.PasswordHasher<object>();
             string uName = string.IsNullOrWhiteSpace(username)
                 ? $"{firstName.ToLower().Replace(" ", "")}.{lastName.ToLower().Replace(" ", "")}"
                 : username.Trim();
@@ -535,7 +590,7 @@ namespace Server.Controllers
                 LastName = lastName.Trim(),
                 FullName = $"{firstName.Trim()} {lastName.Trim()}",
                 Username = uName,
-                PasswordHash = hasher.HashPassword(null, pwd),
+                PasswordHash = _context.Teachers.FirstOrDefault() != null ? new Microsoft.AspNetCore.Identity.PasswordHasher<object>().HashPassword(null, pwd) : "hash",
                 Status = "Active",
                 GradeSection = cls.ClassName,
                 ClassId = cls.ClassId,
@@ -566,7 +621,6 @@ namespace Server.Controllers
                 return RedirectToAction("ClassDetails", new { id = classId });
             }
 
-            var hasher = new Microsoft.AspNetCore.Identity.PasswordHasher<object>();
             int addedCount = 0;
             for (int i = 0; i < bulkFirstNames.Count; i++)
             {
@@ -592,7 +646,7 @@ namespace Server.Controllers
                     LastName = lName,
                     FullName = $"{fName} {lName}",
                     Username = uName,
-                    PasswordHash = hasher.HashPassword(null, pwd),
+                    PasswordHash = new Microsoft.AspNetCore.Identity.PasswordHasher<object>().HashPassword(null, pwd),
                     Status = "Active",
                     GradeSection = cls.ClassName,
                     ClassId = cls.ClassId,
@@ -662,4 +716,3 @@ namespace Server.Controllers
         }
     }
 }
-

@@ -20,7 +20,7 @@ namespace Server.Controllers
             return View();
         }
 
-        // Students can ONLY log in. There is no registration flow.
+        // Students, Teachers, and Admins can log in
         [HttpPost]
         public async Task<IActionResult> Login(string username, string password)
         {
@@ -64,7 +64,7 @@ namespace Server.Controllers
                     return RedirectToAction("Index", "Admin");
 
                 default:
-                    _loginCache.Set(key, fails, TimeSpan.FromMinutes(1));
+                    _loginCache.Set(key, fails + 1, TimeSpan.FromMinutes(1));
                     ViewBag.Error = result.Role == AccountRole.None
                         ? "Username and password are required."
                         : "Invalid username or password.";
@@ -72,10 +72,14 @@ namespace Server.Controllers
             }
         }
 
-        [HttpPost]
+        [HttpGet, HttpPost]
         public async Task<IActionResult> Logout()
         {
-            await _authService.LogoutAsync(HttpContext.Session.GetInt32("StudentId"));
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            if (studentId.HasValue)
+            {
+                await _authService.LogoutAsync(studentId.Value);
+            }
             HttpContext.Session.Clear();
             return RedirectToAction("Login");
         }

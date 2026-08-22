@@ -83,13 +83,12 @@
             <tbody>
                 @foreach (var t in Model)
                 {
-                    var formId = "t-update-" + t.TeacherId;
                     <tr>
                         <td class="fw-bold text-muted">#T-@t.TeacherId.ToString("D3")</td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 <div class="user-avatar-circle" style="width: 32px; height: 32px; font-size: 0.85rem;">
-                                    @t.FirstName.Substring(0, 1)
+                                    @(!string.IsNullOrEmpty(t.FirstName) ? t.FirstName.Substring(0, 1) : "T")
                                 </div>
                                 <span class="fw-bold text-dark">@t.FirstName @t.LastName</span>
                             </div>
@@ -218,6 +217,11 @@
                         <div class="mb-3">
                             <label class="form-label fw-semibold text-muted small">Username</label>
                             <input type="text" name="Username" class="form-control filter-control" value="@t.Username" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-muted small">New Password <span class="text-muted font-normal">(Leave blank to keep current)</span></label>
+                            <input type="password" name="newPassword" class="form-control filter-control" placeholder="Optional new password" />
                         </div>
 
                         <div class="row g-2 mb-3">
