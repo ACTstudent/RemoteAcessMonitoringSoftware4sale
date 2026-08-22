@@ -13,6 +13,17 @@ CAMS is a LAN-based classroom management and monitoring application for computer
 
 The system serves three roles: **Administrators** manage accounts, classes, and policy; **Teachers** run sessions and monitor student screens in real time; **Students** connect through a lightweight client that auto-discovers the server on the local network.
 
+## Downloads (v2.5.2)
+
+Pre-built installer executables and source packages for the latest release:
+
+| Package | Download Link | Target / Description |
+| :--- | :--- | :--- |
+| **CAMS Server Setup** | [`CAMS-Server-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Server-Setup.exe) | Teacher / Lab Control PC Installer |
+| **CAMS Student Client** | [`CAMS-Client-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Client-Setup.exe) | Student Workstation Agent Installer |
+| **Server Source Code** | [`CAMS-Server-Source.zip`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Server-Source.zip) | ASP.NET Core MVC + SignalR Source Package |
+| **Client Source Code** | [`CAMS-Client-Source.zip`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Client-Source.zip) | WinForms Student Agent Source Package |
+
 ## Key Features
 
 **Monitoring**
@@ -87,8 +98,6 @@ The system serves three roles: **Administrators** manage accounts, classes, and 
 1. Download and run [`CAMS-Client-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Client-Setup.exe) on each workstation.
 2. The client auto-discovers the server on the LAN and connects automatically.
 3. Students log in with their assigned credentials.
-
-Pre-built source packages are also available: [server source](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Server-Source.zip) and [client source](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Client-Source.zip).
 
 ## Build From Source
 
