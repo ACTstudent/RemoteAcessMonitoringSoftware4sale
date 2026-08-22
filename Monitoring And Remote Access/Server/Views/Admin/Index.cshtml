@@ -1,57 +1,168 @@
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Admin Dashboard";
     Layout = "_Layout";
 }
 
-<h4 class="fw-bold mb-4"><i class="bi bi-grid"></i> Dashboard</h4>
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <h2 class="fw-extrabold mb-1 text-dark" style="letter-spacing: -0.5px;">Admin Dashboard</h2>
+        <p class="text-muted mb-0 small">Overview of Pardo Elementary School Computer Laboratories & Users</p>
+    </div>
+    <div class="badge bg-success rounded-pill px-3 py-2 fs-6">
+        <i class="bi bi-shield-check me-1"></i> System Online
+    </div>
+</div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted small">Students</div>
-                <div class="stat text-primary">@ViewBag.StudentCount</div>
+<!-- Metric Summary Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="metric-card metric-card-emerald d-flex justify-content-between align-items-center">
+            <div>
+                <div class="metric-title">Total Students</div>
+                <div class="metric-value">@ViewBag.StudentCount</div>
+            </div>
+            <div class="metric-icon-box">
+                <i class="bi bi-mortarboard-fill fs-3"></i>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted small">Teachers</div>
-                <div class="stat text-info">@ViewBag.TeacherCount</div>
+    <div class="col-md-3 col-sm-6">
+        <div class="metric-card metric-card-active d-flex justify-content-between align-items-center">
+            <div>
+                <div class="metric-title">Faculty / Teachers</div>
+                <div class="metric-value">@ViewBag.TeacherCount</div>
+            </div>
+            <div class="metric-icon-box">
+                <i class="bi bi-person-badge-fill fs-3"></i>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted small">Computers</div>
-                <div class="stat text-warning">@ViewBag.ComputerCount</div>
+    <div class="col-md-3 col-sm-6">
+        <div class="metric-card metric-card-active d-flex justify-content-between align-items-center">
+            <div>
+                <div class="metric-title">Lab Workstations</div>
+                <div class="metric-value">@ViewBag.ComputerCount</div>
+            </div>
+            <div class="metric-icon-box">
+                <i class="bi bi-pc-display fs-3"></i>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted small">Active Sessions</div>
-                <div class="stat text-success">@ViewBag.ActiveSessions</div>
+    <div class="col-md-3 col-sm-6">
+        <div class="metric-card metric-card-emerald d-flex justify-content-between align-items-center">
+            <div>
+                <div class="metric-title">Active Lab Sessions</div>
+                <div class="metric-value text-success">@ViewBag.ActiveSessions</div>
+            </div>
+            <div class="metric-icon-box bg-success text-white">
+                <i class="bi bi-play-circle-fill fs-3"></i>
             </div>
         </div>
     </div>
 </div>
 
-<div class="card">
-    <div class="card-header fw-bold">Quick Actions</div>
-    <div class="card-body">
-        <div class="row g-2">
-            <div class="col-md-3"><a class="btn btn-outline-primary w-100" href="/Admin/Teachers">Manage Teacher Accounts</a></div>
-            <div class="col-md-3"><a class="btn btn-outline-primary w-100" href="/Admin/Students">Manage Student Accounts</a></div>
-            <div class="col-md-3"><a class="btn btn-outline-primary w-100" href="/Admin/Roles">Roles &amp; Permissions</a></div>
-            <div class="col-md-3"><a class="btn btn-outline-primary w-100" href="/Admin/Restrictions">Restriction Rules</a></div>
-            <div class="col-md-3"><a class="btn btn-outline-secondary w-100" href="/Admin/Blacklists">Website/App Blacklists</a></div>
-            <div class="col-md-3"><a class="btn btn-outline-secondary w-100" href="/Admin/SessionRules">Session Rules</a></div>
-            <div class="col-md-3"><a class="btn btn-outline-secondary w-100" href="/Admin/LanConfig">LAN Configuration</a></div>
-            <div class="col-md-3"><a class="btn btn-outline-secondary w-100" href="/Admin/Reports">Generate Reports</a></div>
-        </div>
+<!-- Quick Module Navigation Grid (pro Style) -->
+<h5 class="fw-bold mb-3 text-dark">Management & Administration</h5>
+<div class="row g-4">
+    <div class="col-md-4 col-sm-6">
+        <a href="/Admin/Classes" class="text-decoration-none">
+            <div class="class-card h-100 d-flex flex-column justify-content-between">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="icon-box-primary">
+                        <i class="bi bi-folder-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark fs-5">Class Management</div>
+                        <div class="text-muted small">Advisory & Instructor classes</div>
+                    </div>
+                </div>
+                <div class="btn btn-view-class w-100 py-2 fw-semibold">Open Classes</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-4 col-sm-6">
+        <a href="/Admin/Teachers" class="text-decoration-none">
+            <div class="class-card h-100 d-flex flex-column justify-content-between">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="icon-box-primary">
+                        <i class="bi bi-person-badge-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark fs-5">Teacher Management</div>
+                        <div class="text-muted small">Manage faculty & staff accounts</div>
+                    </div>
+                </div>
+                <div class="btn btn-view-class w-100 py-2 fw-semibold">Open Teachers</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-4 col-sm-6">
+        <a href="/Admin/Students" class="text-decoration-none">
+            <div class="class-card h-100 d-flex flex-column justify-content-between">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="icon-box-primary">
+                        <i class="bi bi-mortarboard-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark fs-5">Student Management</div>
+                        <div class="text-muted small">Manage student records & IDs</div>
+                    </div>
+                </div>
+                <div class="btn btn-view-class w-100 py-2 fw-semibold">Open Students</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-4 col-sm-6">
+        <a href="/Admin/Computers" class="text-decoration-none">
+            <div class="class-card h-100 d-flex flex-column justify-content-between">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="icon-box-primary">
+                        <i class="bi bi-pc-display fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark fs-5">Computer Profiles</div>
+                        <div class="text-muted small">Manage lab workstation stations</div>
+                    </div>
+                </div>
+                <div class="btn btn-view-class w-100 py-2 fw-semibold">Open Profiles</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-4 col-sm-6">
+        <a href="/Admin/Restrictions" class="text-decoration-none">
+            <div class="class-card h-100 d-flex flex-column justify-content-between">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="icon-box-primary">
+                        <i class="bi bi-slash-circle-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark fs-5">Restriction Rules</div>
+                        <div class="text-muted small">App & URL security policies</div>
+                    </div>
+                </div>
+                <div class="btn btn-view-class w-100 py-2 fw-semibold">Open Restrictions</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-4 col-sm-6">
+        <a href="/Admin/Reports" class="text-decoration-none">
+            <div class="class-card h-100 d-flex flex-column justify-content-between">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="icon-box-primary">
+                        <i class="bi bi-bar-chart-line-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark fs-5">System Reports</div>
+                        <div class="text-muted small">Lab usage & audit analytics</div>
+                    </div>
+                </div>
+                <div class="btn btn-view-class w-100 py-2 fw-semibold">Generate Reports</div>
+            </div>
+        </a>
     </div>
 </div>

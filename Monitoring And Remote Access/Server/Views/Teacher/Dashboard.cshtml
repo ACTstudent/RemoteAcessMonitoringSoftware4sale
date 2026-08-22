@@ -3,36 +3,155 @@
     Layout = "_TeacherLayout";
 }
 
-<h4 class="fw-bold mb-4"><i class="bi bi-speedometer2"></i> Teacher Dashboard</h4>
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <h2 class="fw-extrabold mb-1 text-dark" style="letter-spacing: -0.5px;">Teacher Dashboard</h2>
+        <p class="text-muted mb-0 small">Pardo Elementary School Computer Laboratory Controller</p>
+    </div>
+    <div class="badge bg-success rounded-pill px-3 py-2 fs-6">
+        <i class="bi bi-broadcast me-1"></i> SignalR Hub Connected
+    </div>
+</div>
 
-<div class="row g-3">
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted small">Running Sessions</div>
-                <div class="stat text-success">@ViewBag.RunningSessions</div>
+<!-- Metric Summary Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="metric-card metric-card-emerald d-flex justify-content-between align-items-center">
+            <div>
+                <div class="metric-title">Running Lab Sessions</div>
+                <div class="metric-value text-success">@ViewBag.RunningSessions</div>
+            </div>
+            <div class="metric-icon-box bg-success text-white">
+                <i class="bi bi-play-circle-fill fs-3"></i>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted small">Active Students</div>
-                <div class="stat text-primary">@ViewBag.ActiveStudents</div>
+    <div class="col-md-4">
+        <div class="metric-card metric-card-active d-flex justify-content-between align-items-center">
+            <div>
+                <div class="metric-title">Connected Students</div>
+                <div class="metric-value">@ViewBag.ActiveStudents</div>
+            </div>
+            <div class="metric-icon-box">
+                <i class="bi bi-people-fill fs-3"></i>
             </div>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header fw-bold">Quick Actions</div>
-            <div class="card-body">
-                <div class="row g-2">
-                    <div class="col-6"><a class="btn btn-outline-primary w-100" href="/Teacher/Sessions">Session Management</a></div>
-                    <div class="col-6"><a class="btn btn-outline-primary w-100" href="/Teacher/Monitoring">Live Monitoring</a></div>
-                    <div class="col-6"><a class="btn btn-outline-secondary w-100" href="/Teacher/Restrictions">Access Restrictions</a></div>
-                    <div class="col-6"><a class="btn btn-outline-secondary w-100" href="/Teacher/Records">Classroom Records</a></div>
+    <div class="col-md-4">
+        <div class="metric-card d-flex justify-content-between align-items-center">
+            <div>
+                <div class="metric-title">System Status</div>
+                <div class="metric-value fs-4 text-emerald-700 fw-bold">Active</div>
+            </div>
+            <div class="metric-icon-box">
+                <i class="bi bi-shield-check fs-3"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Module Cards (pro Style) -->
+<h5 class="fw-bold mb-3 text-dark">Laboratory Operations</h5>
+<div class="row g-4">
+    <div class="col-md-4 col-sm-6">
+        <a href="/Teacher/Monitoring" class="text-decoration-none">
+            <div class="class-card h-100 d-flex flex-column justify-content-between">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="icon-box-primary">
+                        <i class="bi bi-camera-video-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark fs-5">Live Monitoring</div>
+                        <div class="text-muted small">Real-time screen stream grid</div>
+                    </div>
                 </div>
+                <div class="btn btn-view-class w-100 py-2 fw-semibold">Open Live Grid</div>
             </div>
-        </div>
+        </a>
+    </div>
+
+    <div class="col-md-4 col-sm-6">
+        <a href="/Teacher/Sessions" class="text-decoration-none">
+            <div class="class-card h-100 d-flex flex-column justify-content-between">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="icon-box-primary">
+                        <i class="bi bi-play-circle-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark fs-5">Session Control</div>
+                        <div class="text-muted small">Start 45-min lab timer & lock</div>
+                    </div>
+                </div>
+                <div class="btn btn-view-class w-100 py-2 fw-semibold">Control Session</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-4 col-sm-6">
+        <a href="/Teacher/Students" class="text-decoration-none">
+            <div class="class-card h-100 d-flex flex-column justify-content-between">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="icon-box-primary">
+                        <i class="bi bi-people-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark fs-5">Student Roster</div>
+                        <div class="text-muted small">Assigned class students</div>
+                    </div>
+                </div>
+                <div class="btn btn-view-class w-100 py-2 fw-semibold">View Students</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-4 col-sm-6">
+        <a href="/Teacher/Computers" class="text-decoration-none">
+            <div class="class-card h-100 d-flex flex-column justify-content-between">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="icon-box-primary">
+                        <i class="bi bi-pc-display fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark fs-5">Workstation Grid</div>
+                        <div class="text-muted small">Power & lock control actions</div>
+                    </div>
+                </div>
+                <div class="btn btn-view-class w-100 py-2 fw-semibold">View Workstations</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-4 col-sm-6">
+        <a href="/Teacher/Restrictions" class="text-decoration-none">
+            <div class="class-card h-100 d-flex flex-column justify-content-between">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="icon-box-primary">
+                        <i class="bi bi-slash-circle-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark fs-5">Access Restrictions</div>
+                        <div class="text-muted small">Enforce app & website blocklists</div>
+                    </div>
+                </div>
+                <div class="btn btn-view-class w-100 py-2 fw-semibold">Manage Policies</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-4 col-sm-6">
+        <a href="/Teacher/Records" class="text-decoration-none">
+            <div class="class-card h-100 d-flex flex-column justify-content-between">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="icon-box-primary">
+                        <i class="bi bi-journal-check fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark fs-5">Classroom Records</div>
+                        <div class="text-muted small">Attendance & session logs</div>
+                    </div>
+                </div>
+                <div class="btn btn-view-class w-100 py-2 fw-semibold">View Logs</div>
+            </div>
+        </a>
     </div>
 </div>

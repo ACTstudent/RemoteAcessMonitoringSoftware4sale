@@ -4,25 +4,60 @@
     Layout = "_Layout";
 }
 
-<h4 class="fw-bold mb-4 d-flex justify-content-between align-items-center">
-    <span><i class="bi bi-journal-text"></i> View Basic Audit Trail</span>
-    <a href="/Admin/ExportAuditCsv" class="btn btn-sm btn-outline-light"><i class="bi bi-download"></i> Export CSV</a>
-</h4>
+<!-- Header Row -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-box-primary">
+            <i class="bi bi-journal-text fs-3"></i>
+        </div>
+        <div>
+            <h2 class="fw-extrabold mb-0 text-dark" style="letter-spacing: -0.5px;">System Audit Trail</h2>
+            <p class="text-muted mb-0 small">Security event tracking, administrative actions, and user login history</p>
+        </div>
+    </div>
+    <a href="/Admin/ExportAuditCsv" class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold text-white shadow-sm">
+        <i class="bi bi-download me-1"></i> Export Audit CSV
+    </a>
+</div>
 
-<div class="card">
+<!-- Audit Logs Table Card -->
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-dark">Audit Event Log</h5>
+        <span class="badge bg-light text-dark font-monospace fs-6">@Model.Count() Events Recorded</span>
+    </div>
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead><tr><th>Timestamp</th><th>User Type</th><th>User ID</th><th>Action</th><th>Details</th><th>IP</th></tr></thead>
+        <table class="table custom-table mb-0">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User Role</th>
+                    <th>User ID</th>
+                    <th>Action</th>
+                    <th>Details</th>
+                    <th>IP Address</th>
+                </tr>
+            </thead>
             <tbody>
                 @foreach (var a in Model)
                 {
                     <tr>
-                        <td>@a.Timestamp.ToString("MM/dd/yyyy HH:mm:ss")</td>
-                        <td><span class="badge bg-info text-dark">@a.UserType</span></td>
-                        <td>@a.UserId</td>
-                        <td>@a.Action</td>
+                        <td class="font-monospace text-muted">@a.Timestamp.ToString("MMM dd, yyyy HH:mm:ss")</td>
+                        <td>
+                            <span class="badge @(a.UserType == "Admin" ? "bg-dark" : "bg-success") rounded-pill px-3 py-1 font-monospace">
+                                @a.UserType
+                            </span>
+                        </td>
+                        <td class="font-monospace fw-bold">#@a.UserId</td>
+                        <td class="fw-bold text-dark">@a.Action</td>
                         <td>@a.Details</td>
-                        <td>@a.IpAddress</td>
+                        <td class="font-monospace text-emerald-700">@(string.IsNullOrEmpty(a.IpAddress) ? "127.0.0.1" : a.IpAddress)</td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">No audit trail records logged yet.</td>
                     </tr>
                 }
             </tbody>

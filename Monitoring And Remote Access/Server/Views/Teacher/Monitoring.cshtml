@@ -1,467 +1,175 @@
-
-
 @{
-    ViewData["Title"] = "Class Details - " + Model.ClassInfo?.SectionName;
+    ViewData["Title"] = "Live Monitoring Grid";
+    Layout = "_TeacherLayout";
 }
 
-<div class="container-fluid py-3">
-    <!-- Notifications -->
-    @if (!string.IsNullOrEmpty(Model.Message))
-    {
-        <div class="alert alert-dark alert-dismissible fade show rounded-3 shadow-sm mb-4 border-dark" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i> @Model.Message
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<!-- Header & Live Status Banner -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-box-primary">
+            <i class="bi bi-camera-video-fill fs-3"></i>
         </div>
-    }
-    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-    {
-        <div class="alert alert-secondary alert-dismissible fade show rounded-3 shadow-sm mb-4 border" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i> @Model.ErrorMessage
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-
-    <!-- Breadcrumb & Actions Header -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
         <div>
-            <a asp-page="./Index" class="btn btn-outline-dark btn-sm mb-2 rounded-pill px-3">
-                <i class="bi bi-arrow-left me-1"></i> Back to Class Management
-            </a>
-            <h2 class="fw-bold mb-1 text-dark font-display" style="font-size: 2rem;">@Model.ClassInfo?.SectionName</h2>
-            <div class="d-flex align-items-center gap-2 text-muted small">
-                <span>Academic Year: <strong class="text-dark">@Model.ClassInfo?.AcademicYear</strong></span>
-                <span>•</span>
-                <span>Status: <span class="badge bg-dark text-white">@Model.ClassInfo?.Status</span></span>
-            </div>
-        </div>
-
-        <div class="d-flex flex-wrap gap-2">
-            <!-- Edit Class Button -->
-            <button type="button" class="btn btn-outline-dark rounded-pill px-3 py-2 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#editClassModal">
-                <i class="bi bi-pencil-square me-1"></i> Edit Class
-            </button>
-
-            <!-- Assign Teacher Button -->
-            <button type="button" class="btn btn-outline-dark rounded-pill px-3 py-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#assignTeacherModal">
-                <i class="bi bi-person-badge me-1"></i> Assign Teacher
-            </button>
-
-            <!-- Add Student/s Button -->
-            <button type="button" class="btn btn-dark rounded-pill px-3 py-2 fw-semibold text-white shadow-sm" data-bs-toggle="modal" data-bs-target="#bulkAddStudentModal">
-                <i class="bi bi-person-plus-fill me-1"></i> Add Student/s
-            </button>
-
-            <!-- Archive Class Button -->
-            <form method="post" asp-page-handler="ArchiveClass" class="d-inline">
-                <input type="hidden" asp-for="ClassID" />
-                <button type="submit" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-semibold" onclick="return confirm('Are you sure you want to change the class status?')">
-                    <i class="bi bi-archive-fill me-1"></i> @(Model.ClassInfo?.Status == "Archived" ? "Unarchive" : "Archive")
-                </button>
-            </form>
-
-            <!-- Delete Class Button -->
-            <form method="post" asp-page-handler="DeleteClass" class="d-inline">
-                <input type="hidden" asp-for="ClassID" />
-                <button type="submit" class="btn btn-outline-dark rounded-pill px-3 py-2 fw-semibold" onclick="return confirm('Delete this class? Enrolled students will be unassigned.')">
-                    <i class="bi bi-trash-fill me-1"></i> Delete Class
-                </button>
-            </form>
+            <h2 class="fw-extrabold mb-0 text-dark" style="letter-spacing: -0.5px;">Live Workstation Monitoring</h2>
+            <p class="text-muted mb-0 small">Real-time SignalR WebSocket screen feeds & remote laboratory control</p>
         </div>
     </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#broadcastModal">
+            <i class="bi bi-broadcast me-1"></i> Broadcast Screen
+        </button>
+        <button class="btn btn-outline-danger rounded-pill px-4 py-2 fw-semibold shadow-sm" onclick="lockAllStations()">
+            <i class="bi bi-lock-fill me-1"></i> Lock All Units
+        </button>
+    </div>
+</div>
 
-    <!-- Class Summary Information Card -->
-    <div class="row g-4 mb-4">
-        <div class="col-md-6 col-lg-4">
-            <div class="card border border-subtle shadow-sm rounded-4 p-4 bg-white h-100">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="p-3 bg-light text-dark rounded-4 border">
-                        <i class="bi bi-person-video3 fs-2"></i>
-                    </div>
-                    <div>
-                        <div class="text-muted small">Assigned Teacher / Adviser</div>
-                        <h5 class="fw-bold text-dark mb-0">
-                            @(Model.ClassInfo?.Teacher != null ? $"{Model.ClassInfo.Teacher.FirstName} {Model.ClassInfo.Teacher.LastName}" : "No Teacher Assigned")
-                        </h5>
-                        @if (Model.ClassInfo?.Teacher != null)
-                        {
-                            <div class="small text-muted">@Model.ClassInfo.Teacher.Email</div>
-                        }
-                    </div>
-                </div>
+<!-- Real-time Control Toolbar -->
+<div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+    <div class="row g-3 align-items-center">
+        <div class="col-md-3 col-sm-6">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-success rounded-circle p-2"></span>
+                <span class="fw-bold text-dark small">Status: <span id="lblSessionState" class="text-success">Ready</span></span>
             </div>
         </div>
-
-        <div class="col-md-6 col-lg-4">
-            <div class="card border border-subtle shadow-sm rounded-4 p-4 bg-white h-100">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="p-3 bg-light text-dark rounded-4 border">
-                        <i class="bi bi-people fs-2"></i>
-                    </div>
-                    <div>
-                        <div class="text-muted small">Total Enrolled Students</div>
-                        <h2 class="fw-bold text-dark mb-0">@Model.EnrolledStudents.Count</h2>
-                    </div>
-                </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-clock-history text-muted"></i>
+                <span class="fw-bold text-dark small">Session Timer: <span id="lblSessionTimer" class="session-timer fs-5">00:00</span></span>
             </div>
         </div>
+        <div class="col-md-4 col-sm-8">
+            <div class="search-input-wrapper">
+                <input type="text" id="gridSearch" class="form-control filter-control search-input py-1.5" placeholder="Filter workstations..." />
+                <i class="bi bi-search search-icon text-muted"></i>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-4 text-end">
+            <span class="badge bg-light text-dark font-monospace border py-2 px-3 rounded-pill" id="lblConnectedCount">0 Units Active</span>
+        </div>
+    </div>
+</div>
 
-        <div class="col-md-12 col-lg-4">
-            <div class="card border border-subtle shadow-sm rounded-4 p-4 bg-white h-100">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="p-3 bg-light text-dark rounded-4 border">
-                        <i class="bi bi-calendar-check fs-2"></i>
-                    </div>
-                    <div>
-                        <div class="text-muted small">Academic Term</div>
-                        <h5 class="fw-bold text-dark mb-0">@Model.ClassInfo?.AcademicYear</h5>
-                        <div class="small text-muted">Active Session</div>
-                    </div>
+<!-- Live Monitoring Workstations Grid Container -->
+<div class="row g-4" id="workstationsGrid">
+    <!-- SignalR dynamic workstation cards will be populated here -->
+    <div class="col-12 text-center py-5 text-muted" id="emptyState">
+        <i class="bi bi-display-slash display-3 d-block opacity-50 mb-3 text-emerald-800"></i>
+        <h5 class="fw-bold">Awaiting Workstation Connections...</h5>
+        <p class="small">Ensure student client agents are launched on workstations in the computer laboratory.</p>
+    </div>
+</div>
+
+<!-- Modal: Broadcast Screen -->
+<div class="modal fade" id="broadcastModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 text-white" style="background-color: var(--sidebar-bg);">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-broadcast me-2"></i> Broadcast Teacher Screen
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <p class="text-muted small">Share your current display screen with all connected student workstations across the laboratory.</p>
+                <div class="alert alert-info py-2 small">
+                    <i class="bi bi-info-circle-fill me-1"></i> Students will receive the screen stream in full-screen mode.
                 </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-emerald rounded-pill px-4 text-white" onclick="startBroadcast()">Start Broadcast</button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Enrolled Students Table Card -->
-    <div class="card border border-subtle shadow-sm rounded-4 overflow-hidden bg-white mb-4">
-        <div class="card-header bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
-            <h5 class="fw-bold text-dark mb-0">
-                <i class="bi bi-person-lines-fill me-2 text-dark"></i> Students Enrolled in @Model.ClassInfo?.SectionName
-            </h5>
-            <span class="badge bg-light text-dark font-monospace fs-6 px-3 py-2 border rounded-pill">
-                @Model.EnrolledStudents.Count Student(s)
-            </span>
-        </div>
+@section Scripts {
+    <script src="~/lib/signalr/signalr.min.js"></script>
+    <script>
+        const hub = new signalR.HubConnectionBuilder()
+            .withUrl("/remoteMonitoringHub")
+            .withAutomaticReconnect()
+            .build();
 
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light border-bottom">
-                    <tr>
-                        <th class="ps-4 py-3 text-muted small fw-semibold">#</th>
-                        <th class="py-3 text-muted small fw-semibold">STUDENT NAME</th>
-                        <th class="py-3 text-muted small fw-semibold">USERNAME</th>
-                        <th class="py-3 text-muted small fw-semibold">ADVISER</th>
-                        <th class="py-3 text-muted small fw-semibold">STATUS</th>
-                        <th class="pe-4 py-3 text-end text-muted small fw-semibold">ACTIONS</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model.EnrolledStudents.Any())
-                    {
-                        int index = 1;
-                        foreach (var student in Model.EnrolledStudents)
-                        {
-                            <tr>
-                                <td class="ps-4 fw-semibold text-muted">@(index++)</td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="avatar-circle-sm bg-dark text-white fw-bold d-flex justify-content-center align-items-center rounded-circle" style="width: 34px; height: 34px; font-size: 0.85rem;">
-                                            @student.FirstName.Substring(0, 1)@student.LastName.Substring(0, 1)
-                                        </div>
-                                        <div>
-                                            <div class="fw-bold text-dark">@student.FirstName @student.LastName</div>
-                                            <div class="text-muted small">ID: #@student.StudentID</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="font-monospace text-muted">@student.UserName</td>
-                                <td>
-                                    @if (student.Adviser != null)
-                                    {
-                                        <span class="badge bg-light text-dark border fw-semibold">@student.Adviser.FirstName @student.Adviser.LastName</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted small">Unassigned</span>
-                                    }
-                                </td>
-                                <td>
-                                    <span class="badge bg-dark text-white fw-semibold px-2 py-1">@(student.Status ?? "Active")</span>
-                                </td>
-                                <td class="pe-4 text-end">
-                                    <!-- Edit Student Button -->
-                                    <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-3 me-1" data-bs-toggle="modal" data-bs-target="#editStudentModal-@student.StudentID">
-                                        <i class="bi bi-pencil me-1"></i> Edit
-                                    </button>
+        const activeUnits = new Map();
 
-                                    <!-- Remove Student Button -->
-                                    <form method="post" asp-page-handler="RemoveStudent" class="d-inline">
-                                        <input type="hidden" asp-for="ClassID" />
-                                        <input type="hidden" name="studentId" value="@student.StudentID" />
-                                        <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="return confirm('Remove student from this class?')">
-                                            <i class="bi bi-person-x me-1"></i> Remove
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
+        hub.on("ReceiveScreenStream", (connectionId, pcName, base64Image) => {
+            updateWorkstationCard(connectionId, pcName, base64Image);
+        });
 
-                            <!-- Edit Student Modal for each student -->
-                            <div class="modal fade" id="editStudentModal-@student.StudentID" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content border-0 shadow-lg rounded-4">
-                                        <div class="modal-header border-0 pb-0">
-                                            <h5 class="modal-title fw-bold">
-                                                <i class="bi bi-pencil-square text-dark me-2"></i> Edit Student: @student.FirstName @student.LastName
-                                            </h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <form method="post" asp-page-handler="EditStudent">
-                                            <div class="modal-body py-4">
-                                                <input type="hidden" asp-for="ClassID" />
-                                                <input type="hidden" asp-for="EditStudentID" value="@student.StudentID" />
+        hub.on("GlobalSessionState", (state) => {
+            document.getElementById("lblSessionState").textContent = state.status;
+            const timerEl = document.getElementById("lblSessionTimer");
+            const m = Math.floor(state.elapsedSeconds / 60), s = state.elapsedSeconds % 60;
+            timerEl.textContent = String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
+        });
 
-                                                <div class="row g-3">
-                                                    <div class="col-6">
-                                                        <label class="form-label fw-semibold text-muted small">First Name</label>
-                                                        <input type="text" asp-for="EditStudentFirstName" class="form-control rounded-3" value="@student.FirstName" required />
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <label class="form-label fw-semibold text-muted small">Last Name</label>
-                                                        <input type="text" asp-for="EditStudentLastName" class="form-control rounded-3" value="@student.LastName" required />
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <label class="form-label fw-semibold text-muted small">Username</label>
-                                                        <input type="text" asp-for="EditStudentUserName" class="form-control rounded-3" value="@student.UserName" />
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <label class="form-label fw-semibold text-muted small">Password</label>
-                                                        <input type="text" asp-for="EditStudentPassword" class="form-control rounded-3" value="@student.Password" />
-                                                    </div>
-                                                    <div class="col-12">
-                                                        <label class="form-label fw-semibold text-muted small">Status</label>
-                                                        <select asp-for="EditStudentStatus" class="form-select rounded-3">
-                                                            <option value="Active" selected="@(student.Status == "Active")">Active</option>
-                                                            <option value="Inactive" selected="@(student.Status == "Inactive")">Inactive</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer border-0 pt-0">
-                                                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-dark rounded-pill px-4">Save Changes</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
+        function updateWorkstationCard(connId, pcName, base64Img) {
+            document.getElementById("emptyState")?.remove();
+            let card = document.getElementById("unit-card-" + connId);
+            
+            if (!card) {
+                const col = document.createElement("div");
+                col.className = "col-lg-3 col-md-4 col-sm-6 unit-col";
+                col.id = "unit-card-" + connId;
+                col.innerHTML = `
+                    <div class="workstation-card h-100 d-flex flex-column justify-content-between">
+                        <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-success rounded-circle p-1"></span>
+                                <span class="fw-bold text-dark font-monospace small">${pcName}</span>
                             </div>
-                        }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="6" class="text-center py-5 text-muted">
-                                <i class="bi bi-people display-4 d-block text-secondary opacity-50 mb-2"></i>
-                                <p class="mb-2 fw-semibold">No students currently enrolled in this class.</p>
-                                <p class="small text-muted mb-3">Click <strong>Add Student/s</strong> to enroll students.</p>
-                                <button type="button" class="btn btn-dark rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#bulkAddStudentModal">
-                                    <i class="bi bi-person-plus-fill me-1"></i> Add Student/s Now
-                                </button>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<!-- Modal: Edit Class -->
-<div class="modal fade" id="editClassModal" tabindex="-1" aria-labelledby="editClassModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold" id="editClassModalLabel">
-                    <i class="bi bi-pencil-square text-dark me-2"></i> Edit Class Details
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="post" asp-page-handler="EditClass">
-                <div class="modal-body py-4">
-                    <input type="hidden" asp-for="ClassID" />
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Section Name <span class="text-danger">*</span></label>
-                        <input type="text" asp-for="EditSectionName" class="form-control rounded-3" required />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Academic Year</label>
-                        <input type="text" asp-for="EditAcademicYear" class="form-control rounded-3" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Status</label>
-                        <select asp-for="EditStatus" class="form-select rounded-3">
-                            <option value="Active">Active</option>
-                            <option value="Archived">Archived</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Assigned Teacher / Adviser</label>
-                        <select asp-for="EditTeacherID" class="form-select rounded-3">
-                            <option value="">-- Select Teacher --</option>
-                            @foreach (var t in Model.AvailableTeachers)
-                            {
-                                <option value="@t.TeacherID">@t.FirstName @t.LastName (@t.UserName)</option>
-                            }
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-dark rounded-pill px-4">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal 1: Assign Teacher -->
-<div class="modal fade" id="assignTeacherModal" tabindex="-1" aria-labelledby="assignTeacherModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold" id="assignTeacherModalLabel">
-                    <i class="bi bi-person-badge text-dark me-2"></i> Assign Teacher to Class
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="post" asp-page-handler="AssignTeacher">
-                <div class="modal-body py-4">
-                    <input type="hidden" asp-for="ClassID" />
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Select Teacher / Adviser</label>
-                        <select asp-for="SelectedTeacherID" class="form-select py-2 rounded-3">
-                            <option value="">-- Select Teacher --</option>
-                            @foreach (var t in Model.AvailableTeachers)
-                            {
-                                <option value="@t.TeacherID">@t.FirstName @t.LastName (@t.UserName)</option>
-                            }
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-dark rounded-pill px-4">Save Assignment</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal 2: Single Add Student -->
-<div class="modal fade" id="addStudentModal" tabindex="-1" aria-labelledby="addStudentModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold" id="addStudentModalLabel">
-                    <i class="bi bi-person-plus text-dark me-2"></i> Add Student to @Model.ClassInfo?.SectionName
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="post" asp-page-handler="AddStudent">
-                <div class="modal-body py-4">
-                    <input type="hidden" asp-for="ClassID" />
-
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <label class="form-label fw-semibold text-muted small">First Name <span class="text-danger">*</span></label>
-                            <input type="text" asp-for="NewStudentFirstName" class="form-control rounded-3" required placeholder="e.g. Juan" />
+                            <span class="badge badge-active">Online</span>
                         </div>
-                        <div class="col-6">
-                            <label class="form-label fw-semibold text-muted small">Last Name <span class="text-danger">*</span></label>
-                            <input type="text" asp-for="NewStudentLastName" class="form-control rounded-3" required placeholder="e.g. Dela Cruz" />
+                        <div class="stream-container">
+                            <img id="img-${connId}" class="stream-img" src="data:image/jpeg;base64,${base64Img}" alt="${pcName}" />
                         </div>
-                        <div class="col-6">
-                            <label class="form-label fw-semibold text-muted small">Username</label>
-                            <input type="text" asp-for="NewStudentUserName" class="form-control rounded-3" placeholder="Auto-generated if empty" />
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label fw-semibold text-muted small">Password</label>
-                            <input type="password" asp-for="NewStudentPassword" class="form-control rounded-3" placeholder="Default: student123" />
+                        <div class="p-3 bg-light d-flex justify-content-between align-items-center">
+                            <button class="btn btn-sm btn-outline-emerald rounded-pill px-3" onclick="lockUnit('${connId}')">
+                                <i class="bi bi-lock-fill me-1"></i> Lock
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="logoutUnit('${connId}')">
+                                <i class="bi bi-power me-1"></i> Logout
+                            </button>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-dark rounded-pill px-4 text-white">Enroll Student</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal 3: Bulk Add Students (Individual Text Boxes for Each Student Row) -->
-<div class="modal fade" id="bulkAddStudentModal" tabindex="-1" aria-labelledby="bulkAddStudentModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content border-0 shadow-lg rounded-4">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold" id="bulkAddStudentModalLabel">
-                    <i class="bi bi-person-plus-fill text-dark me-2"></i> Add Student/s to @Model.ClassInfo?.SectionName
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="post" asp-page-handler="BulkAddStudents">
-                <div class="modal-body py-4">
-                    <input type="hidden" asp-for="ClassID" />
-
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="text-muted small fw-semibold">Fill in student details in the text boxes below:</span>
-                        <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-3" onclick="addStudentRow()">
-                            <i class="bi bi-plus-lg me-1"></i> Add Another Row
-                        </button>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="table table-bordered align-middle" id="bulkStudentsTable">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th style="width: 25%;">FIRST NAME <span class="text-danger">*</span></th>
-                                    <th style="width: 25%;">LAST NAME <span class="text-danger">*</span></th>
-                                    <th style="width: 22%;">USERNAME (OPTIONAL)</th>
-                                    <th style="width: 20%;">PASSWORD</th>
-                                    <th style="width: 8%;" class="text-center">ACTION</th>
-                                </tr>
-                            </thead>
-                            <tbody id="bulkStudentsTbody">
-                                <tr>
-                                    <td><input type="text" name="BulkFirstNames" class="form-control rounded-3" placeholder="e.g. Juan" required /></td>
-                                    <td><input type="text" name="BulkLastNames" class="form-control rounded-3" placeholder="e.g. Dela Cruz" required /></td>
-                                    <td><input type="text" name="BulkUserNames" class="form-control rounded-3" placeholder="Auto-generated" /></td>
-                                    <td><input type="text" name="BulkPasswords" class="form-control rounded-3" value="student123" /></td>
-                                    <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="removeStudentRow(this)"><i class="bi bi-trash-fill"></i></button></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-dark rounded-pill px-4 text-white">Add Student/s</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<script>
-    function addStudentRow() {
-        const tbody = document.getElementById('bulkStudentsTbody');
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><input type="text" name="BulkFirstNames" class="form-control rounded-3" placeholder="First Name" /></td>
-            <td><input type="text" name="BulkLastNames" class="form-control rounded-3" placeholder="Last Name" /></td>
-            <td><input type="text" name="BulkUserNames" class="form-control rounded-3" placeholder="Auto-generated" /></td>
-            <td><input type="text" name="BulkPasswords" class="form-control rounded-3" value="student123" /></td>
-            <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="removeStudentRow(this)"><i class="bi bi-trash-fill"></i></button></td>
-        `;
-        tbody.appendChild(tr);
-    }
-
-    function removeStudentRow(btn) {
-        const tbody = document.getElementById('bulkStudentsTbody');
-        if (tbody.children.length > 1) {
-            btn.closest('tr').remove();
+                `;
+                document.getElementById("workstationsGrid").appendChild(col);
+                activeUnits.set(connId, pcName);
+            } else {
+                document.getElementById("img-" + connId).src = "data:image/jpeg;base64," + base64Img;
+            }
+            document.getElementById("lblConnectedCount").textContent = activeUnits.size + " Units Active";
         }
-    }
-</script>
+
+        function lockAllStations() {
+            if (confirm("Are you sure you want to lock all laboratory student workstations?")) {
+                hub.invoke("LockAllWorkstations").catch(console.error);
+            }
+        }
+
+        function startBroadcast() {
+            hub.invoke("StartScreenBroadcast").catch(console.error);
+            bootstrap.Modal.getInstance(document.getElementById('broadcastModal'))?.hide();
+        }
+
+        function lockUnit(connId) {
+            hub.invoke("LockWorkstation", connId).catch(console.error);
+        }
+
+        function logoutUnit(connId) {
+            hub.invoke("LogoutWorkstation", connId).catch(console.error);
+        }
+
+        document.getElementById("gridSearch")?.addEventListener("input", function() {
+            const q = this.value.toLowerCase();
+            document.querySelectorAll(".unit-col").forEach(col => {
+                col.style.display = col.textContent.toLowerCase().includes(q) ? "" : "none";
+            });
+        });
+
+        hub.start().catch(console.error);
+    </script>
+}

@@ -1,41 +1,139 @@
 @model IEnumerable<Server.Models.Computer>
 @{
-    ViewData["Title"] = "Computer Profiles";
-    Layout = "_Layout";
+    ViewData["Title"] = "Workstation Profiles";
+    Layout = "_TeacherLayout";
+
+    var total = Model.Count();
+    var available = Model.Count(c => c.Status == "Available");
+    var inUse = Model.Count(c => c.Status == "In Use");
+    var maintenance = Model.Count(c => c.Status == "Maintenance");
 }
 
-<h4 class="fw-bold mb-4"><i class="bi bi-pc-display"></i> Computer Profiles</h4>
+<!-- Header Row -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-box-primary">
+            <i class="bi bi-pc-display fs-3"></i>
+        </div>
+        <div>
+            <h2 class="fw-extrabold mb-0 text-dark" style="letter-spacing: -0.5px;">Workstation Profiles</h2>
+            <p class="text-muted mb-0 small">Monitor laboratory workstations, operational state, and station status</p>
+        </div>
+    </div>
+    <span class="badge bg-success rounded-pill px-3 py-2 fs-6">
+        <i class="bi bi-check-circle me-1"></i> @available / @total Available
+    </span>
+</div>
 
-<div class="card">
-    <div class="card-header fw-bold">All Workstations</div>
+<!-- Metric Summary Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="metric-card d-flex justify-content-between align-items-center">
+            <div>
+                <div class="metric-title">Total Workstations</div>
+                <div class="metric-value">@total</div>
+            </div>
+            <div class="metric-icon-box">
+                <i class="bi bi-pc-display fs-3"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="metric-card metric-card-emerald d-flex justify-content-between align-items-center">
+            <div>
+                <div class="metric-title">Available</div>
+                <div class="metric-value text-success">@available</div>
+            </div>
+            <div class="metric-icon-box">
+                <i class="bi bi-check-circle-fill fs-3"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="metric-card metric-card-active d-flex justify-content-between align-items-center">
+            <div>
+                <div class="metric-title">In Use</div>
+                <div class="metric-value text-primary">@inUse</div>
+            </div>
+            <div class="metric-icon-box">
+                <i class="bi bi-person-workspace fs-3"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="metric-card d-flex justify-content-between align-items-center">
+            <div>
+                <div class="metric-title">Maintenance</div>
+                <div class="metric-value text-warning">@maintenance</div>
+            </div>
+            <div class="metric-icon-box bg-warning text-dark">
+                <i class="bi bi-tools fs-3"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Workstation List Card -->
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-dark">Laboratory Workstations</h5>
+        <span class="badge bg-light text-dark font-monospace fs-6">@total Workstations</span>
+    </div>
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead><tr><th>Station</th><th>Status</th><th>Assigned To</th><th>Actions</th></tr></thead>
+        <table class="table custom-table mb-0">
+            <thead>
+                <tr>
+                    <th>Station Name</th>
+                    <th>Status</th>
+                    <th>Assigned Student ID</th>
+                    <th class="text-end">Update Status</th>
+                </tr>
+            </thead>
             <tbody>
                 @foreach (var c in Model)
                 {
                     var formId = "comp-update-" + c.ComputerId;
                     <tr>
-                        <td><input class="form-control form-control-sm" form="@formId" name="LaboratoryStation" value="@c.LaboratoryStation" /></td>
                         <td>
-                            <select name="Status" form="@formId" class="form-select form-select-sm">
-                                <option value="Available" selected="@(c.Status == "Available")">Available</option>
-                                <option value="Maintenance" selected="@(c.Status == "Maintenance")">Maintenance</option>
-                            </select>
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-pc-display-horizontal fs-5 text-emerald-700"></i>
+                                <span class="fw-bold text-dark fs-6">@c.LaboratoryStation</span>
+                            </div>
                         </td>
-                        <td>@c.AssignedTo ?? "—"</td>
                         <td>
-                            <form id="@formId" method="post" action="/Teacher/UpdateComputer" style="display:inline">
+                            @if (c.Status == "Available")
+                            {
+                                <span class="badge bg-success rounded-pill px-3 py-1"><i class="bi bi-circle-fill me-1" style="font-size:0.5rem;"></i> Available</span>
+                            }
+                            else if (c.Status == "In Use")
+                            {
+                                <span class="badge bg-primary rounded-pill px-3 py-1"><i class="bi bi-circle-fill me-1" style="font-size:0.5rem;"></i> In Use</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark rounded-pill px-3 py-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> Maintenance</span>
+                            }
+                        </td>
+                        <td class="font-monospace">@(string.IsNullOrEmpty(c.AssignedTo) ? "-" : $"Student #{c.AssignedTo}")</td>
+                        <td class="text-end">
+                            <form id="@formId" method="post" action="/Teacher/UpdateComputer" class="d-flex gap-2 justify-content-end align-items-center" style="margin:0;">
                                 <input type="hidden" name="ComputerId" value="@c.ComputerId" />
+                                <input type="hidden" name="LaboratoryStation" value="@c.LaboratoryStation" />
                                 <input type="hidden" name="AssignedTo" value="@c.AssignedTo" />
-                                <button class="btn btn-sm btn-outline-light">Save</button>
+                                <select name="Status" class="form-select filter-control py-1 px-2" style="font-size: 0.85rem; width: 140px;">
+                                    <option value="Available" selected="@(c.Status == "Available")">Available</option>
+                                    <option value="Maintenance" selected="@(c.Status == "Maintenance")">Maintenance</option>
+                                </select>
+                                <button class="btn btn-sm btn-emerald rounded-pill px-3">Save</button>
                             </form>
                         </td>
                     </tr>
                 }
                 @if (!Model.Any())
                 {
-                    <tr><td colspan="4" class="text-muted text-center">No computers configured.</td></tr>
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-muted">No workstations configured.</td>
+                    </tr>
                 }
             </tbody>
         </table>

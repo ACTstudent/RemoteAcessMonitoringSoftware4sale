@@ -4,142 +4,192 @@
     Layout = "_Layout";
 }
 
-<h4 class="fw-bold mb-4 d-flex justify-content-between align-items-center">
-    <span><i class="bi bi-bar-chart"></i> Administrative Reports</span>
-    <div class="d-flex gap-2">
-        <a href="/Admin/ExportReportsCsv?from=@ViewBag.FromDate&to=@ViewBag.ToDate" class="btn btn-sm btn-outline-light"><i class="bi bi-download"></i> Session CSV</a>
-        <a href="/Admin/ExportUsageCsv?from=@ViewBag.FromDate&to=@ViewBag.ToDate" class="btn btn-sm btn-outline-light"><i class="bi bi-download"></i> Usage CSV</a>
+<!-- Header Row -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-box-primary">
+            <i class="bi bi-bar-chart-line-fill fs-3"></i>
+        </div>
+        <div>
+            <h2 class="fw-extrabold mb-0 text-dark" style="letter-spacing: -0.5px;">Administrative Analytics & Reports</h2>
+            <p class="text-muted mb-0 small">Export session logs, workstation allocation, and active application usage</p>
+        </div>
     </div>
-</h4>
-
-<div class="card mb-4">
-    <div class="card-body p-3">
-        <form method="get" action="/Admin/Reports" class="row g-2 align-items-end">
-            <div class="col-md-3">
-                <label class="small text-muted">From</label>
-                <input type="date" name="from" class="form-control form-control-sm" value="@ViewBag.FromDate" />
-            </div>
-            <div class="col-md-3">
-                <label class="small text-muted">To</label>
-                <input type="date" name="to" class="form-control form-control-sm" value="@ViewBag.ToDate" />
-            </div>
-            <div class="col-md-2">
-                <button class="btn btn-sm btn-primary w-100">Filter</button>
-            </div>
-        </form>
+    <div class="d-flex gap-2">
+        <a href="/Admin/ExportReportsCsv?from=@ViewBag.FromDate&to=@ViewBag.ToDate" class="btn btn-outline-emerald rounded-pill px-3 py-2 fw-semibold">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Session CSV
+        </a>
+        <a href="/Admin/ExportUsageCsv?from=@ViewBag.FromDate&to=@ViewBag.ToDate" class="btn btn-emerald rounded-pill px-3 py-2 fw-semibold text-white">
+            <i class="bi bi-download me-1"></i> Usage CSV
+        </a>
     </div>
 </div>
 
-<div class="row g-3 mb-4">
+<!-- Date Range Filter Card -->
+<div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+    <form method="get" action="/Admin/Reports" class="row g-3 align-items-center">
+        <div class="col-md-4">
+            <label class="form-label fw-semibold text-muted small mb-1">From Date</label>
+            <input type="date" name="from" class="form-control filter-control" value="@ViewBag.FromDate" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold text-muted small mb-1">To Date</label>
+            <input type="date" name="to" class="form-control filter-control" value="@ViewBag.ToDate" />
+        </div>
+        <div class="col-md-4 mt-4">
+            <button class="btn btn-emerald w-100 py-2 fw-bold text-white rounded-pill">
+                <i class="bi bi-funnel me-1"></i> Filter Analytics
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Metric Summary Cards -->
+<div class="row g-4 mb-4">
     <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted small">Total Sessions</div>
-                <div class="stat text-primary">@ViewBag.TotalSessions</div>
+        <div class="metric-card metric-card-emerald d-flex justify-content-between align-items-center">
+            <div>
+                <div class="metric-title">Total Sessions Logged</div>
+                <div class="metric-value text-success">@ViewBag.TotalSessions</div>
+            </div>
+            <div class="metric-icon-box bg-success text-white">
+                <i class="bi bi-journal-check fs-3"></i>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted small">Total Lab Usage (minutes)</div>
-                <div class="stat text-success">@Math.Round((double)ViewBag.TotalMinutes)</div>
+        <div class="metric-card d-flex justify-content-between align-items-center">
+            <div>
+                <div class="metric-title">Total Lab Usage (Minutes)</div>
+                <div class="metric-value text-dark">@Math.Round((double)ViewBag.TotalMinutes) mins</div>
+            </div>
+            <div class="metric-icon-box">
+                <i class="bi bi-clock-history fs-3"></i>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted small">Sessions by Teacher</div>
-                <div>
+        <div class="metric-card d-flex justify-content-between align-items-center">
+            <div>
+                <div class="metric-title">Sessions by Faculty</div>
+                <div class="d-flex flex-wrap gap-1 mt-1">
                     @foreach (var kv in ViewBag.SessionsByTeacher)
                     {
-                        <span class="badge bg-secondary me-1">@kv.Key: @kv.Value</span>
+                        <span class="badge bg-dark rounded-pill px-2 py-1 font-monospace">@kv.Key: @kv.Value</span>
                     }
-</div>
-        </div>
-    </div>
-</div>
-
-<div class="card mt-4">
-    <div class="card-header fw-bold">Top Apps (date range)</div>
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead><tr><th>Application</th><th>Count</th></tr></thead>
-            <tbody>
-                @if (ViewBag.TopApps != null)
-                {
-                    foreach (var app in ViewBag.TopApps)
-                    {
-                        <tr><td>@app.App</td><td>@app.Count</td></tr>
-                    }
-                }
-                else
-                {
-                    <tr><td colspan="2" class="text-muted text-center">No usage data.</td></tr>
-                }
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<div class="card mt-4">
-    <div class="card-header fw-bold">Usage Logs</div>
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead><tr><th>Timestamp</th><th>Student ID</th><th>PC</th><th>App</th></tr></thead>
-            <tbody>
-                @if (ViewBag.UsageLogs != null)
-                {
-                    foreach (var u in (ViewBag.UsageLogs as System.Collections.Generic.IEnumerable<Server.Models.UsageLog>).Take(50))
-                    {
-                        <tr><td>@u.Timestamp.ToString("MM/dd HH:mm")</td><td>@u.StudentId</td><td>@u.PcName</td><td>@u.AppName</td></tr>
-                    }
-                }
-            </tbody>
-        </table>
-    </div>
-</div>
-</div>
-
-<div class="row g-3 mb-4">
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header fw-bold">Resource Allocation Summary</div>
-            <div class="card-body">
-                <table class="table table-sm mb-0">
-                    <thead><tr><th>Laboratory Station</th><th>Sessions</th></tr></thead>
-                    <tbody>
-                        @foreach (var kv in ViewBag.SessionsByStation)
-                        {
-                            <tr><td>@kv.Key</td><td>@kv.Value</td></tr>
-                        }
-                    </tbody>
-                </table>
+                </div>
+            </div>
+            <div class="metric-icon-box">
+                <i class="bi bi-person-badge fs-3"></i>
             </div>
         </div>
     </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Top Apps Card -->
     <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header fw-bold">Lab Usage Report</div>
-            <div class="card-body">
-                <table class="table table-sm mb-0">
-                    <thead><tr><th>Student</th><th>Teacher</th><th>Station</th><th>Start</th><th>End</th><th>Status</th></tr></thead>
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-dark">Most Active Applications</h5>
+                <i class="bi bi-window-stack text-muted"></i>
+            </div>
+            <div class="table-responsive">
+                <table class="table custom-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Application Name</th>
+                            <th class="text-end">Launch Count</th>
+                        </tr>
+                    </thead>
                     <tbody>
-                        @foreach (var s in Model.Take(30))
+                        @if (ViewBag.TopApps != null)
+                        {
+                            foreach (var app in ViewBag.TopApps)
+                            {
+                                <tr>
+                                    <td class="fw-bold text-dark font-monospace">@app.App</td>
+                                    <td class="text-end font-monospace text-emerald-700 fw-bold">@app.Count</td>
+                                </tr>
+                            }
+                        }
+                        else
                         {
                             <tr>
-                                <td>@(s.Student?.Username ?? "?")</td>
-                                <td>@(s.Teacher?.Username ?? "-")</td>
-                                <td>@(s.Computer?.LaboratoryStation ?? s.PCName)</td>
-                                <td>@s.StartTime.ToString("MM/dd HH:mm")</td>
-                                <td>@(s.EndTime?.ToString("MM/dd HH:mm") ?? "-")</td>
-                                <td><span class="badge @(s.Status == "Running" ? "bg-success" : s.Status == "Paused" ? "bg-warning text-dark" : "bg-secondary")">@s.Status</span></td>
+                                <td colspan="2" class="text-center py-4 text-muted">No application usage data in selected range.</td>
                             </tr>
                         }
                     </tbody>
                 </table>
             </div>
         </div>
+    </div>
+
+    <!-- Station Allocation Summary Card -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-dark">Station Allocation Summary</h5>
+                <i class="bi bi-pc-display text-muted"></i>
+            </div>
+            <div class="table-responsive">
+                <table class="table custom-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Laboratory Station</th>
+                            <th class="text-end">Total Sessions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var kv in ViewBag.SessionsByStation)
+                        {
+                            <tr>
+                                <td class="fw-bold text-dark font-monospace">@kv.Key</td>
+                                <td class="text-end font-monospace text-emerald-700 fw-bold">@kv.Value</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Session Report Card -->
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-dark">Detailed Lab Session Logs</h5>
+        <span class="badge bg-light text-dark font-monospace fs-6">Showing Recent 30</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table custom-table mb-0">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Teacher</th>
+                    <th>Station</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model.Take(30))
+                {
+                    <tr>
+                        <td class="fw-bold text-dark">@(s.Student?.Username ?? "?")</td>
+                        <td>@(s.Teacher?.Username ?? "-")</td>
+                        <td class="font-monospace text-emerald-700">@(s.Computer?.LaboratoryStation ?? s.PCName)</td>
+                        <td>@s.StartTime.ToString("MMM dd, HH:mm")</td>
+                        <td>@(s.EndTime?.ToString("MMM dd, HH:mm") ?? "-")</td>
+                        <td>
+                            <span class="badge @(s.Status == "Running" ? "bg-success" : s.Status == "Paused" ? "bg-warning text-dark" : "bg-secondary") rounded-pill px-3 py-1">
+                                @s.Status
+                            </span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
 </div>

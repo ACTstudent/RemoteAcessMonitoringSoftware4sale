@@ -4,48 +4,99 @@
     Layout = "_TeacherLayout";
 }
 
-<h4 class="fw-bold mb-4"><i class="bi bi-slash-circle"></i> Access Restriction Control</h4>
+<!-- Header Row -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-box-primary">
+            <i class="bi bi-slash-circle-fill fs-3"></i>
+        </div>
+        <div>
+            <h2 class="fw-extrabold mb-0 text-dark" style="letter-spacing: -0.5px;">Access Restriction Policies</h2>
+            <p class="text-muted mb-0 small">Enforce application & website blocklists during active laboratory sessions</p>
+        </div>
+    </div>
+    <span class="badge bg-success rounded-pill px-3 py-2 fs-6">
+        <i class="bi bi-shield-check me-1"></i> Firewall Active
+    </span>
+</div>
 
-<div class="row g-3">
+<div class="row g-4 mb-4">
     <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header fw-bold">Apply Application Restrictions</div>
+        <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
             <div class="card-body">
-                <form method="post" action="/Teacher/SendNotification" class="row g-2">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-window-x fs-3 text-warning"></i>
+                    <h5 class="fw-bold mb-0 text-dark">Broadcast Application Restriction</h5>
+                </div>
+                <p class="text-muted small">Send immediate application restriction warnings to all connected student workstations.</p>
+                <form method="post" action="/Teacher/SendNotification">
                     <input type="hidden" name="type" value="Warning" />
-                    <input type="hidden" name="title" value="Application restriction" />
-                    <div class="col-12"><input name="message" class="form-control" placeholder="Describe the application restriction to broadcast" required /></div>
-                    <div class="col-12"><button class="btn btn-warning w-100">Broadcast App Restriction</button></div>
+                    <input type="hidden" name="title" value="Application restriction policy" />
+                    <div class="mb-3">
+                        <input name="message" class="form-control filter-control" placeholder="e.g. Games and unauthorized chat apps are blocked during class." required />
+                    </div>
+                    <button class="btn btn-warning w-100 py-2 fw-bold text-dark rounded-pill">
+                        <i class="bi bi-broadcast me-1"></i> Broadcast App Restriction
+                    </button>
                 </form>
-                <hr />
-                <a class="btn btn-outline-primary w-100" href="/Teacher/Monitoring">Manage via Live Monitoring</a>
             </div>
         </div>
     </div>
+
     <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header fw-bold">Apply Website Restrictions (Current Session)</div>
+        <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
             <div class="card-body">
-                <form method="post" action="/Teacher/SendNotification" class="row g-2">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-globe-americas fs-3 text-danger"></i>
+                    <h5 class="fw-bold mb-0 text-dark">Broadcast Website Restriction</h5>
+                </div>
+                <p class="text-muted small">Send website URL restriction warnings to all active student browser sessions.</p>
+                <form method="post" action="/Teacher/SendNotification">
                     <input type="hidden" name="type" value="Alert" />
-                    <input type="hidden" name="title" value="Website restriction" />
-                    <div class="col-12"><input name="message" class="form-control" placeholder="Describe the website restriction to broadcast" required /></div>
-                    <div class="col-12"><button class="btn btn-danger w-100">Broadcast Website Restriction</button></div>
+                    <input type="hidden" name="title" value="Website restriction policy" />
+                    <div class="mb-3">
+                        <input name="message" class="form-control filter-control" placeholder="e.g. Social media and video streaming sites are restricted." required />
+                    </div>
+                    <button class="btn btn-danger w-100 py-2 fw-bold rounded-pill">
+                        <i class="bi bi-shield-slash me-1"></i> Broadcast Website Restriction
+                    </button>
                 </form>
             </div>
         </div>
     </div>
 </div>
 
-<div class="card mt-2">
-    <div class="card-header fw-bold">Global Restriction Rules</div>
+<!-- Global Rules List -->
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-dark">Global Enforced Security Policies</h5>
+        <span class="badge bg-light text-dark font-monospace fs-6">@Model.Count() Active Rules</span>
+    </div>
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead><tr><th>Type</th><th>Target</th><th>Description</th></tr></thead>
+        <table class="table custom-table mb-0">
+            <thead>
+                <tr>
+                    <th>Rule Type</th>
+                    <th>Target Pattern</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
             <tbody>
                 @foreach (var r in Model)
                 {
-                    <tr><td><span class="badge bg-secondary">@r.RuleType</span></td><td>@r.Target</td><td>@r.Description</td></tr>
+                    <tr>
+                        <td>
+                            <span class="badge bg-dark rounded-pill px-3 py-1 font-monospace">@r.RuleType</span>
+                        </td>
+                        <td class="fw-bold font-monospace text-emerald-700">@r.Target</td>
+                        <td>@r.Description</td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="3" class="text-center py-4 text-muted">No global restriction rules configured.</td>
+                    </tr>
                 }
             </tbody>
         </table>

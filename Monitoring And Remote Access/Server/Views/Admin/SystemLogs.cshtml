@@ -4,22 +4,58 @@
     Layout = "_Layout";
 }
 
-<h4 class="fw-bold mb-4"><i class="bi bi-bug"></i> View System Error Logs</h4>
+<!-- Header Row -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-box-primary">
+            <i class="bi bi-bug-fill fs-3"></i>
+        </div>
+        <div>
+            <h2 class="fw-extrabold mb-0 text-dark" style="letter-spacing: -0.5px;">System & Exception Logs</h2>
+            <p class="text-muted mb-0 small">Server diagnostic trace, runtime exceptions, and warning logs</p>
+        </div>
+    </div>
+    <span class="badge bg-success rounded-pill px-3 py-2 fs-6">
+        <i class="bi bi-check-circle me-1"></i> System Diagnostics Normal
+    </span>
+</div>
 
-<div class="card">
+<!-- System Logs Table Card -->
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-dark">Exception & Diagnostic Events</h5>
+        <span class="badge bg-light text-dark font-monospace fs-6">@Model.Count() Log Entries</span>
+    </div>
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead><tr><th>Timestamp</th><th>Level</th><th>Message</th><th>Stack Trace</th></tr></thead>
+        <table class="table custom-table mb-0">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Log Level</th>
+                    <th>Error Message</th>
+                    <th>Stack Trace Snippet</th>
+                </tr>
+            </thead>
             <tbody>
                 @foreach (var l in Model)
                 {
                     <tr>
-                        <td>@l.Timestamp.ToString("MM/dd/yyyy HH:mm:ss")</td>
+                        <td class="font-monospace text-muted">@l.Timestamp.ToString("MMM dd, yyyy HH:mm:ss")</td>
                         <td>
-                            <span class="badge @(l.Level == "Error" ? "bg-danger" : l.Level == "Warning" ? "bg-warning text-dark" : l.Level == "Critical" ? "bg-danger" : "bg-secondary")">@l.Level</span>
+                            <span class="badge @(l.Level == "Error" || l.Level == "Critical" ? "bg-danger" : l.Level == "Warning" ? "bg-warning text-dark" : "bg-secondary") rounded-pill px-3 py-1 font-monospace">
+                                @l.Level
+                            </span>
                         </td>
-                        <td>@l.Message</td>
-                        <td class="text-muted small">@(l.StackTrace?.Length > 80 ? l.StackTrace.Substring(0, 80) + "..." : l.StackTrace)</td>
+                        <td class="fw-bold text-dark">@l.Message</td>
+                        <td class="font-monospace text-muted small">
+                            @(l.StackTrace?.Length > 80 ? l.StackTrace.Substring(0, 80) + "..." : (l.StackTrace ?? "-"))
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-muted">No system exceptions or error logs captured.</td>
                     </tr>
                 }
             </tbody>

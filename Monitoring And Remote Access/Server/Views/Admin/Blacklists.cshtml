@@ -4,44 +4,109 @@
     Layout = "_Layout";
 }
 
-<h4 class="fw-bold mb-4"><i class="bi bi-ban"></i> Manage Website/App Blacklists</h4>
-
-<div class="card mb-4">
-    <div class="card-header fw-bold">Add to Blacklist</div>
-    <div class="card-body">
-        <form method="post" action="/Admin/CreateBlacklist" class="row g-2">
-            <div class="col-md-2">
-                <select name="TargetType" class="form-select">
-                    <option value="Website">Website</option>
-                    <option value="Application">Application</option>
-                </select>
-            </div>
-            <div class="col-md-4"><input name="Value" class="form-control" placeholder="URL or app name" required /></div>
-            <div class="col-md-4"><input name="Reason" class="form-control" placeholder="Reason" /></div>
-            <div class="col-md-2"><button class="btn btn-danger w-100">Blacklist</button></div>
-        </form>
+<!-- Header Row -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-box-primary">
+            <i class="bi bi-ban fs-3"></i>
+        </div>
+        <div>
+            <h2 class="fw-extrabold mb-0 text-dark" style="letter-spacing: -0.5px;">Blacklist Directory</h2>
+            <p class="text-muted mb-0 small">Enforce forbidden website domains and prohibited application executables</p>
+        </div>
     </div>
+    <button class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#createBlacklistModal">
+        <i class="bi bi-plus-circle-fill me-1"></i> Add Blacklist Item
+    </button>
 </div>
 
-<div class="card">
-    <div class="card-header fw-bold">Blacklist Items</div>
+<!-- Blacklist Items Card -->
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-dark">Blacklisted Domains & Applications</h5>
+        <span class="badge bg-light text-dark font-monospace fs-6">@Model.Count() Items</span>
+    </div>
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead><tr><th>Type</th><th>Value</th><th>Reason</th><th>Active</th><th></th></tr></thead>
+        <table class="table custom-table mb-0">
+            <thead>
+                <tr>
+                    <th>Target Type</th>
+                    <th>Forbidden Target (URL / App)</th>
+                    <th>Reason / Category</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
             <tbody>
                 @foreach (var b in Model)
                 {
                     <tr>
-                        <td><span class="badge bg-danger">@b.TargetType</span></td>
-                        <td>@b.Value</td>
-                        <td>@b.Reason</td>
-                        <td>@(b.IsActive ? "Yes" : "No")</td>
                         <td>
-                            <form method="post" action="/Admin/DeleteBlacklist"><input type="hidden" name="id" value="@b.BlacklistItemId" /><button class="btn btn-sm btn-danger">Delete</button></form>
+                            <span class="badge bg-danger rounded-pill px-3 py-1 font-monospace">@b.TargetType</span>
                         </td>
+                        <td class="fw-bold font-monospace text-emerald-700">@b.Value</td>
+                        <td>@(string.IsNullOrEmpty(b.Reason) ? "Policy violation" : b.Reason)</td>
+                        <td>
+                            <span class="badge @(b.IsActive ? "bg-success" : "bg-secondary") rounded-pill px-2 py-1">
+                                @(b.IsActive ? "Active Block" : "Disabled")
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <form method="post" action="/Admin/DeleteBlacklist" style="margin:0;" onsubmit="return confirm('Remove item from blacklist?');">
+                                <input type="hidden" name="id" value="@b.BlacklistItemId" />
+                                <button class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                    <i class="bi bi-trash me-1"></i> Remove
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">No items in blacklist directory. Click "Add Blacklist Item" above.</td>
                     </tr>
                 }
             </tbody>
         </table>
+    </div>
+</div>
+
+<!-- Modal: Create Blacklist Item -->
+<div class="modal fade" id="createBlacklistModal" tabindex="-1" aria-labelledby="createBlacklistModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 text-white" style="background-color: var(--sidebar-bg);">
+                <h5 class="modal-title fw-bold" id="createBlacklistModalLabel">
+                    <i class="bi bi-ban me-2"></i> Add Blacklist Item
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="/Admin/CreateBlacklist">
+                <div class="modal-body py-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-muted small">Target Type</label>
+                        <select name="TargetType" class="form-select filter-control">
+                            <option value="Website">Website Domain (URL)</option>
+                            <option value="Application">Application Executable</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-muted small">Forbidden URL / App Name <span class="text-danger">*</span></label>
+                        <input type="text" name="Value" class="form-control filter-control" required placeholder="e.g. facebook.com, roblox.exe" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-muted small">Reason / Note</label>
+                        <input type="text" name="Reason" class="form-control filter-control" placeholder="e.g. Social media distraction during lab" />
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-emerald rounded-pill px-4 text-white">Blacklist Target</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>

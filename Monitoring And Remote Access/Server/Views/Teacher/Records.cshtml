@@ -4,53 +4,91 @@
     Layout = "_TeacherLayout";
 }
 
-<h4 class="fw-bold mb-4"><i class="bi bi-journal"></i> Classroom Records</h4>
+<!-- Header Row -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-box-primary">
+            <i class="bi bi-journal-check fs-3"></i>
+        </div>
+        <div>
+            <h2 class="fw-extrabold mb-0 text-dark" style="letter-spacing: -0.5px;">Classroom Records & Reports</h2>
+            <p class="text-muted mb-0 small">Historical attendance logs, lab duration, and session metrics</p>
+        </div>
+    </div>
+    <button class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold shadow-sm" onclick="window.print()">
+        <i class="bi bi-printer me-1"></i> Print / Export Report
+    </button>
+</div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted small">Total Sessions</div>
-                <div class="stat text-primary">@ViewBag.TotalSessions</div>
+<!-- Metric Summary Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="metric-card metric-card-emerald d-flex justify-content-between align-items-center">
+            <div>
+                <div class="metric-title">Total Recorded Sessions</div>
+                <div class="metric-value text-success">@ViewBag.TotalSessions</div>
+            </div>
+            <div class="metric-icon-box bg-success text-white">
+                <i class="bi bi-journal-text fs-3"></i>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted small">Total Lab Usage</div>
-                <div class="stat text-success">@Math.Round((double)ViewBag.TotalMinutes) min</div>
+    <div class="col-md-6">
+        <div class="metric-card d-flex justify-content-between align-items-center">
+            <div>
+                <div class="metric-title">Cumulative Lab Time</div>
+                <div class="metric-value text-dark">@Math.Round((double)ViewBag.TotalMinutes) mins</div>
             </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted small">Simple Class Report</div>
-                <div class="mt-2">
-                    <a href="#" class="btn btn-sm btn-outline-primary" onclick="window.print()">Print / Export Report</a>
-                </div>
+            <div class="metric-icon-box">
+                <i class="bi bi-clock-history fs-3"></i>
             </div>
         </div>
     </div>
 </div>
 
-<div class="card">
-    <div class="card-header fw-bold">Session Usage Logs</div>
+<!-- Session Usage Logs Table Card -->
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-dark">Attendance & Session Usage Logs</h5>
+        <span class="badge bg-light text-dark font-monospace fs-6">@Model.Count() Logs</span>
+    </div>
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead><tr><th>Student</th><th>Station</th><th>Start</th><th>End</th><th>Duration</th><th>Status</th></tr></thead>
+        <table class="table custom-table mb-0">
+            <thead>
+                <tr>
+                    <th>Student Username</th>
+                    <th>Station Name</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Duration</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
             <tbody>
                 @foreach (var s in Model)
                 {
                     var dur = s.EndTime.HasValue ? (int)Math.Round((s.EndTime.Value - s.StartTime).TotalMinutes) : 0;
                     <tr>
-                        <td>@(s.Student?.Username ?? "?")</td>
-                        <td>@(s.Computer?.LaboratoryStation ?? s.PCName)</td>
-                        <td>@s.StartTime.ToString("MM/dd/yyyy HH:mm")</td>
-                        <td>@(s.EndTime?.ToString("MM/dd/yyyy HH:mm") ?? "-")</td>
-                        <td>@dur min</td>
-                        <td><span class="badge @(s.Status == "Running" ? "bg-success" : s.Status == "Paused" ? "bg-warning text-dark" : "bg-secondary")">@s.Status</span></td>
+                        <td class="fw-bold text-dark font-monospace">
+                            <i class="bi bi-person me-1"></i> @(s.Student?.Username ?? "?")
+                        </td>
+                        <td class="font-monospace text-emerald-700">
+                            <i class="bi bi-pc-display me-1"></i> @(s.Computer?.LaboratoryStation ?? s.PCName)
+                        </td>
+                        <td>@s.StartTime.ToString("MMM dd, yyyy HH:mm")</td>
+                        <td>@(s.EndTime?.ToString("MMM dd, yyyy HH:mm") ?? "-")</td>
+                        <td class="fw-bold text-dark">@dur mins</td>
+                        <td>
+                            <span class="badge @(s.Status == "Running" ? "bg-success" : s.Status == "Paused" ? "bg-warning text-dark" : "bg-secondary") rounded-pill px-3 py-1">
+                                @s.Status
+                            </span>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">No attendance logs recorded yet.</td>
                     </tr>
                 }
             </tbody>

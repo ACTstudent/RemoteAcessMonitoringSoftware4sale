@@ -1,67 +1,108 @@
+@using Microsoft.AspNetCore.Http
 @{
     Layout = null;
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    var teacherName = ViewContext.HttpContext.Session.GetString("TeacherName") ?? "Teacher";
 }
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - CAMS Teacher</title>
+    <title>@ViewData["Title"] - CAMS Teacher | Pardo Elementary School</title>
     <link href="~/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
-    <style>
-        body { background-color: #12141a; color: #e6e6e6; }
-        .card { background-color: #1c1f27; border: 1px solid #2a2e38; }
-        .card-header { background-color: #232733; border-bottom: 1px solid #2a2e38; }
-        .table { color: #e6e6e6; --bs-table-bg: transparent; }
-        .table thead th { color: #9aa0b0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
-        .nav-link { color: #b6bac6; }
-        .nav-link.active { background-color: #3b82f6; color: #fff; }
-        .nav-link:hover { color: #fff; }
-        .stat { font-size: 1.6rem; font-weight: 700; }
-        .stream-img { height: 130px; width: 100%; object-fit: contain; background-color: #000; }
-        .placeholder-box { height: 130px; width: 100%; display: flex; align-items: center; justify-content: center; background: repeating-linear-gradient(45deg, #1c1f27, #1c1f27 10px, #21242e 10px, #21242e 20px); color: #5a6072; font-size: 0.85rem; }
-        .session-timer { font-size: 1.9rem; font-weight: 700; font-variant-numeric: tabular-nums; color: #22c55e; }
-        .session-timer.warn { color: #f59e0b; }
-        .session-timer.expired { color: #ef4444; }
-        .workstation-card { cursor: pointer; transition: border-color .2s, transform .15s; }
-        .workstation-card:hover { border-color: #3b82f6; transform: translateY(-2px); }
-        .workstation-card.flash-infraction { border-color: #ef4444 !important; box-shadow: 0 0 0 3px rgba(239,68,68,.35); animation: flashbg 0.6s ease 3; }
-        @@keyframes flashbg { 0%,100% { background-color: #1c1f27; } 50% { background-color: rgba(239,68,68,.25); } }
-        .avatar { width: 38px; height: 38px; border-radius: 50%; background-color: #3b82f6; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
-        .alert-dropdown { max-height: 320px; overflow-y: auto; width: 360px; }
-        .offcanvas { background-color: #1c1f27; color: #e6e6e6; }
-        .form-select, .form-control, .input-group-text { background-color: #232733; color: #e6e6e6; border-color: #2a2e38; }
-        .btn-outline-light { --bs-btn-border-color: #3a3f4d; }
-    </style>
+    <link href="~/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet" />
+    <link href="~/css/site.css" rel="stylesheet" />
 </head>
 <body>
-    <nav class="navbar navbar-dark navbar-expand-lg" style="background-color:#1a1d24;">
-        <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="/Teacher/Dashboard"><i class="bi bi-person-workspace"></i> CAMS Teacher</a>
-            <div class="d-flex align-items-center gap-2 text-light">
-                <span class="small">@ViewContext.HttpContext.Session.GetString("TeacherName")</span>
-                <a href="/Account/Logout" class="btn btn-sm btn-outline-danger">Logout</a>
+    <div class="app-wrapper">
+        <!-- Dark Emerald Sidebar -->
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <img src="~/images/pardo_logo.png" alt="Pardo Elementary School" class="school-logo-img" />
+                <div class="sidebar-brand-text">CAMS Teacher</div>
+                <div class="sidebar-brand-sub">Pardo Elementary School</div>
             </div>
-        </div>
-    </nav>
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-lg-2 col-md-3 pt-3">
-                <ul class="nav nav-pills flex-column gap-1">
-                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")" href="/Teacher/Dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Sessions" ? "active" : "")" href="/Teacher/Sessions"><i class="bi bi-play-circle"></i> Session Management</a></li>
-                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Students" ? "active" : "")" href="/Teacher/Students"><i class="bi bi-people"></i> Students</a></li>
-                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Computers" ? "active" : "")" href="/Teacher/Computers"><i class="bi bi-pc-display"></i> Computers</a></li>
-                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Monitoring" ? "active" : "")" href="/Teacher/Monitoring"><i class="bi bi-camera-video"></i> Live Monitoring</a></li>
-                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Restrictions" ? "active" : "")" href="/Teacher/Restrictions"><i class="bi bi-slash-circle"></i> Access Restrictions</a></li>
-                    <li class="nav-item"><a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Records" ? "active" : "")" href="/Teacher/Records"><i class="bi bi-journal"></i> Classroom Records</a></li>
-                </ul>
-            </div>
-            <div class="col-lg-10 col-md-9 pt-3 pb-5">
+
+            <nav class="sidebar-nav">
+                <a href="/Teacher/Dashboard" class="nav-item-custom @(currentAction == "Dashboard" ? "active" : "")">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+
+                <div class="sidebar-label">Laboratory Control</div>
+
+                <a href="/Teacher/Sessions" class="nav-item-custom @(currentAction == "Sessions" ? "active" : "")">
+                    <i class="bi bi-play-circle-fill"></i>
+                    <span>Session Management</span>
+                </a>
+
+                <a href="/Teacher/Monitoring" class="nav-item-custom @(currentAction == "Monitoring" ? "active" : "")">
+                    <i class="bi bi-camera-video-fill"></i>
+                    <span>Live Monitoring</span>
+                </a>
+
+                <a href="/Teacher/Computers" class="nav-item-custom @(currentAction == "Computers" ? "active" : "")">
+                    <i class="bi bi-pc-display"></i>
+                    <span>Workstations</span>
+                </a>
+
+                <div class="sidebar-label">Classroom Management</div>
+
+                <a href="/Teacher/Students" class="nav-item-custom @(currentAction == "Students" ? "active" : "")">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Student Roster</span>
+                </a>
+
+                <a href="/Teacher/Restrictions" class="nav-item-custom @(currentAction == "Restrictions" ? "active" : "")">
+                    <i class="bi bi-slash-circle-fill"></i>
+                    <span>Access Restrictions</span>
+                </a>
+
+                <a href="/Teacher/Records" class="nav-item-custom @(currentAction == "Records" ? "active" : "")">
+                    <i class="bi bi-journal-check"></i>
+                    <span>Classroom Records</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="app-main">
+            <!-- Top Header Navbar -->
+            <header class="app-header">
+                <button class="btn-toggle-sidebar" id="sidebarToggle" type="button" aria-label="Toggle Navigation">
+                    <i class="bi bi-list"></i>
+                </button>
+
+                <div class="d-flex align-items-center gap-3">
+                    <div class="user-profile-badge">
+                        <div class="user-avatar-circle">
+                            <i class="bi bi-person-badge"></i>
+                        </div>
+                        <div class="d-flex flex-column text-end">
+                            <span class="fw-bold fs-6">@teacherName</span>
+                            <span class="badge bg-success small" style="font-size: 0.7rem;">Instructor</span>
+                        </div>
+                    </div>
+                    <a href="/Account/Logout" class="btn btn-outline-danger btn-sm rounded-pill px-3 ms-2" title="Logout">
+                        <i class="bi bi-box-arrow-right me-1"></i> Logout
+                    </a>
+                </div>
+            </header>
+
+            <!-- Body Content -->
+            <main role="main" class="content-padding">
                 @RenderBody()
-            </div>
+            </main>
         </div>
     </div>
+
     <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('sidebarToggle')?.addEventListener('click', function () {
+            document.getElementById('appSidebar')?.classList.toggle('show');
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

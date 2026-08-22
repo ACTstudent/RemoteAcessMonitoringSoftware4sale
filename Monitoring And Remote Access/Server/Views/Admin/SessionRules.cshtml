@@ -4,43 +4,127 @@
     Layout = "_Layout";
 }
 
-<h4 class="fw-bold mb-4"><i class="bi bi-hourglass-split"></i> Set Default Session Rules</h4>
-
-<div class="card mb-4">
-    <div class="card-header fw-bold">Add Session Rule</div>
-    <div class="card-body">
-        <form method="post" action="/Admin/CreateSessionRule" class="row g-2">
-            <div class="col-md-3"><input name="Name" class="form-control" placeholder="Rule Name" required /></div>
-            <div class="col-md-2"><input name="MaxDurationMinutes" type="number" min="1" class="form-control" placeholder="Minutes" required /></div>
-            <div class="col-md-2"><label class="form-check-label">Pause Allowed</label><input type="checkbox" name="AllowPause" value="true" class="form-check-input ms-1" checked /></div>
-            <div class="col-md-2"><label class="form-check-label">Remote Control</label><input type="checkbox" name="AllowRemoteControl" value="true" class="form-check-input ms-1" checked /></div>
-            <div class="col-md-1"><label class="form-check-label">Default</label><input type="checkbox" name="IsDefault" value="true" class="form-check-input ms-1" /></div>
-            <div class="col-md-2"><button class="btn btn-primary w-100">Add Rule</button></div>
-        </form>
+<!-- Header Row -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-box-primary">
+            <i class="bi bi-hourglass-split fs-3"></i>
+        </div>
+        <div>
+            <h2 class="fw-extrabold mb-0 text-dark" style="letter-spacing: -0.5px;">Session Policy Rules</h2>
+            <p class="text-muted mb-0 small">Configure timed 45-minute lab session rules, remote control, and pause limits</p>
+        </div>
     </div>
+    <button class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#createSessionRuleModal">
+        <i class="bi bi-plus-circle-fill me-1"></i> Add Session Rule
+    </button>
 </div>
 
-<div class="card">
-    <div class="card-header fw-bold">Session Rules</div>
+<!-- Session Rules Table Card -->
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-dark">Lab Session Rule Policies</h5>
+        <span class="badge bg-light text-dark font-monospace fs-6">@Model.Count() Policies</span>
+    </div>
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead><tr><th>Name</th><th>Max Duration</th><th>Pause</th><th>Remote Control</th><th>Default</th><th>Active</th><th></th></tr></thead>
+        <table class="table custom-table mb-0">
+            <thead>
+                <tr>
+                    <th>Rule Name</th>
+                    <th>Max Duration</th>
+                    <th>Pause Allowed</th>
+                    <th>Remote Control</th>
+                    <th>Default Policy</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
             <tbody>
                 @foreach (var r in Model)
                 {
                     <tr>
-                        <td>@r.Name</td>
-                        <td>@r.MaxDurationMinutes min</td>
-                        <td>@(r.AllowPause ? "Yes" : "No")</td>
-                        <td>@(r.AllowRemoteControl ? "Yes" : "No")</td>
-                        <td>@(r.IsDefault ? "Yes" : "No")</td>
-                        <td>@(r.IsActive ? "Yes" : "No")</td>
+                        <td class="fw-bold text-dark">@r.Name</td>
+                        <td class="font-monospace text-emerald-700 fw-bold">@r.MaxDurationMinutes mins</td>
+                        <td>@(r.AllowPause ? "Allowed" : "Disabled")</td>
+                        <td>@(r.AllowRemoteControl ? "Allowed" : "Disabled")</td>
                         <td>
-                            <form method="post" action="/Admin/DeleteSessionRule"><input type="hidden" name="id" value="@r.SessionRuleId" /><button class="btn btn-sm btn-danger">Delete</button></form>
+                            @if (r.IsDefault)
+                            {
+                                <span class="badge badge-emerald">Default</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">Standard</span>
+                            }
                         </td>
+                        <td>
+                            <span class="badge @(r.IsActive ? "bg-success" : "bg-secondary") rounded-pill px-2 py-1">
+                                @(r.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <form method="post" action="/Admin/DeleteSessionRule" style="margin:0;" onsubmit="return confirm('Delete this session rule?');">
+                                <input type="hidden" name="id" value="@r.SessionRuleId" />
+                                <button class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                    <i class="bi bi-trash me-1"></i> Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">No session rules configured. Click "Add Session Rule" above.</td>
                     </tr>
                 }
             </tbody>
         </table>
+    </div>
+</div>
+
+<!-- Modal: Create Session Rule -->
+<div class="modal fade" id="createSessionRuleModal" tabindex="-1" aria-labelledby="createSessionRuleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 text-white" style="background-color: var(--sidebar-bg);">
+                <h5 class="modal-title fw-bold" id="createSessionRuleModalLabel">
+                    <i class="bi bi-hourglass-top me-2"></i> Create Session Policy Rule
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="/Admin/CreateSessionRule">
+                <div class="modal-body py-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-muted small">Rule Name <span class="text-danger">*</span></label>
+                        <input type="text" name="Name" class="form-control filter-control" required placeholder="e.g. Standard 45-min Class Rule" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-muted small">Max Duration (Minutes) <span class="text-danger">*</span></label>
+                        <input type="number" name="MaxDurationMinutes" min="1" class="form-control filter-control" required value="45" />
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input type="checkbox" name="AllowPause" value="true" class="form-check-input" id="chkPause" checked />
+                        <label class="form-check-label fw-semibold text-dark small" for="chkPause">Allow Teacher to Pause Session</label>
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input type="checkbox" name="AllowRemoteControl" value="true" class="form-check-input" id="chkRemote" checked />
+                        <label class="form-check-label fw-semibold text-dark small" for="chkRemote">Allow Remote Desktop Control</label>
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input type="checkbox" name="IsDefault" value="true" class="form-check-input" id="chkDefault" />
+                        <label class="form-check-label fw-semibold text-dark small" for="chkDefault">Set as Default Rule for New Sessions</label>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-emerald rounded-pill px-4 text-white">Save Rule</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
