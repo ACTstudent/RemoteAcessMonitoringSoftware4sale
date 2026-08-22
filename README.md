@@ -14,7 +14,7 @@ A LAN-based classroom management, real-time screen monitoring, and computer labo
 
 **CAMS** (Classroom Automated Monitoring System) is a complete LAN-based computer laboratory management and real-time screen streaming application built with **ASP.NET Core**, **SignalR**, and **WinForms (.NET 8)**. It replaces traditional manual logbooks with automated account tracking, timed 45-minute lab sessions, real-time screen stream monitoring, and centralized workstation control.
 
-Featuring an official **Dark Emerald (`#0B3C26` / `#18181b` / `#10B981`) Design System** aligned with modern Figma specifications, CAMS provides dedicated, high-contrast, responsive portals for **Administrators**, **Teachers**, and **Students**.
+Featuring an official **Dark Emerald (`#0B3C26` / `#18181b` / `#10B981`) Design System** aligned with modern Figma specifications and exact `pro` project styling, CAMS provides dedicated, high-contrast, responsive portals for **Administrators**, **Teachers**, and **Students**.
 
 ---
 
@@ -24,8 +24,8 @@ Pre-built installer executables and source packages for the latest release:
 
 | Package | Download Link | Target / Description |
 | :--- | :--- | :--- |
-| **CAMS Server Setup** | [`CAMS-Server-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Server-Setup.exe) | Teacher / Lab Control PC Installer (Includes Dark Emerald Web Portal) |
-| **CAMS Student Client** | [`CAMS-Client-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Client-Setup.exe) | Student Workstation Agent Installer |
+| **CAMS Server Setup** | [`CAMS-Server-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Server-Setup.exe) | Teacher / Lab Control PC Installer (Includes Clean Installation Feature & Dark Emerald Web Portal) |
+| **CAMS Student Client** | [`CAMS-Client-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Client-Setup.exe) | Student Workstation Agent Installer (Includes Clean Installation Feature) |
 | **Server Source Code** | [`CAMS-Server-Source.zip`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Server-Source.zip) | ASP.NET Core MVC + SignalR Source Package |
 | **Client Source Code** | [`CAMS-Client-Source.zip`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Client-Source.zip) | WinForms Student Agent Source Package |
 
@@ -33,10 +33,10 @@ Pre-built installer executables and source packages for the latest release:
 
 ## ✨ Key Features & UI System
 
-### 🎨 Dark Emerald UI Design System (Figma Aligned)
+### 🎨 Dark Emerald UI Design System (Figma & `pro` Aligned)
 - **Theme Palette**: Deep forest green (`#0B3C26`), slate dark (`#18181b`), emerald accents (`#10B981`), and soft slate backgrounds (`#F8FAFC`).
 - **Typography & Assets**: `Plus Jakarta Sans` & `Inter` Google Fonts with official Pardo Elementary School branding assets.
-- **Components**: Metric summary counters, high-contrast status badges (`Available`, `In Use`, `Maintenance`), rounded modals (`rounded-4`), search filter controls, and mobile navigation drawer toggles.
+- **Components & Overrides**: Metric summary counters (`.metric-card`, `.metric-card-emerald`), class section cards (`.class-card`), search filter controls (`.filter-control`), rounded modals (`rounded-4`), and explicit button overrides (`.btn-primary`, `.btn-success`, `.btn-dark`).
 
 ### 🖥 Real-Time Screen Monitoring & Workstation Control
 - **Live Monitoring Grid**: High-frequency SignalR WebSocket screen streaming grid across all connected lab workstations.
@@ -45,13 +45,18 @@ Pre-built installer executables and source packages for the latest release:
 - **Infraction Alerting**: Automatic application tracking, idle state detection, and warning popup overlays.
 
 ### 📂 Integrated Class & Computer Profile Management
-- **Class Management**: Section advisory setup, subject schedules, academic year tracking, and student roster enrollment.
-- **Computer Profiles**: Station mapping (Station #, IP, MAC address, Assigned Room) and live station status badges.
+- **Class Management**: Advisory and instructor section setup, subject schedules, academic year tracking, Create Class modals, and student roster enrollment in both Admin (`/Admin/Classes`) and Teacher (`/Teacher/Classes`) portals.
+- **Computer Profiles**: Station mapping (Station #, IP, MAC address, Assigned Room) and live station status badges (`Available`, `In Use`, `Maintenance`).
 - **Teacher & Student Accounts**: Full RBAC account directory with modal dialog creation and LRN/Student ID mapping.
 
 ### ⏱ Timed Lab Sessions & Security Policies
 - **Lab Sessions**: Timed 45-minute laboratory sessions with real-time countdown timers and automated attendance logs.
 - **Security Policies**: Application executable & website URL blacklists/whitelists enforced across workstations during active sessions.
+
+### 🛡️ Clean Installation & Crash Prevention Features
+- **Clean Installation (`cleaninstall`)**: Installers automatically close running processes and clean out old binary files, cached DLLs, static assets, and `wwwroot` folders before extracting new builds.
+- **Launch Crash Prevention**: `AppContext.BaseDirectory` working directory enforcement prevents launch failures when executing `Server.exe` from Desktop icons or custom shortcuts.
+- **Safe SQLite Database Initialization**: Safe startup handlers prevent database lock crashes on launch.
 
 ---
 
@@ -92,13 +97,13 @@ Pre-built installer executables and source packages for the latest release:
 
 ### 1. Server Setup (Teacher / Lab PC)
 1. Download and run [`CAMS-Server-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.2/CAMS-Server-Setup.exe).
-2. The installer provisions the application to `%LOCALAPPDATA%\CAMS Server`, opens firewall ports `5000` & `5001`, and launches the web portal.
+2. The installer performs a clean installation to `%LOCALAPPDATA%\CAMS Server`, opens firewall ports `5000` & `5001`, and launches the web portal.
 3. Default Portal Login Credentials:
 
 | Portal / Role | Username | Password | Access Level |
 | :--- | :--- | :--- | :--- |
 | **Admin** | `admin` | `admin123` | Full system control, accounts, classes, LAN & audit rules |
-| **Teacher** | `teacher1` | `teacher123` | Session control, live monitoring, workstation lock & records |
+| **Teacher** | `teacher1` | `teacher123` | Session control, live monitoring, class management, workstation lock & records |
 | **Student** | `student1` | `student123` | Session info, alert center, and unit status |
 
 > **Security Note:** Change all default passwords before deploying on a production network.
@@ -137,16 +142,16 @@ CAMS/
 ├── DEPLOYMENT.md              # Network deployment & silent install guide
 ├── build-everything.ps1       # Automated build, test & packaging script
 ├── test-installer.ps1         # Installer validation script
-├── server-installer.iss       # Inno Setup configuration (server)
-├── client-installer.iss       # Inno Setup configuration (client)
+├── server-installer.iss       # Inno Setup configuration (server) with Clean Install
+├── client-installer.iss       # Inno Setup configuration (client) with Clean Install
 └── Monitoring And Remote Access/
     ├── RemoteMonitoring.sln   # Main solution file
     ├── Shared/                # DTOs & SignalR event contracts
     ├── Server/                # ASP.NET Core MVC + Dark Emerald UI + SignalR hub + EF Core
-    │   ├── wwwroot/css/       # site.css (Dark Emerald Design System)
+    │   ├── wwwroot/css/       # site.css (Dark Emerald & pro Design System)
     │   ├── wwwroot/images/    # pardo_logo.png (School Logo)
     │   ├── Views/Admin/       # Admin Portal Views & Layout
-    │   ├── Views/Teacher/     # Teacher Portal Views, Live Grid & Layouts
+    │   ├── Views/Teacher/     # Teacher Portal Views, Live Grid, Class Management & Layouts
     │   ├── Views/Student/     # Student Portal Views & Layout
     │   └── Views/Account/     # Glassmorphic Login View
     ├── Client/                # WinForms student agent (.NET 8)
