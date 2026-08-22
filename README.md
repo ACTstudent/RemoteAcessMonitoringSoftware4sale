@@ -93,7 +93,7 @@ Pre-built installer setup executables tracked directly in the repository with co
 | **Client Agent** | WinForms (.NET 8), self-contained desktop process |
 | **Database** | SQLite via EF Core (`EnsureCreated()`) |
 | **Discovery** | UDP Broadcast |
-| **Tests & Packaging** | xUnit (47/47 passing tests), Inno Setup 6 |
+| **Tests & Packaging** | xUnit (129/129 passing tests), Inno Setup 6 |
 
 ---
 
