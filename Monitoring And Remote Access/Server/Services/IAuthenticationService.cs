@@ -13,7 +13,12 @@ public enum AccountRole
     Admin
 }
 
-public sealed record LoginResult(AccountRole Role, int? AccountId, string? DisplayName);
+public sealed record LoginResult(
+    AccountRole Role,
+    int? AccountId,
+    string? DisplayName,
+    string? LoginName = null,
+    string? StudentNumber = null);
 
 public interface IAuthenticationService
 {

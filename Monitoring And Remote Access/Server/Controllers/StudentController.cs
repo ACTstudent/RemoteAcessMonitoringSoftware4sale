@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
@@ -7,6 +8,7 @@ using Server.Services;
 
 namespace Server.Controllers
 {
+    [Authorize(Roles = "Student")]
     public class StudentController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -87,13 +89,13 @@ namespace Server.Controllers
             var student = await _context.Students.FindAsync(studentId);
             if (student == null) return RedirectToAction("Login", "Account");
 
-            if (_hasher.VerifyHashedPassword(null, student.PasswordHash, currentPassword) != PasswordVerificationResult.Success)
+            if (_hasher.VerifyHashedPassword(new object(), student.PasswordHash, currentPassword) != PasswordVerificationResult.Success)
             {
                 ViewBag.Error = "Current password is incorrect.";
                 return View("Settings");
             }
 
-            student.PasswordHash = _hasher.HashPassword(null, newPassword);
+            student.PasswordHash = _hasher.HashPassword(new object(), newPassword);
             await _context.SaveChangesAsync();
             ViewBag.Success = "Password updated successfully.";
             return View("Settings");

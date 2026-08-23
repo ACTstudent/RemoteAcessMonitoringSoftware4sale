@@ -90,4 +90,14 @@ public class ContractTests
         Assert.False(string.IsNullOrEmpty(HubEventNames.RestrictionsReceived));
         Assert.False(string.IsNullOrEmpty(HubEventNames.InfractionDetected));
     }
+
+    [Fact]
+    public void HubMethodNames_MatchTheServerContract()
+    {
+        Assert.Equal("SendScreenFrame", HubMethodNames.SendScreenFrame);
+        Assert.Equal("SendRemoteInput", HubMethodNames.SendRemoteInput);
+        Assert.Equal("LockStudent", HubMethodNames.LockStudent);
+        Assert.Equal("ForceLogout", HubMethodNames.ForceLogout);
+        Assert.Equal("BroadcastScreen", HubMethodNames.BroadcastScreen);
+    }
 }

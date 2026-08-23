@@ -1,15 +1,18 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Server.Services;
+using ServerAuthService = Server.Services.IAuthenticationService;
 
 namespace Server.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly IAuthenticationService _authService;
+        private readonly ServerAuthService _authService;
         private static readonly MemoryCache _loginCache = new(new MemoryCacheOptions());
 
-        public AccountController(IAuthenticationService authService)
+        public AccountController(ServerAuthService authService)
         {
             _authService = authService;
         }
@@ -22,6 +25,7 @@ namespace Server.Controllers
 
         // Students, Teachers, and Admins can log in
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(string username, string password)
         {
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
@@ -37,12 +41,13 @@ namespace Server.Controllers
             var result = await _authService.LoginAsync(
                 username,
                 password,
-                Request.Host.Host,
+                string.Empty,
                 ip);
 
             switch (result.Role)
             {
                 case AccountRole.Student:
+                    await SignInAsync(result, string.Empty);
                     HttpContext.Session.SetInt32("StudentId", result.AccountId!.Value);
                     HttpContext.Session.SetString("FullName", result.DisplayName ?? "");
                     HttpContext.Session.SetString("Role", "Student");
@@ -50,6 +55,7 @@ namespace Server.Controllers
                     return RedirectToAction("Index", "Monitoring");
 
                 case AccountRole.Teacher:
+                    await SignInAsync(result, string.Empty);
                     HttpContext.Session.SetInt32("TeacherId", result.AccountId!.Value);
                     HttpContext.Session.SetString("TeacherName", result.DisplayName ?? "");
                     HttpContext.Session.SetString("Role", "Teacher");
@@ -57,6 +63,7 @@ namespace Server.Controllers
                     return RedirectToAction("Dashboard", "Teacher");
 
                 case AccountRole.Admin:
+                    await SignInAsync(result, string.Empty);
                     HttpContext.Session.SetInt32("AdminId", result.AccountId!.Value);
                     HttpContext.Session.SetString("AdminName", result.DisplayName ?? "");
                     HttpContext.Session.SetString("Role", "Admin");
@@ -72,6 +79,19 @@ namespace Server.Controllers
             }
         }
 
+        private Task SignInAsync(LoginResult result, string pcName)
+        {
+            return HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                AuthPrincipalFactory.Create(result, pcName),
+                new AuthenticationProperties
+                {
+                    IsPersistent = false,
+                    AllowRefresh = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
+                });
+        }
+
         [HttpGet, HttpPost]
         public async Task<IActionResult> Logout()
         {
@@ -81,6 +101,7 @@ namespace Server.Controllers
                 await _authService.LogoutAsync(studentId.Value);
             }
             HttpContext.Session.Clear();
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login");
         }
     }

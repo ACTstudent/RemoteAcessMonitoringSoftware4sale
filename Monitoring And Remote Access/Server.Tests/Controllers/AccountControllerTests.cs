@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Server.Controllers;
 using Server.Services;
@@ -19,10 +23,17 @@ public class AccountControllerTests
         var httpContext = new DefaultHttpContext();
         httpContext.Connection.RemoteIpAddress = System.Net.IPAddress.Parse("127.0.0.1");
         httpContext.Session = new FakeSession();
+        var services = new ServiceCollection();
+        services.AddMvc();
+        services.AddLogging();
+        services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie();
+        httpContext.RequestServices = services.BuildServiceProvider();
 
         _controller.ControllerContext = new ControllerContext
         {
-            HttpContext = httpContext
+            HttpContext = httpContext,
+            RouteData = new RouteData(),
+            ActionDescriptor = new ControllerActionDescriptor()
         };
     }
 

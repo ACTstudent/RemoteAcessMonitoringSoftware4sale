@@ -23,13 +23,13 @@ flowchart TD
         D2[Canvas / remote modal]
     end
 
-    C1 -- "1. RegisterStudent(studentId, pcName)" --> H
+    C1 -- "1. HTTPS client login + authenticated hub connection" --> H
     C2 -- "2. SendScreenFrame(ScreenFrameMessage)" --> H
 
     H -->|student added| G1
 
-    D1 -- "3. RegisterTeacher" --> H
-    H -->|teacher added| G2
+    D1 -- "3. Authenticated hub connection" --> H
+    H -->|teacher claims validated| G2
 
     H -- "ReceiveScreenFrame(connId, frame)" --> D1
     H -- "StudentConnected(student)" --> D2
@@ -56,9 +56,9 @@ flowchart TD
 
 | Direction | Event | Sent by | Payload | Purpose |
 | --- | --- | --- | --- | --- |
-| Client → Server | `RegisterStudent` | Student client | `studentId`, `pcName` | Add connection to `StudentsGroup`, notify teachers |
+| Client → Server | HTTPS login + hub connection | Student client | credentials over TLS, workstation name | Validate identity, add connection to `StudentsGroup`, notify teachers |
 | Client → Server | `SendScreenFrame` | Student client | `ScreenFrameMessage` | Broadcast live frame to `TeachersGroup` |
-| Dashboard → Server | `RegisterTeacher` | Teacher dashboard | — | Add connection to `TeachersGroup` |
+| Dashboard → Server | Authenticated hub connection | Teacher dashboard | auth cookie | Validate teacher role and add connection to `TeachersGroup` |
 | Server → Dashboard | `ReceiveScreenFrame` | Server hub | `connectionId`, `ScreenFrameMessage` | Render live frame / feed the remote canvas |
 | Server → Dashboard | `StudentConnected` / `StudentDisconnected` | Server hub | `StudentConnectionMessage` / `connectionId` | Add / remove student cards |
 | Dashboard → Server | `SendRemoteInput` | Teacher dashboard | `targetConnectionId`, `RemoteInputMessage` | Forward a mouse/keyboard event to one student |

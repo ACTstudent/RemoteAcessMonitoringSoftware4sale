@@ -90,20 +90,9 @@
                             </button>
                         </form>
 
-                        <div class="border-top pt-3 text-center">
-                            <span class="text-muted small d-block mb-2 font-semibold">Quick Role Presets:</span>
-                            <div class="d-flex justify-content-center gap-2 flex-wrap">
-                                <span class="badge bg-dark quick-role-badge" onclick="fillCreds('admin', 'admin123')">
-                                    <i class="bi bi-shield-lock me-1"></i> Admin
-                                </span>
-                                <span class="badge bg-success quick-role-badge" onclick="fillCreds('teacher1', 'teacher123')">
-                                    <i class="bi bi-person-workspace me-1"></i> Teacher
-                                </span>
-                                <span class="badge bg-info text-dark quick-role-badge" onclick="fillCreds('student1', 'student123')">
-                                    <i class="bi bi-mortarboard me-1"></i> Student
-                                </span>
-                            </div>
-                        </div>
+                         <div class="border-top pt-3 text-center">
+                             <span class="text-muted small">Use the account created by your CAMS administrator. Default passwords are not shipped.</span>
+                         </div>
                     </div>
                 </div>
 
@@ -115,11 +104,5 @@
     </div>
 
     <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function fillCreds(u, p) {
-            document.getElementById('loginUsername').value = u;
-            document.getElementById('loginPassword').value = p;
-        }
-    </script>
 </body>
 </html>

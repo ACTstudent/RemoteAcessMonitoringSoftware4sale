@@ -10,11 +10,11 @@ Or build them from source on a machine with the .NET 8 SDK and Inno Setup 6:
 .\build-everything.ps1
 ```
 
-This creates **`server-dist\CAMS-Server-Setup.exe`** and **`client-dist\CAMS-Client-Setup.exe`** — copy them to the target PCs and run the wizards.
+This creates **`server-dist\CAMS-Server-Setup.exe`** and **`client-dist\CAMS-Client-Setup.exe`**, plus SHA-256 checksum files beside them. Verify the checksums before copying the installers to target PCs.
 
 The wizard does everything:
 - Installs to `%LOCALAPPDATA%\CAMS Server`
-- Opens Windows Firewall port **5000**
+- Opens Windows Firewall HTTPS TCP port **5000** and UDP discovery port **5001**
 - Optionally starts the server automatically with Windows
 - Launches the server after install
 
@@ -66,19 +66,15 @@ netsh advfirewall firewall add rule name="CAMS Server" dir=in action=allow proto
 
 | URL | Role |
 |---|---|
-| `http://<server-ip>:5000/Account/Login` | Login page |
-| `http://<server-ip>:5000/Admin` | Admin dashboard |
-| `http://<server-ip>:5000/Teacher/Monitoring` | Teacher monitoring panel |
-| `http://<server-ip>:5000/Student` | Student portal |
-| `http://<server-ip>:5000/remoteMonitoringHub` | SignalR hub (client connects here) |
+| `https://<server-ip>:5000/Account/Login` | Login page |
+| `https://<server-ip>:5000/Admin` | Admin dashboard |
+| `https://<server-ip>:5000/Teacher/Monitoring` | Teacher monitoring panel |
+| `https://<server-ip>:5000/Student` | Student portal |
+| `https://<server-ip>:5000/remoteMonitoringHub` | SignalR hub (client connects here) |
 
-## Default accounts (change these)
+## Initial account setup
 
-| Role | Username | Password |
-|---|---|---|
-| Admin | `admin` | `admin123` |
-| Teacher | `teacher1` | `teacher123` |
-| Student | `student1` | `student123` |
+Set `Cams__InitialAdminPassword` before the first server launch. CAMS does not seed public default passwords. Create teacher and student accounts through the authenticated admin portal.
 
 ## Optional: run as a Windows Service
 

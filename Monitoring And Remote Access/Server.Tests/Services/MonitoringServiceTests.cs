@@ -29,6 +29,20 @@ public class MonitoringServiceTests
     }
 
     [Fact]
+    public void FindStudent_ReturnsOnlyTheRequestedConnection()
+    {
+        var service = new MonitoringService();
+        service.RegisterStudent("connA", "s1", "PC1");
+        service.RegisterStudent("connB", "s2", "PC2");
+
+        var result = service.FindStudent("connB");
+
+        Assert.NotNull(result);
+        Assert.Equal("s2", result.StudentId);
+        Assert.Null(service.FindStudent("missing"));
+    }
+
+    [Fact]
     public void RegisterStudent_OverwritesExistingConnectionId()
     {
         var service = new MonitoringService();

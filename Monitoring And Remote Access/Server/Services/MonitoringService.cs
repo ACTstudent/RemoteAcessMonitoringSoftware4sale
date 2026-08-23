@@ -20,6 +20,11 @@ namespace Server.Services
             return message;
         }
 
+        public StudentConnectionMessage? FindStudent(string connectionId)
+        {
+            return _students.TryGetValue(connectionId, out var student) ? student : null;
+        }
+
         public StudentConnectionMessage? UnregisterStudent(string connectionId)
         {
             _idleStatus.TryRemove(connectionId, out _);

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Services;
@@ -12,6 +13,50 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.Cookie.Name = "CAMS.Auth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.IsEssential = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/Login";
+        options.Events.OnRedirectToLogin = context =>
+        {
+            if (context.Request.Path.StartsWithSegments("/remoteMonitoringHub") ||
+                context.Request.Path.StartsWithSegments("/api"))
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            }
+
+            context.Response.Redirect(context.RedirectUri);
+            return Task.CompletedTask;
+        };
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+            if (context.Request.Path.StartsWithSegments("/remoteMonitoringHub") ||
+                context.Request.Path.StartsWithSegments("/api"))
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return Task.CompletedTask;
+            }
+
+            context.Response.Redirect(context.RedirectUri);
+            return Task.CompletedTask;
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("TeacherControl", policy => policy.RequireRole("Teacher", "Admin"));
+    options.AddPolicy("StudentClient", policy => policy.RequireRole("Student"));
+});
+
 // Application services
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddSingleton<IMonitoringService, MonitoringService>();
@@ -25,10 +70,39 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromHours(8);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Lax;
 });
 
 // SignalR for real-time screen streaming & remote control
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options =>
+{
+    options.MaximumReceiveMessageSize = 8 * 1024 * 1024;
+});
+
+var httpsPort = builder.Configuration.GetValue("Cams:HttpsPort", 5000);
+var certificatePath = builder.Configuration["Cams:CertificatePath"];
+var certificatePassword = builder.Configuration["Cams:CertificatePassword"];
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(httpsPort, listenOptions =>
+    {
+        if (!string.IsNullOrWhiteSpace(certificatePath))
+        {
+            if (string.IsNullOrEmpty(certificatePassword))
+                listenOptions.UseHttps(certificatePath);
+            else
+                listenOptions.UseHttps(certificatePath, certificatePassword);
+        }
+        else
+        {
+            // Uses the configured ASP.NET Core development certificate locally.
+            // Production deployments must provide Cams:CertificatePath.
+            listenOptions.UseHttps();
+        }
+    });
+});
+builder.Services.AddHttpsRedirection(options => options.HttpsPort = httpsPort);
 
 // EF Core — Sqlite (default) or SQL Server / MySql
 var provider = builder.Configuration["DatabaseProvider"] ?? "Sqlite";
@@ -55,6 +129,7 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Account/Login");
+    app.UseHsts();
 }
 
 // Create the schema automatically on first run (no manual migration step required)
@@ -64,6 +139,21 @@ using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         db.Database.EnsureCreated();
+
+        var initialAdminPassword = app.Configuration["Cams:InitialAdminPassword"];
+        if (!string.IsNullOrWhiteSpace(initialAdminPassword) && !db.Admins.Any())
+        {
+            var initialAdminUsername = app.Configuration["Cams:InitialAdminUsername"] ?? "admin";
+            db.Admins.Add(new Server.Models.Admin
+            {
+                Username = initialAdminUsername,
+                FullName = "System Administrator",
+                PasswordHash = new Microsoft.AspNetCore.Identity.PasswordHasher<object>()
+                    .HashPassword(new object(), initialAdminPassword)
+            });
+            db.SaveChanges();
+            Console.WriteLine($"[CAMS] Initial administrator account created: {initialAdminUsername}");
+        }
     }
     catch (Exception ex)
     {
@@ -71,6 +161,7 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.Use(async (context, next) =>
 {
@@ -89,16 +180,19 @@ app.Use(async (context, next) =>
     }
 });
 app.UseRouting();
+app.UseAuthentication();
 app.UseSession();
+app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Account}/{action=Login}/{id?}");
+app.MapControllers();
 
 app.MapHub<Server.Hubs.RemoteMonitoringHub>("/remoteMonitoringHub");
 
-var listenUrl = "http://0.0.0.0:5000/";
-var browseUrl = "http://localhost:5000/";
+var listenUrl = $"https://0.0.0.0:{httpsPort}/";
+var browseUrl = $"https://localhost:{httpsPort}/";
 Console.WriteLine($"[CAMS] Server starting. Listening on {listenUrl}...");
 
 _ = Task.Run(async () =>
@@ -119,6 +213,4 @@ _ = Task.Run(async () =>
         Console.WriteLine($"[CAMS] Could not open browser: {ex.Message}");
     }
 });
-
-app.Urls.Add(listenUrl);
 app.Run();

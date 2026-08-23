@@ -9,6 +9,7 @@ public interface IMonitoringService
     IReadOnlyCollection<ActiveAppMessage> ActiveApps { get; }
 
     StudentConnectionMessage RegisterStudent(string connectionId, string studentId, string pcName);
+    StudentConnectionMessage? FindStudent(string connectionId);
     StudentConnectionMessage? UnregisterStudent(string connectionId);
     void ReportIdleStatus(IdleStatusMessage status);
     void ReportActiveApp(ActiveAppMessage app);

@@ -3,7 +3,9 @@
 ; performs clean installation, and optionally launches the server on startup.
 
 #define MyAppName "CAMS Server"
-#define MyAppVersion "2.5.2"
+#ifndef MyAppVersion
+  #define MyAppVersion "2.5.3"
+#endif
 #define MyAppExeName "Server.exe"
 #define MyAppPublisher "CAMS"
 
@@ -24,6 +26,9 @@ WizardStyle=modern
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 PrivilegesRequired=admin
+; CAMS deliberately keeps its writable SQLite data and per-user autostart under the
+; installing teacher account. Elevation is required only for the firewall rules.
+UsedUserAreasWarning=no
 CloseApplications=yes
 CloseApplicationsFilter=*.exe
 
@@ -44,12 +49,12 @@ Type: files; Name: "{app}\*.json"; Tasks: cleaninstall
 Type: files; Name: "{app}\*.pdb"; Tasks: cleaninstall
 
 [Files]
-Source: "server-publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "server-publish\*"; DestDir: "{app}"; Excludes: "CAMS.db,CAMS.db-shm,CAMS.db-wal"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#MyAppName}";             Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
-Name: "{group}\Server Dashboard (Admin)"; Filename: "http://localhost:5000/Admin"; IconFilename: "{app}\{#MyAppExeName}"; IconIndex: 0
-Name: "{group}\Server Dashboard (Teacher)"; Filename: "http://localhost:5000/Teacher"; IconFilename: "{app}\{#MyAppExeName}"; IconIndex: 0
+Name: "{group}\Server Dashboard (Admin)"; Filename: "https://localhost:5000/Admin"; IconFilename: "{app}\{#MyAppExeName}"; IconIndex: 0
+Name: "{group}\Server Dashboard (Teacher)"; Filename: "https://localhost:5000/Teacher"; IconFilename: "{app}\{#MyAppExeName}"; IconIndex: 0
 Name: "{autodesktop}\{#MyAppName}";       Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: desktopicon
 
 [Registry]
@@ -58,5 +63,4 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 [Run]
 Filename: "netsh.exe"; Parameters: "advfirewall firewall add rule name=""CAMS Server"" dir=in action=allow protocol=TCP localport=5000"; Flags: runhidden; StatusMsg: "Opening firewall port 5000..."
 Filename: "netsh.exe"; Parameters: "advfirewall firewall add rule name=""CAMS Discovery"" dir=in action=allow protocol=UDP localport=5001"; Flags: runhidden; StatusMsg: "Opening firewall port 5001 for auto-discovery..."
-Filename: "netsh.exe"; Parameters: "http add urlacl url=http://+:5000/ user=""Users"""; Flags: runhidden; StatusMsg: "Reserving HTTP namespace for non-admin listeners..."
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent

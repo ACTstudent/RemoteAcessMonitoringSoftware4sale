@@ -55,7 +55,7 @@ public class AuthenticationServiceTests
             StudentNumber = "S001",
             FullName = "Test Student",
             Username = "student_test",
-            PasswordHash = hasher.HashPassword(null, "pass123")
+            PasswordHash = hasher.HashPassword(new object(), "pass123")
         });
         await context.SaveChangesAsync();
 
@@ -77,13 +77,54 @@ public class AuthenticationServiceTests
             Id = 1,
             StudentNumber = "STU001",
             Username = "student_wrong",
-            PasswordHash = hasher.HashPassword(null, "correct")
+            PasswordHash = hasher.HashPassword(new object(), "correct")
         });
         await context.SaveChangesAsync();
 
         var service = new AuthenticationService(context);
         var result = await service.LoginAsync("student_wrong", "wrongpass", "PC01", "127.0.0.1");
         Assert.Equal(AccountRole.Invalid, result.Role);
+    }
+
+    [Fact]
+    public async Task LoginAsync_PlaintextStoredPassword_IsRejected()
+    {
+        var context = CreateContext();
+        context.Students.Add(new Student
+        {
+            Id = 2,
+            StudentNumber = "STU002",
+            Username = "plaintext_student",
+            PasswordHash = "plain-password"
+        });
+        await context.SaveChangesAsync();
+
+        var service = new AuthenticationService(context);
+        var result = await service.LoginAsync("plaintext_student", "plain-password", "PC01", "127.0.0.1");
+
+        Assert.Equal(AccountRole.Invalid, result.Role);
+    }
+
+    [Fact]
+    public async Task LoginAsync_StudentNumber_IsAcceptedAsLoginName()
+    {
+        var context = CreateContext();
+        var hasher = new PasswordHasher<object>();
+        context.Students.Add(new Student
+        {
+            Id = 3,
+            StudentNumber = "STU003",
+            Username = "student_three",
+            PasswordHash = hasher.HashPassword(new object(), "pass123")
+        });
+        await context.SaveChangesAsync();
+
+        var service = new AuthenticationService(context);
+        var result = await service.LoginAsync("STU003", "pass123", "PC01", "127.0.0.1");
+
+        Assert.Equal(AccountRole.Student, result.Role);
+        Assert.Equal("student_three", result.LoginName);
+        Assert.Equal("STU003", result.StudentNumber);
     }
 
     [Fact]
@@ -96,7 +137,7 @@ public class AuthenticationServiceTests
             Id = 5,
             StudentNumber = "STU005",
             Username = "bound_student",
-            PasswordHash = hasher.HashPassword(null, "pass")
+            PasswordHash = hasher.HashPassword(new object(), "pass")
         };
         context.Students.Add(student);
         context.Computers.Add(new Computer
@@ -122,7 +163,7 @@ public class AuthenticationServiceTests
             Id = 7,
             StudentNumber = "STU007",
             Username = "station_student",
-            PasswordHash = hasher.HashPassword(null, "test")
+            PasswordHash = hasher.HashPassword(new object(), "test")
         });
         context.Computers.Add(new Computer
         {
@@ -149,7 +190,7 @@ public class AuthenticationServiceTests
             LastName = "Doe",
             Email = "",
             Username = "teacher_j",
-            PasswordHash = hasher.HashPassword(null, "pass"),
+            PasswordHash = hasher.HashPassword(new object(), "pass"),
             ContactNumber = "",
             Status = "Active"
         });
@@ -175,7 +216,7 @@ public class AuthenticationServiceTests
             LastName = "Teacher",
             Email = "",
             Username = "teach_inactive",
-            PasswordHash = hasher.HashPassword(null, "pass"),
+            PasswordHash = hasher.HashPassword(new object(), "pass"),
             ContactNumber = "",
             Status = "Inactive"
         });
@@ -195,7 +236,7 @@ public class AuthenticationServiceTests
         {
             Id = 1,
             Username = "admin_test",
-            PasswordHash = hasher.HashPassword(null, "adminpass"),
+            PasswordHash = hasher.HashPassword(new object(), "adminpass"),
             FullName = "Big Admin"
         });
         await context.SaveChangesAsync();
@@ -218,7 +259,7 @@ public class AuthenticationServiceTests
             Id = 1,
             StudentNumber = "STU001",
             Username = "sameuser",
-            PasswordHash = hasher.HashPassword(null, "pass")
+            PasswordHash = hasher.HashPassword(new object(), "pass")
         });
         context.Teachers.Add(new Teacher
         {
@@ -227,7 +268,7 @@ public class AuthenticationServiceTests
             LastName = "T",
             Email = "",
             Username = "sameuser",
-            PasswordHash = hasher.HashPassword(null, "pass"),
+            PasswordHash = hasher.HashPassword(new object(), "pass"),
             ContactNumber = "",
             Status = "Active"
         });

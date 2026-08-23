@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
@@ -6,279 +6,389 @@ using Server.Models;
 using Server.Services;
 using Shared.Contracts;
 
-namespace Server.Hubs
+namespace Server.Hubs;
+
+[Authorize]
+public sealed class RemoteMonitoringHub : Hub
 {
-    public class RemoteMonitoringHub : Hub
+    private const int MaxFrameBase64Length = 6 * 1024 * 1024;
+    private const int MaxRemoteEventTypeLength = 32;
+
+    private readonly IMonitoringService _monitoringService;
+    private readonly SessionManagerService _sessionManager;
+    private readonly IServiceScopeFactory _scopeFactory;
+
+    public RemoteMonitoringHub(
+        IMonitoringService monitoringService,
+        SessionManagerService sessionManager,
+        IServiceScopeFactory scopeFactory)
     {
-        private readonly IMonitoringService _monitoringService;
-        private readonly SessionManagerService _sessionManager;
-        private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ConcurrentDictionary<string, string> _lastLoggedApp = new();
-        private static readonly ConcurrentDictionary<string, string> _connectionRoles = new();
+        _monitoringService = monitoringService;
+        _sessionManager = sessionManager;
+        _scopeFactory = scopeFactory;
+    }
 
-        public RemoteMonitoringHub(
-            IMonitoringService monitoringService,
-            SessionManagerService sessionManager,
-            IServiceScopeFactory scopeFactory)
+    private bool IsTeacher => Context.User.IsInRole("Teacher") || Context.User.IsInRole("Admin");
+    private bool IsStudent => Context.User.IsInRole("Student");
+    private bool IsStudentClientAgent => IsStudent &&
+        string.Equals(Context.User.FindFirst(AuthPrincipalFactory.ClientAgentClaim)?.Value, bool.TrueString, StringComparison.OrdinalIgnoreCase);
+
+    private void RequireTeacher()
+    {
+        if (!IsTeacher)
+            throw new HubException("Only teachers can perform this action.");
+    }
+
+    private StudentConnectionMessage RequireStudent()
+    {
+        if (!IsStudentClientAgent)
+            throw new HubException("Only student clients can report workstation state.");
+
+        var student = _monitoringService.FindStudent(Context.ConnectionId);
+        if (student is null)
+            throw new HubException("The student connection is not registered.");
+
+        return student;
+    }
+
+    private StudentConnectionMessage RequireTarget(string targetConnectionId)
+    {
+        RequireTeacher();
+
+        if (string.IsNullOrWhiteSpace(targetConnectionId))
+            throw new HubException("A target workstation is required.");
+
+        var target = _monitoringService.FindStudent(targetConnectionId);
+        if (target is null)
+            throw new HubException("The target workstation is not connected as a student.");
+
+        return target;
+    }
+
+    private static void RequireFrame(string? frameBase64)
+    {
+        if (string.IsNullOrWhiteSpace(frameBase64) || frameBase64.Length > MaxFrameBase64Length)
+            throw new HubException("The screen frame is empty or exceeds the maximum size.");
+    }
+
+    public override async Task OnConnectedAsync()
+    {
+        if (IsStudentClientAgent)
         {
-            _monitoringService = monitoringService;
-            _sessionManager = sessionManager;
-            _scopeFactory = scopeFactory;
-        }
-
-        private bool IsTeacher => _connectionRoles.TryGetValue(Context.ConnectionId, out var r) && r == "Teacher";
-
-        private void RequireTeacher()
-        {
-            if (!IsTeacher) throw new HubException("Only teachers can perform this action.");
-        }
-
-        // Student Client sends a live screen frame
-        public async Task SendScreenFrame(ScreenFrameMessage frame)
-        {
-            await Clients.Group(HubEventNames.TeachersGroup)
-                .SendAsync(HubEventNames.ReceiveScreenFrame, Context.ConnectionId, frame);
-        }
-
-        // Student Client registers upon login
-        public async Task RegisterStudent(string studentId, string pcName)
-        {
-            _connectionRoles[Context.ConnectionId] = "Student";
-            var student = _monitoringService.RegisterStudent(Context.ConnectionId, studentId, pcName);
-
-            // Auto-create or update computer profile in DB
-            try
+            if (!int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var accountId))
             {
-                using var scope = _scopeFactory.CreateScope();
-                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                var computer = await db.Computers.FirstOrDefaultAsync(c => c.LaboratoryStation == pcName);
-                if (computer == null)
-                {
-                    computer = new Computer
-                    {
-                        LaboratoryStation = pcName,
-                        Status = "Online",
-                        AssignedTo = studentId
-                    };
-                    db.Computers.Add(computer);
-                }
-                else
-                {
-                    computer.Status = "Online";
-                    computer.AssignedTo = studentId;
-                    db.Computers.Update(computer);
-                }
-                await db.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[CAMS] Error auto-registering computer profile: {ex.Message}");
+                Context.Abort();
+                return;
             }
 
+            var studentNumber = Context.User.FindFirst(AuthPrincipalFactory.StudentNumberClaim)?.Value;
+            var pcName = Context.User.FindFirst(AuthPrincipalFactory.PcNameClaim)?.Value;
+            if (string.IsNullOrWhiteSpace(studentNumber) || string.IsNullOrWhiteSpace(pcName))
+            {
+                Context.Abort();
+                return;
+            }
+
+            var student = _monitoringService.RegisterStudent(Context.ConnectionId, studentNumber, pcName);
+            await UpdateComputerProfileAsync(accountId, studentNumber, pcName);
             await Groups.AddToGroupAsync(Context.ConnectionId, HubEventNames.StudentsGroup);
             await Clients.Group(HubEventNames.TeachersGroup)
                 .SendAsync(HubEventNames.StudentConnected, student);
-
-            // Push the current global session state so late-joining workstations sync up
             await Clients.Client(Context.ConnectionId)
                 .SendAsync(HubEventNames.GlobalSessionState, _sessionManager.Snapshot());
         }
-
-        // Teacher dashboard joins monitoring group
-        public async Task RegisterTeacher()
+        else if (IsStudent || IsTeacher)
         {
-            _connectionRoles[Context.ConnectionId] = "Teacher";
-            await Groups.AddToGroupAsync(Context.ConnectionId, HubEventNames.TeachersGroup);
+            await Groups.AddToGroupAsync(Context.ConnectionId, IsTeacher ? HubEventNames.TeachersGroup : HubEventNames.StudentsGroup);
             await Clients.Client(Context.ConnectionId)
                 .SendAsync(HubEventNames.GlobalSessionState, _sessionManager.Snapshot());
         }
-
-        // Teacher transmits mouse/keyboard event to a specific student connection
-        public async Task SendRemoteInput(string targetConnectionId, RemoteInputMessage input)
+        else
         {
-            await Clients.Client(targetConnectionId)
-                .SendAsync(HubEventNames.ExecuteRemoteInput, input);
+            Context.Abort();
+            return;
         }
 
-        // ---- Teacher control commands ----
+        await base.OnConnectedAsync();
+    }
 
-        public async Task LockStudent(string targetConnectionId)
+    private async Task UpdateComputerProfileAsync(int accountId, string studentNumber, string pcName)
+    {
+        try
         {
-            RequireTeacher();
-            await Clients.Client(targetConnectionId)
-                .SendAsync(HubEventNames.LockStudent);
-        }
-
-        public async Task UnlockStudent(string targetConnectionId)
-        {
-            RequireTeacher();
-            await Clients.Client(targetConnectionId)
-                .SendAsync(HubEventNames.UnlockStudent);
-        }
-
-        public async Task ForceLogout(string targetConnectionId)
-        {
-            RequireTeacher();
-            await Clients.Client(targetConnectionId)
-                .SendAsync(HubEventNames.ForceLogout);
-            _monitoringService.UnregisterStudent(targetConnectionId);
-            await Clients.Group(HubEventNames.TeachersGroup)
-                .SendAsync(HubEventNames.StudentDisconnected, targetConnectionId);
-        }
-
-        // Remotely shut down a student workstation
-        public async Task ShutdownStudent(string targetConnectionId)
-        {
-            RequireTeacher();
-            await Clients.Client(targetConnectionId)
-                .SendAsync(HubEventNames.ShutdownStudent);
-        }
-
-        // Send a warning popup to one student (or all if target is empty)
-        public async Task SendWarningPopup(string targetConnectionId, NotificationMessage warning)
-        {
-            RequireTeacher();
-            try
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var computer = await db.Computers.FirstOrDefaultAsync(c => c.LaboratoryStation == pcName);
+            if (computer == null)
             {
-                using var scope = _scopeFactory.CreateScope();
-                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                context.Notifications.Add(new Notification { Type = "Warning", Title = warning.Title ?? "", Message = warning.Message ?? "" });
-                await context.SaveChangesAsync();
-            }
-            catch { }
-
-            if (string.IsNullOrWhiteSpace(targetConnectionId))
-            {
-                await Clients.Group(HubEventNames.StudentsGroup)
-                    .SendAsync(HubEventNames.SendWarningPopup, warning);
+                computer = new Computer
+                {
+                    LaboratoryStation = pcName,
+                    Status = "Online",
+                    AssignedTo = accountId.ToString()
+                };
+                db.Computers.Add(computer);
             }
             else
             {
-                await Clients.Client(targetConnectionId)
-                    .SendAsync(HubEventNames.SendWarningPopup, warning);
+                computer.Status = "Online";
+                computer.AssignedTo = accountId.ToString();
             }
-        }
 
-        // Broadcast the current session's frame to all students (screen broadcast)
-        public async Task BroadcastScreen(string frameBase64)
+            await db.SaveChangesAsync();
+        }
+        catch (Exception ex)
         {
-            RequireTeacher();
-            await Clients.Group(HubEventNames.StudentsGroup)
-                .SendAsync(HubEventNames.BroadcastScreen, new BroadcastMessage(frameBase64, DateTime.Now));
+            Console.WriteLine($"[CAMS] Error auto-registering computer profile for {studentNumber}: {ex.Message}");
         }
+    }
 
-        public async Task SendNotification(NotificationMessage notification)
-        {
-            RequireTeacher();
-            try
-            {
-                using var scope = _scopeFactory.CreateScope();
-                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                context.Notifications.Add(new Notification { Type = notification.Type ?? "Info", Title = notification.Title ?? "", Message = notification.Message ?? "", CreatedAt = notification.Timestamp == default ? DateTime.Now : notification.Timestamp });
-                await context.SaveChangesAsync();
-            }
-            catch { }
+    public async Task SendScreenFrame(ScreenFrameMessage frame)
+    {
+        var student = RequireStudent();
+        if (frame is null)
+            throw new HubException("A screen frame is required.");
+        RequireFrame(frame.FrameBase64);
 
-            await Clients.Group(HubEventNames.StudentsGroup)
-                .SendAsync(HubEventNames.SendNotification, notification);
-        }
+        var canonicalFrame = new ScreenFrameMessage(
+            student.StudentId,
+            student.PcName,
+            frame.FrameBase64,
+            DateTime.UtcNow);
 
-        // ---- Global session management (teacher) ----
+        await Clients.Group(HubEventNames.TeachersGroup)
+            .SendAsync(HubEventNames.ReceiveScreenFrame, Context.ConnectionId, canonicalFrame);
+    }
 
-        public async Task GlobalStartSession()
-        {
-            RequireTeacher();
-            var existing = _sessionManager.Snapshot();
-            if (existing.Status == "Ended") _sessionManager.StartSession();
-            else _sessionManager.StartSession();
-            await Task.CompletedTask;
-        }
+    public async Task SendRemoteInput(string targetConnectionId, RemoteInputMessage input)
+    {
+        RequireTarget(targetConnectionId);
+        if (input is null || string.IsNullOrWhiteSpace(input.EventType) || input.EventType.Length > MaxRemoteEventTypeLength)
+            throw new HubException("Invalid remote input.");
 
-        public async Task GlobalPauseSession()
-        {
-            RequireTeacher();
-            _sessionManager.PauseSession();
-            await Task.CompletedTask;
-        }
+        await Clients.Client(targetConnectionId)
+            .SendAsync(HubEventNames.ExecuteRemoteInput, input);
+    }
 
-        public async Task GlobalEndSession()
-        {
-            RequireTeacher();
-            _sessionManager.EndSession();
-            await Task.CompletedTask;
-        }
+    public async Task LockStudent(string targetConnectionId)
+    {
+        RequireTarget(targetConnectionId);
+        await Clients.Client(targetConnectionId).SendAsync(HubEventNames.LockStudent);
+    }
 
-        // ---- Restriction enforcement (student client) ----
+    public async Task UnlockStudent(string targetConnectionId)
+    {
+        RequireTarget(targetConnectionId);
+        await Clients.Client(targetConnectionId).SendAsync(HubEventNames.UnlockStudent);
+    }
 
-        // Student client pulls the active restriction rules on login
-        public async Task FetchRestrictions()
+    public async Task ForceLogout(string targetConnectionId)
+    {
+        RequireTarget(targetConnectionId);
+        await Clients.Client(targetConnectionId).SendAsync(HubEventNames.ForceLogout);
+        _monitoringService.UnregisterStudent(targetConnectionId);
+        await Clients.Group(HubEventNames.TeachersGroup)
+            .SendAsync(HubEventNames.StudentDisconnected, targetConnectionId);
+    }
+
+    public async Task ShutdownStudent(string targetConnectionId)
+    {
+        RequireTarget(targetConnectionId);
+        await Clients.Client(targetConnectionId).SendAsync(HubEventNames.ShutdownStudent);
+    }
+
+    public async Task SendWarningPopup(string targetConnectionId, NotificationMessage warning)
+    {
+        RequireTeacher();
+        if (warning is null || warning.Title.Length > 120 || warning.Message.Length > 2000)
+            throw new HubException("The warning message is invalid.");
+
+        try
         {
             using var scope = _scopeFactory.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-            var rules = await context.RestrictionRules
-                .Where(r => r.IsActive)
-                .OrderBy(r => r.RuleType)
-                .Select(r => new RestrictionRuleMessage(r.RestrictionRuleId, r.RuleType, r.Target, r.Mode))
-                .ToListAsync();
-
-            await Clients.Client(Context.ConnectionId)
-                .SendAsync(HubEventNames.RestrictionsReceived, rules);
-        }
-
-        // Student client reports a blocked-application / blocked-site attempt
-        public async Task ReportInfraction(InfractionMessage infraction)
-        {
-            // Persist to the audit trail
-            try
+            context.Notifications.Add(new Notification
             {
-                using var scope = _scopeFactory.CreateScope();
-                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                context.AuditLogs.Add(new AuditLog
-                {
-                    UserType = "Student",
-                    Action = "RestrictionViolation",
-                    Details = $"{infraction.TargetType}: {infraction.Target} on {infraction.PcName}",
-                    Timestamp = infraction.Timestamp
-                });
-                await context.SaveChangesAsync();
-            }
-            catch
+                Type = "Warning",
+                Title = warning.Title,
+                Message = warning.Message,
+                CreatedAt = warning.Timestamp == default ? DateTime.UtcNow : warning.Timestamp
+            });
+            await context.SaveChangesAsync();
+        }
+        catch
+        {
+            // Persistence must not prevent delivery to connected workstations.
+        }
+
+        if (string.IsNullOrWhiteSpace(targetConnectionId))
+        {
+            await Clients.Group(HubEventNames.StudentsGroup)
+                .SendAsync(HubEventNames.SendWarningPopup, warning);
+        }
+        else
+        {
+            RequireTarget(targetConnectionId);
+            await Clients.Client(targetConnectionId)
+                .SendAsync(HubEventNames.SendWarningPopup, warning);
+        }
+    }
+
+    public async Task BroadcastScreen(string frameBase64)
+    {
+        RequireTeacher();
+        RequireFrame(frameBase64);
+        await Clients.Group(HubEventNames.StudentsGroup)
+            .SendAsync(HubEventNames.BroadcastScreen, new BroadcastMessage(frameBase64, DateTime.UtcNow));
+    }
+
+    public async Task SendNotification(NotificationMessage notification)
+    {
+        RequireTeacher();
+        if (notification is null || notification.Title.Length > 120 || notification.Message.Length > 2000)
+            throw new HubException("The notification is invalid.");
+
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            context.Notifications.Add(new Notification
             {
-                // Audit persistence must never break the real-time alert
-            }
-
-            await Clients.Group(HubEventNames.TeachersGroup)
-                .SendAsync(HubEventNames.InfractionDetected, infraction);
+                Type = notification.Type ?? "Info",
+                Title = notification.Title,
+                Message = notification.Message,
+                CreatedAt = notification.Timestamp == default ? DateTime.UtcNow : notification.Timestamp
+            });
+            await context.SaveChangesAsync();
+        }
+        catch
+        {
+            // Persistence must not prevent delivery to connected workstations.
         }
 
-        // ---- Student status reporting ----
+        await Clients.Group(HubEventNames.StudentsGroup)
+            .SendAsync(HubEventNames.SendNotification, notification);
+    }
 
-        public async Task ReportIdleStatus(IdleStatusMessage status)
-        {
-            _monitoringService.ReportIdleStatus(status);
-            await Clients.Group(HubEventNames.TeachersGroup)
-                .SendAsync(HubEventNames.IdleStatusReceived, status);
-        }
+    public Task GlobalStartSession()
+    {
+        RequireTeacher();
+        _sessionManager.StartSession();
+        return Task.CompletedTask;
+    }
 
-        public async Task ReportActiveApp(ActiveAppMessage app)
-        {
-            _monitoringService.ReportActiveApp(app);
-            await Clients.Group(HubEventNames.TeachersGroup)
-                .SendAsync(HubEventNames.ActiveAppReceived, app);
-        }
+    public Task GlobalPauseSession()
+    {
+        RequireTeacher();
+        _sessionManager.PauseSession();
+        return Task.CompletedTask;
+    }
 
-        public override async Task OnDisconnectedAsync(Exception? exception)
+    public Task GlobalEndSession()
+    {
+        RequireTeacher();
+        _sessionManager.EndSession();
+        return Task.CompletedTask;
+    }
+
+    public async Task FetchRestrictions()
+    {
+        RequireStudent();
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var rules = await context.RestrictionRules
+            .Where(r => r.IsActive)
+            .OrderBy(r => r.RuleType)
+            .Select(r => new RestrictionRuleMessage(r.RestrictionRuleId, r.RuleType, r.Target, r.Mode))
+            .ToListAsync();
+
+        await Clients.Client(Context.ConnectionId)
+            .SendAsync(HubEventNames.RestrictionsReceived, rules);
+    }
+
+    public async Task ReportInfraction(InfractionMessage infraction)
+    {
+        var student = RequireStudent();
+        if (infraction is null || string.IsNullOrWhiteSpace(infraction.Target) || string.IsNullOrWhiteSpace(infraction.TargetType) || infraction.Target.Length > 500 || infraction.TargetType.Length > 50)
+            throw new HubException("The infraction report is invalid.");
+
+        var canonicalInfraction = infraction with
         {
-            _connectionRoles.TryRemove(Context.ConnectionId, out _);
-            var student = _monitoringService.UnregisterStudent(Context.ConnectionId);
-            if (student != null)
+            ConnectionId = Context.ConnectionId,
+            StudentId = student.StudentId,
+            PcName = student.PcName,
+            Timestamp = DateTime.UtcNow
+        };
+
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            context.AuditLogs.Add(new AuditLog
             {
-                await Clients.Group(HubEventNames.TeachersGroup)
-                    .SendAsync(HubEventNames.StudentDisconnected, student.ConnectionId);
-            }
-
-            await base.OnDisconnectedAsync(exception);
+                UserType = "Student",
+                Action = "RestrictionViolation",
+                Details = $"{canonicalInfraction.TargetType}: {canonicalInfraction.Target} on {canonicalInfraction.PcName}",
+                Timestamp = canonicalInfraction.Timestamp
+            });
+            await context.SaveChangesAsync();
         }
+        catch
+        {
+            // Audit persistence must never break the real-time alert.
+        }
+
+        await Clients.Group(HubEventNames.TeachersGroup)
+            .SendAsync(HubEventNames.InfractionDetected, canonicalInfraction);
+    }
+
+    public async Task ReportIdleStatus(IdleStatusMessage status)
+    {
+        var student = RequireStudent();
+        if (status is null)
+            throw new HubException("The idle status report is invalid.");
+        var canonicalStatus = status with
+        {
+            ConnectionId = Context.ConnectionId,
+            StudentId = student.StudentId,
+            PcName = student.PcName,
+            Timestamp = DateTime.UtcNow
+        };
+
+        _monitoringService.ReportIdleStatus(canonicalStatus);
+        await Clients.Group(HubEventNames.TeachersGroup)
+            .SendAsync(HubEventNames.IdleStatusReceived, canonicalStatus);
+    }
+
+    public async Task ReportActiveApp(ActiveAppMessage app)
+    {
+        var student = RequireStudent();
+        if (app is null || string.IsNullOrWhiteSpace(app.ApplicationName) || app.ApplicationName.Length > 500)
+            throw new HubException("The active application report is invalid.");
+
+        var canonicalApp = app with
+        {
+            ConnectionId = Context.ConnectionId,
+            StudentId = student.StudentId,
+            PcName = student.PcName,
+            Timestamp = DateTime.UtcNow
+        };
+
+        _monitoringService.ReportActiveApp(canonicalApp);
+        await Clients.Group(HubEventNames.TeachersGroup)
+            .SendAsync(HubEventNames.ActiveAppReceived, canonicalApp);
+    }
+
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        var student = _monitoringService.UnregisterStudent(Context.ConnectionId);
+        if (student != null)
+        {
+            await Clients.Group(HubEventNames.TeachersGroup)
+                .SendAsync(HubEventNames.StudentDisconnected, student.ConnectionId);
+        }
+
+        await base.OnDisconnectedAsync(exception);
     }
 }

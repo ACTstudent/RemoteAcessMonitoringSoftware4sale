@@ -1,13 +1,17 @@
 # CAMS -- One-shot build pipeline
 # Run:  powershell -NoProfile -ExecutionPolicy Bypass -File build-everything.ps1
 #
-# Output (2 files):
+# Output (2 installers plus checksums):
 #   server-dist\CAMS-Server-Setup.exe       -- installer wizard for teacher PC
 #   client-dist\CAMS-Client-Setup.exe       -- installer wizard for student PCs
 
 $ErrorActionPreference = "Stop"
 $root = $PSScriptRoot
-$version = "2.5.2"
+$versionConfig = Get-Content (Join-Path $root "version.json") -Raw | ConvertFrom-Json
+$version = [string]$versionConfig.version
+if ([string]::IsNullOrWhiteSpace($version)) {
+    throw "version.json does not contain a version."
+}
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Magenta
@@ -67,6 +71,10 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "  FAIL: server publish failed." -ForegroundColor Red
     exit $LASTEXITCODE
 }
+# Runtime data belongs on the target machine, never inside a release installer.
+Get-ChildItem -LiteralPath $serverPub -Filter "CAMS.db*" -File -ErrorAction SilentlyContinue |
+    Remove-Item -Force
+Write-Host "  Removed local database files from server publish output." -ForegroundColor Green
 Write-Host "  Server published." -ForegroundColor Green
 
 # ---- 4. Publish client (self-contained) ----
@@ -91,19 +99,28 @@ $clientDist = Join-Path $root "client-dist"
 New-Item -ItemType Directory -Force -Path $serverDist | Out-Null
 New-Item -ItemType Directory -Force -Path $clientDist | Out-Null
 
-& $iscc "/o$serverDist" (Join-Path $root "server-installer.iss")
+& $iscc "/DMyAppVersion=$version" "/o$serverDist" (Join-Path $root "server-installer.iss")
 if ($LASTEXITCODE -ne 0) {
     Write-Host "  FAIL: server installer build failed." -ForegroundColor Red
     exit $LASTEXITCODE
 }
 Write-Host "  Server installer built." -ForegroundColor Green
 
-& $iscc "/o$clientDist" (Join-Path $root "client-installer.iss")
+& $iscc "/DMyAppVersion=$version" "/o$clientDist" (Join-Path $root "client-installer.iss")
 if ($LASTEXITCODE -ne 0) {
     Write-Host "  FAIL: client installer build failed." -ForegroundColor Red
     exit $LASTEXITCODE
 }
 Write-Host "  Client installer built." -ForegroundColor Green
+
+# Generate release checksums beside the installers for release verification.
+$serverInstaller = Join-Path $serverDist "CAMS-Server-Setup.exe"
+$clientInstaller = Join-Path $clientDist "CAMS-Client-Setup.exe"
+"$((Get-FileHash $serverInstaller -Algorithm SHA256).Hash)  CAMS-Server-Setup.exe" |
+    Set-Content -LiteralPath (Join-Path $serverDist "CAMS-Server-Setup.exe.sha256") -Encoding ascii
+"$((Get-FileHash $clientInstaller -Algorithm SHA256).Hash)  CAMS-Client-Setup.exe" |
+    Set-Content -LiteralPath (Join-Path $clientDist "CAMS-Client-Setup.exe.sha256") -Encoding ascii
+Write-Host "  SHA-256 checksums generated." -ForegroundColor Green
 
 # ---- Done ----
 Write-Host ""

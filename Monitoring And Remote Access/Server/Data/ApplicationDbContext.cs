@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Server.Models;
 
@@ -33,8 +32,6 @@ namespace Server.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            var hasher = new PasswordHasher<object>();
-
             modelBuilder.Entity<Role>()
                 .HasMany(r => r.Permissions)
                 .WithMany(p => p.Roles)
@@ -68,57 +65,6 @@ namespace Server.Data
                 .WithMany(t => t.Students)
                 .HasForeignKey(s => s.AdviserId)
                 .OnDelete(DeleteBehavior.SetNull);
-
-            modelBuilder.Entity<Admin>().HasData(new Admin
-            {
-                Id = 1,
-                Username = "admin",
-                PasswordHash = hasher.HashPassword(null, "admin123"),
-                FullName = "System Administrator"
-            });
-
-            // Seed sample Teacher
-            modelBuilder.Entity<Teacher>().HasData(new Teacher
-            {
-                TeacherId = 1,
-                FirstName = "Maria",
-                LastName = "Santos",
-                Email = "maria.santos@pardo.edu.ph",
-                Username = "teacher1",
-                PasswordHash = hasher.HashPassword(null, "teacher123"),
-                ContactNumber = "09171234567",
-                Status = "Active"
-            });
-
-            // Seed sample Class Section matching pro
-            modelBuilder.Entity<Class>().HasData(new Class
-            {
-                ClassId = 1,
-                ClassName = "Grade 6 - Sapphire",
-                Section = "Sapphire",
-                Subject = "Computer Education",
-                GradeLevel = "Grade 6",
-                Schedule = "MWF 8:00 AM - 9:00 AM",
-                AcademicYear = "2026-2027",
-                Status = "Active",
-                TeacherId = 1
-            });
-
-            // Seed sample Student matching pro
-            modelBuilder.Entity<Student>().HasData(new Student
-            {
-                Id = 1,
-                StudentNumber = "STU-2026-001",
-                FirstName = "John",
-                LastName = "Doe",
-                FullName = "John Doe",
-                Username = "student1",
-                PasswordHash = hasher.HashPassword(null, "student123"),
-                Status = "Active",
-                GradeSection = "Grade 6 - Sapphire",
-                ClassId = 1,
-                AdviserId = 1
-            });
 
             // Seed roles
             modelBuilder.Entity<Role>().HasData(

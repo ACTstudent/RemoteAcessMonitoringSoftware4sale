@@ -2,7 +2,9 @@
 ; Builds "CAMS-Client-Setup.exe" - a clean installation wizard.
 
 #define MyAppName "CAMS Student Client"
-#define MyAppVersion "2.5.2"
+#ifndef MyAppVersion
+  #define MyAppVersion "2.5.3"
+#endif
 #define MyAppExeName "Client.exe"
 #define MyAppPublisher "CAMS"
 #define MyAppURL "https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale"
@@ -25,6 +27,7 @@ SolidCompression=yes
 WizardStyle=modern
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
+PrivilegesRequired=lowest
 CloseApplications=yes
 CloseApplicationsFilter=*.exe
 
@@ -69,9 +72,9 @@ begin
   begin
     ServerUrlPage := CreateInputQueryPage(wpSelectDir,
       'Server Address', 'Enter the CAMS server URL',
-      'Your teacher will give you this address, e.g. http://192.168.1.100:5000/remoteMonitoringHub');
+      'Your teacher will give you this address, e.g. https://lab-server.example:5000/remoteMonitoringHub');
     ServerUrlPage.Add('Server URL:', False);
-    ServerUrlPage.Values[0] := 'http://localhost:5000/remoteMonitoringHub';
+    ServerUrlPage.Values[0] := 'https://localhost:5000/remoteMonitoringHub';
   end;
 end;
 

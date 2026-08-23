@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
@@ -7,6 +8,7 @@ using Server.Services;
 
 namespace Server.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class AdminController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -64,11 +66,16 @@ namespace Server.Controllers
                 TempData["ErrorMessage"] = "Username is required.";
                 return RedirectToAction("Teachers");
             }
+            if (string.IsNullOrWhiteSpace(teacher.PasswordHash))
+            {
+                TempData["ErrorMessage"] = "A password is required for a new teacher.";
+                return RedirectToAction("Teachers");
+            }
 
             teacher.FirstName = string.IsNullOrWhiteSpace(teacher.FirstName) ? teacher.Username : teacher.FirstName.Trim();
             teacher.LastName = string.IsNullOrWhiteSpace(teacher.LastName) ? "Teacher" : teacher.LastName.Trim();
             teacher.Status = string.IsNullOrWhiteSpace(teacher.Status) ? "Active" : teacher.Status.Trim();
-            teacher.PasswordHash = _hasher.HashPassword(null, string.IsNullOrWhiteSpace(teacher.PasswordHash) ? "teacher123" : teacher.PasswordHash);
+            teacher.PasswordHash = _hasher.HashPassword(new object(), teacher.PasswordHash.Trim());
             
             _context.Teachers.Add(teacher);
             await _context.SaveChangesAsync();
@@ -93,7 +100,7 @@ namespace Server.Controllers
 
             if (!string.IsNullOrWhiteSpace(newPassword))
             {
-                existing.PasswordHash = _hasher.HashPassword(null, newPassword.Trim());
+                existing.PasswordHash = _hasher.HashPassword(new object(), newPassword.Trim());
             }
 
             await _context.SaveChangesAsync();
@@ -141,9 +148,13 @@ namespace Server.Controllers
                 TempData["ErrorMessage"] = "Username is required.";
                 return RedirectToAction("Students");
             }
+            if (string.IsNullOrWhiteSpace(student.PasswordHash))
+            {
+                TempData["ErrorMessage"] = "A password is required for a new student.";
+                return RedirectToAction("Students");
+            }
 
-            string rawPassword = string.IsNullOrWhiteSpace(student.PasswordHash) ? "student123" : student.PasswordHash;
-            student.PasswordHash = _hasher.HashPassword(null, rawPassword);
+            student.PasswordHash = _hasher.HashPassword(new object(), student.PasswordHash.Trim());
             student.Status = string.IsNullOrWhiteSpace(student.Status) ? "Active" : student.Status;
 
             if (string.IsNullOrWhiteSpace(student.StudentNumber))
@@ -192,7 +203,7 @@ namespace Server.Controllers
 
             if (!string.IsNullOrWhiteSpace(newPassword))
             {
-                existing.PasswordHash = _hasher.HashPassword(null, newPassword.Trim());
+                existing.PasswordHash = _hasher.HashPassword(new object(), newPassword.Trim());
             }
 
             await _context.SaveChangesAsync();
@@ -691,11 +702,16 @@ namespace Server.Controllers
                 TempData["ErrorMessage"] = "First Name and Last Name are required.";
                 return RedirectToAction("ClassDetails", new { id = classId });
             }
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                TempData["ErrorMessage"] = "A password is required for a new student.";
+                return RedirectToAction("ClassDetails", new { id = classId });
+            }
 
             string uName = string.IsNullOrWhiteSpace(username)
                 ? $"{firstName.ToLower().Replace(" ", "")}.{lastName.ToLower().Replace(" ", "")}"
                 : username.Trim();
-            string pwd = string.IsNullOrWhiteSpace(password) ? "student123" : password.Trim();
+            string pwd = password.Trim();
 
             var student = new Student
             {
@@ -704,7 +720,7 @@ namespace Server.Controllers
                 LastName = lastName.Trim(),
                 FullName = $"{firstName.Trim()} {lastName.Trim()}",
                 Username = uName,
-                PasswordHash = _hasher.HashPassword(null, pwd),
+                PasswordHash = _hasher.HashPassword(new object(), pwd),
                 Status = "Active",
                 GradeSection = cls.ClassName,
                 ClassId = cls.ClassId,
@@ -735,6 +751,18 @@ namespace Server.Controllers
                 return RedirectToAction("ClassDetails", new { id = classId });
             }
 
+            for (int i = 0; i < bulkFirstNames.Count; i++)
+            {
+                var hasName = !string.IsNullOrWhiteSpace(bulkFirstNames[i]) ||
+                              (i < bulkLastNames.Count && !string.IsNullOrWhiteSpace(bulkLastNames[i]));
+                var hasPassword = i < bulkPasswords.Count && !string.IsNullOrWhiteSpace(bulkPasswords[i]);
+                if (hasName && !hasPassword)
+                {
+                    TempData["ErrorMessage"] = "A password is required for every new student.";
+                    return RedirectToAction("ClassDetails", new { id = classId });
+                }
+            }
+
             int addedCount = 0;
             for (int i = 0; i < bulkFirstNames.Count; i++)
             {
@@ -751,8 +779,6 @@ namespace Server.Controllers
                 {
                     uName = $"{fName.ToLower().Replace(" ", "")}.{lName.ToLower().Replace(" ", "")}{new Random().Next(100, 999)}";
                 }
-                if (string.IsNullOrWhiteSpace(pwd)) pwd = "student123";
-
                 var student = new Student
                 {
                     StudentNumber = $"STU-{DateTime.Now:yyyy}-{new Random().Next(100, 999)}",
@@ -760,7 +786,7 @@ namespace Server.Controllers
                     LastName = lName,
                     FullName = $"{fName} {lName}",
                     Username = uName,
-                    PasswordHash = _hasher.HashPassword(null, pwd),
+                    PasswordHash = _hasher.HashPassword(new object(), pwd),
                     Status = "Active",
                     GradeSection = cls.ClassName,
                     ClassId = cls.ClassId,

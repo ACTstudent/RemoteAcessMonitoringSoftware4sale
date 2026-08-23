@@ -12,10 +12,12 @@ public class ServerDiscoveryService : BackgroundService
     private static readonly IPEndPoint BroadcastEndpoint = new IPEndPoint(IPAddress.Broadcast, BroadcastPort);
 
     private readonly ILogger<ServerDiscoveryService> _logger;
+    private readonly IConfiguration _configuration;
 
-    public ServerDiscoveryService(ILogger<ServerDiscoveryService> logger)
+    public ServerDiscoveryService(ILogger<ServerDiscoveryService> logger, IConfiguration configuration)
     {
         _logger = logger;
+        _configuration = configuration;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -27,8 +29,12 @@ public class ServerDiscoveryService : BackgroundService
             return;
         }
 
-        var payload = new DiscoveryPayload($"http://{localIp}:5000/remoteMonitoringHub", "CAMS");
-        var json = JsonSerializer.Serialize(payload);
+        var httpsPort = _configuration.GetValue("Cams:HttpsPort", 5000);
+        var payload = new DiscoveryPayload($"https://{localIp}:{httpsPort}/remoteMonitoringHub", "CAMS");
+        var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
         var data = System.Text.Encoding.UTF8.GetBytes(json);
 
         _logger.LogInformation($"[Discovery] Broadcasting on UDP:{BroadcastPort} — {payload.ServerUrl}");

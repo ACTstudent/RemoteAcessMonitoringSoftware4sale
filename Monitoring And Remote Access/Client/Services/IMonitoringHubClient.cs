@@ -16,12 +16,13 @@ public interface IMonitoringHubClient
     event Action<NotificationMessage>? WarningPopupReceived;
     event Action<List<RestrictionRuleMessage>>? RestrictionsReceived;
 
+    Task<StudentClientLoginResponse> LoginAsync(string serverUrl, string username, string password, string pcName, CancellationToken cancellationToken = default);
     Task StartAsync(string serverUrl, CancellationToken cancellationToken = default);
-    Task RegisterStudentAsync(string studentId, string pcName);
     Task SendScreenFrameAsync(ScreenFrameMessage frame);
     Task ReportIdleStatusAsync(IdleStatusMessage status);
     Task ReportActiveAppAsync(ActiveAppMessage app);
     Task FetchRestrictionsAsync();
     Task ReportInfractionAsync(InfractionMessage infraction);
+    Task LogoutAsync(CancellationToken cancellationToken = default);
     ValueTask DisposeAsync();
 }

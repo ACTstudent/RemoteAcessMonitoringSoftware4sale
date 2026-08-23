@@ -26,7 +26,7 @@ Pardo Elementary School Computer Laboratory Management System
 │                   TEACHER WORKSTATION                    │
 │  ┌─────────────────────────────────────────────────┐    │
 │  │  Web Browser (Chrome/Edge)                      │    │
-│  │  http://<server>:5000/Teacher/Monitoring        │    │
+│  │  https://<server>:5000/Teacher/Monitoring       │    │
 │  │                                                  │    │
 │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐         │    │
 │  │  │Student A  │ │Student B  │ │Student C  │         │    │
@@ -76,8 +76,8 @@ Pardo Elementary School Computer Laboratory Management System
 ## Teacher
 
 ### Login
-- Open browser → `http://<server-ip>:5000`
-- Enter teacher credentials (default: `teacher1` / `teacher123`)
+- Open browser → `https://<server-ip>:5000`
+- Enter the teacher credentials created by the CAMS administrator
 - The dashboard shows active sessions quick-access cards
 
 ### Global Session Controls (Header Bar)
@@ -124,7 +124,7 @@ The Session Management page allows the teacher to start individual per-student s
 
 ### Login
 - Launch the WinForms student client (`Client.exe`)
-- Enter Student ID and Password (default: `student1` / `student123`)
+- Enter the assigned Student ID and password; the client validates both over HTTPS before opening SignalR
 
 ### Overlay Toolbar
 After login, a sticky toolbar appears:
@@ -203,7 +203,7 @@ Restriction rules are **downloaded to the student client** after login.
 ```
 dotnet run --project Server
 ```
-Server is at `http://localhost:5000`. Default login: **admin** / **admin123**  
+Server is at `https://localhost:5000`. Set `Cams__InitialAdminPassword` before the first launch; CAMS does not ship default login passwords.
 
 ### Production LAN Setup
 1. Install .NET 8 runtime on the server machine
@@ -251,7 +251,7 @@ Server is at `http://localhost:5000`. Default login: **admin** / **admin123**
 
 | Event | From → To | Payload | Meaning |
 |---|---|---|---|
-| `RegisterStudent` | Client → Server | studentId, pcName | Student computer joins live grid |
+| Authenticated client connection | Client → Server | signed-in student cookie | Student computer joins the live grid |
 | `SendScreenFrame` | Client → Server | base64 jpeg | Live screen bitmap |
 | `ReceiveScreenFrame` | Server → Teacher Dashboard | cid, ScreenFrameMessage | Render in teacher grid |
 | `StudentConnected/Distributed` | Server → Teacher | student info | Card add/remove in grid |

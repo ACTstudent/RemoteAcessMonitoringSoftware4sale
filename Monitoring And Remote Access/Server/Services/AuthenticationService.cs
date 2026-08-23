@@ -18,10 +18,9 @@ public class AuthenticationService : IAuthenticationService
     private bool VerifyPassword(string storedHash, string providedPassword)
     {
         if (string.IsNullOrEmpty(storedHash)) return false;
-        if (storedHash == providedPassword) return true;
         try
         {
-            return _hasher.VerifyHashedPassword(null!, storedHash, providedPassword) == PasswordVerificationResult.Success;
+            return _hasher.VerifyHashedPassword(new object(), storedHash, providedPassword) == PasswordVerificationResult.Success;
         }
         catch
         {
@@ -37,26 +36,25 @@ public class AuthenticationService : IAuthenticationService
         }
 
         // 1. ADMIN LOGIN
-        if (string.Equals(username, "admin", StringComparison.OrdinalIgnoreCase) && password == "admin123")
-        {
-            var adminObj = await _context.Admins.FirstOrDefaultAsync(a => a.Username == "admin");
-            int adminId = adminObj?.Id ?? 1;
-            string adminName = adminObj?.FullName ?? "System Administrator";
-            await AuditAsync("Admin", adminId, "LoginSuccess", $"Admin {username} logged in from {ipAddress}", ipAddress);
-            return new LoginResult(AccountRole.Admin, adminId, adminName);
-        }
-
         var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Username == username);
         if (admin != null && VerifyPassword(admin.PasswordHash, password))
         {
             await AuditAsync("Admin", admin.Id, "LoginSuccess", $"Admin {username} logged in from {ipAddress}", ipAddress);
-            return new LoginResult(AccountRole.Admin, admin.Id, admin.FullName);
+            return new LoginResult(AccountRole.Admin, admin.Id, admin.FullName, admin.Username);
         }
 
         // 2. STUDENT LOGIN (Student takes priority if username exists in both Student & Teacher)
-        var student = await _context.Students.FirstOrDefaultAsync(s => s.Username == username);
+        var student = await _context.Students
+            .FirstOrDefaultAsync(s => s.Username == username || s.StudentNumber == username);
         if (student != null && VerifyPassword(student.PasswordHash, password))
         {
+            if (!string.IsNullOrEmpty(student.Status) && !string.Equals(student.Status, "Active", StringComparison.OrdinalIgnoreCase))
+            {
+                await AuditAsync("Student", student.Id, "LoginDenied",
+                    $"Student {username} attempted login while account status is {student.Status}", ipAddress);
+                return new LoginResult(AccountRole.Invalid, null, null);
+            }
+
             var assignedPc = await _context.Computers.FirstOrDefaultAsync(c => c.AssignedTo == student.Id.ToString());
             if (assignedPc != null && !string.IsNullOrEmpty(pcName) && !string.Equals(assignedPc.LaboratoryStation, pcName, StringComparison.OrdinalIgnoreCase))
             {
@@ -77,7 +75,7 @@ public class AuthenticationService : IAuthenticationService
             await _context.SaveChangesAsync();
 
             await AuditAsync("Student", student.Id, "LoginSuccess", $"Student {username} logged in from {pcName} ({ipAddress})", ipAddress);
-            return new LoginResult(AccountRole.Student, student.Id, student.FullName);
+            return new LoginResult(AccountRole.Student, student.Id, student.FullName, student.Username, student.StudentNumber);
         }
 
         // 3. TEACHER LOGIN
@@ -96,7 +94,7 @@ public class AuthenticationService : IAuthenticationService
                 : teacher.Username;
 
             await AuditAsync("Teacher", teacher.TeacherId, "LoginSuccess", $"Teacher {username} logged in from {ipAddress}", ipAddress);
-            return new LoginResult(AccountRole.Teacher, teacher.TeacherId, teacherDisplayName);
+            return new LoginResult(AccountRole.Teacher, teacher.TeacherId, teacherDisplayName, teacher.Username);
         }
 
         await AuditAsync("System", null, "LoginFailed", $"Failed login attempt for '{username}' from {ipAddress}", ipAddress);

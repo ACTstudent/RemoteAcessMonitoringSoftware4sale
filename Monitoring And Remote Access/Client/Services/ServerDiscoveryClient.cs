@@ -30,12 +30,18 @@ public static class ServerDiscoveryClient
                     var json = System.Text.Encoding.UTF8.GetString(result.Buffer);
 
                     using var doc = JsonDocument.Parse(json);
-                    if (doc.RootElement.TryGetProperty("serverUrl", out var url) &&
-                        doc.RootElement.TryGetProperty("appName", out var name) &&
+                    if (TryGetPropertyIgnoreCase(doc.RootElement, "serverUrl", out var url) &&
+                        TryGetPropertyIgnoreCase(doc.RootElement, "appName", out var name) &&
                         name.GetString() == "CAMS")
                     {
-                        _cachedUrl = url.GetString();
-                        return _cachedUrl;
+                        var discoveredUrl = url.GetString();
+                        if (Uri.TryCreate(discoveredUrl, UriKind.Absolute, out var parsedUrl) &&
+                            parsedUrl.Scheme == Uri.UriSchemeHttps &&
+                            !string.IsNullOrWhiteSpace(parsedUrl.Host))
+                        {
+                            _cachedUrl = parsedUrl.ToString();
+                            return _cachedUrl;
+                        }
                     }
                 }
                 catch (OperationCanceledException) { }
@@ -52,5 +58,20 @@ public static class ServerDiscoveryClient
     public static void ResetCache()
     {
         _cachedUrl = null;
+    }
+
+    private static bool TryGetPropertyIgnoreCase(JsonElement element, string propertyName, out JsonElement value)
+    {
+        foreach (var property in element.EnumerateObject())
+        {
+            if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+            {
+                value = property.Value;
+                return true;
+            }
+        }
+
+        value = default;
+        return false;
     }
 }

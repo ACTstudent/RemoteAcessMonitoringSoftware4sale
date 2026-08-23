@@ -21,11 +21,11 @@ namespace Client
                 if (File.Exists(path))
                 {
                     var json = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
-                    return json.RootElement.TryGetProperty("ServerUrl", out var u) ? u.GetString() ?? "http://localhost:5000/remoteMonitoringHub" : "http://localhost:5000/remoteMonitoringHub";
+                    return json.RootElement.TryGetProperty("ServerUrl", out var u) ? u.GetString() ?? "https://localhost:5000/remoteMonitoringHub" : "https://localhost:5000/remoteMonitoringHub";
                 }
             }
             catch { }
-            return "http://localhost:5000/remoteMonitoringHub";
+            return "https://localhost:5000/remoteMonitoringHub";
         }
 
         private readonly IScreenCaptureService _screenCaptureService = new ScreenCaptureService();
@@ -215,13 +215,13 @@ namespace Client
                 hubClient.ShutdownRequested += () => this.Invoke(OnShutdownRequested);
                 hubClient.RestrictionsReceived += rules => this.Invoke(() => OnRestrictionsReceived(rules));
 
+                var login = await hubClient.LoginAsync(serverUrl, studentId, password, Environment.MachineName);
                 await hubClient.StartAsync(serverUrl);
-                await hubClient.RegisterStudentAsync(studentId, Environment.MachineName);
                 await hubClient.FetchRestrictionsAsync();
 
                 _hubClient = hubClient;
-                _studentId = studentId;
-                _studentName = studentId;
+                _studentId = login.StudentId;
+                _studentName = login.DisplayName;
 
                 _isStreaming = true;
                 _streamCts = new CancellationTokenSource();
@@ -229,7 +229,7 @@ namespace Client
                 BuildToolbar();
                 _countdownTimer.Start();
 
-                _ = Task.Run(() => ScreenCaptureLoop(studentId, _streamCts.Token));
+                _ = Task.Run(() => ScreenCaptureLoop(_streamCts.Token));
                 _ = Task.Run(() => StatusReportLoop(_streamCts.Token));
                 _ = Task.Run(() => RestrictionEnforcementLoop(_streamCts.Token));
             }
@@ -283,13 +283,13 @@ namespace Client
             };
             var lbl = new Label
             {
-                Text = "Server URL (e.g. http://192.168.1.100:5000/remoteMonitoringHub):",
+                Text = "Server URL (e.g. https://192.168.1.100:5000/remoteMonitoringHub):",
                 Location = new Point(14, 18),
                 AutoSize = true
             };
             var txt = new TextBox
             {
-                Text = "http://localhost:5000/remoteMonitoringHub",
+                Text = "https://localhost:5000/remoteMonitoringHub",
                 Location = new Point(14, 45),
                 Width = 400
             };
@@ -304,10 +304,18 @@ namespace Client
             };
             btnOk.Click += (_, _) =>
             {
+                if (!Uri.TryCreate(txt.Text.Trim(), UriKind.Absolute, out var serverUri) ||
+                    serverUri.Scheme != Uri.UriSchemeHttps ||
+                    string.IsNullOrWhiteSpace(serverUri.Host))
+                {
+                    MessageBox.Show("Enter a valid HTTPS CAMS server URL.", "Invalid Server URL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 try
                 {
                     var settingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "client-settings.json");
-                    var json = "{\n  \"ServerUrl\": \"" + txt.Text.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"\n}";
+                    var json = "{\n  \"ServerUrl\": \"" + serverUri.ToString().Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"\n}";
                     File.WriteAllText(settingsPath, json);
                     ServerDiscoveryClient.ResetCache();
                 }
@@ -516,7 +524,7 @@ namespace Client
             }
         }
 
-        private async Task ScreenCaptureLoop(string studentId, CancellationToken token)
+        private async Task ScreenCaptureLoop(CancellationToken token)
         {
             while (_isStreaming && !token.IsCancellationRequested)
             {
@@ -525,7 +533,7 @@ namespace Client
                     if (_hubClient != null && !_isLocked)
                     {
                         var frame = new ScreenFrameMessage(
-                            studentId,
+                            _studentId,
                             Environment.MachineName,
                             _screenCaptureService.CaptureBase64(),
                             DateTime.Now);
@@ -560,6 +568,11 @@ namespace Client
             _countdownTimer.Stop();
             if (_hubClient != null)
             {
+                if (manual)
+                {
+                    try { await _hubClient.LogoutAsync(); }
+                    catch { }
+                }
                 await _hubClient.DisposeAsync();
                 _hubClient = null;
             }

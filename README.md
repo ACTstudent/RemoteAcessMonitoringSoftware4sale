@@ -12,20 +12,20 @@ A LAN-based classroom management, real-time screen monitoring, and computer labo
 
 ## 🌟 Overview
 
-**CAMS** (Classroom Automated Monitoring System) is a complete LAN-based computer laboratory management and real-time screen streaming application built with **ASP.NET Core**, **SignalR**, and **WinForms (.NET 8)**. It replaces traditional manual logbooks with automated account tracking, timed 45-minute lab sessions, real-time screen stream monitoring, and centralized workstation control.
+**CAMS** (Classroom Automated Monitoring System) is a LAN-based computer laboratory management and real-time screen streaming application built with **ASP.NET Core**, **SignalR**, and **WinForms (.NET 8)**. It replaces manual logbooks with account tracking, configurable timed lab sessions, real-time screen monitoring, and centralized workstation control.
 
 Featuring an official **Dark Emerald (`#0B3C26` / `#18181b` / `#10B981`) Design System** aligned with modern Figma specifications and exact `pro` project styling, CAMS provides dedicated, high-contrast, responsive portals for **Administrators**, **Teachers**, and **Students**.
 
 ---
 
-## 📦 Latest Installer Downloads (v2.5.3 - Tracked Binaries)
+## 📦 Installer Downloads (v2.5.3 Release Assets)
 
-Pre-built installer setup executables tracked directly in the repository with complete **Dark Emerald UI**, **Primary Multi-Role Login**, and **`pro` CRUD Relationships**:
+Pre-built installer setup executables published as versioned GitHub release assets:
 
 | Package | Direct Download Link | Repository File Path | Target / Description | File Size |
 | :--- | :--- | :--- | :--- | :--- |
-| **CAMS Server Setup** | [📥 **Download CAMS-Server-Setup.exe**](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/raw/main/server-dist/CAMS-Server-Setup.exe) | [`server-dist/CAMS-Server-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/blob/main/server-dist/CAMS-Server-Setup.exe) | Teacher / Lab Control PC Installer (Includes Clean Installation Feature & Dark Emerald Web Portal) | ~15 MB |
-| **CAMS Student Client** | [📥 **Download CAMS-Client-Setup.exe**](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/raw/main/client-dist/CAMS-Client-Setup.exe) | [`client-dist/CAMS-Client-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/blob/main/client-dist/CAMS-Client-Setup.exe) | Student Workstation Agent Installer (Includes Clean Installation Feature) | ~64 MB |
+| **CAMS Server Setup** | [📥 **Download CAMS-Server-Setup.exe**](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.3/CAMS-Server-Setup.exe) | [Release v2.5.3](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/tag/v2.5.3) | Teacher / Lab Control PC Installer | ~15 MB |
+| **CAMS Student Client** | [📥 **Download CAMS-Client-Setup.exe**](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.3/CAMS-Client-Setup.exe) | [Release v2.5.3](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/tag/v2.5.3) | Student Workstation Agent Installer | ~64 MB |
 
 ---
 
@@ -34,7 +34,7 @@ Pre-built installer setup executables tracked directly in the repository with co
 ### 🔑 Primary Multi-Role Login Authentication (`pro` Aligned)
 - **Role Routing**: Single entry point (`/Account/Login`) supporting **Admin**, **Teacher**, and **Student** login credentials.
 - **Session Management**: Automatically stores `Username`, `Role`, `AdminId`/`TeacherId`/`StudentId`, and `DisplayName` sessions for seamless authorization and auditing.
-- **Default Credentials**: Default seed accounts (`admin`/`admin123`, `teacher1`/`teacher123`, `student1`/`student123`) configured out-of-the-box.
+- **Account setup**: No public default passwords are shipped. Set `Cams__InitialAdminPassword` before first server launch, then create teacher and student accounts in the secured admin portal.
 
 ### 🎨 Dark Emerald UI Design System (Figma & `pro` Aligned)
 - **Theme Palette**: Deep forest green (`#0B3C26`), slate dark (`#18181b`), emerald accents (`#10B981`), and soft slate backgrounds (`#F8FAFC`).
@@ -42,7 +42,7 @@ Pre-built installer setup executables tracked directly in the repository with co
 - **Components & Overrides**: Metric summary counters (`.metric-card`, `.metric-card-emerald`), class section cards (`.class-card`), search filter controls (`.filter-control`), rounded modals (`rounded-4`), and explicit button overrides (`.btn-primary`, `.btn-success`, `.btn-dark`).
 
 ### 🖥 Real-Time Screen Monitoring & Workstation Control
-- **Live Monitoring Grid**: High-frequency SignalR WebSocket screen streaming grid across all connected lab workstations.
+- **Live Monitoring Grid**: Authenticated HTTPS SignalR screen streaming across connected lab workstations, approximately 12 FPS by default.
 - **Workstation Control**: Remote workstation lock/unlock, force user logout, shutdown, and reboot triggers.
 - **Teacher Broadcast**: One-click screen broadcasting from the teacher's PC to all student monitors.
 - **Infraction Alerting**: Automatic application tracking, idle state detection, and warning popup overlays.
@@ -54,7 +54,7 @@ Pre-built installer setup executables tracked directly in the repository with co
 - **Complete CRUD Operations**: Single/Bulk student registration, class section creation/editing, instructor assignment, student unenrollment, and section archiving in Admin (`/Admin/Classes`) and Teacher (`/Teacher/Classes`) portals.
 
 ### ⏱ Timed Lab Sessions & Security Policies
-- **Lab Sessions**: Timed 45-minute laboratory sessions with real-time countdown timers and automated attendance logs.
+- **Lab Sessions**: Configurable timed laboratory sessions with real-time countdown timers and attendance logs.
 - **Security Policies**: Application executable & website URL blacklists/whitelists enforced across workstations during active sessions.
 
 ### 🛡️ Clean Installation & Crash Prevention Features
@@ -72,8 +72,8 @@ Pre-built installer setup executables tracked directly in the repository with co
 │    (Teacher / Lab PC)    │ ─────────────────────► │    (Student PC)      │
 │                          │                        │                      │
 │   ASP.NET Core MVC       │ ◄───────────────────── │   WinForms agent     │
-│   Dark Emerald UI System │   SignalR websocket    │   Screen capture     │
-│   SignalR WebSocket Hub  │     ports 5000/5001    │   Input simulation   │
+│   Dark Emerald UI System │ HTTPS SignalR :5000   │   Screen capture     │
+│   SignalR WebSocket Hub  │ UDP discovery :5001   │   Input simulation   │
 │   EF Core + SQLite       │                        │   Infraction guard   │
 └──────────────────────────┘                        └──────────────────────┘
 ```
@@ -93,27 +93,20 @@ Pre-built installer setup executables tracked directly in the repository with co
 | **Client Agent** | WinForms (.NET 8), self-contained desktop process |
 | **Database** | SQLite via EF Core (`EnsureCreated()`) |
 | **Discovery** | UDP Broadcast |
-| **Tests & Packaging** | xUnit (129/129 passing tests), Inno Setup 6 |
+| **Tests & Packaging** | xUnit in CI, Inno Setup 6 |
 
 ---
 
 ## 🚀 Quick Start & Login Credentials
 
 ### 1. Server Setup (Teacher / Lab PC)
-1. Download and run [`CAMS-Server-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/raw/main/server-dist/CAMS-Server-Setup.exe).
-2. The installer performs a clean installation to `%LOCALAPPDATA%\CAMS Server`, opens firewall ports `5000` & `5001`, and launches the web portal.
-3. Default Portal Login Credentials:
-
-| Portal / Role | Username | Password | Access Level |
-| :--- | :--- | :--- | :--- |
-| **Admin** | `admin` | `admin123` | Full system control, accounts, classes, LAN & audit rules |
-| **Teacher** | `teacher1` | `teacher123` | Session control, live monitoring, class management, workstation lock & records |
-| **Student** | `student1` | `student123` | Session info, alert center, and unit status |
-
-> **Security Note:** Change all default passwords before deploying on a production network.
+1. Set the protected `Cams__InitialAdminPassword` environment variable before the first launch.
+2. Download and run [`CAMS-Server-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.3/CAMS-Server-Setup.exe).
+3. The installer performs a clean installation to `%LOCALAPPDATA%\CAMS Server`, opens HTTPS TCP port `5000` and UDP discovery port `5001`, and launches the web portal.
+4. Configure a trusted production certificate with `Cams__CertificatePath` and `Cams__CertificatePassword`.
 
 ### 2. Student Client Setup (Student PCs)
-1. Download and run [`CAMS-Client-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/raw/main/client-dist/CAMS-Client-Setup.exe) on each workstation.
+1. Download and run [`CAMS-Client-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.3/CAMS-Client-Setup.exe) on each workstation.
 2. The client auto-discovers the CAMS server on the local network over UDP.
 
 ---
@@ -135,6 +128,7 @@ The script will:
 2. Build `RemoteMonitoring.sln` in Release mode.
 3. Publish server and client binaries.
 4. Compile setup executables into `server-dist\CAMS-Server-Setup.exe` and `client-dist\CAMS-Client-Setup.exe`.
+5. Generate SHA-256 checksum files beside both installers for release verification.
 
 ---
 
