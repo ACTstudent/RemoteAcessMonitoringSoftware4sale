@@ -47,6 +47,18 @@ namespace Server.Data
                 .WithMany()
                 .HasForeignKey(cs => cs.StudentId);
 
+            modelBuilder.Entity<ClassStudent>()
+                .HasIndex(cs => new { cs.ClassId, cs.StudentId })
+                .IsUnique();
+
+            modelBuilder.Entity<Student>()
+                .HasIndex(s => s.StudentNumber)
+                .IsUnique();
+
+            modelBuilder.Entity<Student>()
+                .HasIndex(s => s.Username)
+                .IsUnique();
+
             // Relationships matching pro CRUD model
             modelBuilder.Entity<Class>()
                 .HasOne(c => c.Teacher)

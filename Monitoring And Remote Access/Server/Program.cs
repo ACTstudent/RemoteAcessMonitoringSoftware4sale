@@ -59,6 +59,7 @@ builder.Services.AddAuthorization(options =>
 
 // Application services
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<IClassManagementService, ClassManagementService>();
 builder.Services.AddSingleton<IMonitoringService, MonitoringService>();
 builder.Services.AddSingleton<SessionManagerService>();
 builder.Services.AddHostedService<ServerDiscoveryService>();
@@ -139,6 +140,7 @@ using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         db.Database.EnsureCreated();
+        DatabaseInitializer.EnsureCurrentSchema(db);
 
         var initialAdminPassword = app.Configuration["Cams:InitialAdminPassword"];
         if (!string.IsNullOrWhiteSpace(initialAdminPassword) && !db.Admins.Any())

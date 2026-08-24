@@ -3,6 +3,8 @@
     Layout = null;
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
     var adminName = ViewContext.HttpContext.Session.GetString("AdminName") ?? "System Administrator";
+    var successMessage = TempData["Message"]?.ToString();
+    var errorMessage = TempData["ErrorMessage"]?.ToString();
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -17,7 +19,7 @@
 <body>
     <div class="app-wrapper">
         <!-- Dark Emerald Sidebar -->
-        <aside class="app-sidebar" id="appSidebar">
+        <aside class="app-sidebar" id="appSidebar" aria-label="Administrator navigation">
             <div class="sidebar-header">
                 <img src="~/images/pardo_logo.png" alt="Pardo Elementary School" class="school-logo-img" />
                 <div class="sidebar-brand-text">CAMS Admin</div>
@@ -25,86 +27,87 @@
             </div>
 
             <nav class="sidebar-nav">
-                <a href="/Admin" class="nav-item-custom @(currentAction == "Index" ? "active" : "")">
+                <a href="@Url.Action("Index", "Admin")" class="nav-item-custom @(currentAction == "Index" ? "active" : "")">
                     <i class="bi bi-grid-fill"></i>
                     <span>Dashboard</span>
                 </a>
 
                 <div class="sidebar-label">User Management</div>
 
-                <a href="/Admin/Teachers" class="nav-item-custom @(currentAction == "Teachers" ? "active" : "")">
+                <a href="@Url.Action("Teachers", "Admin")" class="nav-item-custom @(currentAction == "Teachers" ? "active" : "")">
                     <i class="bi bi-person-badge-fill"></i>
                     <span>Teacher Management</span>
                 </a>
 
-                <a href="/Admin/Students" class="nav-item-custom @(currentAction == "Students" ? "active" : "")">
+                <a href="@Url.Action("Students", "Admin")" class="nav-item-custom @(currentAction == "Students" ? "active" : "")">
                     <i class="bi bi-mortarboard-fill"></i>
                     <span>Student Management</span>
                 </a>
 
-                <a href="/Admin/Classes" class="nav-item-custom @(currentAction is "Classes" or "ClassDetails" ? "active" : "")">
+                <a href="@Url.Action("Classes", "Admin")" class="nav-item-custom @(currentAction is "Classes" or "ClassDetails" ? "active" : "")">
                     <i class="bi bi-folder-fill"></i>
                     <span>Class Management</span>
                 </a>
 
-                <a href="/Admin/Roles" class="nav-item-custom @(currentAction == "Roles" ? "active" : "")">
+                <a href="@Url.Action("Roles", "Admin")" class="nav-item-custom @(currentAction == "Roles" ? "active" : "")">
                     <i class="bi bi-key-fill"></i>
                     <span>Roles & Permissions</span>
                 </a>
 
                 <div class="sidebar-label">Lab & Infrastructure</div>
 
-                <a href="/Admin/Computers" class="nav-item-custom @(currentAction == "Computers" ? "active" : "")">
+                <a href="@Url.Action("Computers", "Admin")" class="nav-item-custom @(currentAction == "Computers" ? "active" : "")">
                     <i class="bi bi-pc-display"></i>
                     <span>Computer Profiles</span>
                 </a>
 
-                <a href="/Admin/LanConfig" class="nav-item-custom @(currentAction == "LanConfig" ? "active" : "")">
+                <a href="@Url.Action("LanConfig", "Admin")" class="nav-item-custom @(currentAction == "LanConfig" ? "active" : "")">
                     <i class="bi bi-router-fill"></i>
                     <span>LAN Configuration</span>
                 </a>
 
                 <div class="sidebar-label">Policy & Security</div>
 
-                <a href="/Admin/Restrictions" class="nav-item-custom @(currentAction == "Restrictions" ? "active" : "")">
+                <a href="@Url.Action("Restrictions", "Admin")" class="nav-item-custom @(currentAction == "Restrictions" ? "active" : "")">
                     <i class="bi bi-slash-circle-fill"></i>
                     <span>Restriction Rules</span>
                 </a>
 
-                <a href="/Admin/Blacklists" class="nav-item-custom @(currentAction == "Blacklists" ? "active" : "")">
+                <a href="@Url.Action("Blacklists", "Admin")" class="nav-item-custom @(currentAction == "Blacklists" ? "active" : "")">
                     <i class="bi bi-ban"></i>
                     <span>Blacklist Directory</span>
                 </a>
 
-                <a href="/Admin/SessionRules" class="nav-item-custom @(currentAction == "SessionRules" ? "active" : "")">
+                <a href="@Url.Action("SessionRules", "Admin")" class="nav-item-custom @(currentAction == "SessionRules" ? "active" : "")">
                     <i class="bi bi-hourglass-split"></i>
                     <span>Session Rules</span>
                 </a>
 
                 <div class="sidebar-label">Analytics & Logs</div>
 
-                <a href="/Admin/Reports" class="nav-item-custom @(currentAction == "Reports" ? "active" : "")">
+                <a href="@Url.Action("Reports", "Admin")" class="nav-item-custom @(currentAction == "Reports" ? "active" : "")">
                     <i class="bi bi-bar-chart-line-fill"></i>
                     <span>System Reports</span>
                 </a>
 
-                <a href="/Admin/AuditLogs" class="nav-item-custom @(currentAction == "AuditLogs" ? "active" : "")">
+                <a href="@Url.Action("AuditLogs", "Admin")" class="nav-item-custom @(currentAction == "AuditLogs" ? "active" : "")">
                     <i class="bi bi-journal-text"></i>
                     <span>Audit Trail</span>
                 </a>
 
-                <a href="/Admin/SystemLogs" class="nav-item-custom @(currentAction == "SystemLogs" ? "active" : "")">
+                <a href="@Url.Action("SystemLogs", "Admin")" class="nav-item-custom @(currentAction == "SystemLogs" ? "active" : "")">
                     <i class="bi bi-bug-fill"></i>
                     <span>System Logs</span>
                 </a>
             </nav>
         </aside>
+        <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
 
         <!-- Main Content Area -->
         <div class="app-main">
             <!-- Top Header Navbar -->
             <header class="app-header">
-                <button class="btn-toggle-sidebar" id="sidebarToggle" type="button" aria-label="Toggle Navigation">
+                <button class="btn-toggle-sidebar" id="sidebarToggle" type="button" aria-label="Toggle Navigation" aria-controls="appSidebar" aria-expanded="false">
                     <i class="bi bi-list"></i>
                 </button>
 
@@ -118,7 +121,7 @@
                             <span class="badge bg-success small" style="font-size: 0.7rem;">Administrator</span>
                         </div>
                     </div>
-                    <a href="/Account/Logout" class="btn btn-outline-danger btn-sm rounded-pill px-3 ms-2" title="Logout">
+                    <a href="@Url.Action("Logout", "Account")" class="btn btn-outline-danger btn-sm rounded-pill px-3 ms-2" title="Logout">
                         <i class="bi bi-box-arrow-right me-1"></i> Logout
                     </a>
                 </div>
@@ -126,6 +129,14 @@
 
             <!-- Body Content -->
             <main role="main" class="content-padding">
+                @if (!string.IsNullOrWhiteSpace(successMessage))
+                {
+                    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert"><i class="bi bi-check-circle me-2"></i>@successMessage<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Dismiss"></button></div>
+                }
+                @if (!string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert"><i class="bi bi-exclamation-triangle me-2"></i>@errorMessage<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Dismiss"></button></div>
+                }
                 @RenderBody()
             </main>
         </div>
@@ -133,9 +144,22 @@
 
     <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.getElementById('sidebarToggle')?.addEventListener('click', function () {
-            document.getElementById('appSidebar')?.classList.toggle('show');
-        });
+        (() => {
+            const sidebar = document.getElementById('appSidebar');
+            const toggle = document.getElementById('sidebarToggle');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            const setOpen = (open) => {
+                sidebar?.classList.toggle('show', open);
+                backdrop?.classList.toggle('show', open);
+                document.body.classList.toggle('sidebar-open', open);
+                toggle?.setAttribute('aria-expanded', String(open));
+            };
+            toggle?.addEventListener('click', () => setOpen(!sidebar?.classList.contains('show')));
+            backdrop?.addEventListener('click', () => setOpen(false));
+            sidebar?.querySelectorAll('a').forEach(link => link.addEventListener('click', () => setOpen(false)));
+            document.addEventListener('keydown', event => { if (event.key === 'Escape') setOpen(false); });
+            window.addEventListener('resize', () => { if (window.innerWidth > 991) setOpen(false); });
+        })();
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

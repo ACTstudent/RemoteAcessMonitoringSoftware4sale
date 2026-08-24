@@ -115,6 +115,25 @@ public class AdminControllerTests
     }
 
     [Fact]
+    public async Task DeleteTeacherWithActiveClass_IsRejected()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var teacher = new Teacher { FirstName = "Maria", LastName = "Santos", Username = "msantos", PasswordHash = "hash", Status = "Active" };
+        db.Teachers.Add(teacher);
+        await db.SaveChangesAsync();
+        var cls = new Class { ClassName = "Grade 6 - Rose", TeacherId = teacher.TeacherId };
+        db.Classes.Add(cls);
+        await db.SaveChangesAsync();
+
+        var result = await controller.DeleteTeacher(teacher.TeacherId);
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.NotNull(await db.Teachers.FindAsync(teacher.TeacherId));
+        Assert.Equal(teacher.TeacherId, (await db.Classes.FindAsync(cls.ClassId))?.TeacherId);
+    }
+
+    [Fact]
     public async Task Students_CRUD_WorksFlawlessly()
     {
         using var db = GetDbContext();
@@ -186,6 +205,16 @@ public class AdminControllerTests
     {
         using var db = GetDbContext();
         var controller = CreateController(db);
+        var teacher = new Teacher
+        {
+            FirstName = "Maria",
+            LastName = "Santos",
+            Username = "msantos",
+            PasswordHash = "hash",
+            Status = "Active"
+        };
+        db.Teachers.Add(teacher);
+        await db.SaveChangesAsync();
 
         // 1. Create Class
         var createResult = await controller.CreateClass(new Class
@@ -194,7 +223,8 @@ public class AdminControllerTests
             Section = "Section A",
             Subject = "Computer Education",
             GradeLevel = "Grade 6",
-            Schedule = "M/W 8:00 AM"
+            Schedule = "M/W 8:00 AM",
+            TeacherId = teacher.TeacherId
         });
         Assert.IsType<RedirectToActionResult>(createResult);
 
@@ -445,7 +475,10 @@ public class AdminControllerTests
         using var db = GetDbContext();
         var controller = CreateController(db);
 
-        var cls = new Class { ClassName = "Grade 9 - Lily" };
+        var teacher = new Teacher { FirstName = "Maria", LastName = "Santos", Username = "msantos", PasswordHash = "hash", Status = "Active" };
+        db.Teachers.Add(teacher);
+        await db.SaveChangesAsync();
+        var cls = new Class { ClassName = "Grade 9 - Lily", TeacherId = teacher.TeacherId };
         var student = new Student { FullName = "Maria Clara", Username = "mclara", PasswordHash = "hash" };
         db.Classes.Add(cls);
         db.Students.Add(student);

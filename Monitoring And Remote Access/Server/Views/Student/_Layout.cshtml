@@ -20,6 +20,7 @@
     <div class="bg-white border-bottom py-2 shadow-sm sticky-top">
         <div class="container-fluid d-flex align-items-center justify-content-between px-4 flex-wrap gap-2">
             <div class="d-flex align-items-center gap-3">
+                <button class="btn-toggle-sidebar d-lg-none" id="sidebarToggle" type="button" aria-label="Toggle Navigation" aria-controls="appSidebar" aria-expanded="false"><i class="bi bi-list"></i></button>
                 <img src="~/images/pardo_logo.png" alt="Pardo Elementary School" style="height: 38px;" />
                 <span class="fw-bold fs-5 text-dark" style="letter-spacing: -0.5px;">CAMS Student</span>
                 <span class="badge bg-success rounded-pill px-3 py-2" id="toolbarUnit">
@@ -38,7 +39,7 @@
                     <i class="bi bi-clock-history text-muted"></i>
                     <span class="session-timer fs-4" id="toolbarTimer">--:--</span>
                 </div>
-                <a href="/Account/Logout" class="btn btn-outline-danger btn-sm rounded-pill px-3" title="Logout">
+                <a href="@Url.Action("Logout", "Account")" class="btn btn-outline-danger btn-sm rounded-pill px-3" title="Logout">
                     <i class="bi bi-box-arrow-right"></i>
                 </a>
             </div>
@@ -49,20 +50,21 @@
         <!-- Sidebar Navigation -->
         <aside class="app-sidebar" id="appSidebar" style="min-height: calc(100vh - 60px);">
             <nav class="sidebar-nav pt-4">
-                <a href="/Student" class="nav-item-custom @(currentAction == "Index" ? "active" : "")">
+                <a href="@Url.Action("Index", "Student")" class="nav-item-custom @(currentAction == "Index" ? "active" : "")">
                     <i class="bi bi-info-circle-fill"></i>
                     <span>Session Information</span>
                 </a>
-                <a href="/Student/Alerts" class="nav-item-custom @(currentAction == "Alerts" ? "active" : "")">
+                <a href="@Url.Action("Alerts", "Student")" class="nav-item-custom @(currentAction == "Alerts" ? "active" : "")">
                     <i class="bi bi-bell-fill"></i>
                     <span>Alert Center</span>
                 </a>
-                <a href="/Student/Settings" class="nav-item-custom @(currentAction == "Settings" ? "active" : "")">
+                <a href="@Url.Action("Settings", "Student")" class="nav-item-custom @(currentAction == "Settings" ? "active" : "")">
                     <i class="bi bi-gear-fill"></i>
                     <span>Account Settings</span>
                 </a>
             </nav>
         </aside>
+        <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
 
         <!-- Main Content Area -->
         <div class="app-main">
@@ -92,6 +94,19 @@
     <script src="~/lib/signalr/signalr.min.js"></script>
     <script>
         const conn = new signalR.HubConnectionBuilder().withUrl("/remoteMonitoringHub").withAutomaticReconnect().build();
+        const sidebar = document.getElementById("appSidebar");
+        const sidebarToggle = document.getElementById("sidebarToggle");
+        const sidebarBackdrop = document.getElementById("sidebarBackdrop");
+        const setSidebarOpen = (open) => {
+            sidebar?.classList.toggle("show", open);
+            sidebarBackdrop?.classList.toggle("show", open);
+            document.body.classList.toggle("sidebar-open", open);
+            sidebarToggle?.setAttribute("aria-expanded", String(open));
+        };
+        sidebarToggle?.addEventListener("click", () => setSidebarOpen(!sidebar?.classList.contains("show")));
+        sidebarBackdrop?.addEventListener("click", () => setSidebarOpen(false));
+        sidebar?.querySelectorAll("a").forEach(link => link.addEventListener("click", () => setSidebarOpen(false)));
+        document.addEventListener("keydown", event => { if (event.key === "Escape") setSidebarOpen(false); });
         let sStatus = "None";
         let sElapsed = 0;
         const tTimer = document.getElementById("toolbarTimer");

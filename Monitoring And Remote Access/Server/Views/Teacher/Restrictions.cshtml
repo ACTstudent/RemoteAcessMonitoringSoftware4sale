@@ -30,6 +30,7 @@
                 </div>
                 <p class="text-muted small">Send immediate application restriction warnings to all connected student workstations.</p>
                 <form method="post" action="/Teacher/SendNotification">
+                    @Html.AntiForgeryToken()
                     <input type="hidden" name="type" value="Warning" />
                     <input type="hidden" name="title" value="Application restriction policy" />
                     <div class="mb-3">
@@ -52,6 +53,7 @@
                 </div>
                 <p class="text-muted small">Send website URL restriction warnings to all active student browser sessions.</p>
                 <form method="post" action="/Teacher/SendNotification">
+                    @Html.AntiForgeryToken()
                     <input type="hidden" name="type" value="Alert" />
                     <input type="hidden" name="title" value="Website restriction policy" />
                     <div class="mb-3">

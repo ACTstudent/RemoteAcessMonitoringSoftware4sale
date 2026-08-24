@@ -26,6 +26,7 @@
         <i class="bi bi-hdd-network me-2 text-emerald-700"></i> Server & Subnet Parameters
     </h5>
     <form method="post" action="/Admin/SaveLanConfig" class="row g-3">
+        @Html.AntiForgeryToken()
         <div class="col-md-4">
             <label class="form-label fw-semibold text-muted small">Server IP Address</label>
             <input name="ServerAddress" class="form-control filter-control" value="@Model.ServerAddress" placeholder="e.g. 192.168.1.100" />

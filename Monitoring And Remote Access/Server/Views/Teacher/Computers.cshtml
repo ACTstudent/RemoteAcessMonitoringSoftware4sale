@@ -117,6 +117,7 @@
                         <td class="font-monospace">@(string.IsNullOrEmpty(c.AssignedTo) ? "-" : $"Student #{c.AssignedTo}")</td>
                         <td class="text-end">
                             <form id="@formId" method="post" action="/Teacher/UpdateComputer" class="d-flex gap-2 justify-content-end align-items-center" style="margin:0;">
+                                @Html.AntiForgeryToken()
                                 <input type="hidden" name="ComputerId" value="@c.ComputerId" />
                                 <input type="hidden" name="LaboratoryStation" value="@c.LaboratoryStation" />
                                 <input type="hidden" name="AssignedTo" value="@c.AssignedTo" />

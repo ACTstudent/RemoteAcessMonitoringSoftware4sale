@@ -61,6 +61,7 @@
                         </td>
                         <td class="text-end">
                             <form method="post" action="/Admin/DeleteRole" style="margin:0;" onsubmit="return confirm('Delete this role?');">
+                                @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@r.RoleId" />
                                 <button class="btn btn-sm btn-outline-danger rounded-pill px-3">
                                     <i class="bi bi-trash me-1"></i> Delete
@@ -91,6 +92,7 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" action="/Admin/CreateRole">
+                @Html.AntiForgeryToken()
                 <div class="modal-body py-4">
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-muted small">Role Name <span class="text-danger">*</span></label>

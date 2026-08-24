@@ -1,148 +1,106 @@
 @model Server.Models.Class
+@using Server.Models
 @{
-    ViewData["Title"] = "Class Details – " + Model.ClassName;
+    ViewData["Title"] = "Class Details - " + Model.ClassName;
     Layout = "_Layout";
+    var roster = Model.ClassStudents.Where(cs => cs.Student != null).OrderBy(cs => cs.Student!.LastName).ThenBy(cs => cs.Student!.FirstName).ToList();
+    var students = ViewBag.AllStudents as IEnumerable<Student> ?? Enumerable.Empty<Student>();
+    var teachers = ViewBag.AvailableTeachers as IEnumerable<Teacher> ?? Enumerable.Empty<Teacher>();
+    var activeTeacher = Model.Teacher != null && (Model.Teacher.Status == "Active" || string.IsNullOrEmpty(Model.Teacher.Status));
 }
 
-<!-- Breadcrumb & Header -->
-<div class="mb-4">
-    <a href="/Admin/Classes" class="btn btn-outline-emerald btn-sm rounded-pill mb-3 px-3">
-        <i class="bi bi-arrow-left me-1"></i> Back to Class Management
-    </a>
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div>
-            <h2 class="fw-extrabold mb-0 text-dark" style="letter-spacing: -0.5px;">@Model.ClassName</h2>
-            <p class="text-muted mb-0 small">Section: <strong class="text-dark">@Model.Section</strong> | Subject: <strong class="text-dark">@Model.Subject</strong></p>
-        </div>
-        <span class="badge badge-emerald fs-6 px-3 py-2">
-            <i class="bi bi-people-fill me-1"></i> @Model.ClassStudents.Count Enrolled
-        </span>
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+    <div>
+        <a asp-controller="Admin" asp-action="Classes" class="btn btn-outline-emerald btn-sm rounded-pill mb-3 px-3"><i class="bi bi-arrow-left me-1"></i>Back to classes</a>
+        <h2 class="fw-extrabold mb-1 text-dark">@Model.ClassName</h2>
+        <p class="text-muted mb-0 small">@Model.Section · @Model.GradeLevel · @Model.Subject</p>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span class="badge @(Model.IsArchived ? "bg-secondary" : !activeTeacher ? "bg-warning text-dark" : "badge-active") fs-6 px-3 py-2">@(Model.IsArchived ? "Archived" : !activeTeacher ? "Needs assignment" : "Active")</span>
+        <form method="post" asp-controller="Admin" asp-action="ArchiveClass" class="m-0"><input type="hidden" name="id" value="@Model.ClassId" />@Html.AntiForgeryToken()<button type="submit" class="btn btn-outline-secondary rounded-pill">@(Model.IsArchived ? "Restore" : "Archive")</button></form>
+        <form method="post" asp-controller="Admin" asp-action="DeleteClass" class="m-0" onsubmit="return confirm('Delete this class and its enrollment links? Student accounts will be preserved.');"><input type="hidden" name="classId" value="@Model.ClassId" />@Html.AntiForgeryToken()<button type="submit" class="btn btn-outline-danger rounded-pill">Delete</button></form>
     </div>
 </div>
 
-<!-- Class Specs Metric Cards -->
 <div class="row g-4 mb-4">
-    <div class="col-md-3 col-sm-6">
-        <div class="metric-card d-flex justify-content-between align-items-center">
-            <div>
-                <div class="metric-title">Section</div>
-                <div class="metric-value fs-4 text-dark">@(string.IsNullOrEmpty(Model.Section) ? "Main" : Model.Section)</div>
-            </div>
-            <div class="metric-icon-box">
-                <i class="bi bi-diagram-3-fill fs-3"></i>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="metric-card metric-card-emerald d-flex justify-content-between align-items-center">
-            <div>
-                <div class="metric-title">Subject</div>
-                <div class="metric-value fs-4 text-success">@(string.IsNullOrEmpty(Model.Subject) ? "General" : Model.Subject)</div>
-            </div>
-            <div class="metric-icon-box">
-                <i class="bi bi-book-fill fs-3"></i>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="metric-card d-flex justify-content-between align-items-center">
-            <div>
-                <div class="metric-title">Grade Level</div>
-                <div class="metric-value fs-4 text-dark">@(string.IsNullOrEmpty(Model.GradeLevel) ? "General" : Model.GradeLevel)</div>
-            </div>
-            <div class="metric-icon-box">
-                <i class="bi bi-mortarboard-fill fs-3"></i>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="metric-card metric-card-active d-flex justify-content-between align-items-center">
-            <div>
-                <div class="metric-title">Schedule</div>
-                <div class="metric-value fs-5 text-dark">@(string.IsNullOrEmpty(Model.Schedule) ? "Flexible" : Model.Schedule)</div>
-            </div>
-            <div class="metric-icon-box">
-                <i class="bi bi-calendar-event fs-3"></i>
-            </div>
-        </div>
-    </div>
+    <div class="col-md-3 col-sm-6"><div class="metric-card"><div class="metric-title">Teacher</div><div class="metric-value fs-5">@(Model.Teacher == null ? "Unassigned" : activeTeacher ? $"{Model.Teacher.FirstName} {Model.Teacher.LastName}" : "Inactive teacher")</div></div></div>
+    <div class="col-md-3 col-sm-6"><div class="metric-card"><div class="metric-title">Academic Year</div><div class="metric-value fs-5">@Model.AcademicYear</div></div></div>
+    <div class="col-md-3 col-sm-6"><div class="metric-card metric-card-emerald"><div class="metric-title">Students</div><div class="metric-value fs-5 text-success">@roster.Count</div></div></div>
+    <div class="col-md-3 col-sm-6"><div class="metric-card"><div class="metric-title">Schedule</div><div class="metric-value fs-6">@(string.IsNullOrWhiteSpace(Model.Schedule) ? "Flexible" : Model.Schedule)</div></div></div>
 </div>
 
-<!-- Enrolled Students Table Card -->
-<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-        <h5 class="fw-bold mb-0 text-dark">Enrolled Students Roster</h5>
-        <span class="badge bg-light text-dark font-monospace fs-6">@Model.ClassStudents.Count Students</span>
-    </div>
-    <div class="table-responsive">
-        <table class="table custom-table mb-0">
-            <thead>
-                <tr>
-                    <th>Student ID</th>
-                    <th>Full Name</th>
-                    <th>Date Enrolled</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var cs in Model.ClassStudents.OrderBy(cs => cs.Student?.FullName))
-                {
-                    <tr>
-                        <td class="fw-bold text-muted font-monospace">@cs.Student?.StudentNumber</td>
-                        <td>
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="user-avatar-circle" style="width: 32px; height: 32px; font-size: 0.85rem;">
-                                    <i class="bi bi-person-fill"></i>
-                                </div>
-                                <span class="fw-bold text-dark">@cs.Student?.FullName</span>
-                            </div>
-                        </td>
-                        <td>@cs.EnrolledAt.ToString("MMM dd, yyyy")</td>
-                        <td class="text-end">
-                            <form method="post" action="/Admin/RemoveStudent" style="margin:0;" onsubmit="return confirm('Remove student from class?');">
-                                <input type="hidden" name="classId" value="@Model.ClassId" />
-                                <input type="hidden" name="studentId" value="@cs.StudentId" />
-                                <button class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                                    <i class="bi bi-person-x me-1"></i> Remove
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                }
-                @if (!Model.ClassStudents.Any())
-                {
-                    <tr>
-                        <td colspan="4" class="text-center py-4 text-muted">No students currently enrolled in this class section.</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- Enroll Student Card -->
-<div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
-    <h5 class="fw-bold mb-3 text-dark">
-        <i class="bi bi-person-plus-fill me-2 text-emerald-700"></i> Enroll Student to @Model.ClassName
-    </h5>
-    <form method="post" action="/Admin/EnrollStudent" class="row g-3 align-items-center">
+<div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3"><div><h5 class="fw-bold mb-1 text-dark">Teacher assignment</h5><p class="text-muted small mb-0">Active classes must have one active teacher.</p></div></div>
+    <form method="post" asp-controller="Admin" asp-action="AssignTeacher" class="row g-3 align-items-end">
+        @Html.AntiForgeryToken()
         <input type="hidden" name="classId" value="@Model.ClassId" />
-        <div class="col-md-9">
-            <select name="studentId" class="form-select filter-control" required>
-                <option value="">-- Select a registered student to enroll --</option>
-                @foreach (var s in (ViewBag.AllStudents as IEnumerable<Server.Models.Student>) ?? new List<Server.Models.Student>())
-                {
-                    @if (!Model.ClassStudents.Any(cs => cs.StudentId == s.Id))
-                    {
-                        <option value="@s.Id">@s.StudentNumber — @s.FullName (@@@s.Username)</option>
-                    }
-                }
-            </select>
-        </div>
-        <div class="col-md-3">
-            <button class="btn btn-emerald w-100 py-2 fw-bold text-white rounded-pill">
-                <i class="bi bi-plus-circle me-1"></i> Enroll Student
-            </button>
-        </div>
+        <div class="col-md-9"><label class="form-label fw-semibold small">Active teacher</label><select name="teacherId" class="form-select filter-control" required><option value="">Select a teacher</option>@foreach (var teacher in teachers){<option value="@teacher.TeacherId" selected="@(Model.TeacherId == teacher.TeacherId ? "selected" : null)">@teacher.FirstName @teacher.LastName (@teacher.Username)</option>}</select></div>
+        <div class="col-md-3"><button type="submit" class="btn btn-emerald w-100 rounded-pill">Save assignment</button></div>
     </form>
 </div>
+
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center"><h5 class="fw-bold mb-0 text-dark">Enrolled Students</h5><span class="badge bg-light text-dark font-monospace fs-6">@roster.Count Students</span></div>
+    <div class="table-responsive"><table class="table custom-table mb-0"><thead><tr><th>Student ID</th><th>Full Name</th><th>Username</th><th>Date Enrolled</th><th class="text-end">Actions</th></tr></thead><tbody>
+        @foreach (var membership in roster)
+        {
+            <tr><td class="fw-bold text-muted font-monospace">@membership.Student!.StudentNumber</td><td><div class="d-flex align-items-center gap-2"><div class="user-avatar-circle" style="width:32px;height:32px;font-size:.85rem;"><i class="bi bi-person-fill"></i></div><span class="fw-bold text-dark">@membership.Student.FullName</span></div></td><td class="font-monospace text-emerald-700">&#64;@membership.Student.Username</td><td>@membership.EnrolledAt.ToString("MMM dd, yyyy")</td><td class="text-end"><form method="post" asp-controller="Admin" asp-action="RemoveStudent" class="m-0" onsubmit="return confirm('Remove this student from the class? The account will be preserved.');"><input type="hidden" name="classId" value="@Model.ClassId" /><input type="hidden" name="studentId" value="@membership.StudentId" />@Html.AntiForgeryToken()<button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"><i class="bi bi-person-x me-1"></i>Remove</button></form></td></tr>
+        }
+        @if (roster.Count == 0)
+        {
+            <tr><td colspan="5" class="text-center py-4 text-muted">No students are enrolled in this class yet.</td></tr>
+        }
+    </tbody></table></div>
+</div>
+
+@if (!Model.IsArchived)
+{
+<div class="row g-4">
+    <div class="col-xl-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100"><h5 class="fw-bold mb-1 text-dark"><i class="bi bi-person-plus-fill me-2 text-emerald-700"></i>Create student</h5><p class="text-muted small mb-3">The new account is assigned to this class immediately.</p>
+            <form method="post" asp-controller="Admin" asp-action="AddStudentToClass">
+                @Html.AntiForgeryToken()<input type="hidden" name="classId" value="@Model.ClassId" />
+                <div class="row g-3"><div class="col-md-6"><label class="form-label small fw-semibold">First name</label><input name="firstName" class="form-control filter-control" required /></div><div class="col-md-6"><label class="form-label small fw-semibold">Last name</label><input name="lastName" class="form-control filter-control" required /></div><div class="col-md-6"><label class="form-label small fw-semibold">Username <span class="text-muted">(optional)</span></label><input name="username" class="form-control filter-control" /></div><div class="col-md-6"><label class="form-label small fw-semibold">Password</label><input name="password" type="password" minlength="6" class="form-control filter-control" required /></div></div>
+                <button type="submit" class="btn btn-emerald rounded-pill mt-3"><i class="bi bi-plus-circle me-1"></i>Create and enroll</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100"><h5 class="fw-bold mb-1 text-dark"><i class="bi bi-people-fill me-2 text-emerald-700"></i>Bulk roster import</h5><p class="text-muted small mb-3">Fill one or more rows. Every filled row needs a six-character password.</p>
+            <form method="post" asp-controller="Admin" asp-action="BulkAddStudents">
+                @Html.AntiForgeryToken()<input type="hidden" name="classId" value="@Model.ClassId" />
+                <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>First</th><th>Last</th><th>Username</th><th>Password</th></tr></thead><tbody>@for (var i = 0; i < 5; i++){<tr><td><input name="bulkFirstNames" class="form-control form-control-sm filter-control" /></td><td><input name="bulkLastNames" class="form-control form-control-sm filter-control" /></td><td><input name="bulkUserNames" class="form-control form-control-sm filter-control" /></td><td><input name="bulkPasswords" type="password" minlength="6" class="form-control form-control-sm filter-control" /></td></tr>}</tbody></table></div>
+                <button type="submit" class="btn btn-outline-emerald rounded-pill mt-3"><i class="bi bi-upload me-1"></i>Add filled rows</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 p-4 mt-4">
+    <h5 class="fw-bold mb-1 text-dark"><i class="bi bi-person-check-fill me-2 text-emerald-700"></i>Enroll an existing student</h5>
+    <p class="text-muted small mb-3">Students already assigned to another class require an explicit move confirmation.</p>
+    <form method="post" asp-controller="Admin" asp-action="EnrollStudent" id="existingStudentForm" class="row g-3 align-items-end">
+        @Html.AntiForgeryToken()<input type="hidden" name="classId" value="@Model.ClassId" /><input type="hidden" name="moveStudent" id="moveStudent" value="false" />
+        <div class="col-md-9"><label class="form-label small fw-semibold">Registered student</label><select name="studentId" id="existingStudentSelect" class="form-select filter-control" required><option value="">Select a student</option>@foreach (var student in students.Where(s => !roster.Any(r => r.StudentId == s.Id))){<option value="@student.Id" data-current-class="@(student.ClassId.HasValue ? student.Class?.ClassName : "")">@student.StudentNumber - @student.FullName (&#64;@student.Username)@(student.ClassId.HasValue ? $" · Currently: {student.Class?.ClassName}" : "")</option>}</select></div>
+        <div class="col-md-3"><button type="submit" class="btn btn-outline-emerald w-100 rounded-pill"><i class="bi bi-person-plus me-1"></i>Enroll student</button></div>
+    </form>
+</div>
+}
+
+@section Scripts {
+    <script>
+        document.getElementById('existingStudentForm')?.addEventListener('submit', function (event) {
+            const select = document.getElementById('existingStudentSelect');
+            const option = select?.selectedOptions[0];
+            const currentClass = option?.dataset.currentClass || '';
+            document.getElementById('moveStudent').value = 'false';
+            if (currentClass) {
+                if (!confirm(`Move this student from ${currentClass} to @Model.ClassName?`)) {
+                    event.preventDefault();
+                    return;
+                }
+                document.getElementById('moveStudent').value = 'true';
+            }
+        });
+    </script>
+}

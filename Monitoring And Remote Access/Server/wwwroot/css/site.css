@@ -47,6 +47,10 @@ body {
     box-shadow: 4px 0 15px rgba(0, 0, 0, 0.05);
 }
 
+.sidebar-backdrop {
+    display: none;
+}
+
 .sidebar-header {
     padding: 1.5rem 1.25rem 1rem 1.25rem;
     display: flex;
@@ -469,14 +473,48 @@ body {
 
 /* Mobile Sidebar Toggle */
 @media (max-width: 991px) {
+    body.sidebar-open {
+        overflow: hidden;
+    }
+
     .app-sidebar {
         position: fixed;
         left: -260px;
         top: 0;
         bottom: 0;
+        height: 100vh;
+        transition: left 0.25s ease;
     }
 
     .app-sidebar.show {
         left: 0;
+    }
+
+    .sidebar-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+        z-index: 999;
+    }
+
+    .sidebar-backdrop.show {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .app-header {
+        padding: 0 1rem;
+    }
+
+    .user-profile-badge > div:last-child {
+        display: none !important;
+    }
+
+    .content-padding {
+        padding: 1.25rem 1rem;
     }
 }
