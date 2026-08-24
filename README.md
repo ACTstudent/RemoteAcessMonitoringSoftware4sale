@@ -3,7 +3,7 @@
 A LAN-based classroom management, real-time screen monitoring, and computer laboratory control system built for **Pardo Elementary School (Cebu City)**.
 
 [![Build Status](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/actions/workflows/ci-full.yml/badge.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/actions/workflows/ci-full.yml)
-[![Release](https://img.shields.io/badge/Release-v2.5.3-emerald.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale)
+[![Release](https://img.shields.io/badge/Release-v2.5.4-emerald.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale)
 [![.NET](https://img.shields.io/badge/.NET-8.0-blueviolet)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![UI: Dark Emerald](https://img.shields.io/badge/UI-Dark%20Emerald-0B3C26)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -18,14 +18,14 @@ Featuring an official **Dark Emerald (`#0B3C26` / `#18181b` / `#10B981`) Design 
 
 ---
 
-## 📦 Installer Downloads (v2.5.3 Release Assets)
+## 📦 Installer Downloads (v2.5.4 Release Assets)
 
 Pre-built installer setup executables published as versioned GitHub release assets:
 
 | Package | Direct Download Link | Repository File Path | Target / Description | File Size |
 | :--- | :--- | :--- | :--- | :--- |
-| **CAMS Server Setup** | [📥 **Download CAMS-Server-Setup.exe**](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.3/CAMS-Server-Setup.exe) | [Release v2.5.3](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/tag/v2.5.3) | Teacher / Lab Control PC Installer | ~15 MB |
-| **CAMS Student Client** | [📥 **Download CAMS-Client-Setup.exe**](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.3/CAMS-Client-Setup.exe) | [Release v2.5.3](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/tag/v2.5.3) | Student Workstation Agent Installer | ~64 MB |
+| **CAMS Server Setup** | [📥 **Download CAMS-Server-Setup.exe**](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.4/CAMS-Server-Setup.exe) | [Release v2.5.4](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/tag/v2.5.4) | Teacher / Lab Control PC Installer | ~15 MB |
+| **CAMS Student Client** | [📥 **Download CAMS-Client-Setup.exe**](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.4/CAMS-Client-Setup.exe) | [Release v2.5.4](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/tag/v2.5.4) | Student Workstation Agent Installer | ~64 MB |
 
 ---
 
@@ -101,12 +101,12 @@ Pre-built installer setup executables published as versioned GitHub release asse
 
 ### 1. Server Setup (Teacher / Lab PC)
 1. Set the protected `Cams__InitialAdminPassword` environment variable before the first launch.
-2. Download and run [`CAMS-Server-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.3/CAMS-Server-Setup.exe).
+2. Download and run [`CAMS-Server-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.4/CAMS-Server-Setup.exe).
 3. The installer performs a clean installation to `%LOCALAPPDATA%\CAMS Server`, opens HTTPS TCP port `5000` and UDP discovery port `5001`, and launches the web portal.
 4. Configure a trusted production certificate with `Cams__CertificatePath` and `Cams__CertificatePassword`.
 
 ### 2. Student Client Setup (Student PCs)
-1. Download and run [`CAMS-Client-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.3/CAMS-Client-Setup.exe) on each workstation.
+1. Download and run [`CAMS-Client-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.4/CAMS-Client-Setup.exe) on each workstation.
 2. The client auto-discovers the CAMS server on the local network over UDP.
 
 ---
