@@ -15,19 +15,14 @@ namespace Server.Controllers
         private readonly SessionManagerService _sessionManager;
         private readonly IClassManagementService _classManagement;
 
-        public TeacherController(ApplicationDbContext context, SessionManagerService sessionManager)
-            : this(context, sessionManager, new ClassManagementService(context))
-        {
-        }
-
         public TeacherController(
             ApplicationDbContext context,
             SessionManagerService sessionManager,
-            IClassManagementService classManagement)
+            IClassManagementService? classManagement = null)
         {
             _context = context;
             _sessionManager = sessionManager;
-            _classManagement = classManagement;
+            _classManagement = classManagement ?? new ClassManagementService(context);
         }
 
         private bool CheckAccess() => HttpContext.IsTeacher();

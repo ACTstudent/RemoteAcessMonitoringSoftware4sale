@@ -16,15 +16,10 @@ namespace Server.Controllers
         private readonly PasswordHasher<object> _hasher = new();
         private readonly IClassManagementService _classManagement;
 
-        public AdminController(ApplicationDbContext context)
-            : this(context, new ClassManagementService(context))
-        {
-        }
-
-        public AdminController(ApplicationDbContext context, IClassManagementService classManagement)
+        public AdminController(ApplicationDbContext context, IClassManagementService? classManagement = null)
         {
             _context = context;
-            _classManagement = classManagement;
+            _classManagement = classManagement ?? new ClassManagementService(context);
         }
 
         private bool CheckAccess() => HttpContext.IsAdmin();
