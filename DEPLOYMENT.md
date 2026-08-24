@@ -74,7 +74,7 @@ netsh advfirewall firewall add rule name="CAMS Server" dir=in action=allow proto
 
 ## Initial account setup
 
-Set `Cams__InitialAdminPassword` before the first server launch. CAMS does not seed public default passwords. Create teacher and student accounts through the authenticated admin portal.
+Set `Cams__InitialAdminPassword` before the first server launch. CAMS does not ship passwords. To seed teacher and student accounts during startup, also set `Cams__SeededTeacherPassword` and `Cams__SeededStudentPassword`; otherwise create them through the authenticated admin portal. Existing accounts are never overwritten.
 
 ## Optional: run as a Windows Service
 

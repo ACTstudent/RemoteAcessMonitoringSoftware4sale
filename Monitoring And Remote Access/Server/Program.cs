@@ -141,21 +141,7 @@ using (var scope = app.Services.CreateScope())
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         db.Database.EnsureCreated();
         DatabaseInitializer.EnsureCurrentSchema(db);
-
-        var initialAdminPassword = app.Configuration["Cams:InitialAdminPassword"];
-        if (!string.IsNullOrWhiteSpace(initialAdminPassword) && !db.Admins.Any())
-        {
-            var initialAdminUsername = app.Configuration["Cams:InitialAdminUsername"] ?? "admin";
-            db.Admins.Add(new Server.Models.Admin
-            {
-                Username = initialAdminUsername,
-                FullName = "System Administrator",
-                PasswordHash = new Microsoft.AspNetCore.Identity.PasswordHasher<object>()
-                    .HashPassword(new object(), initialAdminPassword)
-            });
-            db.SaveChanges();
-            Console.WriteLine($"[CAMS] Initial administrator account created: {initialAdminUsername}");
-        }
+        AccountSeeder.SeedConfiguredAccounts(db, app.Configuration);
     }
     catch (Exception ex)
     {
