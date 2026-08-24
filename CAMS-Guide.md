@@ -203,7 +203,7 @@ Restriction rules are **downloaded to the student client** after login.
 ```
 dotnet run --project Server
 ```
-Server is at `https://localhost:5000`. Set `Cams__InitialAdminPassword` before the first launch; CAMS does not ship passwords. To seed teacher and student accounts during startup, also set `Cams__SeededTeacherPassword` and `Cams__SeededStudentPassword`. Their default usernames are `teacher` and `student`; existing accounts are never overwritten.
+Server is at `https://localhost:5000`. The testing release seeds `admin1` / `admin123` and `student1` / `student123`. Replace those values before production deployment. Teacher accounts can be seeded by setting `Cams__SeededTeacherPassword`; existing accounts are never overwritten.
 
 ### Production LAN Setup
 1. Install .NET 8 runtime on the server machine
