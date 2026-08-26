@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -11,21 +12,44 @@ namespace Client
     {
         private static async Task<string> GetServerUrlAsync()
         {
+            var configured = ReadConfiguredServerUrl();
+            if (configured != null && !IsLocalhost(configured))
+                return configured;
+
             var discovered = await ServerDiscoveryClient.DiscoverAsync(4000, 5);
             if (discovered != null)
                 return discovered;
 
+            return configured ?? "https://localhost:5000/remoteMonitoringHub";
+        }
+
+        private static string? ReadConfiguredServerUrl()
+        {
             try
             {
                 var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "client-settings.json");
                 if (File.Exists(path))
                 {
                     var json = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
-                    return json.RootElement.TryGetProperty("ServerUrl", out var u) ? u.GetString() ?? "https://localhost:5000/remoteMonitoringHub" : "https://localhost:5000/remoteMonitoringHub";
+                    if (json.RootElement.TryGetProperty("ServerUrl", out var urlElement) &&
+                        Uri.TryCreate(urlElement.GetString(), UriKind.Absolute, out var url) &&
+                        string.Equals(url.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) &&
+                        !string.IsNullOrWhiteSpace(url.Host))
+                    {
+                        return url.ToString();
+                    }
                 }
             }
             catch { }
-            return "https://localhost:5000/remoteMonitoringHub";
+
+            return null;
+        }
+
+        private static bool IsLocalhost(string serverUrl)
+        {
+            return Uri.TryCreate(serverUrl, UriKind.Absolute, out var url) &&
+                   (url.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+                    url.Host.Equals(IPAddress.Loopback.ToString(), StringComparison.OrdinalIgnoreCase));
         }
 
         private readonly IScreenCaptureService _screenCaptureService = new ScreenCaptureService();
@@ -244,13 +268,36 @@ namespace Client
                 if (choice == DialogResult.Yes)
                     ShowServerUrlDialog();
             }
-            catch (HttpRequestException)
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized ||
+                                                  ex.StatusCode == HttpStatusCode.Forbidden ||
+                                                  ex.StatusCode == HttpStatusCode.BadRequest)
+            {
+                lblStatus.Text = "Status: Login rejected";
+                lblStatus.ForeColor = Color.Red;
+                btnLogin.Enabled = true;
+                MessageBox.Show(
+                    "The server rejected this student login.\n\nCheck the Student ID and password, and make sure this workstation is assigned to the student.",
+                    "Student Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                lblStatus.Text = "Status: Login temporarily blocked";
+                lblStatus.ForeColor = Color.Red;
+                btnLogin.Enabled = true;
+                MessageBox.Show(
+                    "Too many failed login attempts were received. Wait one minute and try again.",
+                    "Login Temporarily Blocked", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            catch (HttpRequestException ex)
             {
                 lblStatus.Text = "Status: Server not reachable";
                 lblStatus.ForeColor = Color.Red;
                 btnLogin.Enabled = true;
+                var message = IsCertificateError(ex)
+                    ? "The server was discovered, but its HTTPS certificate is not trusted by this PC.\n\nCopy CAMS-Server-Root.cer from the teacher PC and run the client installer again, selecting that certificate. Do not copy the private .pfx file."
+                    : "The server was discovered, but HTTPS port 5000 could not complete the connection.\n\nMake sure the server is running, both PCs are on the same hotspot, Windows Firewall allows TCP port 5000, and the configured address uses https://.";
                 var choice = MessageBox.Show(
-                    "The server was found but is not responding.\n\nIt may still be starting. Try again in a few seconds, or enter the server IP manually.",
+                    message + "\n\nTry again, or enter the server IP manually.",
                     "Connection Failed", MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning);
                 if (choice == DialogResult.Retry)
                     BtnLogin_Click(null, EventArgs.Empty);
@@ -266,6 +313,23 @@ namespace Client
                 if (choice == DialogResult.Yes)
                     ShowServerUrlDialog();
             }
+        }
+
+        private static bool IsCertificateError(Exception exception)
+        {
+            for (var current = exception; current != null; current = current.InnerException)
+            {
+                if (current is System.Security.Authentication.AuthenticationException ||
+                    current.Message.Contains("certificate", StringComparison.OrdinalIgnoreCase) ||
+                    current.Message.Contains("trust", StringComparison.OrdinalIgnoreCase) ||
+                    current.Message.Contains("untrusted", StringComparison.OrdinalIgnoreCase) ||
+                    current.Message.Contains("SSL", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void ShowServerUrlDialog()

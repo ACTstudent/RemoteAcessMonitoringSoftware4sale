@@ -3,7 +3,7 @@
 
 #define MyAppName "CAMS Student Client"
 #ifndef MyAppVersion
-  #define MyAppVersion "2.5.7"
+  #define MyAppVersion "2.5.8"
 #endif
 #define MyAppExeName "Client.exe"
 #define MyAppPublisher "CAMS"
@@ -58,11 +58,17 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 [Code]
 var
   ServerUrlPage: TInputQueryWizardPage;
+  ServerTrustPage: TInputQueryWizardPage;
   ServerUrlOverride: string;
+  ServerRootCertificateOverride: string;
 
 function InitializeSetup: Boolean;
 begin
   ServerUrlOverride := ExpandConstant('{param:ServerIP}');
+  ServerRootCertificateOverride := ExpandConstant('{param:ServerRootCert}');
+  if (ServerRootCertificateOverride = '') and
+     FileExists(ExpandConstant('{localappdata}\CAMS Server\CAMS-Server-Root.cer')) then
+    ServerRootCertificateOverride := ExpandConstant('{localappdata}\CAMS Server\CAMS-Server-Root.cer');
   Result := True;
 end;
 
@@ -76,12 +82,58 @@ begin
     ServerUrlPage.Add('Server URL:', False);
     ServerUrlPage.Values[0] := 'https://localhost:5000/remoteMonitoringHub';
   end;
+
+  if ServerUrlOverride = '' then
+    ServerTrustPage := CreateInputQueryPage(ServerUrlPage.ID,
+      'Server Trust', 'Trust the CAMS server certificate',
+      'Copy CAMS-Server-Root.cer from the teacher PC to this workstation. Leave this blank only when the server uses a publicly trusted certificate.')
+  else
+    ServerTrustPage := CreateInputQueryPage(wpSelectDir,
+      'Server Trust', 'Trust the CAMS server certificate',
+      'Copy CAMS-Server-Root.cer from the teacher PC to this workstation. Leave this blank only when the server uses a publicly trusted certificate.');
+
+  ServerTrustPage.Add('Public root certificate path (optional):', False);
+  ServerTrustPage.Values[0] := ServerRootCertificateOverride;
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+var
+  certificatePath: string;
+begin
+  Result := True;
+  if (ServerUrlPage <> nil) and (CurPageID = ServerUrlPage.ID) and
+     (Pos('https://', LowerCase(Trim(ServerUrlPage.Values[0]))) <> 1) then
+  begin
+    MsgBox('Enter an HTTPS CAMS server URL, for example https://192.168.1.100:5000/remoteMonitoringHub.', mbError, MB_OK);
+    Result := False;
+    Exit;
+  end;
+
+  if (ServerTrustPage <> nil) and (CurPageID = ServerTrustPage.ID) then
+  begin
+    certificatePath := Trim(ServerTrustPage.Values[0]);
+    if (certificatePath <> '') and (not FileExists(certificatePath)) then
+    begin
+      MsgBox('The selected CAMS root certificate was not found.', mbError, MB_OK);
+      Result := False;
+    end;
+  end;
+end;
+
+function InstallRootCertificate(const certificatePath: string): Boolean;
+var
+  resultCode: Integer;
+begin
+  Result := Exec(ExpandConstant('{sys}\certutil.exe'),
+    '-user -addstore -f Root "' + certificatePath + '"',
+    '', SW_HIDE, ewWaitUntilTerminated, resultCode) and (resultCode = 0);
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   SettingsPath: string;
   ServerUrl: string;
+  RootCertificatePath: string;
 begin
   if CurStep = ssPostInstall then
   begin
@@ -90,15 +142,21 @@ begin
     else
       ServerUrl := ServerUrlPage.Values[0];
 
-    SettingsPath := ExpandConstant('{app}\client-settings.json');
-    if not FileExists(SettingsPath) then
+    RootCertificatePath := Trim(ServerTrustPage.Values[0]);
+    if RootCertificatePath <> '' then
     begin
-      StringChangeEx(ServerUrl, '\', '\\', True);
-      StringChangeEx(ServerUrl, '"', '\"', True);
-      SaveStringToFile(SettingsPath,
-        '{' + #13#10 +
-        '  "ServerUrl": "' + ServerUrl + '"' + #13#10 +
-        '}', False);
+      if not InstallRootCertificate(RootCertificatePath) then
+        MsgBox('CAMS was installed, but Windows could not trust the selected root certificate. ' +
+          'Run the installer again as the current student user or install the certificate manually.',
+          mbError, MB_OK);
     end;
+
+    SettingsPath := ExpandConstant('{app}\client-settings.json');
+    StringChangeEx(ServerUrl, '\', '\\', True);
+    StringChangeEx(ServerUrl, '"', '\"', True);
+    SaveStringToFile(SettingsPath,
+      '{' + #13#10 +
+      '  "ServerUrl": "' + ServerUrl + '"' + #13#10 +
+      '}', False);
   end;
 end;

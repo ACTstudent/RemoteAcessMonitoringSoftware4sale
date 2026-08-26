@@ -3,7 +3,7 @@
 A LAN-based classroom management, real-time screen monitoring, and computer laboratory control system built for **Pardo Elementary School (Cebu City)**.
 
 [![Build Status](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/actions/workflows/ci-full.yml/badge.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/actions/workflows/ci-full.yml)
-[![Release](https://img.shields.io/badge/Release-v2.5.7-emerald.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale)
+[![Release](https://img.shields.io/badge/Release-v2.5.8-emerald.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale)
 [![.NET](https://img.shields.io/badge/.NET-8.0-blueviolet)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![UI: Dark Emerald](https://img.shields.io/badge/UI-Dark%20Emerald-0B3C26)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -18,14 +18,14 @@ Featuring an official **Dark Emerald (`#0B3C26` / `#18181b` / `#10B981`) Design 
 
 ---
 
-## 📦 Installer Downloads (v2.5.7 Release Assets)
+## 📦 Installer Downloads (v2.5.8 Release Assets)
 
 Pre-built installer setup executables published as versioned GitHub release assets:
 
 | Package | Direct Download Link | Repository File Path | Target / Description | File Size |
 | :--- | :--- | :--- | :--- | :--- |
-| **CAMS Server Setup** | [📥 **Download CAMS-Server-Setup.exe**](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.7/CAMS-Server-Setup.exe) | [Release v2.5.7](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/tag/v2.5.7) | Teacher / Lab Control PC Installer | ~15 MB |
-| **CAMS Student Client** | [📥 **Download CAMS-Client-Setup.exe**](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.7/CAMS-Client-Setup.exe) | [Release v2.5.7](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/tag/v2.5.7) | Student Workstation Agent Installer | ~64 MB |
+| **CAMS Server Setup** | [📥 **Download CAMS-Server-Setup.exe**](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.8/CAMS-Server-Setup.exe) | [Release v2.5.8](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/tag/v2.5.8) | Teacher / Lab Control PC Installer | ~15 MB |
+| **CAMS Student Client** | [📥 **Download CAMS-Client-Setup.exe**](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.8/CAMS-Client-Setup.exe) | [Release v2.5.8](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/tag/v2.5.8) | Student Workstation Agent Installer | ~64 MB |
 
 ---
 
@@ -61,6 +61,7 @@ Pre-built installer setup executables published as versioned GitHub release asse
 - **Clean Installation (`cleaninstall`)**: Installers automatically close running processes and clean out old binary files, cached DLLs, static assets, and `wwwroot` folders before extracting new builds.
 - **Launch Crash Prevention**: `AppContext.BaseDirectory` working directory enforcement prevents launch failures when executing `Server.exe` from Desktop icons or custom shortcuts.
 - **Safe SQLite Database Initialization**: Safe startup handlers prevent database lock crashes on launch.
+- **Secure LAN Certificate Setup**: The server creates a local CA and a certificate containing the current machine name and LAN addresses. The public root certificate can be trusted by each student client without sharing the private key.
 
 ---
 
@@ -101,13 +102,20 @@ Pre-built installer setup executables published as versioned GitHub release asse
 
 ### 1. Server Setup (Teacher / Lab PC)
 1. Set the protected `Cams__InitialAdminPassword` environment variable before the first launch.
-2. Download and run [`CAMS-Server-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.7/CAMS-Server-Setup.exe).
+2. Download and run [`CAMS-Server-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.8/CAMS-Server-Setup.exe).
 3. The installer performs a clean installation to `%LOCALAPPDATA%\CAMS Server`, opens HTTPS TCP port `5000` and UDP discovery port `5001`, and launches the web portal.
-4. Configure a trusted production certificate with `Cams__CertificatePath` and `Cams__CertificatePassword`.
+4. On first start, copy the public `%LOCALAPPDATA%\CAMS Server\CAMS-Server-Root.cer` file to each student PC. Never copy the `.pfx` files from the `certificates` folder.
 
 ### 2. Student Client Setup (Student PCs)
-1. Download and run [`CAMS-Client-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.7/CAMS-Client-Setup.exe) on each workstation.
-2. The client auto-discovers the CAMS server on the local network over UDP.
+1. Download and run [`CAMS-Client-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.5.8/CAMS-Client-Setup.exe) on each workstation.
+2. Enter `https://<server-ip>:5000/remoteMonitoringHub` when prompted and select the copied `CAMS-Server-Root.cer` file. The installer adds only the public root certificate to the current Windows user trust store.
+3. The client auto-discovers the CAMS server on the local network over UDP when the hotspot allows device-to-device traffic. If discovery is blocked, the saved HTTPS address is used.
+
+### Cellphone Hotspot Notes
+- On the teacher PC, run `ipconfig` and use the IPv4 address of the Wi-Fi hotspot adapter, not `localhost`.
+- Keep the server and student PCs connected to the same phone hotspot.
+- Some phone hotspots enable client isolation and block UDP broadcast or device-to-device traffic. Disable that setting if available, or use the manual HTTPS server address in the client installer.
+- The server certificate is regenerated with the current hotspot IP when the server starts. The root certificate remains stable, so clients do not need a new trust installation when the hotspot assigns a different IP.
 
 ---
 

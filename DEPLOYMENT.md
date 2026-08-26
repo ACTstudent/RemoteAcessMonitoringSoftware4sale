@@ -17,12 +17,26 @@ The wizard does everything:
 - Opens Windows Firewall HTTPS TCP port **5000** and UDP discovery port **5001**
 - Optionally starts the server automatically with Windows
 - Launches the server after install
+- Generates a local CA and a LAN HTTPS certificate on first server start
 
 **No database setup needed** — SQLite auto-creates `CAMS.db` next to `Server.exe` on first run.
 
+## Secure LAN Certificate Setup
+
+The server generates these files in `%LOCALAPPDATA%\CAMS Server` when no production certificate is configured:
+
+- `CAMS-Server-Root.cer` — public trust certificate to copy to student PCs
+- `CAMS-Server.cer` — public server certificate for inspection
+- `certificates\CAMS-Server-Root.pfx` — private CA key; never distribute it
+- `certificates\CAMS-Server.pfx` — private server key; never distribute it
+
+Copy only `CAMS-Server-Root.cer` to each student PC. The client installer has a **Server Trust** page where the teacher can select that file. It imports the certificate into the current user's Windows root store; no private key is copied to the student PC.
+
+For a production certificate, set `Cams__CertificatePath` and `Cams__CertificatePassword`. The certificate must contain the hostname or LAN IP used by the client in its Subject Alternative Name list.
+
 ## Publishing the client installer
 
-The `build-everything.ps1` script builds both server and client installers. The client installer is **`client-dist\CAMS-Client-Setup.exe`** — a self-contained installer (no .NET required on student PCs). Students run the wizard, enter the server address when asked, and the client is ready.
+The `build-everything.ps1` script builds both server and client installers. The client installer is **`client-dist\CAMS-Client-Setup.exe`** — a self-contained installer (no .NET required on student PCs). Students run the wizard, enter the server address, and select the copied `CAMS-Server-Root.cer` file.
 
 ## Manual folder install (fallback)
 
@@ -52,7 +66,7 @@ cd "Monitoring And Remote Access\Client"
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ..\..\client-publish
 ```
 
-Copy `client-publish\` to each student PC. Edit `client-settings.json` with the server address, then run `Client.exe`.
+Copy `client-publish\` to each student PC. Copy `CAMS-Server-Root.cer` beside the folder, install it into the current user's Trusted Root Certification Authorities store, edit `client-settings.json` with `https://<server-ip>:5000/remoteMonitoringHub`, then run `Client.exe`.
 
 ## Firewall
 
@@ -61,6 +75,8 @@ The server installer opens port 5000 automatically. To do it manually:
 ```powershell
 netsh advfirewall firewall add rule name="CAMS Server" dir=in action=allow protocol=TCP localport=5000
 ```
+
+For a cellphone hotspot, use the teacher PC's Wi-Fi IPv4 address from `ipconfig`. If the hotspot blocks client-to-client traffic or UDP broadcast, disable client isolation if possible and use the manual server URL in the client setup.
 
 ## URLs
 

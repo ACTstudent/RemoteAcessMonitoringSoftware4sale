@@ -48,7 +48,11 @@ public class MonitoringHubClient : IMonitoringHubClient
 
         if (!response.IsSuccessStatusCode)
         {
-            throw new HttpRequestException($"Student login failed with status {(int)response.StatusCode}.");
+            var detail = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (string.IsNullOrWhiteSpace(detail))
+                detail = $"Student login failed with status {(int)response.StatusCode}.";
+
+            throw new HttpRequestException(detail.Trim(), null, response.StatusCode);
         }
 
         var result = await response.Content.ReadFromJsonAsync<StudentClientLoginResponse>(cancellationToken: cancellationToken);

@@ -209,10 +209,16 @@ Server is at `https://localhost:5000`. The testing release seeds `admin1` / `adm
 1. Install .NET 8 runtime on the server machine
 2. Publish the Server project
 3. Configure the MySQL or SQL Server connection string in appsettings.json (or `DatabaseProvider: "Sqlite"`)
-4. Run Server.exe
-5. Build student installer via `./publish-client.ps1`; installs with bundled .NET
-6. Student Client connects to the server IP/port LAN configurable via `client-settings.json`
-7. Expose port 5000 for LAN with a firewall rule
+4. Run Server.exe. With no `Cams:CertificatePath`, CAMS creates a local CA and a LAN certificate containing the current machine name and IP addresses.
+5. Copy only `%LOCALAPPDATA%\CAMS Server\CAMS-Server-Root.cer` to each student PC. Never distribute the `.pfx` files.
+6. Build the student installer via `./publish-client.ps1`; it installs with bundled .NET.
+7. In the client installer, enter `https://<server-ip>:5000/remoteMonitoringHub` and select `CAMS-Server-Root.cer`.
+8. Student Client connects to the server IP/port LAN configurable via `client-settings.json`.
+9. Expose port 5000 for LAN with a firewall rule.
+
+### Cellphone Hotspot
+
+Use the teacher PC's Wi-Fi IPv4 address from `ipconfig`, not `localhost`. Phone hotspots can block UDP broadcast or device-to-device traffic; if auto-discovery does not work, use the manual HTTPS URL. The root certificate remains trusted if the hotspot assigns a new IP because the server certificate is regenerated and signed by the same local root CA.
 
 ---
 

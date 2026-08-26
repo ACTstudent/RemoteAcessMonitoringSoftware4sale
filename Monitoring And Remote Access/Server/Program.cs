@@ -84,6 +84,15 @@ builder.Services.AddSignalR(options =>
 var httpsPort = builder.Configuration.GetValue("Cams:HttpsPort", 5000);
 var certificatePath = builder.Configuration["Cams:CertificatePath"];
 var certificatePassword = builder.Configuration["Cams:CertificatePassword"];
+if (string.IsNullOrWhiteSpace(certificatePath))
+{
+    var generatedCertificate = ServerCertificateManager.EnsureGeneratedCertificate(AppContext.BaseDirectory);
+    certificatePath = generatedCertificate.CertificatePath;
+    certificatePassword = generatedCertificate.CertificatePassword;
+    Console.WriteLine($"[CAMS] Generated LAN certificate for this server.");
+    Console.WriteLine($"[CAMS] Copy the public trust certificate to student PCs: {generatedCertificate.RootCertificatePath}");
+    Console.WriteLine($"[CAMS] Server certificate thumbprint: {generatedCertificate.Thumbprint}");
+}
 builder.WebHost.ConfigureKestrel(options =>
 {
     options.ListenAnyIP(httpsPort, listenOptions =>
@@ -97,9 +106,7 @@ builder.WebHost.ConfigureKestrel(options =>
         }
         else
         {
-            // Uses the configured ASP.NET Core development certificate locally.
-            // Production deployments must provide Cams:CertificatePath.
-            listenOptions.UseHttps();
+            throw new InvalidOperationException("CAMS could not configure an HTTPS certificate.");
         }
     });
 });
