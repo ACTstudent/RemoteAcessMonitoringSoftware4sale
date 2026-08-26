@@ -79,23 +79,27 @@ jobs:
       - name: Build server installer
         run: |
           $iscc = "${{ steps.iscc.outputs.path }}"
+          if (-not (Test-Path -LiteralPath $iscc)) { throw "ISCC.exe not found: $iscc" }
           Write-Host "Running: $iscc /Oserver-dist server-installer.iss"
-          $output = & cmd /c "`"$iscc`" /Oserver-dist server-installer.iss 2>&1"
-          $output | ForEach-Object { Write-Host $_ }
+          & $iscc "/Oserver-dist" "/DMyAppVersion=${{ steps.version.outputs.version }}" "server-installer.iss"
           if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
 
       - name: Build client installer
         run: |
           $iscc = "${{ steps.iscc.outputs.path }}"
+          if (-not (Test-Path -LiteralPath $iscc)) { throw "ISCC.exe not found: $iscc" }
           Write-Host "Running: $iscc /Oclient-dist client-installer.iss"
-          $output = & cmd /c "`"$iscc`" /Oclient-dist client-installer.iss 2>&1"
-          $output | ForEach-Object { Write-Host $_ }
+          & $iscc "/Oclient-dist" "/DMyAppVersion=${{ steps.version.outputs.version }}" "client-installer.iss"
           if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
 
       - name: Verify installer output
         run: |
           if (!(Test-Path "server-dist\CAMS-Server-Setup.exe")) { throw "Server installer not found" }
           if (!(Test-Path "client-dist\CAMS-Client-Setup.exe")) { throw "Client installer not found" }
+          $serverHash = (Get-FileHash "server-dist\CAMS-Server-Setup.exe" -Algorithm SHA256).Hash
+          $clientHash = (Get-FileHash "client-dist\CAMS-Client-Setup.exe" -Algorithm SHA256).Hash
+          "$serverHash  CAMS-Server-Setup.exe" | Set-Content "server-dist\CAMS-Server-Setup.exe.sha256" -Encoding ascii
+          "$clientHash  CAMS-Client-Setup.exe" | Set-Content "client-dist\CAMS-Client-Setup.exe.sha256" -Encoding ascii
           Write-Host "Server installer: $((Get-Item server-dist\CAMS-Server-Setup.exe).Length / 1MB) MB"
           Write-Host "Client installer: $((Get-Item client-dist\CAMS-Client-Setup.exe).Length / 1MB) MB"
 
@@ -109,4 +113,6 @@ jobs:
           generate_release_notes: true
           files: |
             server-dist/CAMS-Server-Setup.exe
+            server-dist/CAMS-Server-Setup.exe.sha256
             client-dist/CAMS-Client-Setup.exe
+            client-dist/CAMS-Client-Setup.exe.sha256
