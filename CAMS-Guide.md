@@ -214,11 +214,11 @@ Server is at `https://localhost:5000`. The testing release seeds `admin1` / `adm
 6. Build the student installer via `./publish-client.ps1`; it installs with bundled .NET.
 7. In the client installer, enter `https://<server-ip>:5000/remoteMonitoringHub` and select `CAMS-Server-Root.cer`.
 8. Student Client connects to the server IP/port LAN configurable via `client-settings.json`.
-9. Expose port 5000 for LAN with a firewall rule.
+9. Expose port 5000 for LAN with a firewall rule. Restart the server after switching Wi-Fi networks so discovery and the certificate use the current address.
 
 ### Cellphone Hotspot
 
-Use the teacher PC's Wi-Fi IPv4 address from `ipconfig`, not `localhost`. Phone hotspots can block UDP broadcast or device-to-device traffic; if auto-discovery does not work, use the manual HTTPS URL. The root certificate remains trusted if the hotspot assigns a new IP because the server certificate is regenerated and signed by the same local root CA.
+Use the teacher PC's Wi-Fi IPv4 address from `ipconfig`, not `localhost`. Phone hotspots can block UDP broadcast or device-to-device traffic; if auto-discovery does not work, use the manual HTTPS URL. Restart the server after joining the hotspot or after its IP changes. The root certificate remains trusted because the server certificate is regenerated and signed by the same local root CA.
 
 ---
 

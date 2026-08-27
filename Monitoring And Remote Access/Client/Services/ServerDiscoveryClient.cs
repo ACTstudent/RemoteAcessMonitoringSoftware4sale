@@ -32,20 +32,23 @@ public static class ServerDiscoveryClient
                     using var doc = JsonDocument.Parse(json);
                     if (TryGetPropertyIgnoreCase(doc.RootElement, "serverUrl", out var url) &&
                         TryGetPropertyIgnoreCase(doc.RootElement, "appName", out var name) &&
-                        name.GetString() == "CAMS")
+                        string.Equals(name.GetString(), "CAMS", StringComparison.OrdinalIgnoreCase))
                     {
                         var discoveredUrl = url.GetString();
                         if (Uri.TryCreate(discoveredUrl, UriKind.Absolute, out var parsedUrl) &&
                             parsedUrl.Scheme == Uri.UriSchemeHttps &&
                             !string.IsNullOrWhiteSpace(parsedUrl.Host))
                         {
-                            _cachedUrl = parsedUrl.ToString();
+                            // The UDP sender is the interface that reached this client. Prefer it
+                            // over a stale or incorrectly selected address in the payload.
+                            _cachedUrl = BuildReachableUrl(parsedUrl, result.RemoteEndPoint.Address);
                             return _cachedUrl;
                         }
                     }
                 }
                 catch (OperationCanceledException) { }
                 catch (SocketException) { }
+                catch (JsonException) { }
             }
             catch (SocketException) { }
 
@@ -73,5 +76,27 @@ public static class ServerDiscoveryClient
 
         value = default;
         return false;
+    }
+
+    private static string BuildReachableUrl(Uri advertisedUrl, IPAddress senderAddress)
+    {
+        if (senderAddress.AddressFamily != AddressFamily.InterNetwork ||
+            IPAddress.IsLoopback(senderAddress) ||
+            IsLinkLocal(senderAddress))
+        {
+            return advertisedUrl.ToString();
+        }
+
+        var builder = new UriBuilder(advertisedUrl)
+        {
+            Host = senderAddress.ToString()
+        };
+        return builder.Uri.ToString();
+    }
+
+    private static bool IsLinkLocal(IPAddress address)
+    {
+        var bytes = address.GetAddressBytes();
+        return bytes.Length == 4 && bytes[0] == 169 && bytes[1] == 254;
     }
 }

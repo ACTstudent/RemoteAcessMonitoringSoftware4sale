@@ -10,10 +10,10 @@ namespace Client
 {
     public partial class MainForm : Form
     {
-        private static async Task<string> GetServerUrlAsync()
+        private static async Task<string> GetServerUrlAsync(bool forceDiscovery = false)
         {
             var configured = ReadConfiguredServerUrl();
-            if (configured != null && !IsLocalhost(configured))
+            if (!forceDiscovery && configured != null && !IsLocalhost(configured))
                 return configured;
 
             var discovered = await ServerDiscoveryClient.DiscoverAsync(4000, 5);
@@ -208,6 +208,11 @@ namespace Client
 
         private async void BtnLogin_Click(object? sender, EventArgs e)
         {
+            await TryLoginAsync(forceDiscovery: false);
+        }
+
+        private async Task TryLoginAsync(bool forceDiscovery)
+        {
             string studentId = txtStudentId.Text.Trim();
             string password = txtPassword.Text;
 
@@ -220,12 +225,13 @@ namespace Client
             btnLogin.Enabled = false;
             lblStatus.Text = "Status: Searching for server...";
 
-            var serverUrl = await GetServerUrlAsync();
-
-            lblStatus.Text = $"Status: Connecting to {serverUrl}...";
+            string? serverUrl = null;
 
             try
             {
+                serverUrl = await GetServerUrlAsync(forceDiscovery);
+                lblStatus.Text = $"Status: Connecting to {serverUrl}...";
+
                 var hubClient = new MonitoringHubClient();
                 hubClient.RemoteInputReceived += InputSimulator.ProcessRemoteInput;
                 hubClient.Locked += () => this.Invoke(() => SetLocked(true));
@@ -295,12 +301,20 @@ namespace Client
                 btnLogin.Enabled = true;
                 var message = IsCertificateError(ex)
                     ? "The server was discovered, but its HTTPS certificate is not trusted by this PC.\n\nCopy CAMS-Server-Root.cer from the teacher PC and run the client installer again, selecting that certificate. Do not copy the private .pfx file."
-                    : "The server was discovered, but HTTPS port 5000 could not complete the connection.\n\nMake sure the server is running, both PCs are on the same hotspot, Windows Firewall allows TCP port 5000, and the configured address uses https://.";
+                    : "The server was discovered, but HTTPS port 5000 could not complete the connection.\n\nMake sure the server is running, both PCs are on the same Wi-Fi or hotspot, Windows Firewall allows TCP port 5000, and the configured address uses https://.";
+                message += $"\n\nTarget: {serverUrl ?? "unknown"}\nDetails: {ex.Message}";
                 var choice = MessageBox.Show(
-                    message + "\n\nTry again, or enter the server IP manually.",
+                    message + "\n\nRetry to discover the server again, or choose Cancel to enter the server IP manually.",
                     "Connection Failed", MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning);
                 if (choice == DialogResult.Retry)
-                    BtnLogin_Click(null, EventArgs.Empty);
+                {
+                    ServerDiscoveryClient.ResetCache();
+                    await TryLoginAsync(forceDiscovery: true);
+                }
+                else
+                {
+                    ShowServerUrlDialog();
+                }
             }
             catch (Exception ex)
             {

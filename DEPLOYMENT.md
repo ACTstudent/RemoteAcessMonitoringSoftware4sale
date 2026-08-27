@@ -14,7 +14,7 @@ This creates **`server-dist\CAMS-Server-Setup.exe`** and **`client-dist\CAMS-Cli
 
 The wizard does everything:
 - Installs to `%LOCALAPPDATA%\CAMS Server`
-- Opens Windows Firewall HTTPS TCP port **5000** and UDP discovery port **5001**
+- Refreshes Windows Firewall HTTPS TCP port **5000** and UDP discovery port **5001** rules
 - Optionally starts the server automatically with Windows
 - Launches the server after install
 - Generates a local CA and a LAN HTTPS certificate on first server start
@@ -66,17 +66,20 @@ cd "Monitoring And Remote Access\Client"
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ..\..\client-publish
 ```
 
-Copy `client-publish\` to each student PC. Copy `CAMS-Server-Root.cer` beside the folder, install it into the current user's Trusted Root Certification Authorities store, edit `client-settings.json` with `https://<server-ip>:5000/remoteMonitoringHub`, then run `Client.exe`.
+Copy `client-publish\` to each student PC. Copy `CAMS-Server-Root.cer` beside the folder, install it into the current user's Trusted Root Certification Authorities store, edit `client-settings.json` with `https://<server-ip>:5000/remoteMonitoringHub`, then run `Client.exe`. Start or restart `Server.exe` after connecting the server PC to the target Wi-Fi so its certificate contains the current LAN address.
 
 ## Firewall
 
-The server installer opens port 5000 automatically. To do it manually:
+The server installer refreshes the named rules automatically. To do it manually:
 
 ```powershell
-netsh advfirewall firewall add rule name="CAMS Server" dir=in action=allow protocol=TCP localport=5000
+netsh advfirewall firewall delete rule name="CAMS Server"
+netsh advfirewall firewall add rule name="CAMS Server" dir=in action=allow protocol=TCP localport=5000 profile=any
+netsh advfirewall firewall delete rule name="CAMS Discovery"
+netsh advfirewall firewall add rule name="CAMS Discovery" dir=in action=allow protocol=UDP localport=5001 profile=any
 ```
 
-For a cellphone hotspot, use the teacher PC's Wi-Fi IPv4 address from `ipconfig`. If the hotspot blocks client-to-client traffic or UDP broadcast, disable client isolation if possible and use the manual server URL in the client setup.
+For a Wi-Fi network or cellphone hotspot, use the teacher PC's Wi-Fi IPv4 address from `ipconfig`. Both PCs must be on the same non-guest network subnet. If the network blocks client-to-client traffic or UDP broadcast, disable client isolation if possible and use the manual server URL in the client setup; TCP port 5000 must still be reachable.
 
 ## URLs
 

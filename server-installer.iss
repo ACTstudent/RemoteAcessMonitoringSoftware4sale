@@ -4,7 +4,7 @@
 
 #define MyAppName "CAMS Server"
 #ifndef MyAppVersion
-  #define MyAppVersion "2.5.8"
+  #define MyAppVersion "2.5.9"
 #endif
 #define MyAppExeName "Server.exe"
 #define MyAppPublisher "CAMS"
@@ -61,6 +61,8 @@ Name: "{autodesktop}\{#MyAppName}";       Filename: "{app}\{#MyAppExeName}"; Wor
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "CAMS Server"; ValueData: """{app}\{#MyAppExeName}"""; Flags: uninsdeletevalue; Tasks: autostart
 
 [Run]
-Filename: "netsh.exe"; Parameters: "advfirewall firewall add rule name=""CAMS Server"" dir=in action=allow protocol=TCP localport=5000"; Flags: runhidden; StatusMsg: "Opening firewall port 5000..."
-Filename: "netsh.exe"; Parameters: "advfirewall firewall add rule name=""CAMS Discovery"" dir=in action=allow protocol=UDP localport=5001"; Flags: runhidden; StatusMsg: "Opening firewall port 5001 for auto-discovery..."
+Filename: "netsh.exe"; Parameters: "advfirewall firewall delete rule name=""CAMS Server"""; Flags: runhidden; StatusMsg: "Refreshing the CAMS server firewall rule..."
+Filename: "netsh.exe"; Parameters: "advfirewall firewall add rule name=""CAMS Server"" dir=in action=allow protocol=TCP localport=5000 profile=any"; Flags: runhidden; StatusMsg: "Opening firewall port 5000..."
+Filename: "netsh.exe"; Parameters: "advfirewall firewall delete rule name=""CAMS Discovery"""; Flags: runhidden; StatusMsg: "Refreshing the CAMS discovery firewall rule..."
+Filename: "netsh.exe"; Parameters: "advfirewall firewall add rule name=""CAMS Discovery"" dir=in action=allow protocol=UDP localport=5001 profile=any"; Flags: runhidden; StatusMsg: "Opening firewall port 5001 for auto-discovery..."
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
