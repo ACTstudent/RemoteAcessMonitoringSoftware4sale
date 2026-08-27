@@ -21,7 +21,7 @@ public class ScreenCaptureService : IScreenCaptureService
             using var bitmap = new Bitmap(targetWidth, targetHeight);
             using (var resizeGraphics = Graphics.FromImage(bitmap))
             {
-                resizeGraphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                resizeGraphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Bilinear;
                 resizeGraphics.DrawImage(captured, 0, 0, targetWidth, targetHeight);
             }
 
@@ -29,7 +29,7 @@ public class ScreenCaptureService : IScreenCaptureService
             {
                 ImageCodecInfo jpegEncoder = GetEncoder(ImageFormat.Jpeg);
                 EncoderParameters encoderParams = new EncoderParameters(1);
-                encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, 40L);
+                encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, 35L);
 
                 bitmap.Save(ms, jpegEncoder, encoderParams);
                 return Convert.ToBase64String(ms.ToArray());

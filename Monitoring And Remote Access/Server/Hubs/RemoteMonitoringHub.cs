@@ -12,7 +12,6 @@ namespace Server.Hubs;
 public sealed class RemoteMonitoringHub : Hub
 {
     private const int MaxFrameBase64Length = 6 * 1024 * 1024;
-    private const int MaxRemoteEventTypeLength = 32;
 
     private readonly IMonitoringService _monitoringService;
     private readonly SessionManagerService _sessionManager;
@@ -158,43 +157,6 @@ public sealed class RemoteMonitoringHub : Hub
 
         await Clients.Group(HubEventNames.TeachersGroup)
             .SendAsync(HubEventNames.ReceiveScreenFrame, Context.ConnectionId, canonicalFrame);
-    }
-
-    public async Task SendRemoteInput(string targetConnectionId, RemoteInputMessage input)
-    {
-        RequireTarget(targetConnectionId);
-        if (input is null || string.IsNullOrWhiteSpace(input.EventType) || input.EventType.Length > MaxRemoteEventTypeLength)
-            throw new HubException("Invalid remote input.");
-
-        await Clients.Client(targetConnectionId)
-            .SendAsync(HubEventNames.ExecuteRemoteInput, input);
-    }
-
-    public async Task LockStudent(string targetConnectionId)
-    {
-        RequireTarget(targetConnectionId);
-        await Clients.Client(targetConnectionId).SendAsync(HubEventNames.LockStudent);
-    }
-
-    public async Task UnlockStudent(string targetConnectionId)
-    {
-        RequireTarget(targetConnectionId);
-        await Clients.Client(targetConnectionId).SendAsync(HubEventNames.UnlockStudent);
-    }
-
-    public async Task ForceLogout(string targetConnectionId)
-    {
-        RequireTarget(targetConnectionId);
-        await Clients.Client(targetConnectionId).SendAsync(HubEventNames.ForceLogout);
-        _monitoringService.UnregisterStudent(targetConnectionId);
-        await Clients.Group(HubEventNames.TeachersGroup)
-            .SendAsync(HubEventNames.StudentDisconnected, targetConnectionId);
-    }
-
-    public async Task ShutdownStudent(string targetConnectionId)
-    {
-        RequireTarget(targetConnectionId);
-        await Clients.Client(targetConnectionId).SendAsync(HubEventNames.ShutdownStudent);
     }
 
     public async Task SendWarningPopup(string targetConnectionId, NotificationMessage warning)

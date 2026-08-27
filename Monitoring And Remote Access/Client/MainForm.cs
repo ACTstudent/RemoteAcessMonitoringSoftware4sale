@@ -624,7 +624,7 @@ namespace Client
                     // Frame dropped; keep the loop alive
                 }
 
-                await Task.Delay(80, token); // ~12 FPS
+                await Task.Delay(50, token); // ~20 FPS, with one in-flight frame at a time
             }
         }
 

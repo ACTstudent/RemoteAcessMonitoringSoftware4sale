@@ -5,21 +5,11 @@
 
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
     <div class="d-flex align-items-center gap-3">
-        <div class="icon-box-primary">
-            <i class="bi bi-camera-video-fill fs-3"></i>
-        </div>
+        <div class="icon-box-primary"><i class="bi bi-camera-video-fill fs-3"></i></div>
         <div>
             <h2 class="fw-extrabold mb-0 text-dark" style="letter-spacing: -0.5px;">Live Workstation Monitoring</h2>
-            <p class="text-muted mb-0 small">Authenticated SignalR screen feeds and remote laboratory control</p>
+            <p class="text-muted mb-0 small">View-only live screen feeds from authenticated student workstations</p>
         </div>
-    </div>
-    <div class="d-flex gap-2">
-        <button id="broadcastButton" class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#broadcastModal">
-            <i class="bi bi-broadcast me-1"></i> Broadcast Screen
-        </button>
-        <button class="btn btn-outline-danger rounded-pill px-4 py-2 fw-semibold shadow-sm" onclick="lockAllStations()">
-            <i class="bi bi-lock-fill me-1"></i> Lock All Units
-        </button>
     </div>
 </div>
 
@@ -55,42 +45,21 @@
     <div class="col-12 text-center py-5 text-muted" id="emptyState">
         <i class="bi bi-display-slash display-3 d-block opacity-50 mb-3 text-emerald-800"></i>
         <h5 class="fw-bold">Awaiting Workstation Connections...</h5>
-        <p class="small">Ensure authenticated student clients are launched on laboratory workstations.</p>
+        <p class="small">Authenticated student clients will appear here when they connect.</p>
     </div>
 </div>
 
-<div class="modal fade" id="broadcastModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 text-white" style="background-color: var(--sidebar-bg);">
-                <h5 class="modal-title fw-bold"><i class="bi bi-broadcast me-2"></i> Broadcast Teacher Screen</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body py-4">
-                <p class="text-muted small">Share the selected display with connected student workstations over the authenticated SignalR channel.</p>
-                <div class="alert alert-info py-2 small mb-0">
-                    <i class="bi bi-info-circle-fill me-1"></i> Browser screen sharing requires HTTPS and your permission.
-                </div>
-            </div>
-            <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" id="startBroadcastButton" class="btn btn-emerald rounded-pill px-4 text-white" onclick="startBroadcast()">Start Broadcast</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="remoteControlModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+<div class="modal fade" id="liveViewModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="modal-header border-0 text-white" style="background-color: var(--sidebar-bg);">
-                <h5 class="modal-title fw-bold" id="remoteModalTitle">Remote Access</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="closeRemoteControl()" aria-label="Close"></button>
+                <h5 class="modal-title fw-bold" id="liveViewTitle">Live workstation view</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body text-center p-2">
-                <canvas id="remoteCanvas" tabindex="0" class="border border-secondary w-100" style="max-height: 70vh; object-fit: contain; background: #000; cursor: crosshair;"></canvas>
-                <div class="small text-muted mt-2">Move, click, scroll, or type while this window is focused to send input to the selected workstation.</div>
+            <div class="modal-body text-center p-2 bg-black">
+                <img id="liveViewImage" class="img-fluid" alt="Selected workstation screen" style="max-height: 78vh; object-fit: contain;" />
             </div>
+            <div class="modal-footer border-0 small text-muted">View-only live feed. No input is sent to the workstation.</div>
         </div>
     </div>
 </div>
@@ -104,12 +73,7 @@
             .build();
 
         const activeUnits = new Map();
-        const remoteCanvas = document.getElementById("remoteCanvas");
-        const remoteContext = remoteCanvas.getContext("2d");
-        let activeTargetConnectionId = null;
-        let lastMouseEventAt = 0;
-        let broadcastStream = null;
-        let broadcastTimer = null;
+        let selectedConnectionId = null;
 
         function valueOf(object, camelName, pascalName) {
             return object?.[camelName] ?? object?.[pascalName] ?? "";
@@ -125,22 +89,27 @@
             error.classList.remove("d-none");
         }
 
-        function clearError() {
-            document.getElementById("hubError").classList.add("d-none");
-        }
-
         function createWorkstationCard(connectionId, studentId, pcName) {
-            if (document.getElementById(`unit-card-${connectionId}`)) return;
+            if (!connectionId || document.getElementById(`unit-card-${connectionId}`)) return;
 
             document.getElementById("emptyState")?.remove();
-            activeUnits.set(connectionId, { studentId, pcName });
+            activeUnits.set(connectionId, { studentId, pcName, lastFrame: null });
 
             const column = document.createElement("div");
             column.className = "col-lg-3 col-md-4 col-sm-6 unit-col";
             column.id = `unit-card-${connectionId}`;
 
             const card = document.createElement("div");
-            card.className = "workstation-card h-100 d-flex flex-column justify-content-between";
+            card.className = "workstation-card h-100 d-flex flex-column";
+            card.setAttribute("role", "button");
+            card.tabIndex = 0;
+            card.addEventListener("click", () => selectWorkstation(connectionId));
+            card.addEventListener("keydown", event => {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    selectWorkstation(connectionId);
+                }
+            });
 
             const header = document.createElement("div");
             header.className = "p-3 border-bottom d-flex justify-content-between align-items-center";
@@ -161,20 +130,15 @@
             stream.appendChild(image);
 
             const footer = document.createElement("div");
-            footer.className = "p-3 bg-light d-flex flex-wrap gap-2 justify-content-between align-items-center";
-            const remoteButton = document.createElement("button");
-            remoteButton.className = "btn btn-sm btn-outline-primary rounded-pill px-3";
-            remoteButton.innerHTML = '<i class="bi bi-mouse me-1"></i> Remote';
-            remoteButton.addEventListener("click", () => openRemoteControl(connectionId, studentId, pcName));
-            const lockButton = document.createElement("button");
-            lockButton.className = "btn btn-sm btn-outline-emerald rounded-pill px-3";
-            lockButton.innerHTML = '<i class="bi bi-lock-fill me-1"></i> Lock';
-            lockButton.addEventListener("click", () => invokeHub("LockStudent", connectionId));
-            const logoutButton = document.createElement("button");
-            logoutButton.className = "btn btn-sm btn-outline-danger rounded-pill px-3";
-            logoutButton.innerHTML = '<i class="bi bi-power me-1"></i> Logout';
-            logoutButton.addEventListener("click", () => invokeHub("ForceLogout", connectionId));
-            footer.append(remoteButton, lockButton, logoutButton);
+            footer.className = "p-3 bg-light d-flex justify-content-between align-items-center";
+            const timestamp = document.createElement("span");
+            timestamp.id = `time-${connectionId}`;
+            timestamp.className = "small text-muted";
+            timestamp.textContent = "Waiting for live frame";
+            const viewButton = document.createElement("span");
+            viewButton.className = "btn btn-sm btn-outline-primary rounded-pill px-3";
+            viewButton.innerHTML = '<i class="bi bi-arrows-fullscreen me-1"></i> View';
+            footer.append(timestamp, viewButton);
 
             card.append(header, stream, footer);
             column.appendChild(card);
@@ -185,9 +149,12 @@
         function removeWorkstationCard(connectionId) {
             document.getElementById(`unit-card-${connectionId}`)?.remove();
             activeUnits.delete(connectionId);
-            if (activeTargetConnectionId === connectionId) {
-                closeRemoteControl();
-                bootstrap.Modal.getInstance(document.getElementById("remoteControlModal"))?.hide();
+            if (selectedConnectionId === connectionId) {
+                selectedConnectionId = null;
+                bootstrap.Modal.getInstance(document.getElementById("liveViewModal"))?.hide();
+            }
+            if (activeUnits.size === 0) {
+                document.getElementById("workstationsGrid").innerHTML = '<div class="col-12 text-center py-5 text-muted" id="emptyState"><i class="bi bi-display-slash display-3 d-block opacity-50 mb-3 text-emerald-800"></i><h5 class="fw-bold">Awaiting Workstation Connections...</h5><p class="small">Authenticated student clients will appear here when they connect.</p></div>';
             }
             updateCount();
         }
@@ -199,143 +166,26 @@
             if (!base64Image) return;
 
             createWorkstationCard(connectionId, studentId, pcName);
+            const unit = activeUnits.get(connectionId);
+            if (unit) unit.lastFrame = base64Image;
             const image = document.getElementById(`img-${connectionId}`);
             if (image) image.src = `data:image/jpeg;base64,${base64Image}`;
-
-            if (activeTargetConnectionId === connectionId) {
-                drawRemoteFrame(base64Image);
-            }
+            const timestamp = document.getElementById(`time-${connectionId}`);
+            if (timestamp) timestamp.textContent = `Live frame ${new Date().toLocaleTimeString()}`;
+            if (selectedConnectionId === connectionId) updateSelectedView();
         }
 
-        async function invokeHub(method, ...args) {
-            try {
-                clearError();
-                await hub.invoke(method, ...args);
-            } catch (error) {
-                showError(`Command failed: ${error.message || error}`);
-            }
+        function selectWorkstation(connectionId) {
+            selectedConnectionId = connectionId;
+            updateSelectedView();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById("liveViewModal")).show();
         }
 
-        async function lockAllStations() {
-            if (!confirm("Are you sure you want to lock all connected student workstations?")) return;
-            await Promise.all([...activeUnits.keys()].map(connectionId => invokeHub("LockStudent", connectionId)));
-        }
-
-        function drawRemoteFrame(base64Image) {
-            const image = new Image();
-            image.onload = () => {
-                remoteCanvas.width = image.width;
-                remoteCanvas.height = image.height;
-                remoteContext.drawImage(image, 0, 0);
-            };
-            image.src = `data:image/jpeg;base64,${base64Image}`;
-        }
-
-        function openRemoteControl(connectionId, studentId, pcName) {
-            activeTargetConnectionId = connectionId;
-            document.getElementById("remoteModalTitle").textContent = `Remote Access - ${pcName} (${studentId})`;
-            new bootstrap.Modal(document.getElementById("remoteControlModal")).show();
-            remoteCanvas.focus();
-        }
-
-        function closeRemoteControl() {
-            activeTargetConnectionId = null;
-        }
-
-        function sendInput(eventType, event) {
-            if (!activeTargetConnectionId) return;
-            if (eventType === "mousemove" && Date.now() - lastMouseEventAt < 35) return;
-            lastMouseEventAt = Date.now();
-
-            const rect = remoteCanvas.getBoundingClientRect();
-            const scaleX = remoteCanvas.width / Math.max(rect.width, 1);
-            const scaleY = remoteCanvas.height / Math.max(rect.height, 1);
-            const x = Math.round((event.clientX - rect.left) * scaleX);
-            const y = Math.round((event.clientY - rect.top) * scaleY);
-            invokeHub("SendRemoteInput", activeTargetConnectionId, {
-                eventType,
-                x,
-                y,
-                keyCode: event.button ?? 0,
-                isShift: Boolean(event.shiftKey)
-            });
-        }
-
-        remoteCanvas.addEventListener("mousemove", event => sendInput("mousemove", event));
-        remoteCanvas.addEventListener("mousedown", event => sendInput("mousedown", event));
-        remoteCanvas.addEventListener("mouseup", event => sendInput("mouseup", event));
-        remoteCanvas.addEventListener("wheel", event => {
-            if (!activeTargetConnectionId) return;
-            invokeHub("SendRemoteInput", activeTargetConnectionId, {
-                eventType: "scroll",
-                x: 0,
-                y: 0,
-                keyCode: event.deltaY > 0 ? 1 : -1,
-                isShift: false
-            });
-            event.preventDefault();
-        }, { passive: false });
-        remoteCanvas.addEventListener("keydown", event => {
-            if (event.key === "Escape") {
-                closeRemoteControl();
-                bootstrap.Modal.getInstance(document.getElementById("remoteControlModal"))?.hide();
-                return;
-            }
-            if (!activeTargetConnectionId) return;
-            invokeHub("SendRemoteInput", activeTargetConnectionId, {
-                eventType: "keydown",
-                x: 0,
-                y: 0,
-                keyCode: event.keyCode,
-                isShift: Boolean(event.shiftKey)
-            });
-            event.preventDefault();
-        });
-
-        async function startBroadcast() {
-            if (broadcastTimer) {
-                stopBroadcast();
-                return;
-            }
-
-            try {
-                broadcastStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
-                const video = document.createElement("video");
-                video.srcObject = broadcastStream;
-                video.muted = true;
-                await video.play();
-                const canvas = document.createElement("canvas");
-                const context = canvas.getContext("2d");
-
-                const sendFrame = () => {
-                    if (!context || !video.videoWidth || hub.state !== "Connected") return;
-                    const scale = Math.min(1, 1280 / video.videoWidth);
-                    canvas.width = Math.round(video.videoWidth * scale);
-                    canvas.height = Math.round(video.videoHeight * scale);
-                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    const encoded = canvas.toDataURL("image/jpeg", 0.45).split(",")[1];
-                    invokeHub("BroadcastScreen", encoded);
-                };
-
-                broadcastTimer = window.setInterval(sendFrame, 1000 / 12);
-                sendFrame();
-                document.getElementById("startBroadcastButton").textContent = "Stop Broadcast";
-                document.getElementById("broadcastButton").classList.add("active");
-                bootstrap.Modal.getInstance(document.getElementById("broadcastModal"))?.hide();
-                broadcastStream.getVideoTracks()[0].addEventListener("ended", stopBroadcast);
-            } catch (error) {
-                showError(`Screen sharing could not start: ${error.message || error}`);
-                stopBroadcast();
-            }
-        }
-
-        function stopBroadcast() {
-            if (broadcastTimer) window.clearInterval(broadcastTimer);
-            broadcastTimer = null;
-            broadcastStream?.getTracks().forEach(track => track.stop());
-            broadcastStream = null;
-            document.getElementById("startBroadcastButton").textContent = "Start Broadcast";
-            document.getElementById("broadcastButton").classList.remove("active");
+        function updateSelectedView() {
+            const unit = activeUnits.get(selectedConnectionId);
+            if (!unit) return;
+            document.getElementById("liveViewTitle").textContent = `Live View - ${unit.pcName || "Workstation"} (${unit.studentId || ""})`;
+            document.getElementById("liveViewImage").src = unit.lastFrame ? `data:image/jpeg;base64,${unit.lastFrame}` : "";
         }
 
         async function loadLiveState() {
@@ -344,10 +194,7 @@
                 if (!response.ok) return;
                 const state = await response.json();
                 for (const student of (state.students ?? state.Students ?? [])) {
-                    createWorkstationCard(
-                        valueOf(student, "connectionId", "ConnectionId"),
-                        valueOf(student, "studentId", "StudentId"),
-                        valueOf(student, "pcName", "PcName"));
+                    createWorkstationCard(valueOf(student, "connectionId", "ConnectionId"), valueOf(student, "studentId", "StudentId"), valueOf(student, "pcName", "PcName"));
                 }
             } catch {
                 showError("The initial monitoring state could not be loaded.");
@@ -355,35 +202,23 @@
         }
 
         hub.on("ReceiveScreenFrame", (connectionId, frame) => updateWorkstationCard(connectionId, frame));
-        hub.on("StudentConnected", student => createWorkstationCard(
-            valueOf(student, "connectionId", "ConnectionId"),
-            valueOf(student, "studentId", "StudentId"),
-            valueOf(student, "pcName", "PcName")));
+        hub.on("StudentConnected", student => createWorkstationCard(valueOf(student, "connectionId", "ConnectionId"), valueOf(student, "studentId", "StudentId"), valueOf(student, "pcName", "PcName")));
         hub.on("StudentDisconnected", connectionId => removeWorkstationCard(connectionId));
         hub.on("GlobalSessionState", state => {
             const status = valueOf(state, "status", "Status") || "Ready";
             document.getElementById("lblSessionState").textContent = status;
             const elapsed = Number(valueOf(state, "elapsedSeconds", "ElapsedSeconds")) || 0;
-            document.getElementById("lblSessionTimer").textContent =
-                `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`;
+            document.getElementById("lblSessionTimer").textContent = `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`;
         });
         hub.onreconnecting(() => document.getElementById("lblSessionState").textContent = "Reconnecting");
         hub.onreconnected(() => document.getElementById("lblSessionState").textContent = "Ready");
-        hub.onclose(() => {
-            stopBroadcast();
-            showError("The monitoring connection closed. Refresh the page to reconnect.");
-        });
+        hub.onclose(() => showError("The monitoring connection closed. Refresh the page to reconnect."));
 
         document.getElementById("gridSearch")?.addEventListener("input", function () {
             const query = this.value.toLowerCase();
-            document.querySelectorAll(".unit-col").forEach(column => {
-                column.style.display = column.textContent.toLowerCase().includes(query) ? "" : "none";
-            });
+            document.querySelectorAll(".unit-col").forEach(column => column.style.display = column.textContent.toLowerCase().includes(query) ? "" : "none");
         });
 
-        window.addEventListener("beforeunload", stopBroadcast);
-        hub.start()
-            .then(loadLiveState)
-            .catch(error => showError(`Monitoring connection failed: ${error.message || error}`));
+        hub.start().then(loadLiveState).catch(error => showError(`Monitoring connection failed: ${error.message || error}`));
     </script>
 }
