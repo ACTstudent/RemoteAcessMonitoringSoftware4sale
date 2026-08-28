@@ -3,7 +3,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Client.Services;
 using Shared.Contracts;
 
@@ -598,7 +597,7 @@ namespace Client
                                     PcName: Environment.MachineName,
                                     ApplicationName: appName,
                                     Timestamp: DateTime.Now));
-                                var website = ActiveAppInfo.GetWebsite(appName);
+                                var website = BrowserUrlCollector.TryGetForegroundWebsite();
                                 if (website is not null && website.Value.Domain != _lastWebsiteReport)
                                 {
                                     _lastWebsiteReport = website.Value.Domain;
@@ -760,7 +759,6 @@ namespace Client
 
     internal static class ActiveAppInfo
     {
-        private static readonly Regex DomainPattern = new(@"(?<![A-Za-z0-9-])(?:https?://)?(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,}(?![A-Za-z0-9-])", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         public static string Get()
         {
             IntPtr hwnd = NativeMethods.GetForegroundWindow();
@@ -782,13 +780,6 @@ namespace Client
             }
         }
 
-        public static (string Domain, string Browser)? GetWebsite(string app)
-        {
-            var browser = app.Split(" - ")[0].Trim().ToLowerInvariant();
-            if (browser is not ("chrome" or "msedge" or "firefox" or "opera" or "brave")) return null;
-            var match = DomainPattern.Match(app);
-            return match.Success ? (match.Value.TrimEnd('.').ToLowerInvariant(), browser) : null;
-        }
     }
 
     internal static class NativeMethods

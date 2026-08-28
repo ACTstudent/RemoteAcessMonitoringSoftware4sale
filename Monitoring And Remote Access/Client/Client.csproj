@@ -13,6 +13,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="client-settings.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

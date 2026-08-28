@@ -71,4 +71,30 @@ public class TelemetryServiceTests
             "connection-1", "student-1", "PC-01", "Other", details: new string('x', 1001)));
         Assert.Empty(await db.ActivityEvents.ToListAsync());
     }
+
+    [Fact]
+    public async Task RecordTelemetry_RejectsTimestampsOutsideAllowedWindow()
+    {
+        await using var db = CreateContext();
+        var service = new TelemetryService(db);
+
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => service.RecordApplicationUsageAsync(
+            "connection-1", "student-1", "PC-01", "app.exe", DateTime.UtcNow.AddMinutes(6)));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => service.RecordWebsiteUsageAsync(
+            "connection-1", "student-1", "PC-01", "example.com", "browser", DateTime.UtcNow.AddDays(-8)));
+        Assert.Empty(await db.ActivityEvents.ToListAsync());
+    }
+
+    [Fact]
+    public async Task RecordWebsiteUsage_RejectsOversizedBrowserAndDomain()
+    {
+        await using var db = CreateContext();
+        var service = new TelemetryService(db);
+
+        await Assert.ThrowsAsync<ArgumentException>(() => service.RecordWebsiteUsageAsync(
+            "connection-1", "student-1", "PC-01", new string('d', 301), "browser", DateTime.UtcNow));
+        await Assert.ThrowsAsync<ArgumentException>(() => service.RecordWebsiteUsageAsync(
+            "connection-1", "student-1", "PC-01", "example.com", new string('b', 51), DateTime.UtcNow));
+        Assert.Empty(await db.WebsiteUsageLogs.ToListAsync());
+    }
 }

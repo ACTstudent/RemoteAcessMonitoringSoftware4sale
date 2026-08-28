@@ -80,11 +80,11 @@ public sealed class RemoteMonitoringHub : Hub
 
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var student = await context.Students
-            .Include(s => s.Class)
+        var authorized = await context.Students
             .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.StudentNumber == target.StudentId);
-        if (student is null || (student.AdviserId != teacherId && student.Class?.TeacherId != teacherId))
+            .AnyAsync(s => s.StudentNumber == target.StudentId &&
+                (s.AdviserId == teacherId || context.Classes.Any(c => c.ClassId == s.ClassId && c.TeacherId == teacherId)));
+        if (!authorized)
             throw new HubException("You are not authorized to control this workstation.");
 
         return target;
@@ -304,6 +304,22 @@ public sealed class RemoteMonitoringHub : Hub
         var target = await RequireAuthorizedTargetAsync(targetConnectionId);
         await AuditCommandAsync("RestartStudent", target);
         await Clients.Client(target.ConnectionId).SendAsync(HubEventNames.RestartStudent);
+    }
+
+    public async Task BulkLockStudents(List<string> targetConnectionIds)
+    {
+        if (targetConnectionIds is null || targetConnectionIds.Count > 100)
+            throw new HubException("The bulk command contains too many workstations.");
+        foreach (var target in targetConnectionIds.Distinct(StringComparer.Ordinal))
+            await LockStudent(target);
+    }
+
+    public async Task BulkForceLogoutStudents(List<string> targetConnectionIds)
+    {
+        if (targetConnectionIds is null || targetConnectionIds.Count > 100)
+            throw new HubException("The bulk command contains too many workstations.");
+        foreach (var target in targetConnectionIds.Distinct(StringComparer.Ordinal).ToList())
+            await ForceLogout(target);
     }
 
     public async Task SendRemoteInput(string targetConnectionId, RemoteInputMessage input)

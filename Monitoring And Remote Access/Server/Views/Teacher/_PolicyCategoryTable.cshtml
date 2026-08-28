@@ -1,0 +1,39 @@
+@model Tuple<IEnumerable<object>, string>
+@{
+    var isApplication = Model.Item2 == "Application";
+    var createAction = $"Create{Model.Item2}Category";
+    var updateAction = $"Update{Model.Item2}Category";
+    var deleteAction = $"Delete{Model.Item2}Category";
+}
+<div class="card border-0 shadow-sm rounded-4 p-3 h-100">
+    <div class="d-flex justify-content-between align-items-center mb-3"><h5 class="fw-bold mb-0">@Model.Item2 Categories</h5><button class="btn btn-sm btn-emerald rounded-pill" data-bs-toggle="modal" data-bs-target="#category-@Model.Item2">Add</button></div>
+    <div class="table-responsive"><table class="table custom-table"><thead><tr><th>Name / Pattern</th><th>Mode</th><th>State</th><th></th></tr></thead><tbody>
+    @foreach (var item in Model.Item1)
+    {
+        var app = item as Server.Models.ApplicationCategory;
+        var web = item as Server.Models.WebsiteCategory;
+        var id = app?.ApplicationCategoryId ?? web?.WebsiteCategoryId ?? 0;
+        var name = app?.Name ?? web?.Name ?? "";
+        var pattern = app?.Pattern ?? web?.DomainPattern ?? "";
+        var mode = app?.Mode ?? web?.Mode ?? "Block";
+        var active = app?.IsActive ?? web?.IsActive ?? false;
+        <tr><td><strong>@name</strong><br /><code>@pattern</code></td><td>@mode</td><td>@(active ? "Enabled" : "Disabled")</td><td class="text-end"><button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#edit-@Model.Item2-@id">Edit</button> <form class="d-inline" method="post" action="/Teacher/@deleteAction" onsubmit="return confirm('Delete this category?');">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@id" /><button class="btn btn-sm btn-outline-danger">Delete</button></form></td></tr>
+    }
+    @if (!Model.Item1.Any()) { <tr><td colspan="4" class="text-muted text-center">No categories configured.</td></tr> }
+    </tbody></table></div>
+</div>
+
+<div class="modal fade" id="category-@Model.Item2" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="post" action="/Teacher/@createAction">@Html.AntiForgeryToken()<div class="modal-header"><h5>Add @Model.Item2 Category</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><label>Name</label><input name="Name" required maxlength="100" class="form-control mb-2" /><label>@(isApplication ? "Application pattern" : "Domain pattern")</label><input name="@(isApplication ? "Pattern" : "DomainPattern")" required maxlength="300" class="form-control mb-2" placeholder="@(isApplication ? "chrome*" : "example.org")" /><label>Mode</label><select name="Mode" class="form-select mb-2"><option>Block</option><option>Allow</option></select><label>Description</label><input name="Description" maxlength="500" class="form-control mb-2" /><label><input type="checkbox" name="IsActive" value="true" checked /> Active</label></div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div>
+
+@foreach (var item in Model.Item1)
+{
+    var app = item as Server.Models.ApplicationCategory;
+    var web = item as Server.Models.WebsiteCategory;
+    var id = app?.ApplicationCategoryId ?? web?.WebsiteCategoryId ?? 0;
+    var name = app?.Name ?? web?.Name ?? "";
+    var pattern = app?.Pattern ?? web?.DomainPattern ?? "";
+    var description = app?.Description ?? web?.Description ?? "";
+    var mode = app?.Mode ?? web?.Mode ?? "Block";
+    var active = app?.IsActive ?? web?.IsActive ?? false;
+    <div class="modal fade" id="edit-@Model.Item2-@id" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="post" action="/Teacher/@updateAction">@Html.AntiForgeryToken()<input type="hidden" name="@(isApplication ? "ApplicationCategoryId" : "WebsiteCategoryId")" value="@id" /><div class="modal-header"><h5>Edit @Model.Item2 Category</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><label>Name</label><input name="Name" required maxlength="100" value="@name" class="form-control mb-2" /><label>@(isApplication ? "Application pattern" : "Domain pattern")</label><input name="@(isApplication ? "Pattern" : "DomainPattern")" required maxlength="300" value="@pattern" class="form-control mb-2" /><label>Mode</label><select name="Mode" class="form-select mb-2"><option selected="@(mode == "Block" ? "selected" : null)">Block</option><option selected="@(mode == "Allow" ? "selected" : null)">Allow</option></select><label>Description</label><input name="Description" maxlength="500" value="@description" class="form-control mb-2" /><label><input type="checkbox" name="IsActive" value="true" @(active ? "checked" : "") /> Active</label></div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div>
+}

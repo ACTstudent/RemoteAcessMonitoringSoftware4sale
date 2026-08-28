@@ -83,6 +83,9 @@
                                 <button type="button" class="btn btn-sm btn-outline-emerald rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editStudentModal-@s.Id">
                                     <i class="bi bi-pencil me-1"></i> Edit
                                 </button>
+                                <a class="btn btn-sm btn-outline-primary rounded-pill px-3" asp-action="StudentDetails" asp-route-id="@s.Id">
+                                    <i class="bi bi-graph-up me-1"></i> Analytics
+                                </a>
                                 <form method="post" action="/Teacher/DeleteStudent" style="margin: 0;" onsubmit="return confirm('Remove @s.FullName from student roster?');">
                                     <input type="hidden" name="studentId" value="@s.Id" />
                                     @Html.AntiForgeryToken()

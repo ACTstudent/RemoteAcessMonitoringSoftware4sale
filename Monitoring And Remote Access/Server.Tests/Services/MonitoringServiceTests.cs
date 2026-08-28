@@ -121,4 +121,33 @@ public class MonitoringServiceTests
         Assert.Single(service.ActiveApps);
         Assert.Equal("excel.exe", service.ActiveApps.First().ApplicationName);
     }
+
+    [Fact]
+    public async Task ConcurrentConnections_CanRegisterReportAndDisconnectWithoutLeakingState()
+    {
+        var service = new MonitoringService();
+        var connections = Enumerable.Range(1, 200).Select(i => $"connection-{i}").ToArray();
+
+        await Parallel.ForEachAsync(connections, (connectionId, _) =>
+        {
+            service.RegisterStudent(connectionId, connectionId, $"PC-{connectionId}");
+            service.ReportIdleStatus(new IdleStatusMessage(connectionId, connectionId, $"PC-{connectionId}", true, DateTime.UtcNow));
+            service.ReportActiveApp(new ActiveAppMessage(connectionId, connectionId, $"PC-{connectionId}", "app.exe", DateTime.UtcNow));
+            return ValueTask.CompletedTask;
+        });
+
+        Assert.Equal(connections.Length, service.ActiveStudents.Count);
+        Assert.Equal(connections.Length, service.IdleStatus.Count);
+        Assert.Equal(connections.Length, service.ActiveApps.Count);
+
+        await Parallel.ForEachAsync(connections, (connectionId, _) =>
+        {
+            service.UnregisterStudent(connectionId);
+            return ValueTask.CompletedTask;
+        });
+
+        Assert.Empty(service.ActiveStudents);
+        Assert.Empty(service.IdleStatus);
+        Assert.Empty(service.ActiveApps);
+    }
 }

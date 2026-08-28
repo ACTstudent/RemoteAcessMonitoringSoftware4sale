@@ -11,6 +11,10 @@
             <p class="text-muted mb-0 small">View-only live screen feeds from authenticated student workstations</p>
         </div>
     </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-emerald rounded-pill px-3" onclick="bulkCommand('BulkLockStudents', 'lock')"><i class="bi bi-lock-fill me-1"></i> Lock Visible</button>
+        <button class="btn btn-outline-danger rounded-pill px-3" onclick="bulkCommand('BulkForceLogoutStudents', 'log out')"><i class="bi bi-power me-1"></i> Log Out Visible</button>
+    </div>
 </div>
 
 <div id="hubError" class="alert alert-danger d-none rounded-3" role="alert"></div>
@@ -275,6 +279,18 @@
                 await hub.invoke(method, selectedConnectionId);
             } catch (error) {
                 showError(`Command failed: ${error.message || error}`);
+            }
+        }
+
+        async function bulkCommand(method, label) {
+            const targets = [...document.querySelectorAll(".unit-col")]
+                .filter(column => column.style.display !== "none")
+                .map(column => column.id.replace("unit-card-", ""));
+            if (!targets.length || !confirm(`Confirm ${label} for ${targets.length} visible workstations?`)) return;
+            try {
+                await hub.invoke(method, targets);
+            } catch (error) {
+                showError(`Bulk command failed: ${error.message || error}`);
             }
         }
 
