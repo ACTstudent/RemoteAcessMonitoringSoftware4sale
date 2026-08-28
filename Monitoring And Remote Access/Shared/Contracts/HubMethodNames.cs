@@ -8,6 +8,7 @@ public static class HubMethodNames
     public const string UnlockStudent = "UnlockStudent";
     public const string ForceLogout = "ForceLogout";
     public const string ShutdownStudent = "ShutdownStudent";
+    public const string RestartStudent = "RestartStudent";
     public const string SendWarningPopup = "SendWarningPopup";
     public const string BroadcastScreen = "BroadcastScreen";
     public const string SendNotification = "SendNotification";

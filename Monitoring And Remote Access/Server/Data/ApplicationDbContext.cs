@@ -25,6 +25,8 @@ namespace Server.Data
         public DbSet<SystemLog> SystemLogs { get; set; } = null!;
         public DbSet<Notification> Notifications { get; set; } = null!;
         public DbSet<UsageLog> UsageLogs { get; set; } = null!;
+        public DbSet<IdleInterval> IdleIntervals { get; set; } = null!;
+        public DbSet<ActivityEvent> ActivityEvents { get; set; } = null!;
         public DbSet<Class> Classes { get; set; } = null!;
         public DbSet<ClassStudent> ClassStudents { get; set; } = null!;
 
@@ -58,6 +60,15 @@ namespace Server.Data
             modelBuilder.Entity<Student>()
                 .HasIndex(s => s.Username)
                 .IsUnique();
+
+            modelBuilder.Entity<UsageLog>()
+                .HasIndex(log => new { log.PcName, log.Timestamp });
+
+            modelBuilder.Entity<IdleInterval>()
+                .HasIndex(interval => new { interval.ConnectionId, interval.StartedAt });
+
+            modelBuilder.Entity<ActivityEvent>()
+                .HasIndex(activity => new { activity.PcName, activity.Timestamp });
 
             // Relationships matching pro CRUD model
             modelBuilder.Entity<Class>()

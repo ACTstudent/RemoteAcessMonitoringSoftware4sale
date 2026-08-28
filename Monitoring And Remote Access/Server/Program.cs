@@ -131,6 +131,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
     }
 });
+builder.Services.AddScoped<ITelemetryService, TelemetryService>();
 
 var app = builder.Build();
 

@@ -13,6 +13,7 @@ public interface IMonitoringHubClient
     event Action<GlobalSessionMessage>? GlobalSessionStateReceived;
     event Action? SessionEnded;
     event Action? ShutdownRequested;
+    event Action? RestartRequested;
     event Action<NotificationMessage>? WarningPopupReceived;
     event Action<List<RestrictionRuleMessage>>? RestrictionsReceived;
 

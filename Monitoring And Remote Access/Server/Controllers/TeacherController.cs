@@ -246,6 +246,16 @@ namespace Server.Controllers
             ViewBag.TotalSessions = sessions.Count;
             ViewBag.TotalMinutes = sessions.Sum(s =>
                 s.EndTime.HasValue ? (s.EndTime.Value - s.StartTime).TotalMinutes : 0);
+            var studentIds = await _context.Students
+                .Where(s => s.AdviserId == teacherId || (s.Class != null && s.Class.TeacherId == teacherId))
+                .Select(s => s.Id)
+                .ToListAsync();
+            ViewBag.ApplicationUsage = await _context.UsageLogs
+                .Include(log => log.Student)
+                .Where(log => log.StudentId.HasValue && studentIds.Contains(log.StudentId.Value))
+                .OrderByDescending(log => log.Timestamp)
+                .Take(500)
+                .ToListAsync();
 
             return View(sessions);
         }

@@ -14,15 +14,18 @@ public sealed class RemoteMonitoringHub : Hub
     private const int MaxFrameBase64Length = 6 * 1024 * 1024;
 
     private readonly IMonitoringService _monitoringService;
+    private readonly ITelemetryService _telemetryService;
     private readonly SessionManagerService _sessionManager;
     private readonly IServiceScopeFactory _scopeFactory;
 
     public RemoteMonitoringHub(
         IMonitoringService monitoringService,
+        ITelemetryService telemetryService,
         SessionManagerService sessionManager,
         IServiceScopeFactory scopeFactory)
     {
         _monitoringService = monitoringService;
+        _telemetryService = telemetryService;
         _sessionManager = sessionManager;
         _scopeFactory = scopeFactory;
     }
@@ -62,6 +65,62 @@ public sealed class RemoteMonitoringHub : Hub
             throw new HubException("The target workstation is not connected as a student.");
 
         return target;
+    }
+
+    private async Task<StudentConnectionMessage> RequireAuthorizedTargetAsync(string targetConnectionId)
+    {
+        var target = RequireTarget(targetConnectionId);
+        if (Context.User.IsInRole("Admin"))
+            return target;
+
+        if (!int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
+            throw new HubException("The teacher identity is invalid.");
+
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var student = await context.Students
+            .Include(s => s.Class)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.StudentNumber == target.StudentId);
+        if (student is null || (student.AdviserId != teacherId && student.Class?.TeacherId != teacherId))
+            throw new HubException("You are not authorized to control this workstation.");
+
+        return target;
+    }
+
+    private async Task AuditCommandAsync(string action, StudentConnectionMessage target)
+    {
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var actorId);
+            context.AuditLogs.Add(new AuditLog
+            {
+                UserType = Context.User.IsInRole("Admin") ? "Admin" : "Teacher",
+                UserId = actorId == 0 ? null : actorId,
+                Action = action,
+                Details = $"{target.StudentId} at {target.PcName} ({target.ConnectionId})",
+                Timestamp = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+        }
+        catch
+        {
+            // Auditing must not prevent delivery of an authorized command.
+        }
+    }
+
+    private static async Task TryRecordTelemetryAsync(Func<Task> record)
+    {
+        try
+        {
+            await record();
+        }
+        catch
+        {
+            // Telemetry persistence must never interrupt live monitoring.
+        }
     }
 
     private static void RequireFrame(string? frameBase64)
@@ -196,6 +255,56 @@ public sealed class RemoteMonitoringHub : Hub
         }
     }
 
+    public async Task LockStudent(string targetConnectionId)
+    {
+        var target = await RequireAuthorizedTargetAsync(targetConnectionId);
+        await AuditCommandAsync("LockStudent", target);
+        await Clients.Client(target.ConnectionId).SendAsync(HubEventNames.LockStudent);
+    }
+
+    public async Task UnlockStudent(string targetConnectionId)
+    {
+        var target = await RequireAuthorizedTargetAsync(targetConnectionId);
+        await AuditCommandAsync("UnlockStudent", target);
+        await Clients.Client(target.ConnectionId).SendAsync(HubEventNames.UnlockStudent);
+    }
+
+    public async Task ForceLogout(string targetConnectionId)
+    {
+        var target = await RequireAuthorizedTargetAsync(targetConnectionId);
+        await AuditCommandAsync("ForceLogout", target);
+        await Clients.Client(target.ConnectionId).SendAsync(HubEventNames.ForceLogout);
+        _monitoringService.UnregisterStudent(target.ConnectionId);
+        await Clients.Group(HubEventNames.TeachersGroup)
+            .SendAsync(HubEventNames.StudentDisconnected, target.ConnectionId);
+    }
+
+    public async Task ShutdownStudent(string targetConnectionId)
+    {
+        var target = await RequireAuthorizedTargetAsync(targetConnectionId);
+        await AuditCommandAsync("ShutdownStudent", target);
+        await Clients.Client(target.ConnectionId).SendAsync(HubEventNames.ShutdownStudent);
+    }
+
+    public async Task RestartStudent(string targetConnectionId)
+    {
+        var target = await RequireAuthorizedTargetAsync(targetConnectionId);
+        await AuditCommandAsync("RestartStudent", target);
+        await Clients.Client(target.ConnectionId).SendAsync(HubEventNames.RestartStudent);
+    }
+
+    public async Task SendRemoteInput(string targetConnectionId, RemoteInputMessage input)
+    {
+        var target = await RequireAuthorizedTargetAsync(targetConnectionId);
+        if (input is null || string.IsNullOrWhiteSpace(input.EventType) || input.EventType.Length > 32 ||
+            input.X < 0 || input.Y < 0)
+            throw new HubException("Invalid remote input.");
+
+        await AuditCommandAsync("RemoteInput", target);
+        await Clients.Client(target.ConnectionId)
+            .SendAsync(HubEventNames.ExecuteRemoteInput, input);
+    }
+
     public async Task BroadcastScreen(string frameBase64)
     {
         RequireTeacher();
@@ -283,6 +392,14 @@ public sealed class RemoteMonitoringHub : Hub
             Timestamp = DateTime.UtcNow
         };
 
+        await TryRecordTelemetryAsync(() => _telemetryService.RecordActivityEventAsync(
+            canonicalInfraction.ConnectionId,
+            canonicalInfraction.StudentId,
+            canonicalInfraction.PcName,
+            "RestrictionViolation",
+            details: $"{canonicalInfraction.TargetType}: {canonicalInfraction.Target}",
+            timestamp: canonicalInfraction.Timestamp));
+
         try
         {
             using var scope = _scopeFactory.CreateScope();
@@ -319,6 +436,12 @@ public sealed class RemoteMonitoringHub : Hub
         };
 
         _monitoringService.ReportIdleStatus(canonicalStatus);
+        await TryRecordTelemetryAsync(() => _telemetryService.RecordIdleStatusAsync(
+            canonicalStatus.ConnectionId,
+            canonicalStatus.StudentId,
+            canonicalStatus.PcName,
+            canonicalStatus.IsIdle,
+            canonicalStatus.Timestamp));
         await Clients.Group(HubEventNames.TeachersGroup)
             .SendAsync(HubEventNames.IdleStatusReceived, canonicalStatus);
     }
@@ -338,6 +461,12 @@ public sealed class RemoteMonitoringHub : Hub
         };
 
         _monitoringService.ReportActiveApp(canonicalApp);
+        await TryRecordTelemetryAsync(() => _telemetryService.RecordApplicationUsageAsync(
+            canonicalApp.ConnectionId,
+            canonicalApp.StudentId,
+            canonicalApp.PcName,
+            canonicalApp.ApplicationName,
+            canonicalApp.Timestamp));
         await Clients.Group(HubEventNames.TeachersGroup)
             .SendAsync(HubEventNames.ActiveAppReceived, canonicalApp);
     }

@@ -8,6 +8,7 @@ namespace Server.Models
         public int UsageLogId { get; set; }
 
         public int? StudentId { get; set; }
+        public Student? Student { get; set; }
 
         [StringLength(100)]
         public string PcName { get; set; } = string.Empty;

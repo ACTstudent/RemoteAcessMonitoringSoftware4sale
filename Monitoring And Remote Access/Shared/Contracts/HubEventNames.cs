@@ -38,5 +38,6 @@ public static class HubEventNames
 
     // Remote workstation commands
     public const string ShutdownStudent = "ShutdownStudent";
+    public const string RestartStudent = "RestartStudent";
     public const string SendWarningPopup = "SendWarningPopup";
 }

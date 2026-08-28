@@ -21,6 +21,7 @@ public class MonitoringHubClient : IMonitoringHubClient
     public event Action<GlobalSessionMessage>? GlobalSessionStateReceived;
     public event Action? SessionEnded;
     public event Action? ShutdownRequested;
+    public event Action? RestartRequested;
     public event Action<NotificationMessage>? WarningPopupReceived;
     public event Action<List<RestrictionRuleMessage>>? RestrictionsReceived;
 
@@ -83,6 +84,7 @@ public class MonitoringHubClient : IMonitoringHubClient
             message => GlobalSessionStateReceived?.Invoke(message));
         connection.On(HubEventNames.SessionEnded, () => SessionEnded?.Invoke());
         connection.On(HubEventNames.ShutdownStudent, () => ShutdownRequested?.Invoke());
+        connection.On(HubEventNames.RestartStudent, () => RestartRequested?.Invoke());
         connection.On<NotificationMessage>(HubEventNames.SendWarningPopup,
             message => WarningPopupReceived?.Invoke(message));
         connection.On<List<RestrictionRuleMessage>>(HubEventNames.RestrictionsReceived,

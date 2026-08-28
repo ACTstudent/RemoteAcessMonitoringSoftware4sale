@@ -243,6 +243,7 @@ namespace Client
                 hubClient.GlobalSessionStateReceived += state => this.Invoke(() => OnSessionStateChanged(state));
                 hubClient.SessionEnded += () => this.Invoke(async () => await OnSessionEnded());
                 hubClient.ShutdownRequested += () => this.Invoke(OnShutdownRequested);
+                hubClient.RestartRequested += () => this.Invoke(OnRestartRequested);
                 hubClient.RestrictionsReceived += rules => this.Invoke(() => OnRestrictionsReceived(rules));
 
                 var login = await hubClient.LoginAsync(serverUrl, studentId, password, Environment.MachineName);
@@ -432,6 +433,12 @@ namespace Client
             ShowPopup("Teacher Command", "Shut Down",
                 "The teacher has shut down this workstation. Saving work...", false);
             Process.Start(new ProcessStartInfo("shutdown", "/s /t 15") { CreateNoWindow = true, UseShellExecute = false });
+        }
+
+        private void OnRestartRequested()
+        {
+            ShowPopup("Teacher Command", "Restart", "The teacher has restarted this workstation.", false);
+            Process.Start(new ProcessStartInfo("shutdown", "/r /t 15") { CreateNoWindow = true, UseShellExecute = false });
         }
 
         // ---------- Restriction enforcement ----------

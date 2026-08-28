@@ -13,6 +13,7 @@ public static class DatabaseInitializer
         }
 
         RemoveDuplicateMembershipLinks(db);
+        EnsureTelemetryTables(db);
 
         var hasDuplicateStudentNumbers = db.Students
             .AsNoTracking()
@@ -63,5 +64,13 @@ public static class DatabaseInitializer
         {
             Console.Error.WriteLine($"[CAMS] Database index warning: {ex.Message}");
         }
+    }
+
+    private static void EnsureTelemetryTables(ApplicationDbContext db)
+    {
+        TryCreateIndex(db, "CREATE TABLE IF NOT EXISTS IdleIntervals (IdleIntervalId INTEGER NOT NULL CONSTRAINT PK_IdleIntervals PRIMARY KEY AUTOINCREMENT, ConnectionId TEXT NOT NULL, StudentId TEXT NOT NULL, PcName TEXT NOT NULL, StartedAt TEXT NOT NULL, EndedAt TEXT NULL);");
+        TryCreateIndex(db, "CREATE TABLE IF NOT EXISTS ActivityEvents (ActivityEventId INTEGER NOT NULL CONSTRAINT PK_ActivityEvents PRIMARY KEY AUTOINCREMENT, ConnectionId TEXT NOT NULL, StudentId TEXT NOT NULL, PcName TEXT NOT NULL, EventType TEXT NOT NULL, ApplicationName TEXT NULL, Details TEXT NULL, Timestamp TEXT NOT NULL);");
+        TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_IdleIntervals_ConnectionId_StartedAt ON IdleIntervals (ConnectionId, StartedAt);");
+        TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_ActivityEvents_PcName_Timestamp ON ActivityEvents (PcName, Timestamp);");
     }
 }

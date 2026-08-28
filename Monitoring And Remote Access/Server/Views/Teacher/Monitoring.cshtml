@@ -58,8 +58,17 @@
             </div>
             <div class="modal-body text-center p-2 bg-black">
                 <img id="liveViewImage" class="img-fluid" alt="Selected workstation screen" style="max-height: 78vh; object-fit: contain;" />
+                <canvas id="remoteCanvas" class="img-fluid d-none" tabindex="0" aria-label="Authorized remote-support screen"></canvas>
             </div>
-            <div class="modal-footer border-0 small text-muted">View-only live feed. No input is sent to the workstation.</div>
+            <div class="modal-footer border-0 d-flex flex-wrap gap-2 align-items-center">
+                <span class="small text-muted me-auto">Monitoring is view-only until a teacher explicitly issues a command.</span>
+                <button type="button" id="remoteSupportButton" class="btn btn-sm btn-outline-warning rounded-pill" onclick="toggleRemoteSupport()">Start Remote Support</button>
+                <button type="button" class="btn btn-sm btn-outline-emerald rounded-pill" onclick="sendWorkstationCommand('LockStudent')">Lock</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" onclick="sendWorkstationCommand('UnlockStudent')">Unlock</button>
+                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" onclick="sendWorkstationCommand('RestartStudent', true)">Restart</button>
+                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill" onclick="sendWorkstationCommand('ShutdownStudent', true)">Shutdown</button>
+                <button type="button" class="btn btn-sm btn-danger rounded-pill" onclick="sendWorkstationCommand('ForceLogout', true)">Log out</button>
+            </div>
         </div>
     </div>
 </div>
@@ -74,6 +83,10 @@
 
         const activeUnits = new Map();
         let selectedConnectionId = null;
+        let remoteSupportActive = false;
+        let lastMouseEventAt = 0;
+        const remoteCanvas = document.getElementById("remoteCanvas");
+        const remoteContext = remoteCanvas.getContext("2d");
 
         function valueOf(object, camelName, pascalName) {
             return object?.[camelName] ?? object?.[pascalName] ?? "";
@@ -93,7 +106,7 @@
             if (!connectionId || document.getElementById(`unit-card-${connectionId}`)) return;
 
             document.getElementById("emptyState")?.remove();
-            activeUnits.set(connectionId, { studentId, pcName, lastFrame: null });
+            activeUnits.set(connectionId, { studentId, pcName, lastFrame: null, applicationName: "Unknown", isIdle: false });
 
             const column = document.createElement("div");
             column.className = "col-lg-3 col-md-4 col-sm-6 unit-col";
@@ -130,7 +143,11 @@
             stream.appendChild(image);
 
             const footer = document.createElement("div");
-            footer.className = "p-3 bg-light d-flex justify-content-between align-items-center";
+            footer.className = "p-3 bg-light d-flex flex-wrap gap-2 justify-content-between align-items-center";
+            const activity = document.createElement("span");
+            activity.id = `activity-${connectionId}`;
+            activity.className = "small text-dark text-truncate";
+            activity.textContent = "Activity unavailable";
             const timestamp = document.createElement("span");
             timestamp.id = `time-${connectionId}`;
             timestamp.className = "small text-muted";
@@ -138,7 +155,7 @@
             const viewButton = document.createElement("span");
             viewButton.className = "btn btn-sm btn-outline-primary rounded-pill px-3";
             viewButton.innerHTML = '<i class="bi bi-arrows-fullscreen me-1"></i> View';
-            footer.append(timestamp, viewButton);
+            footer.append(activity, timestamp, viewButton);
 
             card.append(header, stream, footer);
             column.appendChild(card);
@@ -151,6 +168,7 @@
             activeUnits.delete(connectionId);
             if (selectedConnectionId === connectionId) {
                 selectedConnectionId = null;
+                remoteSupportActive = false;
                 bootstrap.Modal.getInstance(document.getElementById("liveViewModal"))?.hide();
             }
             if (activeUnits.size === 0) {
@@ -186,6 +204,80 @@
             if (!unit) return;
             document.getElementById("liveViewTitle").textContent = `Live View - ${unit.pcName || "Workstation"} (${unit.studentId || ""})`;
             document.getElementById("liveViewImage").src = unit.lastFrame ? `data:image/jpeg;base64,${unit.lastFrame}` : "";
+            if (remoteSupportActive && unit.lastFrame) drawRemoteFrame(unit.lastFrame);
+        }
+
+        function drawRemoteFrame(base64Image) {
+            const image = new Image();
+            image.onload = () => {
+                remoteCanvas.width = image.width;
+                remoteCanvas.height = image.height;
+                remoteContext.drawImage(image, 0, 0);
+            };
+            image.src = `data:image/jpeg;base64,${base64Image}`;
+        }
+
+        function toggleRemoteSupport() {
+            if (!selectedConnectionId) return;
+            remoteSupportActive = !remoteSupportActive;
+            document.getElementById("liveViewImage").classList.toggle("d-none", remoteSupportActive);
+            remoteCanvas.classList.toggle("d-none", !remoteSupportActive);
+            document.getElementById("remoteSupportButton").textContent = remoteSupportActive ? "Stop Remote Support" : "Start Remote Support";
+            const unit = activeUnits.get(selectedConnectionId);
+            if (remoteSupportActive && unit?.lastFrame) drawRemoteFrame(unit.lastFrame);
+            if (remoteSupportActive) remoteCanvas.focus();
+        }
+
+        function sendRemoteInput(eventType, event) {
+            if (!remoteSupportActive || !selectedConnectionId) return;
+            if (eventType === "mousemove" && Date.now() - lastMouseEventAt < 35) return;
+            lastMouseEventAt = Date.now();
+            const rect = remoteCanvas.getBoundingClientRect();
+            const scaleX = remoteCanvas.width / Math.max(rect.width, 1);
+            const scaleY = remoteCanvas.height / Math.max(rect.height, 1);
+            sendWorkstationInput(eventType, {
+                x: Math.max(0, Math.round((event.clientX - rect.left) * scaleX)),
+                y: Math.max(0, Math.round((event.clientY - rect.top) * scaleY)),
+                keyCode: event.button ?? 0,
+                isShift: Boolean(event.shiftKey)
+            });
+        }
+
+        function sendWorkstationInput(eventType, coordinates) {
+            hub.invoke("SendRemoteInput", selectedConnectionId, { eventType, ...coordinates }).catch(error => showError(`Remote input failed: ${error.message || error}`));
+        }
+
+        remoteCanvas.addEventListener("mousemove", event => sendRemoteInput("mousemove", event));
+        remoteCanvas.addEventListener("mousedown", event => sendRemoteInput("mousedown", event));
+        remoteCanvas.addEventListener("mouseup", event => sendRemoteInput("mouseup", event));
+        remoteCanvas.addEventListener("wheel", event => {
+            if (!remoteSupportActive || !selectedConnectionId) return;
+            sendWorkstationInput("scroll", { x: 0, y: 0, keyCode: event.deltaY > 0 ? 1 : -1, isShift: Boolean(event.shiftKey) });
+            event.preventDefault();
+        }, { passive: false });
+        remoteCanvas.addEventListener("keydown", event => {
+            if (!remoteSupportActive || !selectedConnectionId) return;
+            sendWorkstationInput("keydown", { x: 0, y: 0, keyCode: event.keyCode, isShift: Boolean(event.shiftKey) });
+            event.preventDefault();
+        });
+
+        async function sendWorkstationCommand(method, dangerous = false) {
+            if (!selectedConnectionId) return;
+            if (dangerous && !confirm(`Confirm ${method.replace("Student", "").toLowerCase()} for this workstation?`)) return;
+            try {
+                await hub.invoke(method, selectedConnectionId);
+            } catch (error) {
+                showError(`Command failed: ${error.message || error}`);
+            }
+        }
+
+        function updateActivity(connectionId, applicationName, isIdle) {
+            const unit = activeUnits.get(connectionId);
+            if (!unit) return;
+            if (applicationName) unit.applicationName = applicationName;
+            if (typeof isIdle === "boolean") unit.isIdle = isIdle;
+            const activity = document.getElementById(`activity-${connectionId}`);
+            if (activity) activity.textContent = unit.isIdle ? "Idle" : unit.applicationName || "Active";
         }
 
         async function loadLiveState() {
@@ -194,7 +286,14 @@
                 if (!response.ok) return;
                 const state = await response.json();
                 for (const student of (state.students ?? state.Students ?? [])) {
-                    createWorkstationCard(valueOf(student, "connectionId", "ConnectionId"), valueOf(student, "studentId", "StudentId"), valueOf(student, "pcName", "PcName"));
+                    const connectionId = valueOf(student, "connectionId", "ConnectionId");
+                    createWorkstationCard(connectionId, valueOf(student, "studentId", "StudentId"), valueOf(student, "pcName", "PcName"));
+                }
+                for (const app of (state.apps ?? state.Apps ?? [])) {
+                    updateActivity(valueOf(app, "connectionId", "ConnectionId"), valueOf(app, "applicationName", "ApplicationName"), false);
+                }
+                for (const idle of (state.idle ?? state.Idle ?? [])) {
+                    updateActivity(valueOf(idle, "connectionId", "ConnectionId"), null, Boolean(valueOf(idle, "isIdle", "IsIdle")));
                 }
             } catch {
                 showError("The initial monitoring state could not be loaded.");
@@ -202,6 +301,9 @@
         }
 
         hub.on("ReceiveScreenFrame", (connectionId, frame) => updateWorkstationCard(connectionId, frame));
+        hub.on("ActiveAppReceived", app => updateActivity(valueOf(app, "connectionId", "ConnectionId"), valueOf(app, "applicationName", "ApplicationName"), false));
+        hub.on("IdleStatusReceived", idle => updateActivity(valueOf(idle, "connectionId", "ConnectionId"), null, Boolean(valueOf(idle, "isIdle", "IsIdle"))));
+        hub.on("InfractionDetected", infraction => showError(`Restriction alert: ${valueOf(infraction, "target", "Target") || "restricted activity detected"}`));
         hub.on("StudentConnected", student => createWorkstationCard(valueOf(student, "connectionId", "ConnectionId"), valueOf(student, "studentId", "StudentId"), valueOf(student, "pcName", "PcName")));
         hub.on("StudentDisconnected", connectionId => removeWorkstationCard(connectionId));
         hub.on("GlobalSessionState", state => {
