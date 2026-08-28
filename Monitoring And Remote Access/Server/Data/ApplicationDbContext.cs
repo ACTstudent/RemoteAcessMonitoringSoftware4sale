@@ -19,6 +19,8 @@ namespace Server.Data
         public DbSet<Permission> Permissions { get; set; } = null!;
         public DbSet<RestrictionRule> RestrictionRules { get; set; } = null!;
         public DbSet<BlacklistItem> BlacklistItems { get; set; } = null!;
+        public DbSet<ApplicationCategory> ApplicationCategories { get; set; } = null!;
+        public DbSet<WebsiteCategory> WebsiteCategories { get; set; } = null!;
         public DbSet<SessionRule> SessionRules { get; set; } = null!;
         public DbSet<LanConfiguration> LanConfigurations { get; set; } = null!;
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;

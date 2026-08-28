@@ -14,6 +14,7 @@ public static class DatabaseInitializer
 
         RemoveDuplicateMembershipLinks(db);
         EnsureTelemetryTables(db);
+        EnsureCategoryTables(db);
 
         var hasDuplicateStudentNumbers = db.Students
             .AsNoTracking()
@@ -79,5 +80,11 @@ public static class DatabaseInitializer
         TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_RemoteControlSessions_TeacherId_IsActive ON RemoteControlSessions (TeacherId, IsActive);");
         TryCreateIndex(db, "CREATE TABLE IF NOT EXISTS WebsiteUsageLogs (WebsiteUsageLogId INTEGER NOT NULL CONSTRAINT PK_WebsiteUsageLogs PRIMARY KEY AUTOINCREMENT, StudentId INTEGER NULL, Domain TEXT NOT NULL, Browser TEXT NOT NULL, Timestamp TEXT NOT NULL);");
         TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_WebsiteUsageLogs_StudentId_Timestamp ON WebsiteUsageLogs (StudentId, Timestamp);");
+    }
+
+    private static void EnsureCategoryTables(ApplicationDbContext db)
+    {
+        TryCreateIndex(db, "CREATE TABLE IF NOT EXISTS ApplicationCategories (ApplicationCategoryId INTEGER NOT NULL CONSTRAINT PK_ApplicationCategories PRIMARY KEY AUTOINCREMENT, Name TEXT NOT NULL, Pattern TEXT NOT NULL, Description TEXT NOT NULL, Mode TEXT NOT NULL, IsActive INTEGER NOT NULL, CreatedAt TEXT NOT NULL);");
+        TryCreateIndex(db, "CREATE TABLE IF NOT EXISTS WebsiteCategories (WebsiteCategoryId INTEGER NOT NULL CONSTRAINT PK_WebsiteCategories PRIMARY KEY AUTOINCREMENT, Name TEXT NOT NULL, DomainPattern TEXT NOT NULL, Description TEXT NOT NULL, Mode TEXT NOT NULL, IsActive INTEGER NOT NULL, CreatedAt TEXT NOT NULL);");
     }
 }

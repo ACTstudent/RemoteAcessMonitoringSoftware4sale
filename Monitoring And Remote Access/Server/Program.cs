@@ -132,6 +132,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     }
 });
 builder.Services.AddScoped<ITelemetryService, TelemetryService>();
+builder.Services.AddSingleton<CategoryPolicyEngine>();
 
 var app = builder.Build();
 

@@ -427,6 +427,17 @@ public sealed class RemoteMonitoringHub : Hub
             .Select(r => new RestrictionRuleMessage(r.RestrictionRuleId, r.RuleType, r.Target, r.Mode))
             .ToListAsync();
 
+        var applicationCategories = await context.ApplicationCategories
+            .Where(c => c.IsActive)
+            .Select(c => new RestrictionRuleMessage(-c.ApplicationCategoryId, "Application", c.Pattern, c.Mode))
+            .ToListAsync();
+        var websiteCategories = await context.WebsiteCategories
+            .Where(c => c.IsActive)
+            .Select(c => new RestrictionRuleMessage(-c.WebsiteCategoryId, "Website", c.DomainPattern, c.Mode))
+            .ToListAsync();
+        rules.AddRange(applicationCategories);
+        rules.AddRange(websiteCategories);
+
         await Clients.Client(Context.ConnectionId)
             .SendAsync(HubEventNames.RestrictionsReceived, rules);
     }
