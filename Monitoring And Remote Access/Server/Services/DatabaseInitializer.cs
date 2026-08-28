@@ -72,5 +72,12 @@ public static class DatabaseInitializer
         TryCreateIndex(db, "CREATE TABLE IF NOT EXISTS ActivityEvents (ActivityEventId INTEGER NOT NULL CONSTRAINT PK_ActivityEvents PRIMARY KEY AUTOINCREMENT, ConnectionId TEXT NOT NULL, StudentId TEXT NOT NULL, PcName TEXT NOT NULL, EventType TEXT NOT NULL, ApplicationName TEXT NULL, Details TEXT NULL, Timestamp TEXT NOT NULL);");
         TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_IdleIntervals_ConnectionId_StartedAt ON IdleIntervals (ConnectionId, StartedAt);");
         TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_ActivityEvents_PcName_Timestamp ON ActivityEvents (PcName, Timestamp);");
+        TryCreateIndex(db, "CREATE TABLE IF NOT EXISTS MonitoringAlerts (MonitoringAlertId INTEGER NOT NULL CONSTRAINT PK_MonitoringAlerts PRIMARY KEY AUTOINCREMENT, StudentId TEXT NOT NULL, PcName TEXT NOT NULL, Severity TEXT NOT NULL, Title TEXT NOT NULL, Message TEXT NOT NULL, IsAcknowledged INTEGER NOT NULL DEFAULT 0, CreatedAt TEXT NOT NULL);");
+        TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_MonitoringAlerts_StudentId_CreatedAt ON MonitoringAlerts (StudentId, CreatedAt);");
+        TryCreateIndex(db, "CREATE TABLE IF NOT EXISTS RemoteControlSessions (RemoteControlSessionId INTEGER NOT NULL CONSTRAINT PK_RemoteControlSessions PRIMARY KEY AUTOINCREMENT, TeacherId INTEGER NOT NULL, StudentId TEXT NOT NULL, PcName TEXT NOT NULL, ConnectionId TEXT NOT NULL, StartedAt TEXT NOT NULL, EndedAt TEXT NULL, IsActive INTEGER NOT NULL DEFAULT 1);");
+        TryCreateIndex(db, "CREATE TABLE IF NOT EXISTS RemoteCommandLogs (RemoteCommandLogId INTEGER NOT NULL CONSTRAINT PK_RemoteCommandLogs PRIMARY KEY AUTOINCREMENT, RemoteControlSessionId INTEGER NULL, TeacherId INTEGER NOT NULL, Command TEXT NOT NULL, Details TEXT NOT NULL, Timestamp TEXT NOT NULL);");
+        TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_RemoteControlSessions_TeacherId_IsActive ON RemoteControlSessions (TeacherId, IsActive);");
+        TryCreateIndex(db, "CREATE TABLE IF NOT EXISTS WebsiteUsageLogs (WebsiteUsageLogId INTEGER NOT NULL CONSTRAINT PK_WebsiteUsageLogs PRIMARY KEY AUTOINCREMENT, StudentId INTEGER NULL, Domain TEXT NOT NULL, Browser TEXT NOT NULL, Timestamp TEXT NOT NULL);");
+        TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_WebsiteUsageLogs_StudentId_Timestamp ON WebsiteUsageLogs (StudentId, Timestamp);");
     }
 }

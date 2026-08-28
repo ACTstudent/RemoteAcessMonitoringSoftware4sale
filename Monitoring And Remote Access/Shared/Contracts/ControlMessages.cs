@@ -23,3 +23,11 @@ public sealed record ActiveAppMessage(
 public sealed record BroadcastMessage(
     string FrameBase64,
     DateTime Timestamp);
+
+public sealed record WebsiteActivityMessage(
+    string ConnectionId,
+    string StudentId,
+    string PcName,
+    string Domain,
+    string Browser,
+    DateTime Timestamp);

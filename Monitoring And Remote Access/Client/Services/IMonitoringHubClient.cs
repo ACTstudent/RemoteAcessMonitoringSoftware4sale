@@ -22,6 +22,7 @@ public interface IMonitoringHubClient
     Task SendScreenFrameAsync(ScreenFrameMessage frame);
     Task ReportIdleStatusAsync(IdleStatusMessage status);
     Task ReportActiveAppAsync(ActiveAppMessage app);
+    Task ReportWebsiteActivityAsync(WebsiteActivityMessage website);
     Task FetchRestrictionsAsync();
     Task ReportInfractionAsync(InfractionMessage infraction);
     Task LogoutAsync(CancellationToken cancellationToken = default);

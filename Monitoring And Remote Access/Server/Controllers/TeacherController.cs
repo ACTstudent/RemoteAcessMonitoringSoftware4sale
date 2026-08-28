@@ -256,6 +256,12 @@ namespace Server.Controllers
                 .OrderByDescending(log => log.Timestamp)
                 .Take(500)
                 .ToListAsync();
+            ViewBag.WebsiteUsage = await _context.WebsiteUsageLogs
+                .Include(log => log.Student)
+                .Where(log => log.StudentId.HasValue && studentIds.Contains(log.StudentId.Value))
+                .OrderByDescending(log => log.Timestamp)
+                .Take(500)
+                .ToListAsync();
 
             return View(sessions);
         }

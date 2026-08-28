@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Concurrent;
 using Server.Data;
 using Server.Models;
 using Server.Services;
@@ -17,6 +18,7 @@ public sealed class RemoteMonitoringHub : Hub
     private readonly ITelemetryService _telemetryService;
     private readonly SessionManagerService _sessionManager;
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ConcurrentDictionary<string, int> _remoteSessions = new();
 
     public RemoteMonitoringHub(
         IMonitoringService monitoringService,
@@ -103,6 +105,17 @@ public sealed class RemoteMonitoringHub : Hub
                 Details = $"{target.StudentId} at {target.PcName} ({target.ConnectionId})",
                 Timestamp = DateTime.UtcNow
             });
+            if (int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
+            {
+                _remoteSessions.TryGetValue(Context.ConnectionId, out var sessionId);
+                context.RemoteCommandLogs.Add(new RemoteCommandLog
+                {
+                    RemoteControlSessionId = sessionId == 0 ? null : sessionId,
+                    TeacherId = teacherId,
+                    Command = action,
+                    Details = $"{target.StudentId} at {target.PcName}"
+                });
+            }
             await context.SaveChangesAsync();
         }
         catch
@@ -296,13 +309,53 @@ public sealed class RemoteMonitoringHub : Hub
     public async Task SendRemoteInput(string targetConnectionId, RemoteInputMessage input)
     {
         var target = await RequireAuthorizedTargetAsync(targetConnectionId);
+        if (!_remoteSessions.ContainsKey(Context.ConnectionId))
+            throw new HubException("Start an authorized remote-support session first.");
         if (input is null || string.IsNullOrWhiteSpace(input.EventType) || input.EventType.Length > 32 ||
             input.X < 0 || input.Y < 0)
             throw new HubException("Invalid remote input.");
 
-        await AuditCommandAsync("RemoteInput", target);
         await Clients.Client(target.ConnectionId)
             .SendAsync(HubEventNames.ExecuteRemoteInput, input);
+    }
+
+    public async Task StartRemoteControl(string targetConnectionId)
+    {
+        var target = await RequireAuthorizedTargetAsync(targetConnectionId);
+        if (!int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
+            throw new HubException("The teacher identity is invalid.");
+
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var session = new RemoteControlSession
+        {
+            TeacherId = teacherId,
+            StudentId = target.StudentId,
+            PcName = target.PcName,
+            ConnectionId = target.ConnectionId
+        };
+        context.RemoteControlSessions.Add(session);
+        await context.SaveChangesAsync();
+        _remoteSessions[Context.ConnectionId] = session.RemoteControlSessionId;
+        await AuditCommandAsync("RemoteControlStarted", target);
+    }
+
+    public async Task StopRemoteControl(string targetConnectionId)
+    {
+        var target = await RequireAuthorizedTargetAsync(targetConnectionId);
+        if (!_remoteSessions.TryRemove(Context.ConnectionId, out var sessionId))
+            return;
+
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var session = await context.RemoteControlSessions.FindAsync(sessionId);
+        if (session is not null)
+        {
+            session.IsActive = false;
+            session.EndedAt = DateTime.UtcNow;
+            await context.SaveChangesAsync();
+        }
+        await AuditCommandAsync("RemoteControlStopped", target);
     }
 
     public async Task BroadcastScreen(string frameBase64)
@@ -404,6 +457,16 @@ public sealed class RemoteMonitoringHub : Hub
         {
             using var scope = _scopeFactory.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var alert = new MonitoringAlert
+            {
+                StudentId = canonicalInfraction.StudentId,
+                PcName = canonicalInfraction.PcName,
+                Severity = "Warning",
+                Title = "Restricted activity detected",
+                Message = $"{canonicalInfraction.TargetType}: {canonicalInfraction.Target}",
+                CreatedAt = canonicalInfraction.Timestamp
+            };
+            context.MonitoringAlerts.Add(alert);
             context.AuditLogs.Add(new AuditLog
             {
                 UserType = "Student",
@@ -412,6 +475,8 @@ public sealed class RemoteMonitoringHub : Hub
                 Timestamp = canonicalInfraction.Timestamp
             });
             await context.SaveChangesAsync();
+            await Clients.Group(HubEventNames.TeachersGroup)
+                .SendAsync(HubEventNames.MonitoringAlertReceived, alert);
         }
         catch
         {
@@ -471,8 +536,49 @@ public sealed class RemoteMonitoringHub : Hub
             .SendAsync(HubEventNames.ActiveAppReceived, canonicalApp);
     }
 
+    public async Task ReportWebsiteActivity(WebsiteActivityMessage website)
+    {
+        var student = RequireStudent();
+        if (website is null || string.IsNullOrWhiteSpace(website.Domain) || website.Domain.Length > 300 ||
+            string.IsNullOrWhiteSpace(website.Browser) || website.Browser.Length > 50)
+            throw new HubException("The website activity report is invalid.");
+
+        var canonical = website with
+        {
+            ConnectionId = Context.ConnectionId,
+            StudentId = student.StudentId,
+            PcName = student.PcName,
+            Timestamp = DateTime.UtcNow
+        };
+        await TryRecordTelemetryAsync(() => _telemetryService.RecordWebsiteUsageAsync(
+            canonical.ConnectionId, canonical.StudentId, canonical.PcName,
+            canonical.Domain, canonical.Browser, canonical.Timestamp));
+        await Clients.Group(HubEventNames.TeachersGroup)
+            .SendAsync(HubEventNames.WebsiteActivityReceived, canonical);
+    }
+
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
+        if (_remoteSessions.TryRemove(Context.ConnectionId, out var sessionId))
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                var session = await context.RemoteControlSessions.FindAsync(sessionId);
+                if (session is not null)
+                {
+                    session.IsActive = false;
+                    session.EndedAt = DateTime.UtcNow;
+                    await context.SaveChangesAsync();
+                }
+            }
+            catch
+            {
+                // Connection cleanup must not block disconnect processing.
+            }
+        }
+
         var student = _monitoringService.UnregisterStudent(Context.ConnectionId);
         if (student != null)
         {

@@ -22,6 +22,7 @@ public static class HubEventNames
     public const string IdleStatusReceived = "IdleStatusReceived";
     public const string ReportActiveApp = "ReportActiveApp";
     public const string ActiveAppReceived = "ActiveAppReceived";
+    public const string WebsiteActivityReceived = "WebsiteActivityReceived";
 
     // Global session management
     public const string GlobalStartSession = "GlobalStartSession";
@@ -35,6 +36,7 @@ public static class HubEventNames
     public const string RestrictionsReceived = "RestrictionsReceived";
     public const string ReportInfraction = "ReportInfraction";
     public const string InfractionDetected = "InfractionDetected";
+    public const string MonitoringAlertReceived = "MonitoringAlertReceived";
 
     // Remote workstation commands
     public const string ShutdownStudent = "ShutdownStudent";

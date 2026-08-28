@@ -217,9 +217,16 @@
             image.src = `data:image/jpeg;base64,${base64Image}`;
         }
 
-        function toggleRemoteSupport() {
+        async function toggleRemoteSupport() {
             if (!selectedConnectionId) return;
-            remoteSupportActive = !remoteSupportActive;
+            const nextState = !remoteSupportActive;
+            try {
+                await hub.invoke(nextState ? "StartRemoteControl" : "StopRemoteControl", selectedConnectionId);
+            } catch (error) {
+                showError(`Remote support could not ${nextState ? "start" : "stop"}: ${error.message || error}`);
+                return;
+            }
+            remoteSupportActive = nextState;
             document.getElementById("liveViewImage").classList.toggle("d-none", remoteSupportActive);
             remoteCanvas.classList.toggle("d-none", !remoteSupportActive);
             document.getElementById("remoteSupportButton").textContent = remoteSupportActive ? "Stop Remote Support" : "Start Remote Support";
@@ -302,8 +309,10 @@
 
         hub.on("ReceiveScreenFrame", (connectionId, frame) => updateWorkstationCard(connectionId, frame));
         hub.on("ActiveAppReceived", app => updateActivity(valueOf(app, "connectionId", "ConnectionId"), valueOf(app, "applicationName", "ApplicationName"), false));
+        hub.on("WebsiteActivityReceived", website => updateActivity(valueOf(website, "connectionId", "ConnectionId"), `Web: ${valueOf(website, "domain", "Domain")}`, false));
         hub.on("IdleStatusReceived", idle => updateActivity(valueOf(idle, "connectionId", "ConnectionId"), null, Boolean(valueOf(idle, "isIdle", "IsIdle"))));
         hub.on("InfractionDetected", infraction => showError(`Restriction alert: ${valueOf(infraction, "target", "Target") || "restricted activity detected"}`));
+        hub.on("MonitoringAlertReceived", alert => showError(`${valueOf(alert, "title", "Title")}: ${valueOf(alert, "message", "Message")}`));
         hub.on("StudentConnected", student => createWorkstationCard(valueOf(student, "connectionId", "ConnectionId"), valueOf(student, "studentId", "StudentId"), valueOf(student, "pcName", "PcName")));
         hub.on("StudentDisconnected", connectionId => removeWorkstationCard(connectionId));
         hub.on("GlobalSessionState", state => {

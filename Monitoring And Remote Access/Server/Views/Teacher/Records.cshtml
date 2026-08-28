@@ -22,6 +22,28 @@
 
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
     <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-dark">Website Activity History</h5>
+        <span class="badge bg-light text-dark font-monospace fs-6">@(((IEnumerable<Server.Models.WebsiteUsageLog>)(ViewBag.WebsiteUsage ?? new List<Server.Models.WebsiteUsageLog>())).Count()) Events</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table custom-table mb-0">
+            <thead><tr><th>Student</th><th>Domain</th><th>Browser</th><th>Recorded At</th></tr></thead>
+            <tbody>
+                @foreach (var log in (IEnumerable<Server.Models.WebsiteUsageLog>)(ViewBag.WebsiteUsage ?? new List<Server.Models.WebsiteUsageLog>()))
+                {
+                    <tr><td class="fw-bold">@(log.Student?.Username ?? log.StudentId?.ToString() ?? "?")</td><td>@log.Domain</td><td>@log.Browser</td><td>@log.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td></tr>
+                }
+                @if (!((IEnumerable<Server.Models.WebsiteUsageLog>)(ViewBag.WebsiteUsage ?? new List<Server.Models.WebsiteUsageLog>())).Any())
+                {
+                    <tr><td colspan="4" class="text-center py-4 text-muted">No website activity recorded yet.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
         <h5 class="fw-bold mb-0 text-dark">Application Activity History</h5>
         <span class="badge bg-light text-dark font-monospace fs-6">@(((IEnumerable<Server.Models.UsageLog>)(ViewBag.ApplicationUsage ?? new List<Server.Models.UsageLog>())).Count()) Events</span>
     </div>

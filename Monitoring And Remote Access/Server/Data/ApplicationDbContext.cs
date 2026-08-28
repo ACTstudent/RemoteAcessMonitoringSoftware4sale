@@ -25,8 +25,12 @@ namespace Server.Data
         public DbSet<SystemLog> SystemLogs { get; set; } = null!;
         public DbSet<Notification> Notifications { get; set; } = null!;
         public DbSet<UsageLog> UsageLogs { get; set; } = null!;
+        public DbSet<WebsiteUsageLog> WebsiteUsageLogs { get; set; } = null!;
         public DbSet<IdleInterval> IdleIntervals { get; set; } = null!;
         public DbSet<ActivityEvent> ActivityEvents { get; set; } = null!;
+        public DbSet<MonitoringAlert> MonitoringAlerts { get; set; } = null!;
+        public DbSet<RemoteControlSession> RemoteControlSessions { get; set; } = null!;
+        public DbSet<RemoteCommandLog> RemoteCommandLogs { get; set; } = null!;
         public DbSet<Class> Classes { get; set; } = null!;
         public DbSet<ClassStudent> ClassStudents { get; set; } = null!;
 

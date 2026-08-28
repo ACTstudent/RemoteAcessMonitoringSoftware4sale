@@ -113,6 +113,12 @@ public class MonitoringHubClient : IMonitoringHubClient
         await _connection!.InvokeAsync(HubMethodNames.ReportActiveApp, app);
     }
 
+    public async Task ReportWebsiteActivityAsync(WebsiteActivityMessage website)
+    {
+        EnsureConnected();
+        await _connection!.InvokeAsync(HubMethodNames.ReportWebsiteActivity, website);
+    }
+
     public async Task FetchRestrictionsAsync()
     {
         EnsureConnected();

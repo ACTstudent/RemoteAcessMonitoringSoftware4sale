@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Client.Services;
 using Shared.Contracts;
 
@@ -560,6 +561,7 @@ namespace Client
 
         private bool _lastIdleReported = false;
         private DateTime _lastActiveAppReport = DateTime.MinValue;
+        private string _lastWebsiteReport = string.Empty;
 
         // Reports idle/active status and the active foreground app periodically.
         private async Task StatusReportLoop(CancellationToken token)
@@ -596,6 +598,13 @@ namespace Client
                                     PcName: Environment.MachineName,
                                     ApplicationName: appName,
                                     Timestamp: DateTime.Now));
+                                var website = ActiveAppInfo.GetWebsite(appName);
+                                if (website is not null && website.Value.Domain != _lastWebsiteReport)
+                                {
+                                    _lastWebsiteReport = website.Value.Domain;
+                                    await _hubClient.ReportWebsiteActivityAsync(new WebsiteActivityMessage(
+                                        "", "", Environment.MachineName, website.Value.Domain, website.Value.Browser, DateTime.Now));
+                                }
                             }
                         }
                     }
@@ -751,6 +760,7 @@ namespace Client
 
     internal static class ActiveAppInfo
     {
+        private static readonly Regex DomainPattern = new(@"(?<![A-Za-z0-9-])(?:https?://)?(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,}(?![A-Za-z0-9-])", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         public static string Get()
         {
             IntPtr hwnd = NativeMethods.GetForegroundWindow();
@@ -770,6 +780,14 @@ namespace Client
             {
                 return string.Empty;
             }
+        }
+
+        public static (string Domain, string Browser)? GetWebsite(string app)
+        {
+            var browser = app.Split(" - ")[0].Trim().ToLowerInvariant();
+            if (browser is not ("chrome" or "msedge" or "firefox" or "opera" or "brave")) return null;
+            var match = DomainPattern.Match(app);
+            return match.Success ? (match.Value.TrimEnd('.').ToLowerInvariant(), browser) : null;
         }
     }
 

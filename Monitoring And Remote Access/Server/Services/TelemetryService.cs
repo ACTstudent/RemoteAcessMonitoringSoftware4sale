@@ -71,6 +71,21 @@ public sealed class TelemetryService : ITelemetryService
         await _db.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task RecordWebsiteUsageAsync(string connectionId, string studentId, string pcName,
+        string domain, string browser, DateTime timestamp, CancellationToken cancellationToken = default)
+    {
+        var values = ValidateIdentity(connectionId, studentId, pcName, timestamp);
+        _db.WebsiteUsageLogs.Add(new WebsiteUsageLog
+        {
+            StudentId = int.TryParse(values.StudentId, out var id) ? id : null,
+            Domain = Required(domain, 300, nameof(domain)),
+            Browser = Required(browser, 50, nameof(browser)),
+            Timestamp = values.Timestamp
+        });
+        await RecordActivityEventCoreAsync(values, "WebsiteUsed", null, domain, cancellationToken);
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
     private Task RecordActivityEventCoreAsync(Identity values, string eventType, string? applicationName,
         string? details, CancellationToken cancellationToken)
     {
