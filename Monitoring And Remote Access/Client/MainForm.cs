@@ -563,6 +563,7 @@ namespace Client
         private bool _lastIdleReported = false;
         private DateTime _lastActiveAppReport = DateTime.MinValue;
         private string _lastWebsiteReport = string.Empty;
+        private readonly ManagedBrowserCollector _managedBrowserCollector = new();
 
         // Reports idle/active status and the active foreground app periodically.
         private async Task StatusReportLoop(CancellationToken token)
@@ -599,7 +600,7 @@ namespace Client
                                     PcName: Environment.MachineName,
                                     ApplicationName: appName,
                                     Timestamp: DateTime.UtcNow));
-                                var website = BrowserUrlCollector.TryGetForegroundWebsite();
+                                var website = await _managedBrowserCollector.TryGetActiveWebsiteAsync(token) ?? BrowserUrlCollector.TryGetForegroundWebsite();
                                 if (website is { Status: BrowserMonitoringStatus.Captured, Domain: not null } &&
                                     website.Domain != _lastWebsiteReport)
                                 {
