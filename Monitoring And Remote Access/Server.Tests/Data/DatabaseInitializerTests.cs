@@ -31,7 +31,7 @@ public class DatabaseInitializerTests
 
         DatabaseInitializer.Initialize(db);
 
-        Assert.Single(db.Database.GetAppliedMigrations());
+        Assert.Equal(db.Database.GetMigrations().Count(), db.Database.GetAppliedMigrations().Count());
         Assert.Equal(3, db.Roles.Count());
     }
 

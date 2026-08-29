@@ -72,6 +72,12 @@
                 <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>First</th><th>Last</th><th>Username</th><th>Password</th></tr></thead><tbody>@for (var i = 0; i < 5; i++){<tr><td><input name="bulkFirstNames" class="form-control form-control-sm filter-control" /></td><td><input name="bulkLastNames" class="form-control form-control-sm filter-control" /></td><td><input name="bulkUserNames" class="form-control form-control-sm filter-control" /></td><td><input name="bulkPasswords" type="password" minlength="6" class="form-control form-control-sm filter-control" /></td></tr>}</tbody></table></div>
                 <button type="submit" class="btn btn-outline-emerald rounded-pill mt-3"><i class="bi bi-upload me-1"></i>Add filled rows</button>
             </form>
+            <form method="post" enctype="multipart/form-data" asp-controller="Admin" asp-action="BulkPreviewCsv" class="mt-3">
+                @Html.AntiForgeryToken()<input type="hidden" name="classId" value="@Model.ClassId" />
+                <label class="form-label small fw-semibold">CSV preview</label><input type="file" name="file" accept=".csv,text/csv" class="form-control form-control-sm" required />
+                <div class="form-text">Columns: student number, first name, last name, full name, username, password.</div>
+                <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill mt-2">Preview CSV</button>
+            </form>
         </div>
     </div>
 </div>

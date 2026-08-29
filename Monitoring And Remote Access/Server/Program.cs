@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Concurrent;
 using Server.Data;
 using Server.Services;
 
@@ -134,10 +135,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     }
 });
 builder.Services.AddScoped<ITelemetryService, TelemetryService>();
+builder.Services.AddScoped<LabSessionLifecycleService>();
+builder.Services.AddHostedService<ExpiredLabSessionCleanupService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddSingleton<CategoryPolicyEngine>();
 
 var app = builder.Build();
+var requestWindows = new ConcurrentDictionary<string, (DateTime Started, int Count)>();
 
 if (!app.Environment.IsDevelopment())
 {
@@ -157,6 +161,33 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.Use(async (context, next) =>
 {
+    if (context.Request.Path.StartsWithSegments("/Account/Login") ||
+        context.Request.Path.StartsWithSegments("/api"))
+    {
+        var key = $"{context.Connection.RemoteIpAddress}:{context.Request.Path}";
+        var now = DateTime.UtcNow;
+        var limit = context.Request.Path.StartsWithSegments("/Account/Login") ? 10 : 120;
+        var window = requestWindows.AddOrUpdate(key, (now, 1), (_, current) =>
+            now - current.Started >= TimeSpan.FromMinutes(1) ? (now, 1) : (current.Started, current.Count + 1));
+        if (window.Count > limit)
+        {
+            context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+            return;
+        }
+    }
+    await next(context);
+});
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-Frame-Options"] = "DENY";
+    context.Response.Headers["Referrer-Policy"] = "no-referrer";
+    context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+    context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'";
+    await next(context);
+});
+app.Use(async (context, next) =>
+{
     try { await next(context); }
     catch (Exception ex)
     {
@@ -164,7 +195,7 @@ app.Use(async (context, next) =>
         {
             using var scope = app.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            db.SystemLogs.Add(new Server.Models.SystemLog { Level = "Error", Message = ex.Message, StackTrace = ex.ToString(), Timestamp = DateTime.Now });
+            db.SystemLogs.Add(new Server.Models.SystemLog { Level = "Error", Message = "An unexpected server error occurred.", StackTrace = app.Environment.IsDevelopment() ? ex.ToString() : null, Timestamp = DateTime.UtcNow });
             db.SaveChanges();
         }
         catch { }

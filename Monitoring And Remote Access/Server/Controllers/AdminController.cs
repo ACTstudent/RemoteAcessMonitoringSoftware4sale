@@ -645,6 +645,15 @@ namespace Server.Controllers
             return View(await _context.Computers.OrderBy(c => c.LaboratoryStation).ToListAsync());
         }
 
+        public async Task<IActionResult> ComputerHistory(int id)
+        {
+            if (!CheckAccess()) return Denied();
+            var computer = await _context.Computers.AsNoTracking().FirstOrDefaultAsync(c => c.ComputerId == id);
+            if (computer == null) return NotFound();
+            ViewBag.Computer = computer;
+            return View(await _context.ComputerStatusHistories.AsNoTracking().Where(h => h.ComputerId == id).OrderByDescending(h => h.ChangedAt).ToListAsync());
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateComputer(Computer computer)
         {
@@ -669,9 +678,12 @@ namespace Server.Controllers
             var existing = await _context.Computers.FindAsync(computer.ComputerId);
             if (existing != null)
             {
+                var previousStatus = existing.Status;
                 existing.LaboratoryStation = string.IsNullOrWhiteSpace(computer.LaboratoryStation) ? existing.LaboratoryStation : computer.LaboratoryStation.Trim();
                 existing.Status = string.IsNullOrWhiteSpace(computer.Status) ? existing.Status : computer.Status.Trim();
                 existing.AssignedTo = computer.AssignedTo;
+                if (!string.Equals(previousStatus, existing.Status, StringComparison.OrdinalIgnoreCase))
+                    _context.ComputerStatusHistories.Add(new ComputerStatusHistory { ComputerId = existing.ComputerId, Status = existing.Status, ChangedByType = "Admin", ChangedById = HttpContext.Session.GetInt32("AdminId") });
                 await _context.SaveChangesAsync();
                 await AuditAsync("UpdateComputer", $"Updated computer {existing.LaboratoryStation}");
                 TempData["Message"] = $"Workstation '{existing.LaboratoryStation}' updated successfully!";
@@ -962,6 +974,27 @@ namespace Server.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> BulkPreviewCsv(int classId, IFormFile? file)
+        {
+            if (!CheckAccess()) return Denied();
+            if (file == null || file.Length == 0) return RedirectToAction("ClassDetails", new { id = classId });
+            using var reader = new StreamReader(file.OpenReadStream());
+            var parsed = _classManagement.ParseBulkStudentsCsv(await reader.ReadToEndAsync());
+            var import = await _classManagement.ValidateBulkStudentsAsync(classId, parsed.Rows);
+            if (import.Errors.Count > 0) return File(BulkErrorCsv(import.Errors), "text/csv; charset=utf-8", $"CAMS-Student-Import-Errors-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv");
+            var result = await _classManagement.BulkCreateStudentsInClassAsync(classId, import.Rows);
+            TempData[result.Success ? "Message" : "ErrorMessage"] = result.Success ? $"Successfully added {result.Count} student(s) to the class." : result.Error;
+            return RedirectToAction("ClassDetails", new { id = classId });
+        }
+
+        private static byte[] BulkErrorCsv(IEnumerable<BulkStudentRow> errors)
+        {
+            var csv = new System.Text.StringBuilder("Row,Student Number,First Name,Last Name,Full Name,Username,Error\n");
+            foreach (var row in errors) csv.AppendLine($"{row.RowNumber},{Csv(row.Input.StudentNumber)},{Csv(row.Input.FirstName)},{Csv(row.Input.LastName)},{Csv(row.Input.FullName)},{Csv(row.Input.Username)},{Csv(row.Error)}");
+            return System.Text.Encoding.UTF8.GetBytes(csv.ToString());
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> EnrollStudent(int classId, int studentId, bool moveStudent = false)
         {
             if (!CheckAccess()) return Denied();
@@ -996,7 +1029,7 @@ namespace Server.Controllers
         }
 
         // ---------- Reports ----------
-        public async Task<IActionResult> Reports(DateTime? from, DateTime? to, int? classId = null, int page = 1, int pageSize = 50)
+        public async Task<IActionResult> Reports(DateTime? from, DateTime? to, int? classId = null, string? station = null, int page = 1, int pageSize = 50)
         {
             if (!CheckAccess()) return Denied();
 
@@ -1011,6 +1044,7 @@ namespace Server.Controllers
                 .Include(s => s.Computer)
                 .Where(s => s.StartTime < toDate && (s.EndTime ?? DateTime.UtcNow) > fromDate);
             if (classId.HasValue) sessionQuery = sessionQuery.Where(s => s.Student != null && s.Student.ClassId == classId.Value);
+            if (!string.IsNullOrWhiteSpace(station)) sessionQuery = sessionQuery.Where(s => (s.Computer != null && s.Computer.LaboratoryStation == station) || s.PCName == station);
             var totalSessions = await sessionQuery.CountAsync();
             var sessions = await sessionQuery.OrderByDescending(s => s.StartTime).ThenByDescending(s => s.Id)
                 .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
@@ -1034,6 +1068,8 @@ namespace Server.Controllers
                 summarySessions.GroupBy(s => s.Teacher?.Username ?? "Unknown").ToDictionary(g => g.Key, g => g.Count()),
                 summarySessions.GroupBy(s => s.Computer?.LaboratoryStation ?? s.PCName ?? "Unknown").ToDictionary(g => g.Key, g => g.Count()));
             ViewBag.Classes = await _context.Classes.Where(c => !c.IsArchived).OrderBy(c => c.ClassName).ToListAsync();
+            ViewBag.Stations = await _context.Computers.AsNoTracking().OrderBy(c => c.LaboratoryStation).ToListAsync();
+            ViewBag.SelectedStation = station;
             ViewBag.TopApps = usage
                 .GroupBy(u => u.AppName)
                 .OrderByDescending(g => g.Count())
@@ -1085,31 +1121,62 @@ namespace Server.Controllers
         }
 
         // ---------- Export usage report as CSV ----------
-        public async Task<IActionResult> ExportReportsCsv(DateTime? from = null, DateTime? to = null)
+        public async Task<IActionResult> ExportReportsCsv(DateTime? from = null, DateTime? to = null, int? classId = null, string? station = null)
         {
             if (!CheckAccess()) return Denied();
             var fromDate = (from ?? DateTime.Today.AddDays(-30)).Date;
             var toDate = (to ?? DateTime.Today).Date.AddDays(1);
-            var sessions = await _context.LabSessions
+            var query = _context.LabSessions
                 .Include(s => s.Student)
+                .ThenInclude(s => s!.Class)
                 .Include(s => s.Teacher)
                 .Include(s => s.Computer)
                 .Where(s => s.StartTime < toDate && (s.EndTime ?? DateTime.UtcNow) > fromDate)
-                .OrderByDescending(s => s.StartTime)
-                .Take(2000)
-                .ToListAsync();
+                .AsQueryable();
+            if (classId.HasValue) query = query.Where(s => s.Student != null && s.Student.ClassId == classId.Value);
+            if (!string.IsNullOrWhiteSpace(station)) query = query.Where(s => (s.Computer != null && s.Computer.LaboratoryStation == station) || s.PCName == station);
+            var sessions = await query.OrderByDescending(s => s.StartTime).Take(2000).ToListAsync();
 
             var csv = new System.Text.StringBuilder();
-            csv.AppendLine("Student,Teacher,Station,Start Time,End Time,Duration (min),Status");
+            csv.AppendLine("Student,Class,Teacher,Station,Start Time,End Time,Duration (min),Attendance,Status");
             foreach (var s in sessions)
             {
                 var duration = Math.Round(SessionDuration(s, fromDate, toDate, DateTime.UtcNow).TotalMinutes, 1);
-                csv.AppendLine($"{Csv(s.Student?.FullName)},{Csv(s.Teacher?.Username ?? "System")},{Csv(s.Computer?.LaboratoryStation ?? s.PCName)},{s.StartTime:yyyy-MM-dd HH:mm},{s.EndTime?.ToString("yyyy-MM-dd HH:mm")},{duration},{s.Status}");
+                csv.AppendLine($"{Csv(s.Student?.FullName)},{Csv(s.Student?.Class?.ClassName ?? "Unassigned")},{Csv(s.Teacher?.Username ?? "System")},{Csv(s.Computer?.LaboratoryStation ?? s.PCName)},{s.StartTime:yyyy-MM-dd HH:mm},{s.EndTime?.ToString("yyyy-MM-dd HH:mm")},{duration},{(s.StartTime < toDate && (s.EndTime ?? DateTime.UtcNow) > fromDate ? "Present" : "Absent")},{s.Status}");
             }
 
             return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()),
                 "text/csv; charset=utf-8",
                 $"CAMS-UsageReport-{DateTime.Now:yyyyMMdd-HHmm}.csv");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportAttendanceCsv(DateTime? from = null, DateTime? to = null, int? classId = null)
+        {
+            if (!CheckAccess()) return Denied();
+            var fromDate = (from ?? DateTime.Today.AddDays(-30)).Date;
+            var toDate = (to ?? DateTime.Today).Date.AddDays(1);
+            var query = _context.LabSessions.AsNoTracking().Include(s => s.Student).ThenInclude(s => s!.Class)
+                .Where(s => s.StartTime < toDate && (s.EndTime ?? DateTime.UtcNow) > fromDate);
+            if (classId.HasValue) query = query.Where(s => s.Student != null && s.Student.ClassId == classId.Value);
+            var rows = await query.OrderByDescending(s => s.StartTime).Take(5000).ToListAsync();
+            var csv = new System.Text.StringBuilder("Student Number,Student Name,Class,Station,Date,Attendance\n");
+            foreach (var s in rows) csv.AppendLine($"{Csv(s.Student?.StudentNumber)},{Csv(s.Student?.FullName)},{Csv(s.Student?.Class?.ClassName ?? "Unassigned")},{Csv(s.Computer?.LaboratoryStation ?? s.PCName)},{s.StartTime:yyyy-MM-dd},Present");
+            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv; charset=utf-8", $"CAMS-Attendance-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportRemoteCommandsCsv(DateTime? from = null, DateTime? to = null, int? teacherId = null)
+        {
+            if (!CheckAccess()) return Denied();
+            var fromDate = (from ?? DateTime.Today.AddDays(-30)).Date;
+            var toDate = (to ?? DateTime.Today).Date.AddDays(1);
+            var query = _context.RemoteCommandLogs.AsNoTracking().Where(l => l.Timestamp >= fromDate && l.Timestamp < toDate);
+            if (teacherId.HasValue) query = query.Where(l => l.TeacherId == teacherId.Value);
+            var rows = await query.OrderByDescending(l => l.Timestamp).Take(5000).ToListAsync();
+            var csv = new System.Text.StringBuilder("Timestamp,Teacher ID,Command,Details,Session ID\n");
+            foreach (var l in rows) csv.AppendLine($"{l.Timestamp:O},{l.TeacherId},{Csv(l.Command)},{Csv(l.Details)},{l.RemoteControlSessionId}");
+            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv; charset=utf-8", $"CAMS-RemoteCommands-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv");
         }
 
         [HttpGet]

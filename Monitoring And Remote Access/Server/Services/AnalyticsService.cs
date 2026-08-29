@@ -11,6 +11,7 @@ public interface IAnalyticsService
     Task<PagedResult<MonitoringAlert>> GetAlertsAsync(int teacherId, bool includeAcknowledged = false, DateTime? from = null, DateTime? to = null, string? severity = null, string? studentId = null, int page = 1, int pageSize = 100, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<AlertHistoryItem>> GetAlertHistoryAsync(int alertId, int teacherId, CancellationToken cancellationToken = default);
     Task<bool> SetAlertAcknowledgedAsync(int alertId, int teacherId, bool acknowledged, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<MonitoringAlert>> GetAlertExportAsync(int teacherId, DateTime? from = null, DateTime? to = null, string? severity = null, string? studentId = null, CancellationToken cancellationToken = default);
 }
 
 public sealed class AnalyticsService : IAnalyticsService
@@ -83,11 +84,22 @@ public sealed class AnalyticsService : IAnalyticsService
         return true;
     }
 
+    public async Task<IReadOnlyList<MonitoringAlert>> GetAlertExportAsync(int teacherId, DateTime? from = null, DateTime? to = null, string? severity = null, string? studentId = null, CancellationToken cancellationToken = default)
+    {
+        var studentIds = await AccessibleStudentIds(teacherId, cancellationToken);
+        var query = _db.MonitoringAlerts.AsNoTracking().Where(a => studentIds.Contains(a.StudentId));
+        if (from.HasValue) query = query.Where(a => a.CreatedAt >= from.Value.Date);
+        if (to.HasValue) query = query.Where(a => a.CreatedAt < to.Value.Date.AddDays(1));
+        if (!string.IsNullOrWhiteSpace(severity)) query = query.Where(a => a.Severity == severity);
+        if (!string.IsNullOrWhiteSpace(studentId)) query = query.Where(a => a.StudentId == studentId);
+        return await query.OrderByDescending(a => a.CreatedAt).ThenByDescending(a => a.MonitoringAlertId).ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<AlertHistoryItem>> GetAlertHistoryAsync(int alertId, int teacherId, CancellationToken cancellationToken = default)
     {
         var studentIds = await AccessibleStudentIds(teacherId, cancellationToken);
         if (!await _db.MonitoringAlerts.AnyAsync(a => a.MonitoringAlertId == alertId && studentIds.Contains(a.StudentId), cancellationToken)) return Array.Empty<AlertHistoryItem>();
-        return await _db.AuditLogs.AsNoTracking().Where(l => l.UserType == "Teacher" && l.UserId == teacherId &&
+        return await _db.AuditLogs.AsNoTracking().Where(l => l.UserType == "Teacher" &&
                 (l.Action == "AcknowledgeAlert" || l.Action == "ReopenAlert") && l.Details.Contains($"Alert {alertId} "))
             .OrderByDescending(l => l.Timestamp)
             .Select(l => new AlertHistoryItem(alertId, l.Action, l.UserId, l.Timestamp, l.Details)).ToListAsync(cancellationToken);

@@ -117,6 +117,41 @@ public class ClassManagementServiceTests
     }
 
     [Fact]
+    public void CsvParserSupportsQuotedValuesAndHeader()
+    {
+        using var db = GetDbContext();
+        var service = new ClassManagementService(db);
+
+        var preview = service.ParseBulkStudentsCsv("Student Number,First Name,Last Name,Full Name,Username,Password\nSTU-1,Jane,\"Van Doe\",,jane,secret1");
+
+        var row = Assert.Single(preview.Rows);
+        Assert.Equal("Van Doe", row.Input.LastName);
+        Assert.Equal("jane", row.Input.Username);
+    }
+
+    [Fact]
+    public async Task BulkPreviewReportsAllInvalidRowsWithoutCreatingAccounts()
+    {
+        using var db = GetDbContext();
+        var teacher = new Teacher { FirstName = "Maria", LastName = "Santos", Username = "preview", PasswordHash = "hash", Status = "Active" };
+        db.Teachers.Add(teacher);
+        await db.SaveChangesAsync();
+        var cls = new Class { ClassName = "Preview", TeacherId = teacher.TeacherId };
+        db.Classes.Add(cls);
+        await db.SaveChangesAsync();
+        var service = new ClassManagementService(db);
+
+        var preview = await service.PreviewBulkStudentsAsync(cls.ClassId, new[] {
+            new NewStudentInput(null, "Valid", "Student", null, "same", "secret1"),
+            new NewStudentInput(null, "", "", null, "same", "short")
+        }, teacher.TeacherId);
+
+        Assert.Equal(2, preview.Rows.Count);
+        Assert.Equal(1, preview.ErrorCount);
+        Assert.Empty(await db.Students.ToListAsync());
+    }
+
+    [Fact]
     public async Task DeleteClassPreservesStudentAccountAndClearsAssignment()
     {
         using var db = GetDbContext();

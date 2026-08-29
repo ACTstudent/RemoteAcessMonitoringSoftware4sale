@@ -58,7 +58,9 @@ namespace Server.Controllers
         public async Task<IActionResult> Alerts()
         {
             if (!CheckAccess()) return Denied();
+            var studentId = HttpContext.Session.GetInt32("StudentId")!.Value;
             var notifications = await _context.Notifications
+                .Where(n => n.StudentId == studentId || n.StudentId == null)
                 .OrderByDescending(n => n.CreatedAt)
                 .Take(100)
                 .ToListAsync();
@@ -69,7 +71,9 @@ namespace Server.Controllers
         public async Task<IActionResult> MarkRead(int id)
         {
             if (!CheckAccess()) return Denied();
-            var n = await _context.Notifications.FindAsync(id);
+            var studentId = HttpContext.Session.GetInt32("StudentId")!.Value;
+            var n = await _context.Notifications.FirstOrDefaultAsync(n => n.NotificationId == id &&
+                (n.StudentId == studentId || n.StudentId == null));
             if (n != null) { n.IsRead = true; await _context.SaveChangesAsync(); }
             return RedirectToAction("Alerts");
         }

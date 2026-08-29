@@ -310,6 +310,38 @@ namespace Server.Migrations
                     b.ToTable("Computers");
                 });
 
+            modelBuilder.Entity("Server.Models.ComputerStatusHistory", b =>
+                {
+                    b.Property<int>("ComputerStatusHistoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("ChangedById")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ChangedByType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ComputerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("ComputerStatusHistoryId");
+
+                    b.HasIndex("ComputerId", "ChangedAt");
+
+                    b.ToTable("ComputerStatusHistories");
+                });
+
             modelBuilder.Entity("Server.Models.IdleInterval", b =>
                 {
                     b.Property<int>("IdleIntervalId")
@@ -732,7 +764,7 @@ namespace Server.Migrations
                             SessionRuleId = 1,
                             AllowPause = true,
                             AllowRemoteControl = true,
-                            CreatedAt = new DateTime(2026, 8, 29, 23, 6, 55, 785, DateTimeKind.Local).AddTicks(3147),
+                            CreatedAt = new DateTime(2026, 8, 30, 1, 57, 29, 59, DateTimeKind.Local).AddTicks(5031),
                             IsActive = true,
                             IsDefault = true,
                             MaxDurationMinutes = 60,
@@ -1013,6 +1045,17 @@ namespace Server.Migrations
                     b.Navigation("Class");
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("Server.Models.ComputerStatusHistory", b =>
+                {
+                    b.HasOne("Server.Models.Computer", "Computer")
+                        .WithMany()
+                        .HasForeignKey("ComputerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Computer");
                 });
 
             modelBuilder.Entity("Server.Models.LabSession", b =>

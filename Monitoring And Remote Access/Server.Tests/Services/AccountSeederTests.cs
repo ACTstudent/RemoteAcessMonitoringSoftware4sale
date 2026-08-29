@@ -57,6 +57,22 @@ public class AccountSeederTests
         Assert.Empty(context.Students);
     }
 
+    [Fact]
+    public void SeedConfiguredAccounts_DoesNotUseProductionDefaults()
+    {
+        var configuration = CreateConfiguration(new Dictionary<string, string?>
+        {
+            ["Cams:InitialAdminPassword"] = "",
+            ["Cams:SeededStudentPassword"] = ""
+        });
+        using var db = CreateContext();
+
+        AccountSeeder.SeedConfiguredAccounts(db, configuration);
+
+        Assert.Empty(db.Admins);
+        Assert.Empty(db.Students);
+    }
+
     private static ApplicationDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()

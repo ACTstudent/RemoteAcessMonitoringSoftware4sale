@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -37,6 +38,19 @@ public sealed record ClassOperationResult(
         new(false, Error: error);
 }
 
+public sealed record BulkStudentRow(int RowNumber, NewStudentInput Input, string? Error = null)
+{
+    public bool IsValid => string.IsNullOrWhiteSpace(Error);
+}
+
+public sealed record BulkStudentPreview(IReadOnlyList<BulkStudentRow> Rows)
+{
+    public int ValidCount => Rows.Count(row => row.IsValid);
+    public int ErrorCount => Rows.Count(row => !row.IsValid);
+}
+
+public sealed record BulkStudentImport(IReadOnlyList<NewStudentInput> Rows, IReadOnlyList<BulkStudentRow> Errors);
+
 public interface IClassManagementService
 {
     Task<IReadOnlyList<Class>> GetClassesAsync(int? teacherId = null);
@@ -52,6 +66,9 @@ public interface IClassManagementService
     Task<ClassOperationResult> EnrollExistingStudentAsync(int classId, int studentId, bool moveStudent, int? teacherId = null);
     Task<ClassOperationResult> CreateStudentInClassAsync(int classId, NewStudentInput input, int? teacherId = null);
     Task<ClassOperationResult> BulkCreateStudentsInClassAsync(int classId, IReadOnlyList<NewStudentInput> inputs, int? teacherId = null);
+    Task<BulkStudentPreview> PreviewBulkStudentsAsync(int classId, IReadOnlyList<NewStudentInput> inputs, int? teacherId = null);
+    Task<BulkStudentImport> ValidateBulkStudentsAsync(int classId, IReadOnlyList<BulkStudentRow> rows, int? teacherId = null);
+    BulkStudentPreview ParseBulkStudentsCsv(string csv);
     Task<ClassOperationResult> RemoveStudentAsync(int classId, int studentId, int? teacherId = null);
 }
 
@@ -565,6 +582,85 @@ public sealed class ClassManagementService : IClassManagementService
             await _context.SaveChangesAsync();
             return ClassOperationResult.Ok(entity.ClassName, students.Count);
         });
+    }
+
+    public BulkStudentPreview ParseBulkStudentsCsv(string csv)
+    {
+        var rows = new List<BulkStudentRow>();
+        var lines = csv.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
+        if (lines.Length == 0 || string.IsNullOrWhiteSpace(lines[0]))
+        {
+            return new BulkStudentPreview(rows);
+        }
+
+        var start = 0;
+        var header = ParseCsvLine(lines[0].TrimStart('\uFEFF'));
+        var knownHeaders = new[] { "studentnumber", "first", "firstname", "last", "lastname", "fullname", "username", "password" };
+        if (header.Any(value => knownHeaders.Contains(value.Trim().Replace(" ", string.Empty).ToLowerInvariant())))
+        {
+            start = 1;
+        }
+
+        for (var i = start; i < lines.Length; i++)
+        {
+            if (string.IsNullOrWhiteSpace(lines[i])) continue;
+            var values = ParseCsvLine(lines[i]);
+            var input = new NewStudentInput(
+                Value(values, 0), Value(values, 1), Value(values, 2), Value(values, 3), Value(values, 4), Value(values, 5));
+            rows.Add(new BulkStudentRow(i + 1, input));
+        }
+        return new BulkStudentPreview(rows);
+    }
+
+    public async Task<BulkStudentPreview> PreviewBulkStudentsAsync(int classId, IReadOnlyList<NewStudentInput> inputs, int? teacherId = null)
+    {
+        var previewRows = new List<BulkStudentRow>();
+        var usernames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var numbers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var cls = await FindAccessibleClassAsync(classId, teacherId);
+        if (cls == null)
+        {
+            return new BulkStudentPreview(new[] { new BulkStudentRow(1, new NewStudentInput(null, null, null, null, null, null), "The class was not found or you do not have access to it.") });
+        }
+
+        for (var i = 0; i < inputs.Count; i++)
+        {
+            var row = inputs[i];
+            var validation = await ValidateStudentInputAsync(row);
+            var error = validation.Success ? null : validation.Error;
+            var requestedUsername = NormalizeOptional(row.Username);
+            var requestedNumber = NormalizeOptional(row.StudentNumber);
+            if (error == null && requestedUsername != null && !usernames.Add(requestedUsername)) error = $"The username '{requestedUsername}' is repeated in the file.";
+            if (error == null && requestedNumber != null && !numbers.Add(requestedNumber)) error = $"The student number '{requestedNumber}' is repeated in the file.";
+            previewRows.Add(new BulkStudentRow(i + 1, row, error));
+        }
+        return new BulkStudentPreview(previewRows);
+    }
+
+    public async Task<BulkStudentImport> ValidateBulkStudentsAsync(int classId, IReadOnlyList<BulkStudentRow> rows, int? teacherId = null)
+    {
+        var preview = await PreviewBulkStudentsAsync(classId, rows.Select(row => row.Input).ToList(), teacherId);
+        var merged = preview.Rows.Select((row, index) => row with { RowNumber = rows[index].RowNumber }).ToList();
+        return new BulkStudentImport(merged.Where(row => row.IsValid).Select(row => row.Input).ToList(), merged.Where(row => !row.IsValid).ToList());
+    }
+
+    private static string? Value(IReadOnlyList<string> values, int index) => index < values.Count ? NormalizeOptional(values[index]) : null;
+
+    private static List<string> ParseCsvLine(string line)
+    {
+        var result = new List<string>();
+        var value = new StringBuilder();
+        var quoted = false;
+        for (var i = 0; i < line.Length; i++)
+        {
+            var c = line[i];
+            if (c == '"' && quoted && i + 1 < line.Length && line[i + 1] == '"') { value.Append('"'); i++; continue; }
+            if (c == '"') { quoted = !quoted; continue; }
+            if (c == ',' && !quoted) { result.Add(value.ToString()); value.Clear(); continue; }
+            value.Append(c);
+        }
+        result.Add(value.ToString());
+        return result;
     }
 
     public async Task<ClassOperationResult> RemoveStudentAsync(int classId, int studentId, int? teacherId = null)

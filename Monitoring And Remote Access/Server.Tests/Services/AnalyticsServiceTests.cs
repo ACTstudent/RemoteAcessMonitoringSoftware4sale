@@ -45,4 +45,19 @@ public class AnalyticsServiceTests
         Assert.False(await service.SetAlertAcknowledgedAsync(11, 1, true));
         Assert.True((await db.MonitoringAlerts.FindAsync(10))!.IsAcknowledged);
     }
+
+    [Fact]
+    public async Task AlertExport_OnlyReturnsAuthorizedStudents()
+    {
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
+        await using var db = new ApplicationDbContext(options);
+        db.Students.AddRange(
+            new Student { Id = 1, StudentNumber = "S-1", FullName = "S", Username = "s", PasswordHash = "h", AdviserId = 1 },
+            new Student { Id = 2, StudentNumber = "S-2", FullName = "S2", Username = "s2", PasswordHash = "h", AdviserId = 2 });
+        db.MonitoringAlerts.AddRange(new MonitoringAlert { StudentId = "1", PcName = "PC", Title = "A", Message = "M" }, new MonitoringAlert { StudentId = "2", PcName = "PC", Title = "B", Message = "M" });
+        await db.SaveChangesAsync();
+        var alerts = await new AnalyticsService(db).GetAlertExportAsync(1);
+        Assert.Single(alerts);
+        Assert.Equal("1", alerts[0].StudentId);
+    }
 }

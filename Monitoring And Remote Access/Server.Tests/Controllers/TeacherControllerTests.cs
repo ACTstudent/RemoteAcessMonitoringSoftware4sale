@@ -31,7 +31,8 @@ public class TeacherControllerTests
         hubMock.Setup(h => h.Clients).Returns(clientsMock.Object);
 
         var sessionManager = new SessionManagerService(hubMock.Object);
-        var controller = new TeacherController(context, sessionManager);
+        var lifecycle = new LabSessionLifecycleService(context, hubMock.Object);
+        var controller = new TeacherController(context, sessionManager, lifecycle);
         var httpContext = new DefaultHttpContext();
         httpContext.Session = new FakeSession();
         if (isTeacher)

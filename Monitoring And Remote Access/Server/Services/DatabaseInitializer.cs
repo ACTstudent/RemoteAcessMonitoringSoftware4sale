@@ -75,15 +75,18 @@ public static class DatabaseInitializer
 
     private static void BaselineLegacySqliteDatabase(ApplicationDbContext db)
     {
-        var initialMigration = db.Database.GetMigrations().SingleOrDefault();
-        if (initialMigration is null)
+        var migrations = db.Database.GetMigrations().ToList();
+        if (migrations.Count == 0)
         {
             throw new InvalidOperationException("No EF Core migration was found for the application database.");
         }
 
         db.Database.ExecuteSqlRaw("CREATE TABLE IF NOT EXISTS __EFMigrationsHistory (MigrationId TEXT NOT NULL CONSTRAINT PK___EFMigrationsHistory PRIMARY KEY, ProductVersion TEXT NOT NULL);");
         var productVersion = typeof(DbContext).Assembly.GetName().Version?.ToString(3) ?? "8.0.0";
-        db.Database.ExecuteSqlInterpolated($"INSERT OR IGNORE INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES ({initialMigration}, {productVersion});");
+        foreach (var migration in migrations)
+        {
+            db.Database.ExecuteSqlInterpolated($"INSERT OR IGNORE INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES ({migration}, {productVersion});");
+        }
     }
 
     private static void RemoveDuplicateMembershipLinks(ApplicationDbContext db)
@@ -130,6 +133,8 @@ public static class DatabaseInitializer
         TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_RemoteControlSessions_TeacherId_IsActive ON RemoteControlSessions (TeacherId, IsActive);");
         TryCreateIndex(db, "CREATE TABLE IF NOT EXISTS WebsiteUsageLogs (WebsiteUsageLogId INTEGER NOT NULL CONSTRAINT PK_WebsiteUsageLogs PRIMARY KEY AUTOINCREMENT, StudentId INTEGER NULL, Domain TEXT NOT NULL, Browser TEXT NOT NULL, Timestamp TEXT NOT NULL);");
         TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_WebsiteUsageLogs_StudentId_Timestamp ON WebsiteUsageLogs (StudentId, Timestamp);");
+        TryCreateIndex(db, "CREATE TABLE IF NOT EXISTS ComputerStatusHistories (ComputerStatusHistoryId INTEGER NOT NULL CONSTRAINT PK_ComputerStatusHistories PRIMARY KEY AUTOINCREMENT, ComputerId INTEGER NOT NULL, Status TEXT NOT NULL, ChangedAt TEXT NOT NULL, ChangedByType TEXT NOT NULL, ChangedById INTEGER NULL);");
+        TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_ComputerStatusHistories_ComputerId_ChangedAt ON ComputerStatusHistories (ComputerId, ChangedAt);");
     }
 
     private static void EnsureCategoryTables(ApplicationDbContext db)

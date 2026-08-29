@@ -14,6 +14,7 @@ namespace Server.Data
         public DbSet<Teacher> Teachers { get; set; } = null!;
         public DbSet<Student> Students { get; set; } = null!;
         public DbSet<Computer> Computers { get; set; } = null!;
+        public DbSet<ComputerStatusHistory> ComputerStatusHistories { get; set; } = null!;
         public DbSet<LabSession> LabSessions { get; set; } = null!;
         public DbSet<Role> Roles { get; set; } = null!;
         public DbSet<Permission> Permissions { get; set; } = null!;
@@ -69,6 +70,15 @@ namespace Server.Data
 
             modelBuilder.Entity<UsageLog>()
                 .HasIndex(log => new { log.PcName, log.Timestamp });
+
+            modelBuilder.Entity<ComputerStatusHistory>()
+                .HasOne(h => h.Computer)
+                .WithMany()
+                .HasForeignKey(h => h.ComputerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ComputerStatusHistory>()
+                .HasIndex(h => new { h.ComputerId, h.ChangedAt });
 
             modelBuilder.Entity<IdleInterval>()
                 .HasIndex(interval => new { interval.ConnectionId, interval.StartedAt });

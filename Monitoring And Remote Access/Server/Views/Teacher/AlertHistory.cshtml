@@ -1,0 +1,10 @@
+@model IReadOnlyList<Server.Models.AlertHistoryItem>
+@{ ViewData["Title"] = "Alert History"; Layout = "_TeacherLayout"; }
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div><h2 class="fw-extrabold mb-1">Alert History</h2><p class="text-muted mb-0">Authorized lifecycle changes for this alert.</p></div>
+    <a class="btn btn-outline-secondary rounded-pill" href="@Url.Action("Alerts")">Back to alerts</a>
+</div>
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden"><div class="table-responsive"><table class="table custom-table mb-0"><thead><tr><th>Time</th><th>Action</th><th>User</th><th>Details</th></tr></thead><tbody>
+@foreach (var item in Model) { <tr><td>@item.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</td><td>@(item.Action == "AcknowledgeAlert" ? "Acknowledged" : "Reopened")</td><td>@item.UserId</td><td>@item.Details</td></tr> }
+@if (!Model.Any()) { <tr><td colspan="4" class="text-center text-muted py-4">No lifecycle changes recorded.</td></tr> }
+</tbody></table></div></div>

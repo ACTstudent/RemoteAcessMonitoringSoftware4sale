@@ -51,6 +51,20 @@ public class SystemAndModelTests
     }
 
     [Fact]
+    public async Task ComputerStatusHistory_PersistsStatusAndAuditMetadata()
+    {
+        using var db = GetDbContext();
+        var computer = new Computer { LaboratoryStation = "PC-01" };
+        db.Computers.Add(computer);
+        await db.SaveChangesAsync();
+        db.ComputerStatusHistories.Add(new ComputerStatusHistory { ComputerId = computer.ComputerId, Status = "Maintenance", ChangedByType = "Admin", ChangedById = 1 });
+        await db.SaveChangesAsync();
+        var history = await db.ComputerStatusHistories.SingleAsync();
+        Assert.Equal("Maintenance", history.Status);
+        Assert.Equal("Admin", history.ChangedByType);
+    }
+
+    [Fact]
     public void LanConfiguration_DefaultIsActive_IsTrue()
     {
         var lan = new LanConfiguration();

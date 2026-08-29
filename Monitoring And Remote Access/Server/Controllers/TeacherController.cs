@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Models;
 using Server.Services;
+using Microsoft.AspNetCore.SignalR;
+using Server.Hubs;
 
 namespace Server.Controllers
 {
@@ -13,17 +15,20 @@ namespace Server.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly SessionManagerService _sessionManager;
+        private readonly LabSessionLifecycleService _sessionLifecycle;
         private readonly IClassManagementService _classManagement;
         private readonly IAnalyticsService _analytics;
 
         public TeacherController(
             ApplicationDbContext context,
             SessionManagerService sessionManager,
+            LabSessionLifecycleService sessionLifecycle,
             IClassManagementService? classManagement = null,
             IAnalyticsService? analytics = null)
         {
             _context = context;
             _sessionManager = sessionManager;
+            _sessionLifecycle = sessionLifecycle;
             _classManagement = classManagement ?? new ClassManagementService(context);
             _analytics = analytics ?? new AnalyticsService(context);
         }
@@ -181,20 +186,7 @@ namespace Server.Controllers
             var session = await _context.LabSessions.FirstOrDefaultAsync(s => s.Id == id && s.TeacherId == teacherId.Value);
             if (session != null)
             {
-                session.Status = "Ended";
-                session.IsActive = false;
-                session.EndTime = DateTime.Now;
-
-                if (session.ComputerId.HasValue)
-                {
-                    var computer = await _context.Computers.FindAsync(session.ComputerId.Value);
-                    if (computer != null)
-                    {
-                        computer.Status = "Available";
-                        computer.AssignedTo = null;
-                    }
-                }
-                await _context.SaveChangesAsync();
+                await _sessionLifecycle.EndAsync(session);
                 await AuditAsync("EndSession", $"Ended session {id}");
                 TempData["Message"] = "Lab Session ended successfully!";
             }
@@ -499,7 +491,22 @@ namespace Server.Controllers
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
-            return Json(await _analytics.GetAlertHistoryAsync(id, teacherId.Value));
+            var history = await _analytics.GetAlertHistoryAsync(id, teacherId.Value);
+            if (history.Count == 0) return NotFound();
+            return View(history);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportAlertsCsv(DateTime? from = null, DateTime? to = null, string? severity = null, string? studentId = null)
+        {
+            if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
+            var alerts = await _analytics.GetAlertExportAsync(teacherId.Value, from, to, severity, studentId);
+            var csv = new System.Text.StringBuilder("Created,Student ID,Station,Severity,Title,Message,Status\n");
+            foreach (var alert in alerts)
+                csv.AppendLine($"{alert.CreatedAt:O},{Csv(alert.StudentId)},{Csv(alert.PcName)},{Csv(alert.Severity)},{Csv(alert.Title)},{Csv(alert.Message)},{(alert.IsAcknowledged ? "Acknowledged" : "Open")}");
+            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv; charset=utf-8", $"CAMS-Alerts-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv");
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -522,7 +529,7 @@ namespace Server.Controllers
             return View(students);
         }
 
-        [HttpPost]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateStudent(Student student, int? classId = null)
         {
             if (!CheckAccess()) return Denied();
@@ -654,9 +661,12 @@ namespace Server.Controllers
             var existing = await _context.Computers.FindAsync(computer.ComputerId);
             if (existing != null)
             {
+                var previousStatus = existing.Status;
                 existing.LaboratoryStation = string.IsNullOrWhiteSpace(computer.LaboratoryStation) ? existing.LaboratoryStation : computer.LaboratoryStation.Trim();
                 existing.Status = string.IsNullOrWhiteSpace(computer.Status) ? existing.Status : computer.Status.Trim();
                 existing.AssignedTo = computer.AssignedTo;
+                if (!string.Equals(previousStatus, existing.Status, StringComparison.OrdinalIgnoreCase))
+                    _context.ComputerStatusHistories.Add(new ComputerStatusHistory { ComputerId = existing.ComputerId, Status = existing.Status, ChangedByType = "Teacher", ChangedById = HttpContext.Session.GetInt32("TeacherId") });
                 await _context.SaveChangesAsync();
                 await AuditAsync("UpdateComputer", $"Updated computer {existing.LaboratoryStation}");
                 TempData["Message"] = $"Workstation '{existing.LaboratoryStation}' status updated!";
@@ -874,6 +884,28 @@ namespace Server.Controllers
             await AuditAsync("BulkAddStudents", $"Bulk added {result.Count} students to class {classId}");
             TempData["Message"] = $"Successfully added {result.Count} student(s) to the class.";
             return RedirectToAction("ClassDetails", new { id = classId });
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> BulkPreviewCsv(int classId, IFormFile? file)
+        {
+            if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue || file == null || file.Length == 0) return RedirectToAction("ClassDetails", new { id = classId });
+            using var reader = new StreamReader(file.OpenReadStream());
+            var parsed = _classManagement.ParseBulkStudentsCsv(await reader.ReadToEndAsync());
+            var import = await _classManagement.ValidateBulkStudentsAsync(classId, parsed.Rows, teacherId.Value);
+            if (import.Errors.Count > 0) return File(BulkErrorCsv(import.Errors), "text/csv; charset=utf-8", $"CAMS-Student-Import-Errors-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv");
+            var result = await _classManagement.BulkCreateStudentsInClassAsync(classId, import.Rows, teacherId.Value);
+            TempData[result.Success ? "Message" : "ErrorMessage"] = result.Success ? $"Successfully added {result.Count} student(s) to the class." : result.Error;
+            return RedirectToAction("ClassDetails", new { id = classId });
+        }
+
+        private static byte[] BulkErrorCsv(IEnumerable<BulkStudentRow> errors)
+        {
+            var csv = new System.Text.StringBuilder("Row,Student Number,First Name,Last Name,Full Name,Username,Error\n");
+            foreach (var row in errors) csv.AppendLine($"{row.RowNumber},{Csv(row.Input.StudentNumber)},{Csv(row.Input.FirstName)},{Csv(row.Input.LastName)},{Csv(row.Input.FullName)},{Csv(row.Input.Username)},{Csv(row.Error)}");
+            return System.Text.Encoding.UTF8.GetBytes(csv.ToString());
         }
 
         [HttpPost, ValidateAntiForgeryToken]
