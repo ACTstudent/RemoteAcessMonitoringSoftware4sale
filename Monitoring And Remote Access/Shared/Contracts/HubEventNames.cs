@@ -9,6 +9,7 @@ public static class HubEventNames
     public const string StudentConnected = "StudentConnected";
     public const string StudentDisconnected = "StudentDisconnected";
     public const string ExecuteRemoteInput = "ExecuteRemoteInput";
+    public const string RemoteControlState = "RemoteControlState";
 
     // Teacher control commands
     public const string LockStudent = "LockStudent";

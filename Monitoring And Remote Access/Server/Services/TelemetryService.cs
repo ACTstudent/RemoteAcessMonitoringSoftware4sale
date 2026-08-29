@@ -40,6 +40,7 @@ public sealed class TelemetryService : ITelemetryService
             .OrderByDescending(interval => interval.StartedAt)
             .FirstOrDefaultAsync(cancellationToken);
 
+        var stateChanged = false;
         if (isIdle && open is null)
         {
             _db.IdleIntervals.Add(new IdleInterval
@@ -49,13 +50,16 @@ public sealed class TelemetryService : ITelemetryService
                 PcName = values.PcName,
                 StartedAt = values.Timestamp
             });
+            stateChanged = true;
         }
-        else if (!isIdle && open is not null)
+        else if (!isIdle && open is not null && values.Timestamp >= open.StartedAt)
         {
             open.EndedAt = values.Timestamp;
+            stateChanged = true;
         }
 
-        await RecordActivityEventCoreAsync(values, isIdle ? "IdleStarted" : "IdleEnded", null, null, cancellationToken);
+        if (stateChanged)
+            await RecordActivityEventCoreAsync(values, isIdle ? "IdleStarted" : "IdleEnded", null, null, cancellationToken);
         await _db.SaveChangesAsync(cancellationToken);
     }
 

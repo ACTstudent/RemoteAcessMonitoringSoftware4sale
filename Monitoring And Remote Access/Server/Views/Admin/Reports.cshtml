@@ -41,8 +41,11 @@
                 <i class="bi bi-funnel me-1"></i> Filter Analytics
             </button>
         </div>
+        <div class="col-md-4"><label class="form-label fw-semibold text-muted small mb-1">Class</label><select name="classId" class="form-select"><option value="">All classes</option>@foreach (var cls in (IEnumerable<Server.Models.Class>)(ViewBag.Classes ?? Array.Empty<Server.Models.Class>())) { <option value="@cls.ClassId" selected="@(Context.Request.Query["classId"] == cls.ClassId.ToString() ? "selected" : null)">@cls.ClassName</option> }</select></div>
     </form>
 </div>
+
+@if (ViewBag.ReportSummary is Server.Models.ReportSummary summary) { <div class="row g-3 mb-4"><div class="col-md-4"><div class="metric-card"><div class="metric-title">Filtered Lab Time</div><div class="metric-value">@Math.Round(summary.TotalDuration.TotalMinutes, 1) mins</div></div></div><div class="col-md-4"><div class="metric-card"><div class="metric-title">Classes Represented</div><div class="metric-value">@summary.SessionsByClass.Count</div></div></div><div class="col-md-4"><div class="metric-card"><div class="metric-title">Stations Used</div><div class="metric-value">@summary.SessionsByStation.Count</div></div></div></div> }
 
 <!-- Metric Summary Cards -->
 <div class="row g-4 mb-4">
@@ -159,7 +162,7 @@
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
     <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
         <h5 class="fw-bold mb-0 text-dark">Detailed Lab Session Logs</h5>
-        <span class="badge bg-light text-dark font-monospace fs-6">Showing Recent 30</span>
+        <span class="badge bg-light text-dark font-monospace fs-6">Showing @Model.Count() of @ViewBag.TotalSessions</span>
     </div>
     <div class="table-responsive">
         <table class="table custom-table mb-0">
@@ -174,7 +177,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var s in Model.Take(30))
+                @foreach (var s in Model)
                 {
                     <tr>
                         <td class="fw-bold text-dark">@(s.Student?.Username ?? "?")</td>
@@ -193,3 +196,4 @@
         </table>
     </div>
 </div>
+@if (ViewBag.Paging is Server.Models.PagedResult<Server.Models.LabSession> p && p.PageCount > 1) { <nav class="mb-4"><a class="btn btn-sm btn-outline-secondary @(p.Page == 1 ? "disabled" : "")" href="@Url.Action("Reports", new { from = ViewBag.FromDate, to = ViewBag.ToDate, classId = Context.Request.Query["classId"], page = p.Page - 1 })">Previous</a> <span class="mx-2">Page @p.Page of @p.PageCount</span><a class="btn btn-sm btn-outline-secondary @(p.Page == p.PageCount ? "disabled" : "")" href="@Url.Action("Reports", new { from = ViewBag.FromDate, to = ViewBag.ToDate, classId = Context.Request.Query["classId"], page = p.Page + 1 })">Next</a></nav> }

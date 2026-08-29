@@ -24,6 +24,16 @@ namespace Server.Controllers
 
         private bool CheckAccess() => HttpContext.IsAdmin();
 
+        private static bool ValidMode(string? mode) => mode is "Block" or "Allow";
+        private static bool ValidRuleType(string? type) => type is "Application" or "Website" or "BlockApplication" or "BlockWebsite";
+        private static bool ValidBlacklistType(string? type) => type is "Application" or "Website" or "Domain" or "Process";
+        private static string NormalizeRuleType(string type) => type switch
+        {
+            "BlockApplication" => "Application",
+            "BlockWebsite" => "Website",
+            _ => type.Trim()
+        };
+
         private IActionResult Denied() => RedirectToAction("Login", "Account");
 
         private async Task AuditAsync(string action, string details)
@@ -350,23 +360,51 @@ namespace Server.Controllers
         public async Task<IActionResult> Restrictions()
         {
             if (!CheckAccess()) return Denied();
-            return View(await _context.RestrictionRules.OrderByDescending(r => r.CreatedAt).ToListAsync());
+            return View(new PolicyManagementViewModel
+            {
+                Restrictions = await _context.RestrictionRules.OrderByDescending(r => r.CreatedAt).ToListAsync(),
+                Blacklist = await _context.BlacklistItems.OrderByDescending(b => b.CreatedAt).ToListAsync(),
+                ApplicationCategories = await _context.ApplicationCategories.OrderBy(c => c.Name).ToListAsync(),
+                WebsiteCategories = await _context.WebsiteCategories.OrderBy(c => c.Name).ToListAsync()
+            });
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateRestriction(RestrictionRule rule)
         {
             if (!CheckAccess()) return Denied();
-            if (string.IsNullOrWhiteSpace(rule.Target))
+            if (!ValidRuleType(rule.RuleType) || string.IsNullOrWhiteSpace(rule.Target) || !ValidMode(rule.Mode))
             {
-                TempData["ErrorMessage"] = "Target is required for restriction rule.";
+                TempData["ErrorMessage"] = "Choose a valid rule type and mode, and provide a target.";
                 return RedirectToAction("Restrictions");
             }
+            rule.RuleType = NormalizeRuleType(rule.RuleType);
+            rule.Target = rule.Target.Trim();
+            rule.Description = rule.Description?.Trim() ?? "";
             rule.CreatedAt = DateTime.Now;
             _context.RestrictionRules.Add(rule);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateRestriction", $"Added restriction on {rule.Target}");
             TempData["Message"] = $"Restriction rule on '{rule.Target}' saved!";
+            return RedirectToAction("Restrictions");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateRestriction(RestrictionRule input)
+        {
+            if (!CheckAccess()) return Denied();
+            var rule = await _context.RestrictionRules.FindAsync(input.RestrictionRuleId);
+            if (rule == null || !ValidRuleType(input.RuleType) || string.IsNullOrWhiteSpace(input.Target) || !ValidMode(input.Mode))
+                return RedirectToAction("Restrictions");
+
+            rule.RuleType = NormalizeRuleType(input.RuleType);
+            rule.Target = input.Target.Trim();
+            rule.Description = input.Description?.Trim() ?? "";
+            rule.Mode = input.Mode;
+            rule.IsGlobal = input.IsGlobal;
+            rule.IsActive = input.IsActive;
+            await _context.SaveChangesAsync();
+            await AuditAsync("UpdateRestriction", $"Updated restriction {rule.RestrictionRuleId}");
             return RedirectToAction("Restrictions");
         }
 
@@ -396,16 +434,36 @@ namespace Server.Controllers
         public async Task<IActionResult> CreateBlacklist(BlacklistItem item)
         {
             if (!CheckAccess()) return Denied();
-            if (string.IsNullOrWhiteSpace(item.Value))
+            if (!ValidBlacklistType(item.TargetType) || string.IsNullOrWhiteSpace(item.Value))
             {
-                TempData["ErrorMessage"] = "Blacklist value is required.";
+                TempData["ErrorMessage"] = "Choose a valid target type and provide a value.";
                 return RedirectToAction(nameof(Blacklists));
             }
+            item.TargetType = item.TargetType.Trim();
+            item.Value = item.Value.Trim();
+            item.Reason = item.Reason?.Trim() ?? "";
             item.CreatedAt = DateTime.Now;
             _context.BlacklistItems.Add(item);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateBlacklist", $"Blacklisted {item.TargetType}: {item.Value}");
             TempData["Message"] = $"Blacklist entry '{item.Value}' created!";
+            return RedirectToAction(nameof(Blacklists));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateBlacklist(BlacklistItem input)
+        {
+            if (!CheckAccess()) return Denied();
+            var item = await _context.BlacklistItems.FindAsync(input.BlacklistItemId);
+            if (item == null || !ValidBlacklistType(input.TargetType) || string.IsNullOrWhiteSpace(input.Value))
+                return RedirectToAction(nameof(Blacklists));
+
+            item.TargetType = input.TargetType.Trim();
+            item.Value = input.Value.Trim();
+            item.Reason = input.Reason?.Trim() ?? "";
+            item.IsActive = input.IsActive;
+            await _context.SaveChangesAsync();
+            await AuditAsync("UpdateBlacklist", $"Updated blacklist {item.BlacklistItemId}");
             return RedirectToAction(nameof(Blacklists));
         }
 
@@ -422,6 +480,84 @@ namespace Server.Controllers
                 TempData["Message"] = "Blacklist entry deleted.";
             }
             return RedirectToAction(nameof(Blacklists));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateApplicationCategory(ApplicationCategory category)
+            => await SaveApplicationCategory(category, null);
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateApplicationCategory(ApplicationCategory input)
+            => await SaveApplicationCategory(input, input.ApplicationCategoryId);
+
+        private async Task<IActionResult> SaveApplicationCategory(ApplicationCategory input, int? id)
+        {
+            if (!CheckAccess()) return Denied();
+            var category = id.HasValue ? await _context.ApplicationCategories.FindAsync(id.Value) : new ApplicationCategory();
+            if (category == null || string.IsNullOrWhiteSpace(input.Name) || string.IsNullOrWhiteSpace(input.Pattern) || !ValidMode(input.Mode))
+                return RedirectToAction(nameof(Restrictions));
+            category.Name = input.Name.Trim();
+            category.Pattern = input.Pattern.Trim();
+            category.Description = input.Description?.Trim() ?? "";
+            category.Mode = input.Mode;
+            category.IsActive = input.IsActive;
+            if (!id.HasValue) _context.ApplicationCategories.Add(category);
+            await _context.SaveChangesAsync();
+            await AuditAsync(id.HasValue ? "UpdateApplicationCategory" : "CreateApplicationCategory", $"Policy category {category.Name}");
+            return RedirectToAction(nameof(Restrictions));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteApplicationCategory(int id)
+        {
+            if (!CheckAccess()) return Denied();
+            var category = await _context.ApplicationCategories.FindAsync(id);
+            if (category != null)
+            {
+                _context.ApplicationCategories.Remove(category);
+                await _context.SaveChangesAsync();
+                await AuditAsync("DeleteApplicationCategory", $"Removed category {id}");
+            }
+            return RedirectToAction(nameof(Restrictions));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateWebsiteCategory(WebsiteCategory category)
+            => await SaveWebsiteCategory(category, null);
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateWebsiteCategory(WebsiteCategory input)
+            => await SaveWebsiteCategory(input, input.WebsiteCategoryId);
+
+        private async Task<IActionResult> SaveWebsiteCategory(WebsiteCategory input, int? id)
+        {
+            if (!CheckAccess()) return Denied();
+            var category = id.HasValue ? await _context.WebsiteCategories.FindAsync(id.Value) : new WebsiteCategory();
+            if (category == null || string.IsNullOrWhiteSpace(input.Name) || string.IsNullOrWhiteSpace(input.DomainPattern) || !ValidMode(input.Mode))
+                return RedirectToAction(nameof(Restrictions));
+            category.Name = input.Name.Trim();
+            category.DomainPattern = input.DomainPattern.Trim();
+            category.Description = input.Description?.Trim() ?? "";
+            category.Mode = input.Mode;
+            category.IsActive = input.IsActive;
+            if (!id.HasValue) _context.WebsiteCategories.Add(category);
+            await _context.SaveChangesAsync();
+            await AuditAsync(id.HasValue ? "UpdateWebsiteCategory" : "CreateWebsiteCategory", $"Policy category {category.Name}");
+            return RedirectToAction(nameof(Restrictions));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteWebsiteCategory(int id)
+        {
+            if (!CheckAccess()) return Denied();
+            var category = await _context.WebsiteCategories.FindAsync(id);
+            if (category != null)
+            {
+                _context.WebsiteCategories.Remove(category);
+                await _context.SaveChangesAsync();
+                await AuditAsync("DeleteWebsiteCategory", $"Removed category {id}");
+            }
+            return RedirectToAction(nameof(Restrictions));
         }
 
         // ---------- Session rules ----------
@@ -860,21 +996,25 @@ namespace Server.Controllers
         }
 
         // ---------- Reports ----------
-        public async Task<IActionResult> Reports(DateTime? from, DateTime? to)
+        public async Task<IActionResult> Reports(DateTime? from, DateTime? to, int? classId = null, int page = 1, int pageSize = 50)
         {
             if (!CheckAccess()) return Denied();
 
-            var fromDate = from ?? DateTime.Now.AddDays(-30);
-            var toDate = to ?? DateTime.Now.AddDays(1);
+            var fromDate = (from ?? DateTime.Today.AddDays(-30)).Date;
+            var toDate = (to ?? DateTime.Today).Date.AddDays(1);
+            if (toDate <= fromDate) toDate = fromDate.AddDays(1);
+            page = Math.Max(1, page); pageSize = Math.Clamp(pageSize, 1, 200);
 
-            var sessions = await _context.LabSessions
-                .Include(s => s.Student)
+            var sessionQuery = _context.LabSessions
+                .Include(s => s.Student).ThenInclude(s => s!.Class)
                 .Include(s => s.Teacher)
                 .Include(s => s.Computer)
-                .Where(s => s.StartTime >= fromDate && s.StartTime < toDate)
-                .OrderByDescending(s => s.StartTime)
-                .Take(500)
-                .ToListAsync();
+                .Where(s => s.StartTime < toDate && (s.EndTime ?? DateTime.UtcNow) > fromDate);
+            if (classId.HasValue) sessionQuery = sessionQuery.Where(s => s.Student != null && s.Student.ClassId == classId.Value);
+            var totalSessions = await sessionQuery.CountAsync();
+            var sessions = await sessionQuery.OrderByDescending(s => s.StartTime).ThenByDescending(s => s.Id)
+                .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+            var summarySessions = await sessionQuery.AsNoTracking().ToListAsync();
 
             var usage = await _context.UsageLogs
                 .Where(u => u.Timestamp >= fromDate && u.Timestamp < toDate)
@@ -884,9 +1024,16 @@ namespace Server.Controllers
 
             ViewBag.FromDate = fromDate.ToString("yyyy-MM-dd");
             ViewBag.ToDate = toDate.ToString("yyyy-MM-dd");
-            ViewBag.TotalSessions = sessions.Count;
-            ViewBag.TotalMinutes = sessions.Sum(s =>
-                (s.EndTime.HasValue ? (s.EndTime.Value - s.StartTime).TotalMinutes : 0));
+            var now = DateTime.UtcNow;
+            ViewBag.TotalSessions = totalSessions;
+            ViewBag.TotalMinutes = summarySessions.Sum(s => SessionDuration(s, fromDate, toDate, now).TotalMinutes);
+            ViewBag.Paging = new PagedResult<LabSession>(sessions, page, pageSize, totalSessions);
+            ViewBag.ReportSummary = new ReportSummary(totalSessions,
+                TimeSpan.FromMinutes(summarySessions.Sum(s => SessionDuration(s, fromDate, toDate, now).TotalMinutes)),
+                summarySessions.GroupBy(s => s.Student?.Class?.ClassName ?? "Unassigned").ToDictionary(g => g.Key, g => g.Count()),
+                summarySessions.GroupBy(s => s.Teacher?.Username ?? "Unknown").ToDictionary(g => g.Key, g => g.Count()),
+                summarySessions.GroupBy(s => s.Computer?.LaboratoryStation ?? s.PCName ?? "Unknown").ToDictionary(g => g.Key, g => g.Count()));
+            ViewBag.Classes = await _context.Classes.Where(c => !c.IsArchived).OrderBy(c => c.ClassName).ToListAsync();
             ViewBag.TopApps = usage
                 .GroupBy(u => u.AppName)
                 .OrderByDescending(g => g.Count())
@@ -894,14 +1041,22 @@ namespace Server.Controllers
                 .Select(g => new { App = g.Key, Count = g.Count() })
                 .ToList();
             ViewBag.UsageLogs = usage;
-            ViewBag.SessionsByTeacher = sessions
+            ViewBag.SessionsByTeacher = summarySessions
                 .GroupBy(s => s.Teacher?.Username ?? "Unknown")
                 .ToDictionary(g => g.Key, g => g.Count());
-            ViewBag.SessionsByStation = sessions
+            ViewBag.SessionsByStation = summarySessions
                 .GroupBy(s => s.Computer?.LaboratoryStation ?? s.PCName ?? "Unknown")
                 .ToDictionary(g => g.Key, g => g.Count());
 
             return View(sessions);
+        }
+
+        private static TimeSpan SessionDuration(LabSession session, DateTime from, DateTime to, DateTime now)
+        {
+            var end = session.EndTime ?? (session.Status == "Paused" && session.PauseTime.HasValue ? session.PauseTime.Value : now);
+            var start = session.StartTime > from ? session.StartTime : from;
+            var clippedEnd = end < to ? end : to;
+            return clippedEnd > start ? clippedEnd - start : TimeSpan.Zero;
         }
 
         // ---------- Audit trail ----------
@@ -930,13 +1085,16 @@ namespace Server.Controllers
         }
 
         // ---------- Export usage report as CSV ----------
-        public async Task<IActionResult> ExportReportsCsv()
+        public async Task<IActionResult> ExportReportsCsv(DateTime? from = null, DateTime? to = null)
         {
             if (!CheckAccess()) return Denied();
+            var fromDate = (from ?? DateTime.Today.AddDays(-30)).Date;
+            var toDate = (to ?? DateTime.Today).Date.AddDays(1);
             var sessions = await _context.LabSessions
                 .Include(s => s.Student)
                 .Include(s => s.Teacher)
                 .Include(s => s.Computer)
+                .Where(s => s.StartTime < toDate && (s.EndTime ?? DateTime.UtcNow) > fromDate)
                 .OrderByDescending(s => s.StartTime)
                 .Take(2000)
                 .ToListAsync();
@@ -945,7 +1103,7 @@ namespace Server.Controllers
             csv.AppendLine("Student,Teacher,Station,Start Time,End Time,Duration (min),Status");
             foreach (var s in sessions)
             {
-                var duration = s.EndTime.HasValue ? Math.Round((s.EndTime.Value - s.StartTime).TotalMinutes, 1) : 0;
+                var duration = Math.Round(SessionDuration(s, fromDate, toDate, DateTime.UtcNow).TotalMinutes, 1);
                 csv.AppendLine($"{Csv(s.Student?.FullName)},{Csv(s.Teacher?.Username ?? "System")},{Csv(s.Computer?.LaboratoryStation ?? s.PCName)},{s.StartTime:yyyy-MM-dd HH:mm},{s.EndTime?.ToString("yyyy-MM-dd HH:mm")},{duration},{s.Status}");
             }
 

@@ -234,6 +234,8 @@ namespace Client
 
                 var hubClient = new MonitoringHubClient();
                 hubClient.RemoteInputReceived += InputSimulator.ProcessRemoteInput;
+                hubClient.RemoteControlStateReceived += state => this.Invoke(() =>
+                    Text = state.IsActive ? "CAMS Student Client - Remote support active" : "CAMS Student Client");
                 hubClient.Locked += () => this.Invoke(() => SetLocked(true));
                 hubClient.Unlocked += () => this.Invoke(() => SetLocked(false));
                 hubClient.ForceLogoutRequested += () => this.Invoke(async () => await ForceLogout(false));
@@ -519,11 +521,11 @@ namespace Client
         private async Task ReportViolation(string targetType, string app, string processName, bool kill, CancellationToken token)
         {
             var key = targetType + ":" + app;
-            if (_lastInfraction.TryGetValue(key, out var last) && DateTime.Now - last < TimeSpan.FromSeconds(30))
+            if (_lastInfraction.TryGetValue(key, out var last) && DateTime.UtcNow - last < TimeSpan.FromSeconds(30))
             {
                 return; // throttled
             }
-            _lastInfraction[key] = DateTime.Now;
+            _lastInfraction[key] = DateTime.UtcNow;
 
             if (kill)
             {
@@ -545,7 +547,7 @@ namespace Client
             {
                 try
                 {
-                    await hub.ReportInfractionAsync(new InfractionMessage("", _studentId, Environment.MachineName, app, targetType, DateTime.Now));
+                    await hub.ReportInfractionAsync(new InfractionMessage("", _studentId, Environment.MachineName, app, targetType, DateTime.UtcNow));
                 }
                 catch
                 {
@@ -582,12 +584,12 @@ namespace Client
                                 StudentId: "",
                                 PcName: Environment.MachineName,
                                 IsIdle: isIdle,
-                                Timestamp: DateTime.Now));
+                                Timestamp: DateTime.UtcNow));
                         }
 
-                        if (DateTime.Now - _lastActiveAppReport > TimeSpan.FromSeconds(5))
+                        if (DateTime.UtcNow - _lastActiveAppReport > TimeSpan.FromSeconds(5))
                         {
-                            _lastActiveAppReport = DateTime.Now;
+                            _lastActiveAppReport = DateTime.UtcNow;
                             var appName = ActiveAppInfo.Get();
                             if (!string.IsNullOrEmpty(appName))
                             {
@@ -596,13 +598,14 @@ namespace Client
                                     StudentId: "",
                                     PcName: Environment.MachineName,
                                     ApplicationName: appName,
-                                    Timestamp: DateTime.Now));
+                                    Timestamp: DateTime.UtcNow));
                                 var website = BrowserUrlCollector.TryGetForegroundWebsite();
-                                if (website is not null && website.Value.Domain != _lastWebsiteReport)
+                                if (website is { Status: BrowserMonitoringStatus.Captured, Domain: not null } &&
+                                    website.Domain != _lastWebsiteReport)
                                 {
-                                    _lastWebsiteReport = website.Value.Domain;
+                                    _lastWebsiteReport = website.Domain;
                                     await _hubClient.ReportWebsiteActivityAsync(new WebsiteActivityMessage(
-                                        "", "", Environment.MachineName, website.Value.Domain, website.Value.Browser, DateTime.Now));
+                                        "", "", Environment.MachineName, website.Domain, website.Browser, DateTime.UtcNow));
                                 }
                             }
                         }

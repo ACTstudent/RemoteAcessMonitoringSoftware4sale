@@ -1,16 +1,28 @@
 using System.Diagnostics;
 using System.Windows.Automation;
+using Shared.Contracts;
 
 namespace Client.Services;
 
-internal static class BrowserUrlCollector
+public enum BrowserMonitoringStatus
+{
+    Captured,
+    Fallback
+}
+
+public sealed record BrowserWebsiteObservation(
+    string? Domain,
+    string Browser,
+    BrowserMonitoringStatus Status);
+
+public static class BrowserUrlCollector
 {
     private static readonly HashSet<string> BrowserProcessNames = new(StringComparer.OrdinalIgnoreCase)
     {
         "chrome", "msedge", "firefox", "opera", "brave"
     };
 
-    public static (string Domain, string Browser)? TryGetForegroundWebsite()
+    public static BrowserWebsiteObservation? TryGetForegroundWebsite()
     {
         var hwnd = NativeMethods.GetForegroundWindow();
         if (hwnd == IntPtr.Zero)
@@ -31,6 +43,8 @@ internal static class BrowserUrlCollector
         if (!BrowserProcessNames.Contains(processName))
             return null;
 
+        var browser = processName.ToLowerInvariant();
+
         try
         {
             var window = AutomationElement.FromHandle(hwnd);
@@ -50,7 +64,7 @@ internal static class BrowserUrlCollector
 
                 var value = ((ValuePattern)pattern).Current.Value;
                 if (TryGetHttpHost(value, out var host))
-                    return (host, processName.ToLowerInvariant());
+                    return new BrowserWebsiteObservation(host, browser, BrowserMonitoringStatus.Captured);
             }
         }
         catch
@@ -58,7 +72,9 @@ internal static class BrowserUrlCollector
             // UI Automation can fail for elevated, protected, or changing browser windows.
         }
 
-        return null;
+        // The browser is foreground, but URL capture is unavailable. Active-app
+        // reporting remains the privacy-preserving fallback signal.
+        return new BrowserWebsiteObservation(null, browser, BrowserMonitoringStatus.Fallback);
     }
 
     private static bool IsAddressBar(string processName, string automationId, string name)
@@ -74,15 +90,6 @@ internal static class BrowserUrlCollector
                name.Equals("Address bar", StringComparison.OrdinalIgnoreCase);
     }
 
-    internal static bool TryGetHttpHost(string? value, out string host)
-    {
-        host = string.Empty;
-        if (!Uri.TryCreate(value?.Trim(), UriKind.Absolute, out var uri) ||
-            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) ||
-            string.IsNullOrWhiteSpace(uri.Host))
-            return false;
-
-        host = uri.Host.TrimEnd('.').ToLowerInvariant();
-        return host.Length > 0;
-    }
+    public static bool TryGetHttpHost(string? value, out string host) =>
+        WebsiteDomainNormalizer.TryNormalize(value, out host);
 }

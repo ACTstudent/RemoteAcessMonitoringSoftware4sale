@@ -59,6 +59,34 @@ public class TelemetryServiceTests
         await service.RecordIdleStatusAsync("connection-1", "student-1", "PC-01", true, timestamp.AddSeconds(10));
 
         Assert.Single(await db.IdleIntervals.ToListAsync());
+        Assert.Single(await db.ActivityEvents.ToListAsync());
+    }
+
+    [Fact]
+    public async Task RecordIdleStatus_OutOfOrderCloseDoesNotCreateInvalidInterval()
+    {
+        await using var db = CreateContext();
+        var service = new TelemetryService(db);
+        var started = DateTime.UtcNow.AddMinutes(-1);
+
+        await service.RecordIdleStatusAsync("connection-1", "student-1", "PC-01", true, started);
+        await service.RecordIdleStatusAsync("connection-1", "student-1", "PC-01", false, started.AddSeconds(-1));
+
+        var interval = await db.IdleIntervals.SingleAsync();
+        Assert.Null(interval.EndedAt);
+        Assert.Single(await db.ActivityEvents.ToListAsync());
+    }
+
+    [Fact]
+    public async Task RecordActivityEvent_NormalizesUnspecifiedTimestampToUtc()
+    {
+        await using var db = CreateContext();
+        var service = new TelemetryService(db);
+        var timestamp = DateTime.SpecifyKind(DateTime.UtcNow.AddMinutes(-1), DateTimeKind.Unspecified);
+
+        await service.RecordActivityEventAsync("connection-1", "student-1", "PC-01", "Other", timestamp: timestamp);
+
+        Assert.Equal(DateTimeKind.Utc, (await db.ActivityEvents.SingleAsync()).Timestamp.Kind);
     }
 
     [Fact]

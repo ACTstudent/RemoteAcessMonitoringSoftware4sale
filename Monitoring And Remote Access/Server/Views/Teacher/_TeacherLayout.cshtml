@@ -44,6 +44,11 @@
                     <span>Live Monitoring</span>
                 </a>
 
+                <a href="@Url.Action("RemoteHistory", "Teacher")" class="nav-item-custom @(currentAction == "RemoteHistory" ? "active" : "")">
+                    <i class="bi bi-terminal-fill"></i>
+                    <span>Remote-Control History</span>
+                </a>
+
                 <a href="@Url.Action("Computers", "Teacher")" class="nav-item-custom @(currentAction == "Computers" ? "active" : "")">
                     <i class="bi bi-pc-display"></i>
                     <span>Workstations</span>

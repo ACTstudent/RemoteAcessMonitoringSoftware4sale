@@ -222,6 +222,21 @@ namespace Server.Controllers
             });
         }
 
+        // ---------- Remote-control history ----------
+        public async Task<IActionResult> RemoteHistory()
+        {
+            if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
+
+            ViewBag.RemoteSessions = await _context.RemoteControlSessions.AsNoTracking()
+                .Where(s => s.TeacherId == teacherId.Value)
+                .OrderByDescending(s => s.StartedAt).Take(100).ToListAsync();
+            return View(await _context.RemoteCommandLogs.AsNoTracking()
+                .Where(log => log.TeacherId == teacherId.Value)
+                .OrderByDescending(log => log.Timestamp).Take(200).ToListAsync());
+        }
+
         // ---------- Restrictions ----------
         public async Task<IActionResult> Restrictions()
         {
@@ -457,22 +472,34 @@ namespace Server.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ActivityTimeline(int id, DateTime? from = null, DateTime? to = null)
+        public async Task<IActionResult> ActivityTimeline(int id, DateTime? from = null, DateTime? to = null, int page = 1, int pageSize = 100, string? eventType = null)
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
             var timeline = await _analytics.GetActivityTimelineAsync(id, teacherId.Value,
-                from ?? DateTime.UtcNow.Date, to ?? DateTime.UtcNow.Date.AddDays(1).AddTicks(-1));
+                from ?? DateTime.UtcNow.Date, to ?? DateTime.UtcNow.Date.AddDays(1).AddTicks(-1), page, pageSize, eventType);
             return Json(timeline);
         }
 
-        public async Task<IActionResult> Alerts(bool includeAcknowledged = false)
+        public async Task<IActionResult> Alerts(bool includeAcknowledged = false, DateTime? from = null, DateTime? to = null, string? severity = null, string? studentId = null, int page = 1, int pageSize = 100)
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
-            return View(await _analytics.GetAlertsAsync(teacherId.Value, includeAcknowledged));
+            var alerts = await _analytics.GetAlertsAsync(teacherId.Value, includeAcknowledged, from, to, severity, studentId, page, pageSize);
+            ViewBag.From = from?.ToString("yyyy-MM-dd"); ViewBag.To = to?.ToString("yyyy-MM-dd");
+            ViewBag.Severity = severity; ViewBag.StudentId = studentId; ViewBag.Paging = alerts;
+            return View(alerts.Items);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> AlertHistory(int id)
+        {
+            if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
+            return Json(await _analytics.GetAlertHistoryAsync(id, teacherId.Value));
         }
 
         [HttpPost, ValidateAntiForgeryToken]

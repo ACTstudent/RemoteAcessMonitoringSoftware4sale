@@ -90,7 +90,7 @@ public sealed class RemoteMonitoringHub : Hub
         return target;
     }
 
-    private async Task AuditCommandAsync(string action, StudentConnectionMessage target)
+    private async Task AuditCommandAsync(string action, StudentConnectionMessage target, int? remoteSessionId = null)
     {
         try
         {
@@ -107,10 +107,9 @@ public sealed class RemoteMonitoringHub : Hub
             });
             if (int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
             {
-                _remoteSessions.TryGetValue(Context.ConnectionId, out var sessionId);
                 context.RemoteCommandLogs.Add(new RemoteCommandLog
                 {
-                    RemoteControlSessionId = sessionId == 0 ? null : sessionId,
+                    RemoteControlSessionId = remoteSessionId ?? (_remoteSessions.TryGetValue(Context.ConnectionId, out var sessionId) ? sessionId : null),
                     TeacherId = teacherId,
                     Command = action,
                     Details = $"{target.StudentId} at {target.PcName}"
@@ -140,6 +139,58 @@ public sealed class RemoteMonitoringHub : Hub
     {
         if (string.IsNullOrWhiteSpace(frameBase64) || frameBase64.Length > MaxFrameBase64Length)
             throw new HubException("The screen frame is empty or exceeds the maximum size.");
+    }
+
+    private async Task<(StudentConnectionMessage Target, RemoteControlSession Session)> RequireActiveRemoteSessionAsync(string targetConnectionId)
+    {
+        var target = await RequireAuthorizedTargetAsync(targetConnectionId);
+        if (!int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
+            throw new HubException("The teacher identity is invalid.");
+
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var labSession = await context.LabSessions
+            .Include(s => s.SessionRule)
+            .Include(s => s.Student)
+            .FirstOrDefaultAsync(s => s.TeacherId == teacherId && s.IsActive &&
+                (s.Status == "Running" || s.Status == "Paused") &&
+                s.Student != null && s.Student.StudentNumber == target.StudentId);
+        if (labSession is null)
+            throw new HubException("The workstation has no active lab session.");
+        if (labSession.SessionRule is not null && !labSession.SessionRule.AllowRemoteControl)
+            throw new HubException("Remote control is disabled by the active session rule.");
+
+        var duration = labSession.MaxDurationMinutes ?? labSession.SessionRule?.MaxDurationMinutes;
+        if (duration is > 0 && DateTime.UtcNow >= labSession.StartTime.ToUniversalTime().AddMinutes(duration.Value))
+        {
+            labSession.IsActive = false;
+            labSession.Status = "Ended";
+            labSession.EndTime = DateTime.UtcNow;
+            var expired = await context.RemoteControlSessions
+                .Where(s => s.IsActive && s.TeacherId == teacherId && s.ConnectionId == target.ConnectionId)
+                .ToListAsync();
+            foreach (var remote in expired)
+            {
+                remote.IsActive = false;
+                remote.EndedAt = DateTime.UtcNow;
+            }
+            await context.SaveChangesAsync();
+            _remoteSessions.TryRemove(Context.ConnectionId, out _);
+            await Clients.Client(target.ConnectionId).SendAsync(HubEventNames.RemoteControlState,
+                new RemoteControlStateMessage(target.StudentId, false, DateTime.UtcNow));
+            throw new HubException("The lab session has expired.");
+        }
+
+        var sessionId = _remoteSessions.TryGetValue(Context.ConnectionId, out var mappedId) ? mappedId : 0;
+        var session = sessionId > 0
+            ? await context.RemoteControlSessions.FirstOrDefaultAsync(s => s.RemoteControlSessionId == sessionId &&
+                s.IsActive && s.TeacherId == teacherId && s.ConnectionId == target.ConnectionId)
+            : await context.RemoteControlSessions.FirstOrDefaultAsync(s => s.IsActive &&
+                s.TeacherId == teacherId && s.ConnectionId == target.ConnectionId);
+        if (session is null)
+            throw new HubException("Start an authorized remote-support session first.");
+        _remoteSessions[Context.ConnectionId] = session.RemoteControlSessionId;
+        return (target, session);
     }
 
     public override async Task OnConnectedAsync()
@@ -322,20 +373,19 @@ public sealed class RemoteMonitoringHub : Hub
             await ForceLogout(target);
     }
 
-    public async Task SendRemoteInput(string targetConnectionId, RemoteInputMessage input)
+    public async Task<RemoteCommandResult> SendRemoteInput(string targetConnectionId, RemoteInputMessage input)
     {
-        var target = await RequireAuthorizedTargetAsync(targetConnectionId);
-        if (!_remoteSessions.ContainsKey(Context.ConnectionId))
-            throw new HubException("Start an authorized remote-support session first.");
+        var (target, session) = await RequireActiveRemoteSessionAsync(targetConnectionId);
         if (input is null || string.IsNullOrWhiteSpace(input.EventType) || input.EventType.Length > 32 ||
             input.X < 0 || input.Y < 0)
             throw new HubException("Invalid remote input.");
 
         await Clients.Client(target.ConnectionId)
             .SendAsync(HubEventNames.ExecuteRemoteInput, input);
+        return new RemoteCommandResult(true, "Remote input delivered.", session.RemoteControlSessionId);
     }
 
-    public async Task StartRemoteControl(string targetConnectionId)
+    public async Task<RemoteCommandResult> StartRemoteControl(string targetConnectionId)
     {
         var target = await RequireAuthorizedTargetAsync(targetConnectionId);
         if (!int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
@@ -343,6 +393,32 @@ public sealed class RemoteMonitoringHub : Hub
 
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var labSession = await context.LabSessions.Include(s => s.SessionRule).Include(s => s.Student)
+            .FirstOrDefaultAsync(s => s.TeacherId == teacherId && s.IsActive &&
+                (s.Status == "Running" || s.Status == "Paused") && s.Student != null &&
+                s.Student.StudentNumber == target.StudentId);
+        if (labSession is null)
+            throw new HubException("The workstation has no active lab session.");
+        if (labSession.SessionRule is not null && !labSession.SessionRule.AllowRemoteControl)
+            throw new HubException("Remote control is disabled by the active session rule.");
+        var duration = labSession.MaxDurationMinutes ?? labSession.SessionRule?.MaxDurationMinutes;
+        if (duration is > 0 && DateTime.UtcNow >= labSession.StartTime.ToUniversalTime().AddMinutes(duration.Value))
+        {
+            labSession.IsActive = false;
+            labSession.Status = "Ended";
+            labSession.EndTime = DateTime.UtcNow;
+            foreach (var old in await context.RemoteControlSessions.Where(s => s.IsActive && s.TeacherId == teacherId &&
+                s.ConnectionId == target.ConnectionId).ToListAsync())
+            {
+                old.IsActive = false;
+                old.EndedAt = DateTime.UtcNow;
+            }
+            await context.SaveChangesAsync();
+            throw new HubException("The lab session has expired.");
+        }
+        var previous = await context.RemoteControlSessions.Where(s => s.IsActive && s.TeacherId == teacherId &&
+            s.ConnectionId == target.ConnectionId).ToListAsync();
+        foreach (var old in previous) { old.IsActive = false; old.EndedAt = DateTime.UtcNow; }
         var session = new RemoteControlSession
         {
             TeacherId = teacherId,
@@ -354,24 +430,40 @@ public sealed class RemoteMonitoringHub : Hub
         await context.SaveChangesAsync();
         _remoteSessions[Context.ConnectionId] = session.RemoteControlSessionId;
         await AuditCommandAsync("RemoteControlStarted", target);
+        await Clients.Client(target.ConnectionId).SendAsync(HubEventNames.RemoteControlState,
+            new RemoteControlStateMessage(target.StudentId, true, DateTime.UtcNow));
+        return new RemoteCommandResult(true, "Remote support started.", session.RemoteControlSessionId);
     }
 
-    public async Task StopRemoteControl(string targetConnectionId)
+    public async Task<RemoteCommandResult> StopRemoteControl(string targetConnectionId)
     {
         var target = await RequireAuthorizedTargetAsync(targetConnectionId);
+        if (!int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
+            throw new HubException("The teacher identity is invalid.");
         if (!_remoteSessions.TryRemove(Context.ConnectionId, out var sessionId))
-            return;
+        {
+            using var lookupScope = _scopeFactory.CreateScope();
+            var lookup = lookupScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var existing = await lookup.RemoteControlSessions.FirstOrDefaultAsync(s => s.IsActive &&
+                s.TeacherId == teacherId && s.ConnectionId == target.ConnectionId);
+            if (existing is null) return new RemoteCommandResult(false, "No active remote-support session.", null);
+            sessionId = existing.RemoteControlSessionId;
+        }
 
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var session = await context.RemoteControlSessions.FindAsync(sessionId);
+        var session = await context.RemoteControlSessions.FirstOrDefaultAsync(s =>
+            s.RemoteControlSessionId == sessionId && s.TeacherId == teacherId && s.ConnectionId == target.ConnectionId);
         if (session is not null)
         {
             session.IsActive = false;
             session.EndedAt = DateTime.UtcNow;
             await context.SaveChangesAsync();
         }
-        await AuditCommandAsync("RemoteControlStopped", target);
+        await AuditCommandAsync("RemoteControlStopped", target, sessionId);
+        await Clients.Client(target.ConnectionId).SendAsync(HubEventNames.RemoteControlState,
+            new RemoteControlStateMessage(target.StudentId, false, DateTime.UtcNow));
+        return new RemoteCommandResult(true, "Remote support stopped.", sessionId);
     }
 
     public async Task BroadcastScreen(string frameBase64)
@@ -566,7 +658,7 @@ public sealed class RemoteMonitoringHub : Hub
     public async Task ReportWebsiteActivity(WebsiteActivityMessage website)
     {
         var student = RequireStudent();
-        if (website is null || string.IsNullOrWhiteSpace(website.Domain) || website.Domain.Length > 300 ||
+        if (website is null || !WebsiteDomainNormalizer.TryNormalize(website.Domain, out var domain) || domain.Length > 300 ||
             string.IsNullOrWhiteSpace(website.Browser) || website.Browser.Length > 50)
             throw new HubException("The website activity report is invalid.");
 
@@ -575,6 +667,7 @@ public sealed class RemoteMonitoringHub : Hub
             ConnectionId = Context.ConnectionId,
             StudentId = student.StudentId,
             PcName = student.PcName,
+            Domain = domain,
             Timestamp = DateTime.UtcNow
         };
         await TryRecordTelemetryAsync(() => _telemetryService.RecordWebsiteUsageAsync(

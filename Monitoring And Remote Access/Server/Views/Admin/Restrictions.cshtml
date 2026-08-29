@@ -1,4 +1,4 @@
-@model IEnumerable<Server.Models.RestrictionRule>
+@model Server.Models.PolicyManagementViewModel
 @{
     ViewData["Title"] = "Restriction Rules";
     Layout = "_Layout";
@@ -20,11 +20,24 @@
     </button>
 </div>
 
+@foreach (var categoryType in new[] { "Application", "Website" })
+{
+    var isApplication = categoryType == "Application";
+    <div class="modal fade" id="create-@categoryType" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="post" action="/Admin/Create@(categoryType)Category">@Html.AntiForgeryToken()<div class="modal-header"><h5>Add @categoryType Category</h5></div><div class="modal-body"><label>Name</label><input name="Name" required maxlength="100" class="form-control mb-2" /><label>@(isApplication ? "Application pattern" : "Domain pattern")</label><input name="@(isApplication ? "Pattern" : "DomainPattern")" required maxlength="300" class="form-control mb-2" /><label>Mode</label><select name="Mode" class="form-select mb-2"><option>Block</option><option>Allow</option></select><label>Description</label><input name="Description" maxlength="500" class="form-control mb-2" /><label><input type="checkbox" name="IsActive" value="true" checked /> Active</label></div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div>
+}
+
+@foreach (var raw in Model.ApplicationCategories.Cast<object>().Concat(Model.WebsiteCategories.Cast<object>()))
+{
+    var app = raw as Server.Models.ApplicationCategory; var web = raw as Server.Models.WebsiteCategory;
+    var isApplication = app != null; var categoryType = isApplication ? "Application" : "Website"; var id = app?.ApplicationCategoryId ?? web!.WebsiteCategoryId; var name = app?.Name ?? web!.Name; var pattern = app?.Pattern ?? web!.DomainPattern; var description = app?.Description ?? web!.Description; var mode = app?.Mode ?? web!.Mode; var active = app?.IsActive ?? web!.IsActive;
+    <div class="modal fade" id="edit-@categoryType-@id" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="post" action="/Admin/Update@(categoryType)Category">@Html.AntiForgeryToken()<input type="hidden" name="@(isApplication ? "ApplicationCategoryId" : "WebsiteCategoryId")" value="@id" /><div class="modal-header"><h5>Edit @categoryType Category</h5></div><div class="modal-body"><label>Name</label><input name="Name" value="@name" required maxlength="100" class="form-control mb-2" /><label>@(isApplication ? "Application pattern" : "Domain pattern")</label><input name="@(isApplication ? "Pattern" : "DomainPattern")" value="@pattern" required maxlength="300" class="form-control mb-2" /><label>Mode</label><select name="Mode" class="form-select mb-2"><option value="Block" selected="@(mode == "Block" ? "selected" : null)">Block</option><option value="Allow" selected="@(mode == "Allow" ? "selected" : null)">Allow</option></select><label>Description</label><input name="Description" value="@description" maxlength="500" class="form-control mb-2" /><label><input type="checkbox" name="IsActive" value="true" @(active ? "checked" : "") /> Active</label></div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div>
+}
+
 <!-- Rule Directory Card -->
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
     <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
         <h5 class="fw-bold mb-0 text-dark">Active Security Policies</h5>
-        <span class="badge bg-light text-dark font-monospace fs-6">@Model.Count() Rules</span>
+        <span class="badge bg-light text-dark font-monospace fs-6">@Model.Restrictions.Count Rules</span>
     </div>
     <div class="table-responsive">
         <table class="table custom-table mb-0">
@@ -40,7 +53,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var r in Model)
+                @foreach (var r in Model.Restrictions)
                 {
                     <tr>
                         <td>
@@ -65,6 +78,7 @@
                             </span>
                         </td>
                         <td class="text-end">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editRule-@r.RestrictionRuleId">Edit</button>
                             <form method="post" action="/Admin/DeleteRestriction" style="margin:0;" onsubmit="return confirm('Delete this security rule?');">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@r.RestrictionRuleId" />
@@ -75,7 +89,7 @@
                         </td>
                     </tr>
                 }
-                @if (!Model.Any())
+                @if (!Model.Restrictions.Any())
                 {
                     <tr>
                         <td colspan="7" class="text-center py-4 text-muted">No security rules configured. Click "Add Restriction Rule" above.</td>
@@ -85,6 +99,26 @@
         </table>
     </div>
 </div>
+
+<div class="row g-4 mb-4">
+    @foreach (var categorySet in new[] { (Name: "Application", Items: Model.ApplicationCategories.Cast<object>()), (Name: "Website", Items: Model.WebsiteCategories.Cast<object>()) })
+    {
+        <div class="col-lg-6"><div class="card border-0 shadow-sm rounded-4 overflow-hidden"><div class="card-header bg-white py-3 d-flex justify-content-between"><h5 class="fw-bold mb-0">@categorySet.Name Categories</h5><button class="btn btn-sm btn-emerald rounded-pill" data-bs-toggle="modal" data-bs-target="#create-@categorySet.Name">Add</button></div><div class="table-responsive"><table class="table custom-table mb-0"><thead><tr><th>Name / Pattern</th><th>Mode</th><th>Active</th><th></th></tr></thead><tbody>
+        @foreach (var raw in categorySet.Items)
+        {
+            var app = raw as Server.Models.ApplicationCategory; var web = raw as Server.Models.WebsiteCategory;
+            var id = app?.ApplicationCategoryId ?? web?.WebsiteCategoryId ?? 0; var name = app?.Name ?? web?.Name ?? ""; var pattern = app?.Pattern ?? web?.DomainPattern ?? ""; var mode = app?.Mode ?? web?.Mode ?? "Block"; var active = app?.IsActive ?? web?.IsActive ?? false;
+            <tr><td><strong>@name</strong><br /><code>@pattern</code></td><td>@mode</td><td>@(active ? "Enabled" : "Disabled")</td><td class="text-end"><button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#edit-@categorySet.Name-@id">Edit</button><form class="d-inline" method="post" action="/Admin/Delete@(categorySet.Name)Category" onsubmit="return confirm('Delete this category?');">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@id" /><button class="btn btn-sm btn-outline-danger">Delete</button></form></td></tr>
+        }
+        @if (!categorySet.Items.Any()) { <tr><td colspan="4" class="text-center text-muted py-3">No categories configured.</td></tr> }
+        </tbody></table></div></div></div>
+    }
+</div>
+
+@foreach (var r in Model.Restrictions)
+{
+    <div class="modal fade" id="editRule-@r.RestrictionRuleId" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="post" action="/Admin/UpdateRestriction">@Html.AntiForgeryToken()<input type="hidden" name="RestrictionRuleId" value="@r.RestrictionRuleId" /><div class="modal-header"><h5>Edit Restriction Rule</h5></div><div class="modal-body"><label>Type</label><select name="RuleType" class="form-select mb-2"><option value="Application" selected="@(r.RuleType == "Application" ? "selected" : null)">Application</option><option value="Website" selected="@(r.RuleType == "Website" ? "selected" : null)">Website</option></select><label>Target</label><input name="Target" value="@r.Target" required maxlength="200" class="form-control mb-2" /><label>Mode</label><select name="Mode" class="form-select mb-2"><option value="Block" selected="@(r.Mode == "Block" ? "selected" : null)">Block</option><option value="Allow" selected="@(r.Mode == "Allow" ? "selected" : null)">Allow</option></select><label>Description</label><input name="Description" value="@r.Description" maxlength="500" class="form-control mb-2" /><label><input type="checkbox" name="IsGlobal" value="true" @(r.IsGlobal ? "checked" : "") /> Global</label> <label><input type="checkbox" name="IsActive" value="true" @(r.IsActive ? "checked" : "") /> Active</label></div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div>
+}
 
 <!-- Modal: Create Rule -->
 <div class="modal fade" id="createRuleModal" tabindex="-1" aria-labelledby="createRuleModalLabel" aria-hidden="true">

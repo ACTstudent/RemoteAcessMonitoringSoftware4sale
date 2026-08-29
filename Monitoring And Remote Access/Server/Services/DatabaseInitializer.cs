@@ -1,10 +1,27 @@
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 using Server.Data;
 
 namespace Server.Services;
 
 public static class DatabaseInitializer
 {
+    public static void Initialize(ApplicationDbContext db)
+    {
+        if (!db.Database.IsRelational())
+        {
+            return;
+        }
+
+        if (db.Database.IsSqlite() && IsLegacySqliteDatabase(db))
+        {
+            EnsureCurrentSchema(db);
+            BaselineLegacySqliteDatabase(db);
+        }
+
+        db.Database.Migrate();
+    }
+
     public static void EnsureCurrentSchema(ApplicationDbContext db)
     {
         if (!db.Database.IsSqlite())
@@ -34,6 +51,39 @@ public static class DatabaseInitializer
         {
             TryCreateIndex(db, "CREATE UNIQUE INDEX IF NOT EXISTS IX_Students_Username ON Students (Username);");
         }
+    }
+
+    private static bool IsLegacySqliteDatabase(ApplicationDbContext db)
+    {
+        using var command = db.Database.GetDbConnection().CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'";
+
+        if (command.Connection!.State != ConnectionState.Open)
+        {
+            command.Connection.Open();
+        }
+
+        var userTableCount = Convert.ToInt32(command.ExecuteScalar());
+        if (userTableCount == 0)
+        {
+            return false;
+        }
+
+        command.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = '__EFMigrationsHistory'";
+        return Convert.ToInt32(command.ExecuteScalar()) == 0;
+    }
+
+    private static void BaselineLegacySqliteDatabase(ApplicationDbContext db)
+    {
+        var initialMigration = db.Database.GetMigrations().SingleOrDefault();
+        if (initialMigration is null)
+        {
+            throw new InvalidOperationException("No EF Core migration was found for the application database.");
+        }
+
+        db.Database.ExecuteSqlRaw("CREATE TABLE IF NOT EXISTS __EFMigrationsHistory (MigrationId TEXT NOT NULL CONSTRAINT PK___EFMigrationsHistory PRIMARY KEY, ProductVersion TEXT NOT NULL);");
+        var productVersion = typeof(DbContext).Assembly.GetName().Version?.ToString(3) ?? "8.0.0";
+        db.Database.ExecuteSqlInterpolated($"INSERT OR IGNORE INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES ({initialMigration}, {productVersion});");
     }
 
     private static void RemoveDuplicateMembershipLinks(ApplicationDbContext db)

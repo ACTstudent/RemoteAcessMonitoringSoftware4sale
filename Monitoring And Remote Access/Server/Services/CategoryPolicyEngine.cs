@@ -16,12 +16,16 @@ public sealed class CategoryPolicyEngine
         IEnumerable<RestrictionRule>? rules = null,
         IEnumerable<BlacklistItem>? blacklist = null)
     {
-        var target = application?.Trim() ?? string.Empty;
+        var target = NormalizeApplication(application);
         var explicitDecision = EvaluateExplicit(target, "Application", rules, blacklist);
         if (explicitDecision is not null)
             return explicitDecision;
 
-        var category = categories.FirstOrDefault(c => c.IsActive && Matches(target, c.Pattern));
+        var category = categories
+            .Where(c => c.IsActive && Matches(target, NormalizeApplication(c.Pattern)))
+            .OrderByDescending(c => Specificity(NormalizeApplication(c.Pattern)))
+            .ThenByDescending(c => IsAllow(c.Mode))
+            .FirstOrDefault();
         return category is null
             ? new CategoryPolicyDecision(true)
             : new CategoryPolicyDecision(!IsBlock(category.Mode), category.Name, category.Pattern);
@@ -38,7 +42,11 @@ public sealed class CategoryPolicyEngine
         if (explicitDecision is not null)
             return explicitDecision;
 
-        var category = categories.FirstOrDefault(c => c.IsActive && MatchesDomain(target, c.DomainPattern));
+        var category = categories
+            .Where(c => c.IsActive && MatchesDomain(target, c.DomainPattern))
+            .OrderByDescending(c => Specificity(NormalizeDomain(c.DomainPattern)))
+            .ThenByDescending(c => IsAllow(c.Mode))
+            .FirstOrDefault();
         return category is null
             ? new CategoryPolicyDecision(true)
             : new CategoryPolicyDecision(!IsBlock(category.Mode), category.Name, category.DomainPattern);
@@ -50,27 +58,32 @@ public sealed class CategoryPolicyEngine
         IEnumerable<RestrictionRule>? rules,
         IEnumerable<BlacklistItem>? blacklist)
     {
-        var activeRules = rules?.Where(r => r.IsActive &&
-            (r.RuleType.Equals(targetType, StringComparison.OrdinalIgnoreCase) ||
-             (targetType == "Website" && r.RuleType.Equals("BlockWebsite", StringComparison.OrdinalIgnoreCase)) ||
-             (targetType == "Application" && r.RuleType.Equals("BlockApplication", StringComparison.OrdinalIgnoreCase)))) ?? Enumerable.Empty<RestrictionRule>();
-
-        var allowRule = activeRules.FirstOrDefault(r => Matches(target, r.Target) && !IsBlock(r.Mode));
-        if (allowRule is not null)
-            return new CategoryPolicyDecision(true, null, allowRule.Target);
-
-        var blockRule = activeRules.FirstOrDefault(r => Matches(target, r.Target) && IsBlock(r.Mode));
-        if (blockRule is not null)
-            return new CategoryPolicyDecision(false, null, blockRule.Target);
+        var matchingRule = rules?
+            .Where(r => r.IsActive && IsRuleType(r.RuleType, targetType) && MatchesTarget(target, targetType, r.Target))
+            .OrderByDescending(r => Specificity(NormalizedTarget(targetType, r.Target)))
+            .ThenByDescending(r => IsAllow(r.Mode))
+            .FirstOrDefault();
+        if (matchingRule is not null)
+            return new CategoryPolicyDecision(!IsBlock(matchingRule.Mode), null, matchingRule.Target);
 
         var blockedItem = blacklist?.FirstOrDefault(item => item.IsActive &&
-            (item.TargetType.Equals(targetType, StringComparison.OrdinalIgnoreCase) ||
-             (targetType == "Website" && item.TargetType.Equals("Domain", StringComparison.OrdinalIgnoreCase))) &&
-            Matches(target, item.Value));
+            IsBlacklistType(item.TargetType, targetType) &&
+            MatchesTarget(target, targetType, item.Value));
         return blockedItem is null ? null : new CategoryPolicyDecision(false, null, blockedItem.Value);
     }
 
     private static bool IsBlock(string? mode) => !string.Equals(mode, "Allow", StringComparison.OrdinalIgnoreCase);
+    private static bool IsAllow(string? mode) => string.Equals(mode?.Trim(), "Allow", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsRuleType(string? ruleType, string targetType) =>
+        string.Equals(ruleType?.Trim(), targetType, StringComparison.OrdinalIgnoreCase) ||
+        (targetType == "Website" && string.Equals(ruleType?.Trim(), "BlockWebsite", StringComparison.OrdinalIgnoreCase)) ||
+        (targetType == "Application" && string.Equals(ruleType?.Trim(), "BlockApplication", StringComparison.OrdinalIgnoreCase));
+
+    private static bool IsBlacklistType(string? itemType, string targetType) =>
+        string.Equals(itemType?.Trim(), targetType, StringComparison.OrdinalIgnoreCase) ||
+        (targetType == "Website" && string.Equals(itemType?.Trim(), "Domain", StringComparison.OrdinalIgnoreCase)) ||
+        (targetType == "Application" && string.Equals(itemType?.Trim(), "Process", StringComparison.OrdinalIgnoreCase));
 
     private static bool Matches(string value, string pattern)
     {
@@ -85,6 +98,17 @@ public sealed class CategoryPolicyEngine
             value.EndsWith(parts[^1], StringComparison.OrdinalIgnoreCase) &&
             value.Length >= parts[0].Length + parts[^1].Length;
     }
+
+    private static bool MatchesTarget(string target, string targetType, string? pattern) =>
+        targetType == "Website" ? MatchesDomain(target, pattern ?? string.Empty) : Matches(target, NormalizeApplication(pattern));
+
+    private static string NormalizedTarget(string targetType, string? pattern) =>
+        targetType == "Website" ? NormalizeDomain(pattern ?? string.Empty) : NormalizeApplication(pattern);
+
+    private static string NormalizeApplication(string? value) => (value ?? string.Empty).Trim();
+
+    private static int Specificity(string? pattern) =>
+        (pattern ?? string.Empty).Count(c => c != '*' && !char.IsWhiteSpace(c));
 
     private static bool MatchesDomain(string domain, string pattern)
     {

@@ -5,6 +5,7 @@ namespace Client.Services;
 public interface IMonitoringHubClient
 {
     event Action<RemoteInputMessage>? RemoteInputReceived;
+    event Action<RemoteControlStateMessage>? RemoteControlStateReceived;
     event Action? Locked;
     event Action? Unlocked;
     event Action? ForceLogoutRequested;

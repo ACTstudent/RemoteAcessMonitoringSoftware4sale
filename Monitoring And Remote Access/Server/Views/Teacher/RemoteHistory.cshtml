@@ -1,0 +1,24 @@
+@model IEnumerable<Server.Models.RemoteCommandLog>
+@{
+    ViewData["Title"] = "Remote-Control History";
+    Layout = "_TeacherLayout";
+    var sessions = (IEnumerable<Server.Models.RemoteControlSession>)(ViewBag.RemoteSessions ?? Array.Empty<Server.Models.RemoteControlSession>());
+}
+<div class="d-flex align-items-center gap-3 mb-4">
+    <div class="icon-box-primary"><i class="bi bi-terminal-fill fs-3"></i></div>
+    <div><h2 class="fw-extrabold mb-0 text-dark">Remote-Control History</h2><p class="text-muted mb-0 small">Your remote-support sessions and command audit trail</p></div>
+</div>
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+    <div class="card-header bg-white py-3"><h5 class="fw-bold mb-0">Remote Sessions</h5></div>
+    <div class="table-responsive"><table class="table custom-table mb-0"><thead><tr><th>Workstation</th><th>Student</th><th>Started</th><th>Ended</th><th>Status</th></tr></thead><tbody>
+    @foreach (var session in sessions) { <tr><td class="font-monospace">@session.PcName</td><td>@session.StudentId</td><td>@session.StartedAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td><td>@session.EndedAt?.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td><td>@(session.IsActive ? "Active" : "Ended")</td></tr> }
+    @if (!sessions.Any()) { <tr><td colspan="5" class="text-center py-4 text-muted">No remote-support sessions recorded.</td></tr> }
+    </tbody></table></div>
+</div>
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="card-header bg-white py-3"><h5 class="fw-bold mb-0">Command Audit</h5></div>
+    <div class="table-responsive"><table class="table custom-table mb-0"><thead><tr><th>Time</th><th>Command</th><th>Details</th><th>Session</th></tr></thead><tbody>
+    @foreach (var log in Model) { <tr><td>@log.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td><td>@log.Command</td><td>@log.Details</td><td>@(log.RemoteControlSessionId?.ToString() ?? "-")</td></tr> }
+    @if (!Model.Any()) { <tr><td colspan="4" class="text-center py-4 text-muted">No remote commands recorded.</td></tr> }
+    </tbody></table></div>
+</div>

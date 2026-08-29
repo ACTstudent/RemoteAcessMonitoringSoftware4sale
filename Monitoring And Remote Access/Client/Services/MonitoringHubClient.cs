@@ -7,12 +7,17 @@ namespace Client.Services;
 
 public class MonitoringHubClient : IMonitoringHubClient
 {
+    private const int MaxQueuedTelemetry = 100;
     private HubConnection? _connection;
     private readonly CookieContainer _cookies = new();
     private HttpClient? _httpClient;
     private string? _serverUrl;
+    private readonly object _telemetryQueueLock = new();
+    private readonly LinkedList<Func<Task>> _queuedTelemetry = new();
+    private readonly SemaphoreSlim _telemetryFlushLock = new(1, 1);
 
     public event Action<RemoteInputMessage>? RemoteInputReceived;
+    public event Action<RemoteControlStateMessage>? RemoteControlStateReceived;
     public event Action? Locked;
     public event Action? Unlocked;
     public event Action? ForceLogoutRequested;
@@ -71,8 +76,16 @@ public class MonitoringHubClient : IMonitoringHubClient
             .WithAutomaticReconnect()
             .Build();
 
+        connection.Reconnected += _connectionId =>
+        {
+            _ = FlushQueuedTelemetryAsync();
+            return Task.CompletedTask;
+        };
+
         connection.On<RemoteInputMessage>(HubEventNames.ExecuteRemoteInput,
             message => RemoteInputReceived?.Invoke(message));
+        connection.On<RemoteControlStateMessage>(HubEventNames.RemoteControlState,
+            message => RemoteControlStateReceived?.Invoke(message));
         connection.On(HubEventNames.LockStudent, () => Locked?.Invoke());
         connection.On(HubEventNames.UnlockStudent, () => Unlocked?.Invoke());
         connection.On(HubEventNames.ForceLogout, () => ForceLogoutRequested?.Invoke());
@@ -93,6 +106,7 @@ public class MonitoringHubClient : IMonitoringHubClient
         await connection.StartAsync(cancellationToken);
         _connection = connection;
         _serverUrl = serverUrl;
+        await FlushQueuedTelemetryAsync();
     }
 
     public async Task SendScreenFrameAsync(ScreenFrameMessage frame)
@@ -103,20 +117,17 @@ public class MonitoringHubClient : IMonitoringHubClient
 
     public async Task ReportIdleStatusAsync(IdleStatusMessage status)
     {
-        EnsureConnected();
-        await _connection!.InvokeAsync(HubMethodNames.ReportIdleStatus, status);
+        await SendTelemetryAsync(() => _connection!.InvokeAsync(HubMethodNames.ReportIdleStatus, status));
     }
 
     public async Task ReportActiveAppAsync(ActiveAppMessage app)
     {
-        EnsureConnected();
-        await _connection!.InvokeAsync(HubMethodNames.ReportActiveApp, app);
+        await SendTelemetryAsync(() => _connection!.InvokeAsync(HubMethodNames.ReportActiveApp, app));
     }
 
     public async Task ReportWebsiteActivityAsync(WebsiteActivityMessage website)
     {
-        EnsureConnected();
-        await _connection!.InvokeAsync(HubMethodNames.ReportWebsiteActivity, website);
+        await SendTelemetryAsync(() => _connection!.InvokeAsync(HubMethodNames.ReportWebsiteActivity, website));
     }
 
     public async Task FetchRestrictionsAsync()
@@ -151,6 +162,7 @@ public class MonitoringHubClient : IMonitoringHubClient
         _httpClient = null;
         _connection = null;
         _serverUrl = null;
+        _telemetryFlushLock.Dispose();
     }
 
     private static Uri GetRootUri(string serverUrl)
@@ -172,6 +184,68 @@ public class MonitoringHubClient : IMonitoringHubClient
         if (_connection?.State != HubConnectionState.Connected)
         {
             throw new InvalidOperationException("Not connected to the monitoring hub.");
+        }
+    }
+
+    private async Task SendTelemetryAsync(Func<Task> send)
+    {
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            try
+            {
+                EnsureConnected();
+                await send();
+                return;
+            }
+            catch when (attempt < 2)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(100 * (attempt + 1)));
+            }
+            catch
+            {
+                break;
+            }
+        }
+
+        lock (_telemetryQueueLock)
+        {
+            if (_queuedTelemetry.Count == MaxQueuedTelemetry)
+                _queuedTelemetry.RemoveFirst();
+            _queuedTelemetry.AddLast(send);
+        }
+    }
+
+    private async Task FlushQueuedTelemetryAsync()
+    {
+        if (!await _telemetryFlushLock.WaitAsync(0))
+            return;
+
+        try
+        {
+            while (true)
+            {
+                Func<Task>? send;
+                lock (_telemetryQueueLock)
+                    send = _queuedTelemetry.First?.Value;
+                if (send is null)
+                    return;
+
+                try
+                {
+                    EnsureConnected();
+                    await send();
+                    lock (_telemetryQueueLock)
+                        _queuedTelemetry.RemoveFirst();
+                }
+                catch
+                {
+                    return;
+                }
+            }
+        }
+        finally
+        {
+            _telemetryFlushLock.Release();
         }
     }
 }

@@ -52,6 +52,7 @@
                             </span>
                         </td>
                         <td class="text-end">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editBlacklist-@b.BlacklistItemId">Edit</button>
                             <form method="post" action="/Admin/DeleteBlacklist" style="margin:0;" onsubmit="return confirm('Remove item from blacklist?');">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@b.BlacklistItemId" />
@@ -72,6 +73,11 @@
         </table>
     </div>
 </div>
+
+@foreach (var b in Model)
+{
+    <div class="modal fade" id="editBlacklist-@b.BlacklistItemId" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post" action="/Admin/UpdateBlacklist">@Html.AntiForgeryToken()<input type="hidden" name="BlacklistItemId" value="@b.BlacklistItemId" /><div class="modal-header"><h5>Edit Blacklist Item</h5></div><div class="modal-body"><label>Target Type</label><select name="TargetType" class="form-select mb-2"><option value="Application" selected="@(b.TargetType == "Application" ? "selected" : null)">Application</option><option value="Website" selected="@(b.TargetType == "Website" ? "selected" : null)">Website</option><option value="Domain" selected="@(b.TargetType == "Domain" ? "selected" : null)">Domain</option><option value="Process" selected="@(b.TargetType == "Process" ? "selected" : null)">Process</option></select><label>Value</label><input name="Value" value="@b.Value" required maxlength="300" class="form-control mb-2" /><label>Reason</label><input name="Reason" value="@b.Reason" maxlength="500" class="form-control mb-2" /><label><input type="checkbox" name="IsActive" value="true" @(b.IsActive ? "checked" : "") /> Active</label></div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div>
+}
 
 <!-- Modal: Create Blacklist Item -->
 <div class="modal fade" id="createBlacklistModal" tabindex="-1" aria-labelledby="createBlacklistModalLabel" aria-hidden="true">

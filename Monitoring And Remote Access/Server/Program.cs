@@ -124,7 +124,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     }
     else if (provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
     {
-        options.UseSqlite("Data Source=CAMS.db");
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+            ?? $"Data Source={Path.Combine(AppContext.BaseDirectory, "CAMS.db")}";
+        options.UseSqlite(connectionString);
     }
     else
     {
@@ -143,20 +145,12 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// Create the schema automatically on first run (no manual migration step required)
+// Apply migrations before starting services that depend on the database.
 using (var scope = app.Services.CreateScope())
 {
-    try
-    {
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        db.Database.EnsureCreated();
-        DatabaseInitializer.EnsureCurrentSchema(db);
-        AccountSeeder.SeedConfiguredAccounts(db, app.Configuration);
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"[CAMS] Database init warning: {ex.Message}");
-    }
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    DatabaseInitializer.Initialize(db);
+    AccountSeeder.SeedConfiguredAccounts(db, app.Configuration);
 }
 
 app.UseHttpsRedirection();
