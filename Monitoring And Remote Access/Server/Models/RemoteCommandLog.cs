@@ -9,6 +9,12 @@ public class RemoteCommandLog
     public int? RemoteControlSessionId { get; set; }
     public int TeacherId { get; set; }
 
+    [Required, StringLength(100)]
+    public string StudentId { get; set; } = string.Empty;
+
+    [Required, StringLength(100)]
+    public string PcName { get; set; } = string.Empty;
+
     [Required, StringLength(50)]
     public string Command { get; set; } = string.Empty;
 

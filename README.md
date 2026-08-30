@@ -92,7 +92,7 @@ Pre-built installer setup executables published as versioned GitHub release asse
 | **Server Web App** | ASP.NET Core MVC (.NET 8), Razor Views, SignalR WebSockets |
 | **UI Design System**| Dark Emerald CSS System (`#0B3C26` / `#10B981`), `Plus Jakarta Sans`, Bootstrap 5 |
 | **Client Agent** | WinForms (.NET 8), self-contained desktop process |
-| **Database** | SQLite via EF Core (`EnsureCreated()`) |
+| **Database** | Local SQLite (`CAMS.db`) via EF Core migrations |
 | **Discovery** | UDP Broadcast |
 | **Tests & Packaging** | xUnit in CI, Inno Setup 6 |
 

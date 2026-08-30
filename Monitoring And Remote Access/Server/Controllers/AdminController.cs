@@ -45,7 +45,7 @@ namespace Server.Controllers
                 Action = action,
                 Details = details,
                 IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
-                Timestamp = DateTime.Now
+                 Timestamp = DateTime.UtcNow
             });
             await _context.SaveChangesAsync();
         }
@@ -70,7 +70,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateTeacher(Teacher teacher)
+        public async Task<IActionResult> CreateTeacher([Bind("FirstName,LastName,Email,Username,PasswordHash,ContactNumber,Status")] Teacher teacher)
         {
             if (!CheckAccess()) return Denied();
             
@@ -105,7 +105,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> UpdateTeacher(Teacher teacher, string? newPassword)
+        public async Task<IActionResult> UpdateTeacher([Bind("TeacherId,FirstName,LastName,Email,Username,ContactNumber,Status")] Teacher teacher, string? newPassword)
         {
             if (!CheckAccess()) return Denied();
             var existing = await _context.Teachers.FindAsync(teacher.TeacherId);
@@ -192,7 +192,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateStudent(Student student)
+        public async Task<IActionResult> CreateStudent([Bind("StudentNumber,FirstName,LastName,FullName,Username,PasswordHash,Status,GradeSection,ClassId,AdviserId")] Student student)
         {
             if (!CheckAccess()) return Denied();
 
@@ -250,7 +250,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> UpdateStudent(Student student, string? newPassword)
+        public async Task<IActionResult> UpdateStudent([Bind("Id,StudentNumber,FirstName,LastName,FullName,Username,Status,GradeSection,ClassId,AdviserId")] Student student, string? newPassword)
         {
             if (!CheckAccess()) return Denied();
             var existing = await _context.Students.FindAsync(student.Id);
@@ -381,7 +381,7 @@ namespace Server.Controllers
             rule.RuleType = NormalizeRuleType(rule.RuleType);
             rule.Target = rule.Target.Trim();
             rule.Description = rule.Description?.Trim() ?? "";
-            rule.CreatedAt = DateTime.Now;
+             rule.CreatedAt = DateTime.UtcNow;
             _context.RestrictionRules.Add(rule);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateRestriction", $"Added restriction on {rule.Target}");
@@ -430,8 +430,28 @@ namespace Server.Controllers
             return View(await _context.BlacklistItems.OrderByDescending(b => b.CreatedAt).ToListAsync());
         }
 
+        public async Task<IActionResult> Whitelists()
+        {
+            if (!CheckAccess()) return Denied();
+            return View(await _context.RestrictionRules.Where(r => r.IsActive && r.Mode == "Allow").OrderByDescending(r => r.CreatedAt).ToListAsync());
+        }
+
         [HttpPost]
-        public async Task<IActionResult> CreateBlacklist(BlacklistItem item)
+        public async Task<IActionResult> CreateWhitelist([Bind("RuleType,Target,Description,IsGlobal,IsActive")] RestrictionRule rule)
+        {
+            rule.Mode = "Allow";
+            return await CreateRestriction(rule);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateWhitelist([Bind("RestrictionRuleId,RuleType,Target,Description,IsGlobal,IsActive")] RestrictionRule rule)
+        {
+            rule.Mode = "Allow";
+            return await UpdateRestriction(rule);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateBlacklist([Bind("TargetType,Value,Reason,IsActive")] BlacklistItem item)
         {
             if (!CheckAccess()) return Denied();
             if (!ValidBlacklistType(item.TargetType) || string.IsNullOrWhiteSpace(item.Value))
@@ -442,7 +462,7 @@ namespace Server.Controllers
             item.TargetType = item.TargetType.Trim();
             item.Value = item.Value.Trim();
             item.Reason = item.Reason?.Trim() ?? "";
-            item.CreatedAt = DateTime.Now;
+             item.CreatedAt = DateTime.UtcNow;
             _context.BlacklistItems.Add(item);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateBlacklist", $"Blacklisted {item.TargetType}: {item.Value}");
@@ -451,7 +471,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> UpdateBlacklist(BlacklistItem input)
+        public async Task<IActionResult> UpdateBlacklist([Bind("BlacklistItemId,TargetType,Value,Reason,IsActive")] BlacklistItem input)
         {
             if (!CheckAccess()) return Denied();
             var item = await _context.BlacklistItems.FindAsync(input.BlacklistItemId);
@@ -568,7 +588,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateSessionRule(SessionRule rule)
+        public async Task<IActionResult> CreateSessionRule([Bind("Name,MaxDurationMinutes,AllowPause,AllowRemoteControl,IsDefault,IsActive")] SessionRule rule)
         {
             if (!CheckAccess()) return Denied();
             if (string.IsNullOrWhiteSpace(rule.Name))
@@ -587,6 +607,21 @@ namespace Server.Controllers
             await AuditAsync("CreateSessionRule", $"Created session rule {rule.Name}");
             TempData["Message"] = $"Session rule '{rule.Name}' created!";
             return RedirectToAction("SessionRules");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateSessionRule([Bind("SessionRuleId,Name,MaxDurationMinutes,AllowPause,AllowRemoteControl,IsDefault,IsActive")] SessionRule input)
+        {
+            if (!CheckAccess()) return Denied();
+            var rule = await _context.SessionRules.FindAsync(input.SessionRuleId);
+            if (rule == null || string.IsNullOrWhiteSpace(input.Name) || input.MaxDurationMinutes < 1) return RedirectToAction(nameof(SessionRules));
+            if (input.IsDefault)
+                await _context.SessionRules.Where(r => r.SessionRuleId != rule.SessionRuleId && r.IsDefault).ExecuteUpdateAsync(s => s.SetProperty(r => r.IsDefault, false));
+            rule.Name = input.Name.Trim(); rule.MaxDurationMinutes = input.MaxDurationMinutes; rule.AllowPause = input.AllowPause;
+            rule.AllowRemoteControl = input.AllowRemoteControl; rule.IsDefault = input.IsDefault; rule.IsActive = input.IsActive;
+            await _context.SaveChangesAsync();
+            await AuditAsync("UpdateSessionRule", $"Updated session rule {rule.Name}");
+            return RedirectToAction(nameof(SessionRules));
         }
 
         [HttpPost]

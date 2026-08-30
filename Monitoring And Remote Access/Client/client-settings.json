@@ -1,3 +1,9 @@
 {
-  "ServerUrl": "https://localhost:5000/remoteMonitoringHub"
+  "ServerUrl": "https://localhost:5000/remoteMonitoringHub",
+  "Enabled": true,
+  "ManageChrome": true,
+  "ManageBrave": true,
+  "ChromePort": 9222,
+  "BravePort": 9223,
+  "RestartDelayMilliseconds": 1000
 }

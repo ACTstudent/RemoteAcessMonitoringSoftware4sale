@@ -9,6 +9,7 @@ using Server.Services;
 namespace Server.Controllers
 {
     [Authorize(Roles = "Student")]
+    [AutoValidateAntiforgeryToken]
     public class StudentController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -86,21 +87,15 @@ namespace Server.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ResetPassword(string currentPassword, string newPassword)
+        public async Task<IActionResult> ResetPassword(PasswordChangeInput input)
         {
             if (!CheckAccess()) return Denied();
             var studentId = HttpContext.Session.GetInt32("StudentId")!.Value;
-            var student = await _context.Students.FindAsync(studentId);
-            if (student == null) return RedirectToAction("Login", "Account");
-
-            if (_hasher.VerifyHashedPassword(new object(), student.PasswordHash, currentPassword) != PasswordVerificationResult.Success)
+            if (!ModelState.IsValid || !await new AuthenticationService(_context).ChangeStudentPasswordAsync(studentId, input.CurrentPassword, input.NewPassword))
             {
                 ViewBag.Error = "Current password is incorrect.";
                 return View("Settings");
             }
-
-            student.PasswordHash = _hasher.HashPassword(new object(), newPassword);
-            await _context.SaveChangesAsync();
             ViewBag.Success = "Password updated successfully.";
             return View("Settings");
         }

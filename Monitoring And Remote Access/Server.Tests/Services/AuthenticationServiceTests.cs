@@ -87,6 +87,30 @@ public class AuthenticationServiceTests
     }
 
     [Fact]
+    public async Task LoginAsync_FiveWrongPasswords_LocksStudentAccount()
+    {
+        var context = CreateContext();
+        var hasher = new PasswordHasher<object>();
+        var student = new Student
+        {
+            Id = 11,
+            StudentNumber = "STU011",
+            Username = "lockout_student",
+            PasswordHash = hasher.HashPassword(new object(), "correct")
+        };
+        context.Students.Add(student);
+        await context.SaveChangesAsync();
+
+        var service = new AuthenticationService(context);
+        for (var attempt = 0; attempt < 5; attempt++)
+            Assert.Equal(AccountRole.Invalid, (await service.LoginAsync("lockout_student", "wrong", "PC01", "127.0.0.1")).Role);
+
+        Assert.NotNull(student.LockoutEndUtc);
+        Assert.True(student.LockoutEndUtc > DateTime.UtcNow);
+        Assert.Equal(AccountRole.Invalid, (await service.LoginAsync("lockout_student", "correct", "PC01", "127.0.0.1")).Role);
+    }
+
+    [Fact]
     public async Task LoginAsync_PlaintextStoredPassword_IsRejected()
     {
         var context = CreateContext();

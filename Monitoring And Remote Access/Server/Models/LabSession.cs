@@ -26,7 +26,7 @@ namespace Server.Models
         [StringLength(50)]
         public string IPAddress { get; set; } = string.Empty;
 
-        public DateTime StartTime { get; set; } = DateTime.Now;
+        public DateTime StartTime { get; set; } = DateTime.UtcNow;
 
         public DateTime? PauseTime { get; set; }
 

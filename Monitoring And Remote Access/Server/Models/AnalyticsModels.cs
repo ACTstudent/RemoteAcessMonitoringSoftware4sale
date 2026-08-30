@@ -19,6 +19,8 @@ public sealed record ActivityTimelineItem(
     string? Details,
     string PcName);
 
+public sealed record RemoteHistoryItem(DateTime Timestamp, string StudentId, string PcName, string Command, string? Details, int? SessionId);
+
 public sealed record PagedResult<T>(
     IReadOnlyList<T> Items,
     int Page,
@@ -48,4 +50,13 @@ public sealed record StudentAnalyticsReport(
     DateTime To,
     DurationSummary Durations,
     IReadOnlyList<ActivityTimelineItem> Timeline,
+    IReadOnlyList<MonitoringAlert> Alerts);
+
+public sealed record ClassAnalyticsReport(
+    Class Class,
+    DateTime From,
+    DateTime To,
+    int TotalSessions,
+    double TotalMinutes,
+    IReadOnlyDictionary<string, int> SessionsByStudent,
     IReadOnlyList<MonitoringAlert> Alerts);

@@ -63,6 +63,7 @@
                             </span>
                         </td>
                         <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editSessionRule-@r.SessionRuleId">Edit</button>
                             <form method="post" action="/Admin/DeleteSessionRule" style="margin:0;" onsubmit="return confirm('Delete this session rule?');">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@r.SessionRuleId" />
@@ -73,16 +74,33 @@
                         </td>
                     </tr>
                 }
-                @if (!Model.Any())
+@if (!Model.Any())
                 {
                     <tr>
                         <td colspan="7" class="text-center py-4 text-muted">No session rules configured. Click "Add Session Rule" above.</td>
                     </tr>
-                }
+}
             </tbody>
         </table>
     </div>
 </div>
+
+@foreach (var r in Model)
+{
+    <div class="modal fade" id="editSessionRule-@r.SessionRuleId" tabindex="-1">
+        <div class="modal-dialog"><div class="modal-content"><form method="post" action="/Admin/UpdateSessionRule">
+            @Html.AntiForgeryToken()<input type="hidden" name="SessionRuleId" value="@r.SessionRuleId" />
+            <div class="modal-header"><h5>Edit Session Rule</h5></div><div class="modal-body">
+                <input name="Name" value="@r.Name" maxlength="100" required class="form-control mb-2" />
+                <input name="MaxDurationMinutes" type="number" min="1" value="@r.MaxDurationMinutes" required class="form-control mb-2" />
+                <label><input type="checkbox" name="AllowPause" value="true" @(r.AllowPause ? "checked" : "") /> Allow pause</label><br />
+                <label><input type="checkbox" name="AllowRemoteControl" value="true" @(r.AllowRemoteControl ? "checked" : "") /> Allow remote control</label><br />
+                <label><input type="checkbox" name="IsDefault" value="true" @(r.IsDefault ? "checked" : "") /> Default</label><br />
+                <label><input type="checkbox" name="IsActive" value="true" @(r.IsActive ? "checked" : "") /> Active</label>
+            </div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div>
+        </form></div></div>
+    </div>
+}
 
 <!-- Modal: Create Session Rule -->
 <div class="modal fade" id="createSessionRuleModal" tabindex="-1" aria-labelledby="createSessionRuleModalLabel" aria-hidden="true">

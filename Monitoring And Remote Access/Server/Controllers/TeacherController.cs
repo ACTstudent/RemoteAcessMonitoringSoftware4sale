@@ -126,7 +126,7 @@ namespace Server.Controllers
                     ? (await _context.Computers.FindAsync(computerId.Value))?.LaboratoryStation ?? ""
                     : student.Username,
                 MaxDurationMinutes = rule?.MaxDurationMinutes,
-                StartTime = DateTime.Now,
+                 StartTime = DateTime.UtcNow,
                 Status = "Running",
                 IsActive = true
             };
@@ -159,13 +159,13 @@ namespace Server.Controllers
                 if (session.Status == "Running")
                 {
                     session.Status = "Paused";
-                    session.PauseTime = DateTime.Now;
+                     session.PauseTime = DateTime.UtcNow;
                 }
                 else if (session.Status == "Paused")
                 {
                     if (session.PauseTime.HasValue)
                     {
-                        session.StartTime = session.StartTime.Add(DateTime.Now - session.PauseTime.Value);
+                         session.StartTime = session.StartTime.Add(DateTime.UtcNow - session.PauseTime.Value);
                         session.PauseTime = null;
                     }
                     session.Status = "Running";
@@ -210,12 +210,13 @@ namespace Server.Controllers
             {
                 Students = svc?.ActiveStudents,
                 Idle = svc?.IdleStatus,
-                Apps = svc?.ActiveApps
+                Apps = svc?.ActiveApps,
+                Browsers = svc?.BrowserMonitoringStatus
             });
         }
 
         // ---------- Remote-control history ----------
-        public async Task<IActionResult> RemoteHistory()
+        public async Task<IActionResult> RemoteHistory(DateTime? from = null, DateTime? to = null, string? command = null, string? studentId = null, int page = 1)
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
@@ -224,9 +225,22 @@ namespace Server.Controllers
             ViewBag.RemoteSessions = await _context.RemoteControlSessions.AsNoTracking()
                 .Where(s => s.TeacherId == teacherId.Value)
                 .OrderByDescending(s => s.StartedAt).Take(100).ToListAsync();
-            return View(await _context.RemoteCommandLogs.AsNoTracking()
-                .Where(log => log.TeacherId == teacherId.Value)
-                .OrderByDescending(log => log.Timestamp).Take(200).ToListAsync());
+            ViewBag.From = from?.ToString("yyyy-MM-dd"); ViewBag.To = to?.ToString("yyyy-MM-dd");
+            ViewBag.Command = command; ViewBag.StudentId = studentId;
+            var result = await _analytics.GetRemoteHistoryAsync(teacherId.Value, from, to, command, studentId, page);
+            return View(result);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportRemoteHistoryCsv(DateTime? from = null, DateTime? to = null, string? command = null, string? studentId = null)
+        {
+            if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
+            var result = await _analytics.GetRemoteHistoryAsync(teacherId.Value, from, to, command, studentId, 1, 500);
+            var csv = new System.Text.StringBuilder("Timestamp,Student,Command,Details,Session\n");
+            foreach (var item in result.Items) csv.AppendLine($"{item.Timestamp:O},{Csv(item.StudentId)},{Csv(item.Command)},{Csv(item.Details)},{item.SessionId?.ToString() ?? ""}");
+            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv; charset=utf-8", $"CAMS-Remote-History-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv");
         }
 
         // ---------- Restrictions ----------
@@ -447,6 +461,18 @@ namespace Server.Controllers
             return report is null ? RedirectToAction("Students") : View(report);
         }
 
+        public async Task<IActionResult> ClassAnalytics(int id, DateTime? from = null, DateTime? to = null, string? station = null)
+        {
+            if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
+            var start = from ?? DateTime.UtcNow.Date;
+            var end = to ?? DateTime.UtcNow.Date.AddDays(1);
+            if (end <= start || end - start > TimeSpan.FromDays(366)) return BadRequest("Invalid date range.");
+            var report = await _analytics.GetClassReportAsync(id, teacherId.Value, start, end, station);
+            return report is null ? NotFound() : View(report);
+        }
+
         public async Task<IActionResult> ExportStudentAnalyticsCsv(int id, DateTime? from = null, DateTime? to = null)
         {
             if (!CheckAccess()) return Denied();
@@ -479,7 +505,9 @@ namespace Server.Controllers
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
-            var alerts = await _analytics.GetAlertsAsync(teacherId.Value, includeAcknowledged, from, to, severity, studentId, page, pageSize);
+            if (from.HasValue && to.HasValue && to.Value.Date < from.Value.Date) return BadRequest("Invalid date range.");
+            if (page < 1 || pageSize is < 1 or > 500) return BadRequest("Invalid paging.");
+            var alerts = await _analytics.GetAlertsAsync(teacherId.Value, includeAcknowledged, from, to, severity, studentId?.Trim(), page, pageSize);
             ViewBag.From = from?.ToString("yyyy-MM-dd"); ViewBag.To = to?.ToString("yyyy-MM-dd");
             ViewBag.Severity = severity; ViewBag.StudentId = studentId; ViewBag.Paging = alerts;
             return View(alerts.Items);
@@ -515,7 +543,7 @@ namespace Server.Controllers
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
-            if (!await _analytics.SetAlertAcknowledgedAsync(id, teacherId.Value, acknowledged)) return NotFound();
+            if (id <= 0 || !await _analytics.SetAlertAcknowledgedAsync(id, teacherId.Value, acknowledged)) return NotFound();
             return RedirectToAction(nameof(Alerts), new { includeAcknowledged = true });
         }
 

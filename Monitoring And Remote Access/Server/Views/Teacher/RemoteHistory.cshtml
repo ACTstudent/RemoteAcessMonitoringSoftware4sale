@@ -1,4 +1,4 @@
-@model IEnumerable<Server.Models.RemoteCommandLog>
+@model Server.Models.PagedResult<Server.Models.RemoteHistoryItem>
 @{
     ViewData["Title"] = "Remote-Control History";
     Layout = "_TeacherLayout";
@@ -8,6 +8,9 @@
     <div class="icon-box-primary"><i class="bi bi-terminal-fill fs-3"></i></div>
     <div><h2 class="fw-extrabold mb-0 text-dark">Remote-Control History</h2><p class="text-muted mb-0 small">Your remote-support sessions and command audit trail</p></div>
 </div>
+<form method="get" class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+    <div class="row g-2 align-items-end"><div class="col-md-2"><label class="small text-muted">From</label><input type="date" name="from" value="@ViewBag.From" class="form-control" /></div><div class="col-md-2"><label class="small text-muted">To</label><input type="date" name="to" value="@ViewBag.To" class="form-control" /></div><div class="col-md-3"><label class="small text-muted">Command</label><input name="command" value="@ViewBag.Command" class="form-control" placeholder="e.g. LockStudent" /></div><div class="col-md-3"><label class="small text-muted">Student</label><input name="studentId" value="@ViewBag.StudentId" class="form-control" /></div><div class="col-md-2 d-flex gap-2"><button class="btn btn-emerald">Filter</button><a class="btn btn-outline-secondary" href="@Url.Action("ExportRemoteHistoryCsv", "Teacher", new { from = ViewBag.From, to = ViewBag.To, command = ViewBag.Command, studentId = ViewBag.StudentId })">CSV</a></div></div>
+</form>
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
     <div class="card-header bg-white py-3"><h5 class="fw-bold mb-0">Remote Sessions</h5></div>
     <div class="table-responsive"><table class="table custom-table mb-0"><thead><tr><th>Workstation</th><th>Student</th><th>Started</th><th>Ended</th><th>Status</th></tr></thead><tbody>
@@ -18,7 +21,7 @@
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
     <div class="card-header bg-white py-3"><h5 class="fw-bold mb-0">Command Audit</h5></div>
     <div class="table-responsive"><table class="table custom-table mb-0"><thead><tr><th>Time</th><th>Command</th><th>Details</th><th>Session</th></tr></thead><tbody>
-    @foreach (var log in Model) { <tr><td>@log.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td><td>@log.Command</td><td>@log.Details</td><td>@(log.RemoteControlSessionId?.ToString() ?? "-")</td></tr> }
-    @if (!Model.Any()) { <tr><td colspan="4" class="text-center py-4 text-muted">No remote commands recorded.</td></tr> }
+    @foreach (var log in Model.Items) { <tr><td>@log.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td><td>@log.Command</td><td>@log.Details</td><td>@(log.SessionId?.ToString() ?? "-")</td></tr> }
+    @if (!Model.Items.Any()) { <tr><td colspan="4" class="text-center py-4 text-muted">No remote commands recorded.</td></tr> }
     </tbody></table></div>
 </div>

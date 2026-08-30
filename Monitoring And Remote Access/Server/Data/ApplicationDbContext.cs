@@ -86,6 +86,12 @@ namespace Server.Data
             modelBuilder.Entity<ActivityEvent>()
                 .HasIndex(activity => new { activity.PcName, activity.Timestamp });
 
+            modelBuilder.Entity<RemoteCommandLog>()
+                .HasIndex(log => new { log.TeacherId, log.StudentId, log.Timestamp });
+
+            modelBuilder.Entity<MonitoringAlert>()
+                .HasIndex(alert => new { alert.StudentId, alert.DedupeKey, alert.CreatedAt });
+
             // Relationships matching pro CRUD model
             modelBuilder.Entity<Class>()
                 .HasOne(c => c.Teacher)
@@ -120,7 +126,8 @@ namespace Server.Data
                 AllowPause = true,
                 AllowRemoteControl = true,
                 IsDefault = true,
-                IsActive = true
+                IsActive = true,
+                CreatedAt = new DateTime(2026, 8, 29, 0, 0, 0, DateTimeKind.Utc)
             });
         }
     }

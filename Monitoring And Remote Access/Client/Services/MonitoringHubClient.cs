@@ -130,6 +130,11 @@ public class MonitoringHubClient : IMonitoringHubClient
         await SendTelemetryAsync(() => _connection!.InvokeAsync(HubMethodNames.ReportWebsiteActivity, website));
     }
 
+    public async Task ReportBrowserMonitoringStatusAsync(BrowserMonitoringStatusMessage status)
+    {
+        await SendTelemetryAsync(() => _connection!.InvokeAsync(HubMethodNames.ReportBrowserMonitoringStatus, status));
+    }
+
     public async Task FetchRestrictionsAsync()
     {
         EnsureConnected();

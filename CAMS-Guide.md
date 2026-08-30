@@ -58,7 +58,7 @@ Pardo Elementary School Computer Laboratory Management System
           │                  │
           │  SignalR Hub     │
           │  Controllers      │
-          │  DB (MySQL/SQL)  │
+          │  SQLite CAMS.db  │
           │                  │
           │  Local LAN Only  │
           │  No Cloud Reqs   │
@@ -208,7 +208,7 @@ Server is at `https://localhost:5000`. The testing release seeds `admin1` / `adm
 ### Production LAN Setup
 1. Install .NET 8 runtime on the server machine
 2. Publish the Server project
-3. Configure the MySQL or SQL Server connection string in appsettings.json (or `DatabaseProvider: "Sqlite"`)
+3. Keep the local SQLite connection string in `appsettings.json`; CAMS creates and migrates `CAMS.db` automatically.
 4. Run Server.exe. With no `Cams:CertificatePath`, CAMS creates a local CA and a LAN certificate containing the current machine name and IP addresses.
 5. Copy only `%LOCALAPPDATA%\CAMS Server\CAMS-Server-Root.cer` to each student PC. Never distribute the `.pfx` files.
 6. Build the student installer via `./publish-client.ps1`; it installs with bundled .NET.
@@ -224,7 +224,7 @@ Use the teacher PC's Wi-Fi IPv4 address from `ipconfig`, not `localhost`. Phone 
 
 ## Requirements for Developing
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- SQL Server LocalDB **or** MySQL **or** SQLite (file‑based, zero‑install default)
+- SQLite (file-based and zero-install)
 - PowerShell (for publish helpers)
 
 ---

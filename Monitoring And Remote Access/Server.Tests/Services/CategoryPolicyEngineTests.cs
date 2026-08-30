@@ -48,6 +48,15 @@ public class CategoryPolicyEngineTests
     }
 
     [Fact]
+    public void MoreSpecificAllowRuleBeatsBroadBlockRule()
+    {
+        var result = _engine.EvaluateWebsite("safe.example.test", [], [
+            new RestrictionRule { RuleType = "Website", Target = "*.example.test", Mode = "Block" },
+            new RestrictionRule { RuleType = "Website", Target = "safe.example.test", Mode = "Allow" }]);
+        Assert.True(result.IsAllowed);
+    }
+
+    [Fact]
     public async Task CategoryDbSets_PersistCategories()
     {
         var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<Server.Data.ApplicationDbContext>()

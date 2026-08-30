@@ -20,4 +20,5 @@ public static class HubMethodNames
     public const string ReportIdleStatus = "ReportIdleStatus";
     public const string ReportActiveApp = "ReportActiveApp";
     public const string ReportWebsiteActivity = "ReportWebsiteActivity";
+    public const string ReportBrowserMonitoringStatus = "ReportBrowserMonitoringStatus";
 }

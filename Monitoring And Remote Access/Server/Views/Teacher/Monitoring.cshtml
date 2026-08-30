@@ -110,7 +110,7 @@
             if (!connectionId || document.getElementById(`unit-card-${connectionId}`)) return;
 
             document.getElementById("emptyState")?.remove();
-            activeUnits.set(connectionId, { studentId, pcName, lastFrame: null, applicationName: "Unknown", isIdle: false });
+            activeUnits.set(connectionId, { studentId, pcName, lastFrame: null, applicationName: "Unknown", isIdle: false, browsers: {} });
 
             const column = document.createElement("div");
             column.className = "col-lg-3 col-md-4 col-sm-6 unit-col";
@@ -156,10 +156,14 @@
             timestamp.id = `time-${connectionId}`;
             timestamp.className = "small text-muted";
             timestamp.textContent = "Waiting for live frame";
+            const browser = document.createElement("span");
+            browser.id = `browser-${connectionId}`;
+            browser.className = "small text-muted w-100";
+            browser.textContent = "Browser monitoring pending";
             const viewButton = document.createElement("span");
             viewButton.className = "btn btn-sm btn-outline-primary rounded-pill px-3";
             viewButton.innerHTML = '<i class="bi bi-arrows-fullscreen me-1"></i> View';
-            footer.append(activity, timestamp, viewButton);
+            footer.append(activity, timestamp, browser, viewButton);
 
             card.append(header, stream, footer);
             column.appendChild(card);
@@ -276,10 +280,18 @@
             if (!selectedConnectionId) return;
             if (dangerous && !confirm(`Confirm ${method.replace("Student", "").toLowerCase()} for this workstation?`)) return;
             try {
-                await hub.invoke(method, selectedConnectionId);
+                const result = await hub.invoke(method, selectedConnectionId);
+                showCommandResult(result);
             } catch (error) {
                 showError(`Command failed: ${error.message || error}`);
             }
+        }
+
+        function showCommandResult(result) {
+            if (!result) return;
+            const message = valueOf(result, "message", "Message") || "Command completed.";
+            if (!Boolean(valueOf(result, "succeeded", "Succeeded"))) showError(message);
+            else document.getElementById("hubError").classList.add("d-none");
         }
 
         async function bulkCommand(method, label) {
@@ -303,6 +315,19 @@
             if (activity) activity.textContent = unit.isIdle ? "Idle" : unit.applicationName || "Active";
         }
 
+        function updateBrowserStatus(status) {
+            const connectionId = valueOf(status, "connectionId", "ConnectionId");
+            const unit = activeUnits.get(connectionId);
+            if (!unit) return;
+            const browserName = valueOf(status, "browser", "Browser") || "browser";
+            const rawMode = valueOf(status, "mode", "Mode");
+            const mode = Number(rawMode) === 0 || rawMode === "ManagedProtocol" ? "managed" :
+                Number(rawMode) === 1 || rawMode === "WindowTitleFallback" ? "fallback" : "unavailable";
+            unit.browsers[browserName] = mode;
+            const label = document.getElementById(`browser-${connectionId}`);
+            if (label) label.textContent = Object.entries(unit.browsers).map(([name, value]) => `${name}: ${value}`).join(" | ");
+        }
+
         async function loadLiveState() {
             try {
                 const response = await fetch("/Teacher/LiveState", { credentials: "same-origin" });
@@ -318,6 +343,7 @@
                 for (const idle of (state.idle ?? state.Idle ?? [])) {
                     updateActivity(valueOf(idle, "connectionId", "ConnectionId"), null, Boolean(valueOf(idle, "isIdle", "IsIdle")));
                 }
+                for (const browser of (state.browsers ?? state.Browsers ?? [])) updateBrowserStatus(browser);
             } catch {
                 showError("The initial monitoring state could not be loaded.");
             }
@@ -326,6 +352,7 @@
         hub.on("ReceiveScreenFrame", (connectionId, frame) => updateWorkstationCard(connectionId, frame));
         hub.on("ActiveAppReceived", app => updateActivity(valueOf(app, "connectionId", "ConnectionId"), valueOf(app, "applicationName", "ApplicationName"), false));
         hub.on("WebsiteActivityReceived", website => updateActivity(valueOf(website, "connectionId", "ConnectionId"), `Web: ${valueOf(website, "domain", "Domain")}`, false));
+        hub.on("BrowserMonitoringStatusReceived", updateBrowserStatus);
         hub.on("IdleStatusReceived", idle => updateActivity(valueOf(idle, "connectionId", "ConnectionId"), null, Boolean(valueOf(idle, "isIdle", "IsIdle"))));
         hub.on("InfractionDetected", infraction => showError(`Restriction alert: ${valueOf(infraction, "target", "Target") || "restricted activity detected"}`));
         hub.on("MonitoringAlertReceived", alert => showError(`${valueOf(alert, "title", "Title")}: ${valueOf(alert, "message", "Message")}`));

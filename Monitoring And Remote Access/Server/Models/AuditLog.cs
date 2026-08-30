@@ -22,6 +22,6 @@ namespace Server.Models
         [StringLength(50)]
         public string? IpAddress { get; set; }
 
-        public DateTime Timestamp { get; set; } = DateTime.Now;
+        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     }
 }

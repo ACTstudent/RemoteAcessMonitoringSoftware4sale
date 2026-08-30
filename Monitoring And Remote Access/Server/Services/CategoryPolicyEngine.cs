@@ -10,6 +10,21 @@ public sealed record CategoryPolicyDecision(bool IsAllowed, string? CategoryName
 /// </summary>
 public sealed class CategoryPolicyEngine
 {
+    public IReadOnlyList<RestrictionRule> GetEffectiveRules(IEnumerable<RestrictionRule> rules, IEnumerable<BlacklistItem>? blacklist = null)
+    {
+        var effective = rules.Where(r => r.IsActive).ToList();
+        foreach (var item in blacklist?.Where(b => b.IsActive) ?? [])
+        {
+            effective.Add(new RestrictionRule
+            {
+                RestrictionRuleId = -item.BlacklistItemId,
+                RuleType = item.TargetType is "Domain" ? "Website" : item.TargetType is "Process" ? "Application" : item.TargetType,
+                Target = item.Value, Mode = "Block", IsGlobal = true, IsActive = true
+            });
+        }
+        return effective;
+    }
+
     public CategoryPolicyDecision EvaluateApplication(
         string application,
         IEnumerable<ApplicationCategory> categories,

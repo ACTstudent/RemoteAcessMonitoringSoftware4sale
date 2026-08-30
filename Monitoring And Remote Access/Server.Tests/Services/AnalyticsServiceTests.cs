@@ -60,4 +60,65 @@ public class AnalyticsServiceTests
         Assert.Single(alerts);
         Assert.Equal("1", alerts[0].StudentId);
     }
+
+    [Fact]
+    public async Task ClassReport_RestrictsToTeacherClassAndDateRange()
+    {
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
+        await using var db = new ApplicationDbContext(options);
+        db.Teachers.Add(new Teacher { TeacherId = 1, Username = "t", PasswordHash = "h" });
+        db.Classes.Add(new Class { ClassId = 2, ClassName = "Lab", TeacherId = 1 });
+        db.Students.Add(new Student { Id = 3, FullName = "S", Username = "s", PasswordHash = "h", ClassId = 2 });
+        db.LabSessions.Add(new LabSession { StudentId = 3, TeacherId = 1, PCName = "PC", StartTime = DateTime.UtcNow.AddMinutes(-10), EndTime = DateTime.UtcNow });
+        await db.SaveChangesAsync();
+        var report = await new AnalyticsService(db).GetClassReportAsync(2, 1, DateTime.UtcNow.AddHours(-1), DateTime.UtcNow.AddHours(1));
+        Assert.NotNull(report);
+        Assert.Equal(1, report!.TotalSessions);
+    }
+
+    [Fact]
+    public async Task ClassReport_IncludesEnrolledStudentsWithoutSessions()
+    {
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
+        await using var db = new ApplicationDbContext(options);
+        db.Teachers.Add(new Teacher { TeacherId = 1, Username = "t", PasswordHash = "h" });
+        db.Classes.Add(new Class { ClassId = 2, ClassName = "Lab", TeacherId = 1 });
+        db.Students.AddRange(
+            new Student { Id = 3, FullName = "Present", Username = "p", PasswordHash = "h", ClassId = 2 },
+            new Student { Id = 4, FullName = "Absent", Username = "a", PasswordHash = "h", ClassId = 2 });
+        await db.SaveChangesAsync();
+        var report = await new AnalyticsService(db).GetClassReportAsync(2, 1, DateTime.UtcNow.AddHours(-1), DateTime.UtcNow.AddHours(1));
+        Assert.NotNull(report);
+        Assert.Equal(0, report!.SessionsByStudent["Absent"]);
+    }
+
+    [Fact]
+    public async Task RemoteHistoryFiltersByStructuredStudentId()
+    {
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
+        await using var db = new ApplicationDbContext(options);
+        db.RemoteCommandLogs.AddRange(
+            new RemoteCommandLog { TeacherId = 1, StudentId = "S-1", PcName = "PC-1", Command = "LockStudent", Details = "S-10 in text" },
+            new RemoteCommandLog { TeacherId = 1, StudentId = "S-2", PcName = "PC-2", Command = "LockStudent" });
+        await db.SaveChangesAsync();
+        var result = await new AnalyticsService(db).GetRemoteHistoryAsync(1, studentId: "S-1");
+        Assert.Single(result.Items);
+        Assert.Equal("S-1", result.Items[0].StudentId);
+    }
+
+    [Fact]
+    public async Task ActivityTimeline_FiltersLifecycleEventsAndPaginates()
+    {
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
+        await using var db = new ApplicationDbContext(options);
+        db.Students.Add(new Student { Id = 9, StudentNumber = "S-9", FullName = "S", Username = "s", PasswordHash = "h", AdviserId = 3 });
+        var now = DateTime.UtcNow;
+        db.ActivityEvents.AddRange(
+            new ActivityEvent { StudentId = "9", PcName = "PC-9", ConnectionId = "c", EventType = "Connected", Timestamp = now.AddMinutes(-2) },
+            new ActivityEvent { StudentId = "9", PcName = "PC-9", ConnectionId = "c", EventType = "Disconnected", Timestamp = now.AddMinutes(-1) });
+        await db.SaveChangesAsync();
+        var result = await new AnalyticsService(db).GetActivityTimelineAsync(9, 3, now.AddHours(-1), now.AddMinutes(1), eventType: "Disconnected");
+        Assert.Single(result.Items);
+        Assert.Equal("Disconnected", result.Items[0].EventType);
+    }
 }

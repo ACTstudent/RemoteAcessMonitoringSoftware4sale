@@ -80,6 +80,8 @@ namespace Client
         private Label lblStudent = new();
         private Label lblTimer = new();
         private Label lblState = new();
+        private Label lblRemoteState = new();
+        private Label lblBrowserState = new();
         private System.Windows.Forms.Timer _countdownTimer = new();
 
         public MainForm()
@@ -164,19 +166,37 @@ namespace Client
 
             bar.Controls.AddRange(new Control[] { lblUnit, lblStudent, lblState, lblTimer });
 
+            lblRemoteState = new Label
+            {
+                Text = "Remote support: inactive",
+                Location = new Point(20, 70),
+                AutoSize = true,
+                ForeColor = Color.FromArgb(120, 130, 150),
+                Font = new Font("Segoe UI", 10, FontStyle.Bold)
+            };
+
             lblStatus = new Label
             {
                 Text = "Status: Connected & Streaming",
-                Location = new Point(20, 70),
+                Location = new Point(20, 94),
                 AutoSize = true,
                 ForeColor = Color.Green,
                 Font = new Font("Segoe UI", 10)
             };
 
+            lblBrowserState = new Label
+            {
+                Text = "Browser monitoring: starting",
+                Location = new Point(20, 116),
+                AutoSize = true,
+                ForeColor = Color.FromArgb(120, 130, 150),
+                Font = new Font("Segoe UI", 9)
+            };
+
             var lblInfo = new Label
             {
                 Text = "This workstation is monitored by your teacher.\r\nRestricted applications and websites are blocked.\r\nYour session timer appears above.",
-                Location = new Point(20, 110),
+                Location = new Point(20, 140),
                 AutoSize = true,
                 ForeColor = Color.FromArgb(150, 155, 170)
             };
@@ -192,7 +212,7 @@ namespace Client
             };
             btnLogout.Click += async (_, _) => await ForceLogout(true);
 
-            Controls.AddRange(new Control[] { bar, lblStatus, lblInfo, btnLogout });
+            Controls.AddRange(new Control[] { bar, lblRemoteState, lblStatus, lblBrowserState, lblInfo, btnLogout });
             lblUnit.Text = $"Unit: {Environment.MachineName}";
             lblStudent.Text = $"Student: {_studentName}";
         }
@@ -234,8 +254,7 @@ namespace Client
 
                 var hubClient = new MonitoringHubClient();
                 hubClient.RemoteInputReceived += InputSimulator.ProcessRemoteInput;
-                hubClient.RemoteControlStateReceived += state => this.Invoke(() =>
-                    Text = state.IsActive ? "CAMS Student Client - Remote support active" : "CAMS Student Client");
+                 hubClient.RemoteControlStateReceived += state => this.Invoke(() => OnRemoteControlStateChanged(state));
                 hubClient.Locked += () => this.Invoke(() => SetLocked(true));
                 hubClient.Unlocked += () => this.Invoke(() => SetLocked(false));
                 hubClient.ForceLogoutRequested += () => this.Invoke(async () => await ForceLogout(false));
@@ -256,6 +275,7 @@ namespace Client
                 _studentId = login.StudentId;
                 _studentName = login.DisplayName;
 
+                await _managedBrowserCollector.StartAsync();
                 _isStreaming = true;
                 _streamCts = new CancellationTokenSource();
 
@@ -396,8 +416,11 @@ namespace Client
                 try
                 {
                     var settingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "client-settings.json");
-                    var json = "{\n  \"ServerUrl\": \"" + serverUri.ToString().Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"\n}";
-                    File.WriteAllText(settingsPath, json);
+                    var settings = File.Exists(settingsPath)
+                        ? JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(File.ReadAllText(settingsPath)) ?? new()
+                        : new Dictionary<string, JsonElement>();
+                    settings["ServerUrl"] = JsonSerializer.SerializeToElement(serverUri.ToString());
+                    File.WriteAllText(settingsPath, JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true }));
                     ServerDiscoveryClient.ResetCache();
                 }
                 catch { }
@@ -435,6 +458,14 @@ namespace Client
             ShowPopup("Teacher Command", "Shut Down",
                 "The teacher has shut down this workstation. Saving work...", false);
             Process.Start(new ProcessStartInfo("shutdown", "/s /t 15") { CreateNoWindow = true, UseShellExecute = false });
+        }
+
+        private void OnRemoteControlStateChanged(RemoteControlStateMessage state)
+        {
+            Text = state.IsActive ? "CAMS Student Client - Remote support active" : "CAMS Student Client";
+            lblRemoteState.Text = state.IsActive ? "Remote support: active (teacher controls input)" : "Remote support: inactive";
+            lblRemoteState.ForeColor = state.IsActive ? Color.FromArgb(245, 158, 11) : Color.FromArgb(120, 130, 150);
+            lblStatus.Text = state.IsActive ? "Status: Connected & Streaming" : lblStatus.Text;
         }
 
         private void OnRestartRequested()
@@ -483,32 +514,18 @@ namespace Client
             var processName = app.Split(" - ")[0].Trim().ToLowerInvariant();
             var windowTitle = app.ToLowerInvariant();
 
-            // 1) Block rules (blacklist)
-            foreach (var rule in _blockRules)
-            {
-                var target = rule.Target.Trim().ToLowerInvariant();
-                if (string.IsNullOrEmpty(target)) continue;
+            var appRules = _blockRules.Concat(_allowRules).Where(r => r.RuleType == "Application");
+            var matchingApp = appRules.Where(r => processName.Contains(r.Target.Trim().ToLowerInvariant()))
+                .OrderByDescending(r => r.Target.Count(c => c != '*')).ThenByDescending(r => r.Mode == "Allow").FirstOrDefault();
+            if (matchingApp is not null && matchingApp.Mode != "Allow") await HandleViolation(matchingApp, app, processName, token);
 
-                bool hit = rule.RuleType == "Website"
-                    ? windowTitle.Contains(target) && (processName.Contains("chrome") || processName.Contains("msedge") || processName.Contains("firefox") || processName.Contains("opera"))
-                    : processName.Contains(target);
+            if (_allowRules.Any(r => r.RuleType == "Application") && matchingApp is null && processName is not ("explorer" or "shellexperiencehost" or "searchapp"))
+                await ReportViolation("Application", app, processName, kill: true, token);
 
-                if (hit) await HandleViolation(rule, app, processName, token);
-            }
-
-            // 2) Whitelist (allow) rules — only enforced when the allow list is non-empty
-            if (_allowRules.Count > 0 && _allowRules.Any(r => r.RuleType == "Application"))
-            {
-                bool allowed = _allowRules.Any(r =>
-                    r.RuleType == "Application" && processName.Contains(r.Target.Trim().ToLowerInvariant()));
-                if (!allowed)
-                {
-                    // In whitelist mode the session shell is always permitted
-                    if (processName is "explorer" or "shellexperiencehost" or "searchapp") return;
-                    var allow = _allowRules.First(r => r.RuleType == "Application");
-                    await ReportViolation("Application", app, processName, kill: true, token);
-                }
-            }
+            var websiteRules = _blockRules.Concat(_allowRules).Where(r => r.RuleType == "Website");
+            var matchingWebsite = websiteRules.Where(r => windowTitle.Contains(r.Target.Trim().ToLowerInvariant()))
+                .OrderByDescending(r => r.Target.Count(c => c != '*')).ThenByDescending(r => r.Mode == "Allow").FirstOrDefault();
+            if (matchingWebsite is not null && matchingWebsite.Mode != "Allow") await HandleViolation(matchingWebsite, app, processName, token);
         }
 
         private async Task HandleViolation(RestrictionRuleMessage rule, string app, string processName, CancellationToken token)
@@ -563,7 +580,19 @@ namespace Client
         private bool _lastIdleReported = false;
         private DateTime _lastActiveAppReport = DateTime.MinValue;
         private string _lastWebsiteReport = string.Empty;
-        private readonly ManagedBrowserCollector _managedBrowserCollector = new();
+        private readonly Dictionary<string, string> _lastBrowserStatus = new(StringComparer.OrdinalIgnoreCase);
+        private readonly ManagedBrowserCollector _managedBrowserCollector = CreateManagedBrowserCollector();
+
+        private static ManagedBrowserCollector CreateManagedBrowserCollector()
+        {
+            try
+            {
+                var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "client-settings.json");
+                var options = File.Exists(path) ? JsonSerializer.Deserialize<ManagedBrowserOptions>(File.ReadAllText(path)) : null;
+                return new ManagedBrowserCollector(options);
+            }
+            catch { return new ManagedBrowserCollector(); }
+        }
 
         // Reports idle/active status and the active foreground app periodically.
         private async Task StatusReportLoop(CancellationToken token)
@@ -600,7 +629,10 @@ namespace Client
                                     PcName: Environment.MachineName,
                                     ApplicationName: appName,
                                     Timestamp: DateTime.UtcNow));
-                                var website = await _managedBrowserCollector.TryGetActiveWebsiteAsync(token) ?? BrowserUrlCollector.TryGetForegroundWebsite();
+                                var foregroundBrowser = appName.Split(" - ")[0].Trim().ToLowerInvariant();
+                                var website = BrowserUrlCollector.TryGetForegroundWebsite();
+                                if (website == null && foregroundBrowser is "chrome" or "brave")
+                                    website = await _managedBrowserCollector.TryGetActiveWebsiteAsync(foregroundBrowser, token);
                                 if (website is { Status: BrowserMonitoringStatus.Captured, Domain: not null } &&
                                     website.Domain != _lastWebsiteReport)
                                 {
@@ -608,6 +640,7 @@ namespace Client
                                     await _hubClient.ReportWebsiteActivityAsync(new WebsiteActivityMessage(
                                         "", "", Environment.MachineName, website.Domain, website.Browser, DateTime.UtcNow));
                                 }
+                                await ReportBrowserMonitoringStatusAsync(website);
                             }
                         }
                     }
@@ -621,6 +654,40 @@ namespace Client
             }
         }
 
+        private async Task ReportBrowserMonitoringStatusAsync(BrowserWebsiteObservation? observation)
+        {
+            if (_hubClient == null) return;
+
+            var summaries = new List<string>();
+            foreach (var status in _managedBrowserCollector.GetStatus())
+            {
+                var foreground = observation != null && string.Equals(observation.Browser, status.Identity, StringComparison.OrdinalIgnoreCase);
+                var mode = foreground ? observation!.Mode : status.EndpointAvailable
+                    ? BrowserMonitoringMode.ManagedProtocol
+                    : BrowserMonitoringMode.Unavailable;
+                var detail = foreground && observation!.Mode == BrowserMonitoringMode.WindowTitleFallback
+                    ? observation.Status == BrowserMonitoringStatus.Captured ? "Foreground URL captured" : "Foreground browser detected; URL unavailable"
+                    : status.Message;
+                var signature = $"{mode}:{detail}";
+                summaries.Add($"{status.Identity}: {ModeLabel(mode)}");
+                if (_lastBrowserStatus.TryGetValue(status.Identity, out var previous) && previous == signature) continue;
+
+                _lastBrowserStatus[status.Identity] = signature;
+                await _hubClient.ReportBrowserMonitoringStatusAsync(new BrowserMonitoringStatusMessage(
+                    "", "", Environment.MachineName, status.Identity, mode, DateTime.UtcNow, detail));
+            }
+
+            if (!IsDisposed && IsHandleCreated)
+                BeginInvoke(() => lblBrowserState.Text = $"Browser monitoring: {string.Join(" | ", summaries)}");
+        }
+
+        private static string ModeLabel(BrowserMonitoringMode mode) => mode switch
+        {
+            BrowserMonitoringMode.ManagedProtocol => "managed",
+            BrowserMonitoringMode.WindowTitleFallback => "fallback",
+            _ => "unavailable"
+        };
+
         private async Task ScreenCaptureLoop(CancellationToken token)
         {
             while (_isStreaming && !token.IsCancellationRequested)
@@ -633,7 +700,7 @@ namespace Client
                             _studentId,
                             Environment.MachineName,
                             _screenCaptureService.CaptureBase64(),
-                            DateTime.Now);
+                            DateTime.UtcNow);
 
                         await _hubClient.SendScreenFrameAsync(frame);
                     }
@@ -663,6 +730,7 @@ namespace Client
             _isStreaming = false;
             _streamCts?.Cancel();
             _countdownTimer.Stop();
+            _managedBrowserCollector.Dispose();
             if (_hubClient != null)
             {
                 if (manual)
@@ -756,6 +824,7 @@ namespace Client
             _isStreaming = false;
             _streamCts?.Cancel();
             _countdownTimer.Stop();
+            _managedBrowserCollector.Dispose();
             _ = _hubClient?.DisposeAsync();
             base.OnFormClosing(e);
         }

@@ -82,9 +82,18 @@ namespace Server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("FailedLoginAttempts")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("LockoutEndUtc")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PasswordHash")
@@ -487,6 +496,11 @@ namespace Server.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("DedupeKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("IsAcknowledged")
                         .HasColumnType("INTEGER");
 
@@ -516,6 +530,8 @@ namespace Server.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("MonitoringAlertId");
+
+                    b.HasIndex("StudentId", "DedupeKey", "CreatedAt");
 
                     b.ToTable("MonitoringAlerts");
                 });
@@ -592,8 +608,18 @@ namespace Server.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("PcName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("RemoteControlSessionId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("StudentId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("TeacherId")
                         .HasColumnType("INTEGER");
@@ -602,6 +628,8 @@ namespace Server.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("RemoteCommandLogId");
+
+                    b.HasIndex("TeacherId", "StudentId", "Timestamp");
 
                     b.ToTable("RemoteCommandLogs");
                 });
@@ -764,7 +792,7 @@ namespace Server.Migrations
                             SessionRuleId = 1,
                             AllowPause = true,
                             AllowRemoteControl = true,
-                            CreatedAt = new DateTime(2026, 8, 30, 1, 57, 29, 59, DateTimeKind.Local).AddTicks(5031),
+                            CreatedAt = new DateTime(2026, 8, 29, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
                             IsDefault = true,
                             MaxDurationMinutes = 60,
@@ -784,6 +812,9 @@ namespace Server.Migrations
                     b.Property<int?>("ClassId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("FailedLoginAttempts")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -799,6 +830,9 @@ namespace Server.Migrations
 
                     b.Property<string>("LastName")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LockoutEndUtc")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PasswordHash")
@@ -878,6 +912,9 @@ namespace Server.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("FailedLoginAttempts")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -886,6 +923,9 @@ namespace Server.Migrations
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LockoutEndUtc")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PasswordHash")

@@ -23,5 +23,7 @@ public class MonitoringAlert
     public string Message { get; set; } = string.Empty;
 
     public bool IsAcknowledged { get; set; }
+    [StringLength(100)]
+    public string DedupeKey { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

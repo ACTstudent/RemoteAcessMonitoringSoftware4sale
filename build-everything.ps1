@@ -49,6 +49,9 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 Write-Host "  Tests passed." -ForegroundColor Green
+$clientTestProject = Join-Path $root "Monitoring And Remote Access\Client.Tests\Client.Tests.csproj"
+dotnet test $clientTestProject -c Release --verbosity minimal
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 # ---- 2. Build solution ----
 Write-Host ""

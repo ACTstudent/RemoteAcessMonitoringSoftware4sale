@@ -35,6 +35,8 @@ namespace Server.Models
         public string PasswordHash { get; set; } = string.Empty;
 
         public string Status { get; set; } = "Active";
+        public int FailedLoginAttempts { get; set; }
+        public DateTime? LockoutEndUtc { get; set; }
 
         [Display(Name = "Grade / Section")]
         public string GradeSection { get; set; } = string.Empty;

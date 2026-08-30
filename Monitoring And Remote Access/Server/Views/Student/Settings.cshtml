@@ -1,3 +1,4 @@
+@model Server.Models.PasswordChangeInput
 @{
     ViewData["Title"] = "Account Settings";
     Layout = "_StudentLayout";
@@ -18,13 +19,18 @@
         }
 
         <form method="post" action="/Student/ResetPassword">
+            @Html.AntiForgeryToken()
             <div class="mb-3">
                 <label class="form-label">Current Password</label>
-                <input type="password" name="currentPassword" class="form-control" required />
+                <input type="password" name="CurrentPassword" class="form-control" required />
             </div>
             <div class="mb-3">
                 <label class="form-label">New Password</label>
-                <input type="password" name="newPassword" class="form-control" minlength="4" required />
+                <input type="password" name="NewPassword" class="form-control" minlength="8" required />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Confirm New Password</label>
+                <input type="password" name="ConfirmPassword" class="form-control" minlength="8" required />
             </div>
             <button class="btn btn-primary">Reset Password</button>
         </form>

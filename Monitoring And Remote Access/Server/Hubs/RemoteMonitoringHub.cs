@@ -112,6 +112,9 @@ public sealed class RemoteMonitoringHub : Hub
                     RemoteControlSessionId = remoteSessionId ?? (_remoteSessions.TryGetValue(Context.ConnectionId, out var sessionId) ? sessionId : null),
                     TeacherId = teacherId,
                     Command = action,
+                    StudentId = target.StudentId,
+                    PcName = target.PcName,
+                    Timestamp = DateTime.UtcNow,
                     Details = $"{target.StudentId} at {target.PcName}"
                 });
             }
@@ -213,6 +216,7 @@ public sealed class RemoteMonitoringHub : Hub
 
             var student = _monitoringService.RegisterStudent(Context.ConnectionId, studentNumber, pcName);
             await UpdateComputerProfileAsync(accountId, studentNumber, pcName);
+            await TryRecordTelemetryAsync(() => _telemetryService.RecordActivityEventAsync(Context.ConnectionId, student.StudentId, student.PcName, "Connected"));
             await Groups.AddToGroupAsync(Context.ConnectionId, HubEventNames.StudentsGroup);
             await Clients.Group(HubEventNames.TeachersGroup)
                 .SendAsync(HubEventNames.StudentConnected, student);
@@ -535,6 +539,12 @@ public sealed class RemoteMonitoringHub : Hub
             .Select(r => new RestrictionRuleMessage(r.RestrictionRuleId, r.RuleType, r.Target, r.Mode))
             .ToListAsync();
 
+        var blacklist = await context.BlacklistItems.Where(b => b.IsActive).ToListAsync();
+        rules.AddRange(blacklist.Select(b => new RestrictionRuleMessage(
+            -b.BlacklistItemId,
+            b.TargetType is "Domain" ? "Website" : b.TargetType is "Process" ? "Application" : b.TargetType,
+            b.Value, "Block")));
+
         var applicationCategories = await context.ApplicationCategories
             .Where(c => c.IsActive)
             .Select(c => new RestrictionRuleMessage(-c.ApplicationCategoryId, "Application", c.Pattern, c.Mode))
@@ -583,9 +593,17 @@ public sealed class RemoteMonitoringHub : Hub
                 Severity = "Warning",
                 Title = "Restricted activity detected",
                 Message = $"{canonicalInfraction.TargetType}: {canonicalInfraction.Target}",
+                DedupeKey = $"{canonicalInfraction.TargetType}:{canonicalInfraction.Target}".ToLowerInvariant(),
                 CreatedAt = canonicalInfraction.Timestamp
             };
-            context.MonitoringAlerts.Add(alert);
+            var duplicate = await context.MonitoringAlerts.AnyAsync(a =>
+                a.StudentId == canonicalInfraction.StudentId && !a.IsAcknowledged &&
+                a.DedupeKey == alert.DedupeKey &&
+                a.CreatedAt >= canonicalInfraction.Timestamp.AddMinutes(-5));
+            if (!duplicate)
+            {
+                context.MonitoringAlerts.Add(alert);
+            }
             context.AuditLogs.Add(new AuditLog
             {
                 UserType = "Student",
@@ -594,8 +612,11 @@ public sealed class RemoteMonitoringHub : Hub
                 Timestamp = canonicalInfraction.Timestamp
             });
             await context.SaveChangesAsync();
-            await Clients.Group(HubEventNames.TeachersGroup)
-                .SendAsync(HubEventNames.MonitoringAlertReceived, alert);
+            if (!duplicate)
+            {
+                await Clients.Group(HubEventNames.TeachersGroup)
+                    .SendAsync(HubEventNames.MonitoringAlertReceived, alert);
+            }
         }
         catch
         {
@@ -677,6 +698,26 @@ public sealed class RemoteMonitoringHub : Hub
             .SendAsync(HubEventNames.WebsiteActivityReceived, canonical);
     }
 
+    public async Task ReportBrowserMonitoringStatus(BrowserMonitoringStatusMessage status)
+    {
+        var student = RequireStudent();
+        if (status is null || string.IsNullOrWhiteSpace(status.Browser) || status.Browser.Length > 50 ||
+            !Enum.IsDefined(status.Mode) || (status.Detail?.Length ?? 0) > 300)
+            throw new HubException("The browser monitoring status is invalid.");
+
+        var canonical = status with
+        {
+            ConnectionId = Context.ConnectionId,
+            StudentId = student.StudentId,
+            PcName = student.PcName,
+            Browser = status.Browser.Trim().ToLowerInvariant(),
+            Timestamp = DateTime.UtcNow
+        };
+        _monitoringService.ReportBrowserMonitoringStatus(canonical);
+        await Clients.Group(HubEventNames.TeachersGroup)
+            .SendAsync(HubEventNames.BrowserMonitoringStatusReceived, canonical);
+    }
+
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         if (_remoteSessions.TryRemove(Context.ConnectionId, out var sessionId))
@@ -702,6 +743,7 @@ public sealed class RemoteMonitoringHub : Hub
         var student = _monitoringService.UnregisterStudent(Context.ConnectionId);
         if (student != null)
         {
+            await TryRecordTelemetryAsync(() => _telemetryService.RecordActivityEventAsync(Context.ConnectionId, student.StudentId, student.PcName, "Disconnected", details: exception?.Message));
             await Clients.Group(HubEventNames.TeachersGroup)
                 .SendAsync(HubEventNames.StudentDisconnected, student.ConnectionId);
         }

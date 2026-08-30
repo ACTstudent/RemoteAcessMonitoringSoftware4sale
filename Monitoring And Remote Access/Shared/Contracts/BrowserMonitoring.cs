@@ -8,6 +8,9 @@ public enum BrowserMonitoringMode
 }
 
 public sealed record BrowserMonitoringStatusMessage(
+    string ConnectionId,
+    string StudentId,
+    string PcName,
     string Browser,
     BrowserMonitoringMode Mode,
     DateTime Timestamp,

@@ -19,7 +19,7 @@ The wizard does everything:
 - Launches the server after install
 - Generates a local CA and a LAN HTTPS certificate on first server start
 
-**No database setup needed** — SQLite auto-creates `CAMS.db` next to `Server.exe` on first run.
+**SQLite is the supported database** - migrations create `CAMS.db` next to `Server.exe` on first run.
 
 ## Secure LAN Certificate Setup
 
@@ -49,15 +49,7 @@ cd "Monitoring And Remote Access"
 dotnet publish Server\Server.csproj -c Release -o ..\publish
 ```
 
-Copy the `publish\` folder to the server PC. Open `appsettings.json` and verify `DatabaseProvider` is set:
-
-| Provider | Config | Notes |
-|---|---|---|
-| **Sqlite** (default) | `"DatabaseProvider": "Sqlite"` | Zero-install, file-based `CAMS.db` — recommended |
-| **SqlServer** | `"DatabaseProvider": "SqlServer"` | Requires SQL Server or LocalDB |
-| **MySql** | `"DatabaseProvider": "MySql"` | Requires MySQL server |
-
-Then run `Server.exe` from the publish folder.
+Copy the `publish\` folder to the server PC, then run `Server.exe`. CAMS creates and migrates the local `CAMS.db` SQLite database automatically.
 
 ### Client
 

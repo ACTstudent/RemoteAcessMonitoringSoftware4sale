@@ -394,6 +394,31 @@ public class AdminControllerTests
     }
 
     [Fact]
+    public async Task UpdateSessionRule_UpdatesAndDeactivatesWithoutChangingIdentity()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var rule = new SessionRule { Name = "Old", MaxDurationMinutes = 30, IsActive = true };
+        db.SessionRules.Add(rule);
+        await db.SaveChangesAsync();
+
+        await controller.UpdateSessionRule(new SessionRule
+        {
+            SessionRuleId = rule.SessionRuleId,
+            Name = "Updated",
+            MaxDurationMinutes = 90,
+            AllowPause = false,
+            AllowRemoteControl = false,
+            IsActive = false
+        });
+
+        var updated = await db.SessionRules.FindAsync(rule.SessionRuleId);
+        Assert.Equal("Updated", updated?.Name);
+        Assert.Equal(90, updated?.MaxDurationMinutes);
+        Assert.False(updated?.IsActive);
+    }
+
+    [Fact]
     public async Task LanConfig_Save_WorksFlawlessly()
     {
         using var db = GetDbContext();

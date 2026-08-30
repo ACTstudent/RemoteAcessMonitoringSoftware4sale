@@ -13,7 +13,8 @@ public enum BrowserMonitoringStatus
 public sealed record BrowserWebsiteObservation(
     string? Domain,
     string Browser,
-    BrowserMonitoringStatus Status);
+    BrowserMonitoringStatus Status,
+    BrowserMonitoringMode Mode = BrowserMonitoringMode.WindowTitleFallback);
 
 public static class BrowserUrlCollector
 {

@@ -24,4 +24,5 @@ public interface IAuthenticationService
 {
     Task<LoginResult> LoginAsync(string username, string password, string pcName, string ipAddress);
     Task LogoutAsync(int? studentId);
+    Task<bool> ChangeStudentPasswordAsync(int studentId, string currentPassword, string newPassword);
 }

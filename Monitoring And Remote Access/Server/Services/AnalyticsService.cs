@@ -12,6 +12,8 @@ public interface IAnalyticsService
     Task<IReadOnlyList<AlertHistoryItem>> GetAlertHistoryAsync(int alertId, int teacherId, CancellationToken cancellationToken = default);
     Task<bool> SetAlertAcknowledgedAsync(int alertId, int teacherId, bool acknowledged, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<MonitoringAlert>> GetAlertExportAsync(int teacherId, DateTime? from = null, DateTime? to = null, string? severity = null, string? studentId = null, CancellationToken cancellationToken = default);
+    Task<ClassAnalyticsReport?> GetClassReportAsync(int classId, int teacherId, DateTime from, DateTime to, string? station = null, CancellationToken cancellationToken = default);
+    Task<PagedResult<RemoteHistoryItem>> GetRemoteHistoryAsync(int teacherId, DateTime? from = null, DateTime? to = null, string? command = null, string? studentId = null, int page = 1, int pageSize = 100, CancellationToken cancellationToken = default);
 }
 
 public sealed class AnalyticsService : IAnalyticsService
@@ -93,6 +95,44 @@ public sealed class AnalyticsService : IAnalyticsService
         if (!string.IsNullOrWhiteSpace(severity)) query = query.Where(a => a.Severity == severity);
         if (!string.IsNullOrWhiteSpace(studentId)) query = query.Where(a => a.StudentId == studentId);
         return await query.OrderByDescending(a => a.CreatedAt).ThenByDescending(a => a.MonitoringAlertId).ToListAsync(cancellationToken);
+    }
+
+    public async Task<ClassAnalyticsReport?> GetClassReportAsync(int classId, int teacherId, DateTime from, DateTime to, string? station = null, CancellationToken cancellationToken = default)
+    {
+        var cls = await _db.Classes.AsNoTracking().FirstOrDefaultAsync(c => c.ClassId == classId && !c.IsArchived && c.TeacherId == teacherId, cancellationToken);
+        if (cls is null) return null;
+        var range = NormalizeRange(from, to);
+        var enrolledStudents = await _db.Students.AsNoTracking()
+            .Where(s => s.ClassId == classId || _db.ClassStudents.Any(cs => cs.ClassId == classId && cs.StudentId == s.Id))
+            .Select(s => new { s.Id, s.FullName }).ToListAsync(cancellationToken);
+        var enrolledStudentIds = enrolledStudents.Select(s => s.Id).ToList();
+        var query = _db.LabSessions.AsNoTracking().Include(s => s.Student).Include(s => s.Computer)
+            .Where(s => enrolledStudentIds.Contains(s.StudentId) && s.StartTime < range.To && (s.EndTime ?? DateTime.UtcNow) > range.From);
+        if (!string.IsNullOrWhiteSpace(station)) query = query.Where(s => s.PCName == station || (s.Computer != null && s.Computer.LaboratoryStation == station));
+        var sessions = await query.ToListAsync(cancellationToken);
+        var studentIds = enrolledStudentIds.Select(id => id.ToString()).ToList();
+        var alerts = await _db.MonitoringAlerts.AsNoTracking().Where(a => studentIds.Contains(a.StudentId) && a.CreatedAt >= range.From && a.CreatedAt < range.To).ToListAsync(cancellationToken);
+        return new ClassAnalyticsReport(cls, range.From, range.To, sessions.Count,
+            sessions.Sum(s => Overlap(s.StartTime, s.EndTime ?? DateTime.UtcNow, range.From, range.To).TotalMinutes),
+            enrolledStudents.Select(s => new { s.Id, Name = string.IsNullOrWhiteSpace(s.FullName) ? s.Id.ToString() : s.FullName })
+                .ToDictionary(x => x.Name, x => sessions.Count(s => s.StudentId == x.Id)), alerts);
+    }
+
+    public async Task<PagedResult<RemoteHistoryItem>> GetRemoteHistoryAsync(int teacherId, DateTime? from = null, DateTime? to = null, string? command = null, string? studentId = null, int page = 1, int pageSize = 100, CancellationToken cancellationToken = default)
+    {
+        var query = _db.RemoteCommandLogs.AsNoTracking().Where(l => l.TeacherId == teacherId);
+        if (from.HasValue) query = query.Where(l => l.Timestamp >= from.Value.Date);
+        if (to.HasValue) query = query.Where(l => l.Timestamp < to.Value.Date.AddDays(1));
+        if (!string.IsNullOrWhiteSpace(command)) query = query.Where(l => l.Command == command);
+        if (!string.IsNullOrWhiteSpace(studentId)) query = query.Where(l => l.StudentId == studentId);
+        page = Math.Max(1, page); pageSize = Math.Clamp(pageSize, 1, 500);
+        var total = await query.CountAsync(cancellationToken);
+        page = Math.Min(page, Math.Max(1, (int)Math.Ceiling(total / (double)pageSize)));
+        var items = await query.OrderByDescending(l => l.Timestamp).ThenByDescending(l => l.RemoteCommandLogId)
+            .Skip((page - 1) * pageSize).Take(pageSize)
+            .Select(l => new RemoteHistoryItem(l.Timestamp, l.StudentId, l.PcName, l.Command, l.Details, l.RemoteControlSessionId))
+            .ToListAsync(cancellationToken);
+        return new PagedResult<RemoteHistoryItem>(items, page, pageSize, total);
     }
 
     public async Task<IReadOnlyList<AlertHistoryItem>> GetAlertHistoryAsync(int alertId, int teacherId, CancellationToken cancellationToken = default)

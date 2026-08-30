@@ -113,26 +113,12 @@ builder.WebHost.ConfigureKestrel(options =>
 });
 builder.Services.AddHttpsRedirection(options => options.HttpsPort = httpsPort);
 
-// EF Core — Sqlite (default) or SQL Server / MySql
-var provider = builder.Configuration["DatabaseProvider"] ?? "Sqlite";
+// CAMS is intentionally SQLite-only. Ignore legacy provider configuration.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    if (provider.Equals("MySql", StringComparison.OrdinalIgnoreCase))
-    {
-        options.UseMySql(
-            builder.Configuration.GetConnectionString("DefaultConnection"),
-            ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")));
-    }
-    else if (provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
-    {
-        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-            ?? $"Data Source={Path.Combine(AppContext.BaseDirectory, "CAMS.db")}";
-        options.UseSqlite(connectionString);
-    }
-    else
-    {
-        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-    }
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? $"Data Source={Path.Combine(AppContext.BaseDirectory, "CAMS.db")}";
+    options.UseSqlite(connectionString);
 });
 builder.Services.AddScoped<ITelemetryService, TelemetryService>();
 builder.Services.AddScoped<LabSessionLifecycleService>();

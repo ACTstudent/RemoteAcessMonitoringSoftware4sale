@@ -29,6 +29,8 @@ namespace Server.Models
         public string ContactNumber { get; set; } = string.Empty;
 
         public string Status { get; set; } = "Active";
+        public int FailedLoginAttempts { get; set; }
+        public DateTime? LockoutEndUtc { get; set; }
 
         // Navigation: one Teacher manages many Students as Adviser
         public ICollection<Student> Students { get; set; } = new List<Student>();

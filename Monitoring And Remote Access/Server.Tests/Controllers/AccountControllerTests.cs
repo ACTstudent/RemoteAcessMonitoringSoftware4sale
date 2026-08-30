@@ -7,6 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Server.Controllers;
 using Server.Services;
+using Server.Models;
+using Server.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Server.Tests.Controllers;
 
@@ -99,6 +102,25 @@ public class AccountControllerTests
         var result = await _controller.Logout();
         var redirect = Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal("Login", redirect.ActionName);
+    }
+
+    [Fact]
+    public async Task ChangeStudentPassword_UsesCurrentPasswordAndHashesNewPassword()
+    {
+        var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
+        await using var db = new ApplicationDbContext(options);
+        var hasher = new Microsoft.AspNetCore.Identity.PasswordHasher<object>();
+        var student = new Student { Username = "student", StudentNumber = "S1", PasswordHash = hasher.HashPassword(new object(), "oldpass") };
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+
+        var service = new AuthenticationService(db);
+        Assert.True(await service.ChangeStudentPasswordAsync(student.Id, "oldpass", "newpassword"));
+        Assert.NotEqual(student.PasswordHash, hasher.HashPassword(new object(), "newpassword"));
+        Assert.Equal(Microsoft.AspNetCore.Identity.PasswordVerificationResult.Success,
+            hasher.VerifyHashedPassword(new object(), student.PasswordHash, "newpassword"));
+        Assert.False(await service.ChangeStudentPasswordAsync(student.Id, "wrongpass", "anotherpass"));
     }
 }
 

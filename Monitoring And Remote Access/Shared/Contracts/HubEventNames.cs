@@ -24,6 +24,7 @@ public static class HubEventNames
     public const string ReportActiveApp = "ReportActiveApp";
     public const string ActiveAppReceived = "ActiveAppReceived";
     public const string WebsiteActivityReceived = "WebsiteActivityReceived";
+    public const string BrowserMonitoringStatusReceived = "BrowserMonitoringStatusReceived";
 
     // Global session management
     public const string GlobalStartSession = "GlobalStartSession";
