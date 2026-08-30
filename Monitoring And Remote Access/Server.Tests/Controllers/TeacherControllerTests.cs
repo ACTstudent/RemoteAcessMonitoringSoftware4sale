@@ -28,6 +28,8 @@ public class TeacherControllerTests
         var clientsMock = new Mock<IHubClients>();
         var proxyMock = new Mock<IClientProxy>();
         clientsMock.Setup(c => c.All).Returns(proxyMock.Object);
+        clientsMock.Setup(c => c.User(It.IsAny<string>())).Returns(proxyMock.Object);
+        clientsMock.Setup(c => c.Users(It.IsAny<IReadOnlyList<string>>())).Returns(proxyMock.Object);
         hubMock.Setup(h => h.Clients).Returns(clientsMock.Object);
 
         var sessionManager = new SessionManagerService(hubMock.Object);
@@ -317,12 +319,19 @@ public class TeacherControllerTests
     {
         using var db = GetDbContext();
         var controller = CreateController(db);
+        var cls = new Class { ClassName = "Class A", TeacherId = 1 };
+        db.Classes.Add(cls);
+        await db.SaveChangesAsync();
+        var student = new Student { StudentNumber = "STU-1", Username = "student-1", FullName = "Student One", ClassId = cls.ClassId };
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
 
         var result = await controller.SendNotification("Warning", "Time Up", "Please save your work.");
         Assert.IsType<JsonResult>(result);
 
         var notification = await db.Notifications.FirstOrDefaultAsync(n => n.Title == "Time Up");
         Assert.NotNull(notification);
+        Assert.Equal(student.Id, notification.StudentId);
     }
 
     [Fact]

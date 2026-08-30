@@ -22,6 +22,7 @@ public class LabSessionLifecycleServiceTests
         await db.SaveChangesAsync();
         var clients = new Mock<IHubClients>();
         clients.Setup(c => c.Group(It.IsAny<string>())).Returns(Mock.Of<IClientProxy>());
+        clients.Setup(c => c.Users(It.IsAny<IReadOnlyList<string>>())).Returns(Mock.Of<IClientProxy>());
         var hub = new Mock<IHubContext<RemoteMonitoringHub>>();
         hub.SetupGet(h => h.Clients).Returns(clients.Object);
 
@@ -43,6 +44,7 @@ public class LabSessionLifecycleServiceTests
         var hub = new Mock<IHubContext<RemoteMonitoringHub>>();
         var clients = new Mock<IHubClients>();
         clients.Setup(c => c.Group(It.IsAny<string>())).Returns(Mock.Of<IClientProxy>());
+        clients.Setup(c => c.Users(It.IsAny<IReadOnlyList<string>>())).Returns(Mock.Of<IClientProxy>());
         hub.SetupGet(h => h.Clients).Returns(clients.Object);
         var service = new LabSessionLifecycleService(db, hub.Object);
         Assert.Equal(1, await service.EndExpiredSessionsAsync());

@@ -788,7 +788,12 @@ namespace Server.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("TeacherId")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("RestrictionRuleId");
+
+                    b.HasIndex("TeacherId");
 
                     b.ToTable("RestrictionRules");
                 });
@@ -1204,6 +1209,15 @@ namespace Server.Migrations
                     b.Navigation("SessionRule");
 
                     b.Navigation("Student");
+
+                    b.Navigation("Teacher");
+                });
+
+            modelBuilder.Entity("Server.Models.RestrictionRule", b =>
+                {
+                    b.HasOne("Server.Models.Teacher", "Teacher")
+                        .WithMany()
+                        .HasForeignKey("TeacherId");
 
                     b.Navigation("Teacher");
                 });

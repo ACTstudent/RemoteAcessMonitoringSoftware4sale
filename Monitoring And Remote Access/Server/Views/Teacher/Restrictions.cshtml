@@ -3,46 +3,54 @@
 @{
     ViewData["Title"] = "Access Restrictions";
     Layout = "_TeacherLayout";
+    var teacherId = (int)ViewBag.TeacherId;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <div><h2 class="fw-extrabold mb-0 text-dark">Access Restriction Policies</h2><p class="text-muted mb-0 small">Manage the rules sent to active student workstations.</p></div>
-    <span class="badge bg-success rounded-pill px-3 py-2"><i class="bi bi-shield-check me-1"></i> Firewall Active</span>
+    <div>
+        <h2 class="fw-extrabold mb-0 text-dark">Session Restriction Policies</h2>
+        <p class="text-muted mb-0 small">Your rules are delivered only to students in your active sessions. Administrator global rules remain read-only.</p>
+    </div>
+    <button class="btn btn-sm btn-emerald rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#ruleModal">Add Session Rule</button>
 </div>
 
 @if (TempData["ErrorMessage"] != null) { <div class="alert alert-danger">@TempData["ErrorMessage"]</div> }
-<div class="row g-4">
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
-            <div class="d-flex justify-content-between align-items-center mb-3"><h5 class="fw-bold mb-0">Explicit Rules</h5><button class="btn btn-sm btn-emerald rounded-pill" data-bs-toggle="modal" data-bs-target="#ruleModal">Add</button></div>
-            <p class="text-muted small">Rules override categories and support block or allow decisions.</p>
-            <div class="table-responsive"><table class="table custom-table"><thead><tr><th>Type / Target</th><th>Mode</th><th>State</th><th></th></tr></thead><tbody>
-            @foreach (var r in Model.Restrictions) { <tr><td><span class="badge bg-dark">@r.RuleType</span><br /><code>@r.Target</code><small class="d-block text-muted">@r.Description</small></td><td>@r.Mode</td><td>@(r.IsActive ? "Enabled" : "Disabled")</td><td class="text-end"><button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editRule-@r.RestrictionRuleId">Edit</button> <form class="d-inline" method="post" asp-action="DeleteRestriction" onsubmit="return confirm('Delete this rule?');">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@r.RestrictionRuleId" /><button class="btn btn-sm btn-outline-danger">Delete</button></form></td></tr> }
-            @if (!Model.Restrictions.Any()) { <tr><td colspan="4" class="text-muted text-center">No rules configured.</td></tr> }</tbody></table></div>
-        </div>
-    </div>
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
-            <div class="d-flex justify-content-between align-items-center mb-3"><h5 class="fw-bold mb-0">Blacklist Entries</h5><button class="btn btn-sm btn-emerald rounded-pill" data-bs-toggle="modal" data-bs-target="#blacklistModal">Add</button></div>
-            <div class="table-responsive"><table class="table custom-table"><thead><tr><th>Type / Value</th><th>State</th><th></th></tr></thead><tbody>
-            @foreach (var b in Model.Blacklist) { <tr><td><span class="badge bg-dark">@b.TargetType</span><br /><code>@b.Value</code><small class="d-block text-muted">@b.Reason</small></td><td>@(b.IsActive ? "Enabled" : "Disabled")</td><td class="text-end"><button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editBlacklist-@b.BlacklistItemId">Edit</button> <form class="d-inline" method="post" asp-action="DeleteBlacklist" onsubmit="return confirm('Delete this blacklist entry?');">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@b.BlacklistItemId" /><button class="btn btn-sm btn-outline-danger">Delete</button></form></td></tr> }
-            @if (!Model.Blacklist.Any()) { <tr><td colspan="3" class="text-muted text-center">No blacklist entries configured.</td></tr> }</tbody></table></div>
-        </div>
+<div class="card border-0 shadow-sm rounded-4 p-3">
+    <div class="table-responsive">
+        <table class="table custom-table">
+            <thead><tr><th>Scope</th><th>Type / Target</th><th>Mode</th><th>State</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var rule in Model.Restrictions)
+            {
+                var owned = rule.TeacherId == teacherId;
+                <tr>
+                    <td><span class="badge @(owned ? "bg-primary" : "bg-dark")">@(owned ? "My sessions" : "Administrator global")</span></td>
+                    <td><span class="badge bg-secondary">@rule.RuleType</span><br /><code>@rule.Target</code><small class="d-block text-muted">@rule.Description</small></td>
+                    <td>@rule.Mode</td>
+                    <td>@(rule.IsActive ? "Enabled" : "Disabled")</td>
+                    <td class="text-end">
+                    @if (owned)
+                    {
+                        <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editRule-@rule.RestrictionRuleId">Edit</button>
+                        <form class="d-inline" method="post" asp-action="DeleteRestriction" onsubmit="return confirm('Delete this rule?');">
+                            @Html.AntiForgeryToken()<input type="hidden" name="id" value="@rule.RestrictionRuleId" /><button class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    }
+                    </td>
+                </tr>
+            }
+            @if (!Model.Restrictions.Any()) { <tr><td colspan="5" class="text-muted text-center">No rules configured.</td></tr> }
+            </tbody>
+        </table>
     </div>
 </div>
 
-<div class="row g-4 mt-1">
-    <div class="col-lg-6"><partial name="_PolicyCategoryTable" model="new Tuple<IEnumerable<object>, string>(Model.ApplicationCategories.Cast<object>(), "Application")" /></div>
-    <div class="col-lg-6"><partial name="_PolicyCategoryTable" model="new Tuple<IEnumerable<object>, string>(Model.WebsiteCategories.Cast<object>(), "Website")" /></div>
-</div>
-
-<div class="modal fade" id="ruleModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="post" asp-action="CreateRestriction">@Html.AntiForgeryToken()<div class="modal-header"><h5>Add Explicit Rule</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">@RuleFields(null)</div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div>
-<div class="modal fade" id="blacklistModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="post" asp-action="CreateBlacklist">@Html.AntiForgeryToken()<div class="modal-header"><h5>Add Blacklist Entry</h5></div><div class="modal-body">@BlacklistFields(null)</div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div>
-
-@foreach (var r in Model.Restrictions) { <div class="modal fade" id="editRule-@r.RestrictionRuleId" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="post" asp-action="UpdateRestriction">@Html.AntiForgeryToken()<input type="hidden" name="RestrictionRuleId" value="@r.RestrictionRuleId" /><div class="modal-header"><h5>Edit Rule</h5></div><div class="modal-body">@RuleFields(r)</div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div> }
-@foreach (var b in Model.Blacklist) { <div class="modal fade" id="editBlacklist-@b.BlacklistItemId" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="post" asp-action="UpdateBlacklist">@Html.AntiForgeryToken()<input type="hidden" name="BlacklistItemId" value="@b.BlacklistItemId" /><div class="modal-header"><h5>Edit Blacklist Entry</h5></div><div class="modal-body">@BlacklistFields(b)</div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div> }
+<div class="modal fade" id="ruleModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="post" asp-action="CreateRestriction">@Html.AntiForgeryToken()<div class="modal-header"><h5>Add Session Rule</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">@RuleFields(null)</div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div>
+@foreach (var rule in Model.Restrictions.Where(rule => rule.TeacherId == teacherId))
+{
+    <div class="modal fade" id="editRule-@rule.RestrictionRuleId" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="post" asp-action="UpdateRestriction">@Html.AntiForgeryToken()<input type="hidden" name="RestrictionRuleId" value="@rule.RestrictionRuleId" /><div class="modal-header"><h5>Edit Session Rule</h5></div><div class="modal-body">@RuleFields(rule)</div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div>
+}
 
 @functions {
-    public IHtmlContent RuleFields(Server.Models.RestrictionRule? r) => new HtmlString($"<label>Type</label><select name='RuleType' class='form-select mb-2'><option {(r?.RuleType == "Application" ? "selected" : "")}>Application</option><option {(r?.RuleType == "Website" ? "selected" : "")}>Website</option></select><label>Mode</label><select name='Mode' class='form-select mb-2'><option {(r?.Mode != "Allow" ? "selected" : "")}>Block</option><option {(r?.Mode == "Allow" ? "selected" : "")}>Allow</option></select><label>Target</label><input required name='Target' value='{System.Net.WebUtility.HtmlEncode(r?.Target)}' class='form-control mb-2' maxlength='200' /><label>Description</label><input name='Description' value='{System.Net.WebUtility.HtmlEncode(r?.Description)}' class='form-control mb-2' maxlength='500' /><label><input type='checkbox' name='IsGlobal' value='true' {(r?.IsGlobal != false ? "checked" : "")} /> Global</label> <label><input type='checkbox' name='IsActive' value='true' {(r?.IsActive != false ? "checked" : "")} /> Active</label>");
-    public IHtmlContent BlacklistFields(Server.Models.BlacklistItem? b) => new HtmlString($"<label>Type</label><select name='TargetType' class='form-select mb-2'><option {(b?.TargetType == "Application" ? "selected" : "")}>Application</option><option {(b?.TargetType == "Website" ? "selected" : "")}>Website</option><option {(b?.TargetType == "Domain" ? "selected" : "")}>Domain</option><option {(b?.TargetType == "Process" ? "selected" : "")}>Process</option></select><label>Value</label><input required name='Value' value='{System.Net.WebUtility.HtmlEncode(b?.Value)}' class='form-control mb-2' maxlength='300' /><label>Reason</label><input name='Reason' value='{System.Net.WebUtility.HtmlEncode(b?.Reason)}' class='form-control mb-2' maxlength='500' /><label><input type='checkbox' name='IsActive' value='true' {(b?.IsActive != false ? "checked" : "")} /> Active</label>");
+    public IHtmlContent RuleFields(Server.Models.RestrictionRule? rule) => new HtmlString($"<label>Type</label><select name='RuleType' class='form-select mb-2'><option {(rule?.RuleType == "Application" ? "selected" : "")}>Application</option><option {(rule?.RuleType == "Website" ? "selected" : "")}>Website</option></select><label>Mode</label><select name='Mode' class='form-select mb-2'><option {(rule?.Mode != "Allow" ? "selected" : "")}>Block</option><option {(rule?.Mode == "Allow" ? "selected" : "")}>Allow</option></select><label>Target or wildcard</label><input required name='Target' value='{System.Net.WebUtility.HtmlEncode(rule?.Target)}' class='form-control mb-2' maxlength='200' placeholder='chrome* or example.com' /><label>Description</label><input name='Description' value='{System.Net.WebUtility.HtmlEncode(rule?.Description)}' class='form-control mb-2' maxlength='500' /><label><input type='checkbox' name='IsActive' value='true' {(rule?.IsActive != false ? "checked" : "")} /> Active</label>");
 }

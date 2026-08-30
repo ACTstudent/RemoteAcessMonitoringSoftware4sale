@@ -32,9 +32,9 @@ namespace Server.Services
             {
                 lock (_lock)
                 {
-                    if (_status != GlobalSessionStatus.Running && _status != GlobalSessionStatus.Paused)
+                    if (_status != GlobalSessionStatus.Running)
                         return (int)_accumulatedSeconds;
-                    return (int)(_accumulatedSeconds + (DateTime.Now - _startedAt).TotalSeconds);
+                    return (int)(_accumulatedSeconds + (DateTime.UtcNow - _startedAt).TotalSeconds);
                 }
             }
         }
@@ -54,9 +54,18 @@ namespace Server.Services
         {
             lock (_lock)
             {
-                _status = GlobalSessionStatus.Running;
-                _startedAt = DateTime.Now;
-                _accumulatedSeconds = 0;
+                if (_status == GlobalSessionStatus.Running) return;
+                if (_status == GlobalSessionStatus.Paused)
+                {
+                    _status = GlobalSessionStatus.Running;
+                    _startedAt = DateTime.UtcNow;
+                }
+                else
+                {
+                    _status = GlobalSessionStatus.Running;
+                    _startedAt = DateTime.UtcNow;
+                    _accumulatedSeconds = 0;
+                }
             }
 
             _ = _hub.Clients.All.SendAsync(HubEventNames.GlobalSessionState, Snapshot());
@@ -67,7 +76,7 @@ namespace Server.Services
             lock (_lock)
             {
                 if (_status != GlobalSessionStatus.Running) return;
-                _accumulatedSeconds += (DateTime.Now - _startedAt).TotalSeconds;
+                _accumulatedSeconds += (DateTime.UtcNow - _startedAt).TotalSeconds;
                 _status = GlobalSessionStatus.Paused;
             }
 
@@ -81,7 +90,7 @@ namespace Server.Services
                 if (_status == GlobalSessionStatus.None || _status == GlobalSessionStatus.Ended) return;
                 if (_status == GlobalSessionStatus.Running)
                 {
-                    _accumulatedSeconds += (DateTime.Now - _startedAt).TotalSeconds;
+                    _accumulatedSeconds += (DateTime.UtcNow - _startedAt).TotalSeconds;
                 }
                 _status = GlobalSessionStatus.Ended;
             }

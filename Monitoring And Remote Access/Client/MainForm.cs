@@ -58,6 +58,7 @@ namespace Client
         private bool _isStreaming = false;
         private CancellationTokenSource? _streamCts;
         private bool _isLocked = false;
+        private bool _isClosing;
         private string _studentId = "";
         private string _studentName = "";
 
@@ -434,7 +435,7 @@ namespace Client
         private void OnSessionStateChanged(GlobalSessionMessage state)
         {
             _sessionStatus = state.Status;
-            if (state.Status == "Running") _sessionElapsed = state.ElapsedSeconds;
+            _sessionElapsed = state.ElapsedSeconds;
             lblState.Text = state.Status;
             lblState.ForeColor = state.Status == "Running" ? Color.FromArgb(34, 197, 94)
                 : state.Status == "Paused" ? Color.FromArgb(245, 158, 11)
@@ -512,23 +513,27 @@ namespace Client
             if (string.IsNullOrWhiteSpace(app)) return;
 
             var processName = app.Split(" - ")[0].Trim().ToLowerInvariant();
-            var windowTitle = app.ToLowerInvariant();
 
             var appRules = _blockRules.Concat(_allowRules).Where(r => r.RuleType == "Application");
-            var matchingApp = appRules.Where(r => processName.Contains(r.Target.Trim().ToLowerInvariant()))
+            var matchingApp = appRules.Where(r => PolicyPatternMatcher.MatchesApplication(processName, r.Target))
                 .OrderByDescending(r => r.Target.Count(c => c != '*')).ThenByDescending(r => r.Mode == "Allow").FirstOrDefault();
             if (matchingApp is not null && matchingApp.Mode != "Allow") await HandleViolation(matchingApp, app, processName, token);
 
-if (_allowRules.Any(r => r.RuleType == "Application") && matchingApp is null && processName is not ("explorer" or "shellexperiencehost" or "searchapp"))
+            if (_allowRules.Any(r => r.RuleType == "Application") && matchingApp is null && processName is not ("explorer" or "shellexperiencehost" or "searchapp"))
                 await ReportViolation("Application", app, processName, kill: true, token, reportedTarget: processName);
 
-            var websiteRules = _blockRules.Concat(_allowRules).Where(r => r.RuleType == "Website");
-            var matchingWebsite = websiteRules.Where(r => windowTitle.Contains(r.Target.Trim().ToLowerInvariant()))
+            var website = _lastForegroundWebsite;
+            if (website is not { Status: BrowserMonitoringStatus.Captured, Domain: not null }) return;
+            var websiteRules = _blockRules.Concat(_allowRules).Where(r => r.RuleType == "Website").ToList();
+            var matchingWebsite = websiteRules.Where(r => PolicyPatternMatcher.MatchesDomain(website.Domain, r.Target))
                 .OrderByDescending(r => r.Target.Count(c => c != '*')).ThenByDescending(r => r.Mode == "Allow").FirstOrDefault();
-            if (matchingWebsite is not null && matchingWebsite.Mode != "Allow") await HandleViolation(matchingWebsite, app, processName, token);
+            if (matchingWebsite is not null && matchingWebsite.Mode != "Allow")
+                await ReportViolation("Website", website.Domain, processName, kill: false, token, reportedTarget: website.Domain);
+            else if (websiteRules.Any(rule => rule.Mode == "Allow") && matchingWebsite is null)
+                await ReportViolation("Website", website.Domain, processName, kill: false, token, reportedTarget: website.Domain);
         }
 
-private async Task HandleViolation(RestrictionRuleMessage rule, string app, string processName, CancellationToken token)
+        private async Task HandleViolation(RestrictionRuleMessage rule, string app, string processName, CancellationToken token)
         {
             // Kill the offending process for blocked applications/games
             bool kill = rule.RuleType == "Application";
@@ -582,6 +587,7 @@ private async Task HandleViolation(RestrictionRuleMessage rule, string app, stri
         private bool _lastIdleReported = false;
         private DateTime _lastActiveAppReport = DateTime.MinValue;
         private string _lastWebsiteReport = string.Empty;
+        private BrowserWebsiteObservation? _lastForegroundWebsite;
         private readonly Dictionary<string, string> _lastBrowserStatus = new(StringComparer.OrdinalIgnoreCase);
         private readonly ManagedBrowserCollector _managedBrowserCollector = CreateManagedBrowserCollector();
 
@@ -639,13 +645,17 @@ private async Task HandleViolation(RestrictionRuleMessage rule, string app, stri
                                 if (website == null && foregroundBrowser is "chrome" or "brave")
                                     website = await _managedBrowserCollector.TryGetActiveWebsiteAsync(foregroundBrowser, appName, token);
                                 website ??= fallbackWebsite;
+                                _lastForegroundWebsite = website is { Status: BrowserMonitoringStatus.Captured, Domain: not null }
+                                    ? website
+                                    : null;
                                 if (website is { Status: BrowserMonitoringStatus.Captured, Domain: not null } &&
-                                    website.Domain != _lastWebsiteReport)
+                                    $"{website.Browser}:{website.Domain}" != _lastWebsiteReport)
                                 {
-                                    _lastWebsiteReport = website.Domain;
+                                    _lastWebsiteReport = $"{website.Browser}:{website.Domain}";
                                     await _hubClient.ReportWebsiteActivityAsync(new WebsiteActivityMessage(
                                         "", "", Environment.MachineName, website.Domain, website.Browser, DateTime.UtcNow));
                                 }
+                                if (_lastForegroundWebsite is null) _lastWebsiteReport = string.Empty;
                                 await ReportBrowserMonitoringStatusAsync(website);
                             }
                         }
@@ -733,6 +743,7 @@ private async Task HandleViolation(RestrictionRuleMessage rule, string app, stri
 
         private async Task ForceLogout(bool manual)
         {
+            _isClosing = true;
             _isStreaming = false;
             _streamCts?.Cancel();
             _countdownTimer.Stop();
@@ -825,8 +836,14 @@ private async Task HandleViolation(RestrictionRuleMessage rule, string app, stri
             popup.Show(this);
         }
 
-        protected override void OnFormClosing(FormClosingEventArgs e)
+        protected override async void OnFormClosing(FormClosingEventArgs e)
         {
+            if (!_isClosing && _hubClient is not null)
+            {
+                e.Cancel = true;
+                await ForceLogout(true);
+                return;
+            }
             _isStreaming = false;
             _streamCts?.Cancel();
             _countdownTimer.Stop();

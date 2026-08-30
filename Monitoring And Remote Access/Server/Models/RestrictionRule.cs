@@ -23,6 +23,9 @@ namespace Server.Models
 
         public bool IsGlobal { get; set; } = true;
 
+        public int? TeacherId { get; set; }
+        public Teacher? Teacher { get; set; }
+
         public bool IsActive { get; set; } = true;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

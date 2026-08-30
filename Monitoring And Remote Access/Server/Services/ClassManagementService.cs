@@ -770,18 +770,27 @@ public sealed class ClassManagementService : IClassManagementService
         }
 
         if (!string.IsNullOrWhiteSpace(input.Username) &&
-            await _context.Students.AnyAsync(s => s.Username.ToLower() == input.Username.Trim().ToLower()))
+            await LoginIdentifierInUseAsync(input.Username))
         {
             return ClassOperationResult.Fail($"The username '{input.Username.Trim()}' is already in use.");
         }
 
         if (!string.IsNullOrWhiteSpace(input.StudentNumber) &&
-            await _context.Students.AnyAsync(s => s.StudentNumber.ToLower() == input.StudentNumber.Trim().ToLower()))
+            await LoginIdentifierInUseAsync(input.StudentNumber))
         {
             return ClassOperationResult.Fail($"The student number '{input.StudentNumber.Trim()}' is already in use.");
         }
 
         return ClassOperationResult.Ok();
+    }
+
+    private async Task<bool> LoginIdentifierInUseAsync(string identifier)
+    {
+        var normalized = identifier.Trim().ToLower();
+        return await _context.Admins.AnyAsync(account => account.Username.ToLower() == normalized) ||
+               await _context.Teachers.AnyAsync(account => account.Username.ToLower() == normalized) ||
+               await _context.Students.AnyAsync(account =>
+                   account.Username.ToLower() == normalized || account.StudentNumber.ToLower() == normalized);
     }
 
     private async Task<Student> BuildStudentAsync(
@@ -825,7 +834,7 @@ public sealed class ClassManagementService : IClassManagementService
         var candidate = baseName;
         var suffix = 2;
         while ((reserved?.Contains(candidate) ?? false) ||
-               await _context.Students.AnyAsync(s => s.Username.ToLower() == candidate.ToLower()))
+               await LoginIdentifierInUseAsync(candidate))
         {
             candidate = $"{baseName}{suffix++}";
         }
@@ -840,7 +849,7 @@ public sealed class ClassManagementService : IClassManagementService
         var candidate = NormalizeOptional(requested);
         if (!string.IsNullOrWhiteSpace(candidate) &&
             !(reserved?.Contains(candidate) ?? false) &&
-            !await _context.Students.AnyAsync(s => s.StudentNumber.ToLower() == candidate.ToLower()))
+            !await LoginIdentifierInUseAsync(candidate))
         {
             return candidate;
         }
@@ -850,7 +859,7 @@ public sealed class ClassManagementService : IClassManagementService
             candidate = $"STU-{DateTime.Now:yyyy}-{RandomNumberGenerator.GetInt32(100000, 999999)}";
         }
         while ((reserved?.Contains(candidate) ?? false) ||
-               await _context.Students.AnyAsync(s => s.StudentNumber == candidate));
+               await LoginIdentifierInUseAsync(candidate));
 
         return candidate;
     }

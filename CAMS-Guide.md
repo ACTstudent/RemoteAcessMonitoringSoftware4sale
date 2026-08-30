@@ -70,7 +70,7 @@ Pardo Elementary School Computer Laboratory Management System
 | Role | Permissions |
 |---|---|
 | **Admin** | Manage teachers, students, computers, restriction rules, blacklists, session rules, LAN config, view audit logs and reports |
-| **Teacher** | Dashboard with global session controls, live monitoring grid, start/pause/end per-student sessions, remote control, set access restrictions, export records |
+| **Teacher** | Dashboard with teacher-scoped bulk session controls, live monitoring grid, start/pause/end per-student sessions, remote control, set active-session restrictions, export records |
 | **Student** | Login only on assigned workstation, view session info, alert center, account settings |
 
 ## Teacher
@@ -80,10 +80,10 @@ Pardo Elementary School Computer Laboratory Management System
 - Enter the teacher credentials created by the CAMS administrator
 - The dashboard shows active sessions quick-access cards
 
-### Global Session Controls (Header Bar)
-- **Start Session** — Opens the lab session; the elapsed timer starts counting upward
-- **Pause Session** — Freezes the countdown (students see "Paused")
-- **End Session** — Immediately logs out all students and locks their workstations
+### Bulk Session Controls
+- **Resume My Sessions** — Resumes the signed-in teacher's paused sessions
+- **Pause My Sessions** — Freezes countdowns for the signed-in teacher's sessions when their rules permit pausing
+- **End My Sessions** — Ends and logs out only students in the signed-in teacher's active sessions
 
 ### Monitoring Grid
 - Student cards show: workstation name, live screen feed, idle/active status badge, current active app name
@@ -93,7 +93,7 @@ Pardo Elementary School Computer Laboratory Management System
   - **Log Out** — forces the student client to disconnect
   - **Shut Down** — shuts down the student workstation
   - **Remote Access** — takes control of mouse + keyboard on the student PC
-  - **Broadcast Teacher Screen** — shares teacher's screen to all student monitors
+  - **Broadcast Teacher Screen** — shares the teacher's screen to assigned student monitors
   - **Send Warning** — sends a popup message to the student
 
 ### Infraction Alerts
@@ -109,8 +109,8 @@ Pardo Elementary School Computer Laboratory Management System
 | **Log Out** | Disconnects student from CAMS |
 | **Shut Down** | Shuts down student computer |
 | **Remote Access** | Teacher mouse/keyboard control the student PC |
-| **Broadcast Teacher Screen** | Shares teacher screen to all students |
-| **Send Warning Popup** | Sends a popup message to one or all students |
+| **Broadcast Teacher Screen** | Shares teacher screen to assigned students |
+| **Send Warning Popup** | Sends a popup message to one or all assigned students |
 
 ### Per-Session Management
 The Session Management page allows the teacher to start individual per-student sessions with optional:
@@ -130,7 +130,7 @@ The Session Management page allows the teacher to start individual per-student s
 After login, a sticky toolbar appears:
 - **Unit** — the machine name
 - **Student** — logged-in user name
-- **Elapsed Timer** — counts up while the global session is Running or Paused
+- **Elapsed Timer** — shows the current laboratory session time and pauses while the session is paused
 
 ### Enforcement
 - Restricted apps are automatically **killed** if on the blocklist
@@ -181,15 +181,13 @@ Each student session:
 3. **Pause/Resume** — controls of the session **start from the teacher or admin** — not from student entry
 4. **Ending** — the teacher logs** the student, the hardware workstation's stopped, and the session log entry is timestamped
 
-The **global session** (Start/Pause/End CTAs in Monitoring) works similarly but affects **all** connected students as **one batch**
-- Start → starts global timer
-- End → logs out all students and locks all stations
+The bulk controls on the Session Management page operate only on sessions owned by the signed-in teacher. Lab-wide global SignalR controls are restricted to administrators.
 
 ---
 
 ## Restriction
 
-Restriction rules are **downloaded to the student client** after login.
+Administrator-global rules and rules owned by the teacher of the student's active lab session are **downloaded to the student client** after login.
 
 - **Blacklist Rule →** *Block* targets: Scan active app every ~5 seconds. If it matches → kill process → send `Infraction` SignalR message to teacher → teacher panel flashes red → violation logged to Audit
 - **Whitelist Rule →** *Allow* rules override list: Only apps matching the whitelist can run. Any others are killed automatically, same as above
@@ -264,12 +262,12 @@ Use the teacher PC's Wi-Fi IPv4 address from `ipconfig`, not `localhost`. Phone 
 | `LockStudent/UnlockStudent` | Dashboard → Student | — | Lock or unlock workstation |
 | `ForceLogout` | Dashboard → Student | — | Logout student |
 | `SendRemoteInput` | Control Centre → Server | control meta | Remote mouse/keyboard |
-| `BroadcastScreen` | Dashboard → Server | base64 frames | Tell all students teacher screen |
+| `BroadcastScreen` | Dashboard → Server | base64 frames | Show teacher screen to assigned students |
 | `SendWarningPopup` | Dashboard → Client | message | Show warning on student screen |
 | `ShutdownStudent` | Dashboard → Client | — | Shut down workstation |
 | `ReportInfraction` | Client → Server | infraction data | Report blocked app / site |
 | `InfractionDetected` | Server → Teacher | infraction data | Flash alert badge on dashboard |
-| `GlobalSessionState` | Server → All | status, elapsed seconds | Push current session status |
-| `SessionEnded` | Server → Students | — | Hard logout when session ends |
+| `GlobalSessionState` | Server → Clients | status, elapsed seconds | Push administrator-controlled lab-wide session status |
+| `SessionEnded` | Server → Target students | — | Hard logout when their session ends |
 | `FetchRestrictions` | Student → Server | — | Asking for active rules |
 | `RestrictionsReceived` | Server → Student | rules list | Download restrictions to client |

@@ -41,6 +41,9 @@ jobs:
       - name: Run xUnit tests
         run: dotnet test "Monitoring And Remote Access\Server.Tests\Server.Tests.csproj" -c Release --verbosity minimal
 
+      - name: Run client tests
+        run: dotnet test "Monitoring And Remote Access\Client.Tests\Client.Tests.csproj" -c Release --verbosity minimal
+
       - name: Build solution
         run: dotnet build "Monitoring And Remote Access\RemoteMonitoring.sln" -c Release
 

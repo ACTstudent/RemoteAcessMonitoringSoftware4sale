@@ -38,10 +38,14 @@ namespace Server.Controllers
                 .FirstOrDefaultAsync();
 
             ViewBag.Remaining = 0;
-            if (session != null && session.MaxDurationMinutes.HasValue && session.Status == "Running")
+            var maxDuration = session?.MaxDurationMinutes ?? session?.SessionRule?.MaxDurationMinutes;
+            if (session != null && maxDuration.HasValue)
             {
-                var elapsed = (DateTime.Now - session.StartTime).TotalMinutes;
-                ViewBag.Remaining = Math.Max(0, session.MaxDurationMinutes.Value - (int)elapsed);
+                var effectiveNow = session.Status == "Paused" && session.PauseTime.HasValue
+                    ? session.PauseTime.Value.ToUniversalTime()
+                    : DateTime.UtcNow;
+                var elapsed = (effectiveNow - session.StartTime.ToUniversalTime()).TotalMinutes;
+                ViewBag.Remaining = Math.Max(0, maxDuration.Value - (int)elapsed);
             }
 
             if (session?.Computer?.LaboratoryStation != null)
@@ -50,7 +54,9 @@ namespace Server.Controllers
             }
 
             ViewBag.CurrentSession = session;
-            ViewBag.Rules = await _context.RestrictionRules.Where(r => r.IsActive).ToListAsync();
+            ViewBag.Rules = await _context.RestrictionRules
+                .Where(r => r.IsActive && (r.IsGlobal || (session != null && r.TeacherId == session.TeacherId)))
+                .ToListAsync();
             ViewBag.Blacklist = await _context.BlacklistItems.Where(b => b.IsActive).ToListAsync();
             return View();
         }
@@ -105,13 +111,19 @@ namespace Server.Controllers
             if (!CheckAccess()) return Json(new { });
             var studentId = HttpContext.Session.GetInt32("StudentId")!.Value;
             var session = await _context.LabSessions
+                .Include(s => s.SessionRule)
+                .Include(s => s.Computer)
                 .Where(s => s.StudentId == studentId && s.IsActive)
                 .OrderByDescending(s => s.StartTime)
                 .FirstOrDefaultAsync();
 
             if (session == null) return Json(new { active = false });
-            var elapsed = (session.StartTime != default) ? (DateTime.Now - session.StartTime).TotalMinutes : 0;
-            var remaining = session.MaxDurationMinutes.HasValue ? Math.Max(0, session.MaxDurationMinutes.Value - (int)elapsed) : (int?)null;
+            var effectiveNow = session.Status == "Paused" && session.PauseTime.HasValue
+                ? session.PauseTime.Value.ToUniversalTime()
+                : DateTime.UtcNow;
+            var elapsed = session.StartTime != default ? (effectiveNow - session.StartTime.ToUniversalTime()).TotalMinutes : 0;
+            var maxDuration = session.MaxDurationMinutes ?? session.SessionRule?.MaxDurationMinutes;
+            var remaining = maxDuration.HasValue ? Math.Max(0, maxDuration.Value - (int)elapsed) : (int?)null;
             return Json(new { active = true, status = session.Status, remaining, station = session.Computer?.LaboratoryStation });
         }
     }

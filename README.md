@@ -44,7 +44,7 @@ Pre-built installer setup executables published as versioned GitHub release asse
 ### 🖥 Real-Time Screen Monitoring & Workstation Control
 - **Live Monitoring Grid**: Authenticated HTTPS SignalR screen streaming across connected lab workstations, approximately 12 FPS by default.
 - **Workstation Control**: Remote workstation lock/unlock, force user logout, shutdown, and reboot triggers.
-- **Teacher Broadcast**: One-click screen broadcasting from the teacher's PC to all student monitors.
+- **Teacher Broadcast**: One-click screen broadcasting from the teacher's PC to assigned student monitors.
 - **Infraction Alerting**: Automatic application tracking, idle state detection, and warning popup overlays.
 
 ### 📂 Integrated Class & Computer Profile Management (`pro` Relationships)
@@ -55,7 +55,7 @@ Pre-built installer setup executables published as versioned GitHub release asse
 
 ### ⏱ Timed Lab Sessions & Security Policies
 - **Lab Sessions**: Configurable timed laboratory sessions with real-time countdown timers and attendance logs.
-- **Security Policies**: Application executable & website URL blacklists/whitelists enforced across workstations during active sessions.
+- **Security Policies**: Administrator-global and active-session teacher application/domain blocklists and allowlists, enforced from normalized process names and domains.
 
 ### 📊 Lab Analytics, Alerts & Database Maintenance
 - **Scoped Account & Workstation Management**: Teacher-scoped student/computer CRUD and roster management with per-object authorization checks, plus admin/teacher self-service password changes and account unlock/activation controls.

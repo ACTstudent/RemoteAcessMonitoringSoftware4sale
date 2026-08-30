@@ -4,6 +4,9 @@ public static class HubEventNames
 {
     public const string TeachersGroup = "Teachers";
     public const string StudentsGroup = "Students";
+    public const string AdminsGroup = "Admins";
+
+    public static string TeacherGroup(int teacherId) => $"Teacher:{teacherId}";
 
     public const string ReceiveScreenFrame = "ReceiveScreenFrame";
     public const string StudentConnected = "StudentConnected";

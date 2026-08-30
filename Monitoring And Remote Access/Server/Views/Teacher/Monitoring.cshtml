@@ -12,6 +12,8 @@
         </div>
     </div>
     <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary rounded-pill px-3" onclick="openWarning(true)"><i class="bi bi-megaphone-fill me-1"></i> Warn All</button>
+        <button id="broadcastButton" class="btn btn-outline-warning rounded-pill px-3" onclick="toggleBroadcast()"><i class="bi bi-broadcast me-1"></i> Broadcast Screen</button>
         <button class="btn btn-outline-emerald rounded-pill px-3" onclick="bulkCommand('BulkLockStudents', 'lock')"><i class="bi bi-lock-fill me-1"></i> Lock Visible</button>
         <button class="btn btn-outline-danger rounded-pill px-3" onclick="bulkCommand('BulkForceLogoutStudents', 'log out')"><i class="bi bi-power me-1"></i> Log Out Visible</button>
     </div>
@@ -67,6 +69,7 @@
             <div class="modal-footer border-0 d-flex flex-wrap gap-2 align-items-center">
                 <span class="small text-muted me-auto">Monitoring is view-only until a teacher explicitly issues a command.</span>
                 <button type="button" id="remoteSupportButton" class="btn btn-sm btn-outline-warning rounded-pill" onclick="toggleRemoteSupport()">Start Remote Support</button>
+                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" onclick="openWarning(false)">Send Warning</button>
                 <button type="button" class="btn btn-sm btn-outline-emerald rounded-pill" onclick="sendWorkstationCommand('LockStudent')">Lock</button>
                 <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" onclick="sendWorkstationCommand('UnlockStudent')">Unlock</button>
                 <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" onclick="sendWorkstationCommand('RestartStudent', true)">Restart</button>
@@ -75,6 +78,18 @@
             </div>
         </div>
     </div>
+</div>
+
+<div class="modal fade" id="warningModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Send Student Warning</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <input type="hidden" id="warningTarget" />
+            <label class="form-label">Title</label><input id="warningTitle" class="form-control mb-3" maxlength="120" value="Teacher Warning" />
+            <label class="form-label">Message</label><textarea id="warningMessage" class="form-control" maxlength="1000" rows="4" required></textarea>
+        </div>
+        <div class="modal-footer"><button class="btn btn-primary" onclick="sendWarning()">Send Warning</button></div>
+    </div></div>
 </div>
 
 @section Scripts {
@@ -89,6 +104,9 @@
         let selectedConnectionId = null;
         let remoteSupportActive = false;
         let lastMouseEventAt = 0;
+        let broadcastStream = null;
+        let broadcastTimer = null;
+        let broadcastBusy = false;
         const remoteCanvas = document.getElementById("remoteCanvas");
         const remoteContext = remoteCanvas.getContext("2d");
 
@@ -292,6 +310,71 @@
             const message = valueOf(result, "message", "Message") || "Command completed.";
             if (!Boolean(valueOf(result, "succeeded", "Succeeded"))) showError(message);
             else document.getElementById("hubError").classList.add("d-none");
+        }
+
+        function openWarning(allStudents) {
+            if (!allStudents && !selectedConnectionId) return showError("Select a workstation before sending a warning.");
+            document.getElementById("warningTarget").value = allStudents ? "" : selectedConnectionId;
+            bootstrap.Modal.getOrCreateInstance(document.getElementById("warningModal")).show();
+        }
+
+        async function sendWarning() {
+            const title = document.getElementById("warningTitle").value.trim();
+            const message = document.getElementById("warningMessage").value.trim();
+            if (!title || !message) return showError("A warning title and message are required.");
+            try {
+                await hub.invoke("SendWarningPopup", document.getElementById("warningTarget").value,
+                    { type: "Warning", title, message, timestamp: new Date().toISOString() });
+                bootstrap.Modal.getInstance(document.getElementById("warningModal"))?.hide();
+                document.getElementById("warningMessage").value = "";
+            } catch (error) {
+                showError(`Warning delivery failed: ${error.message || error}`);
+            }
+        }
+
+        async function toggleBroadcast() {
+            if (broadcastStream) {
+                stopBroadcast();
+                return;
+            }
+            try {
+                broadcastStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+                const video = document.createElement("video");
+                video.srcObject = broadcastStream;
+                video.muted = true;
+                await video.play();
+                const canvas = document.createElement("canvas");
+                const context = canvas.getContext("2d");
+                const sendFrame = async () => {
+                    if (broadcastBusy || !broadcastStream || hub.state !== signalR.HubConnectionState.Connected) return;
+                    broadcastBusy = true;
+                    try {
+                        const scale = Math.min(1, 1280 / Math.max(video.videoWidth, 1));
+                        canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
+                        canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        await hub.invoke("BroadcastScreen", canvas.toDataURL("image/jpeg", 0.65).split(",")[1]);
+                    } catch (error) {
+                        showError(`Screen broadcast failed: ${error.message || error}`);
+                    } finally {
+                        broadcastBusy = false;
+                    }
+                };
+                broadcastTimer = setInterval(sendFrame, 250);
+                broadcastStream.getVideoTracks()[0].addEventListener("ended", stopBroadcast);
+                document.getElementById("broadcastButton").innerHTML = '<i class="bi bi-stop-circle me-1"></i> Stop Broadcast';
+            } catch (error) {
+                stopBroadcast();
+                showError(`Screen sharing was not started: ${error.message || error}`);
+            }
+        }
+
+        function stopBroadcast() {
+            if (broadcastTimer) clearInterval(broadcastTimer);
+            broadcastTimer = null;
+            broadcastStream?.getTracks().forEach(track => track.stop());
+            broadcastStream = null;
+            document.getElementById("broadcastButton").innerHTML = '<i class="bi bi-broadcast me-1"></i> Broadcast Screen';
         }
 
         async function bulkCommand(method, label) {

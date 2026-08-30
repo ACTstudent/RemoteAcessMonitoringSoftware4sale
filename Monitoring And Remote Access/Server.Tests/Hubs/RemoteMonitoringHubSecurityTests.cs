@@ -131,6 +131,92 @@ public sealed class RemoteMonitoringHubSecurityTests
     }
 
     [Fact]
+    public async Task FetchRestrictions_ReturnsOnlyGlobalAndOwningTeacherRules()
+    {
+        await using var provider = CreateProvider();
+        var student = await SeedStudentAsync(provider, "student-1", classTeacherId: 1);
+        await SeedLabSessionAsync(provider, student.Id, allowRemoteControl: false);
+        await using (var scope = provider.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.RestrictionRules.AddRange(
+                new Server.Models.RestrictionRule { RuleType = "Website", Target = "global.test", Mode = "Block", IsGlobal = true, IsActive = true },
+                new Server.Models.RestrictionRule { RuleType = "Website", Target = "teacher-one.test", Mode = "Block", TeacherId = 1, IsGlobal = false, IsActive = true },
+                new Server.Models.RestrictionRule { RuleType = "Website", Target = "teacher-two.test", Mode = "Block", TeacherId = 2, IsGlobal = false, IsActive = true });
+            await db.SaveChangesAsync();
+        }
+
+        IReadOnlyList<RestrictionRuleMessage>? delivered = null;
+        var clients = new Mock<IHubCallerClients>();
+        var target = new Mock<ISingleClientProxy>();
+        target.Setup(proxy => proxy.SendCoreAsync(HubEventNames.RestrictionsReceived, It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object?[], CancellationToken>((_, args, _) =>
+                delivered = Assert.IsAssignableFrom<IReadOnlyList<RestrictionRuleMessage>>(args[0]))
+            .Returns(Task.CompletedTask);
+        clients.Setup(value => value.Client("student-connection")).Returns(target.Object);
+        var monitoring = new MonitoringService();
+        monitoring.RegisterStudent("student-connection", "student-1", "PC-01");
+        var hub = CreateHub(provider, monitoring, "student-connection", "Student", "1", clients, clientAgent: true);
+
+        await hub.FetchRestrictions();
+
+        Assert.NotNull(delivered);
+        Assert.Contains(delivered!, rule => rule.Target == "global.test");
+        Assert.Contains(delivered!, rule => rule.Target == "teacher-one.test");
+        Assert.DoesNotContain(delivered!, rule => rule.Target == "teacher-two.test");
+    }
+
+    [Fact]
+    public async Task ForceLogout_EndsLabSessionBeforeDisconnectingStudent()
+    {
+        await using var provider = CreateProvider();
+        var student = await SeedStudentAsync(provider, "student-1", classTeacherId: 1);
+        await SeedLabSessionAsync(provider, student.Id, allowRemoteControl: false);
+        var monitoring = new MonitoringService();
+        monitoring.RegisterStudent("student-connection", "student-1", "PC-01");
+        var clients = new Mock<IHubCallerClients>();
+        clients.Setup(value => value.Client("student-connection")).Returns(Mock.Of<ISingleClientProxy>());
+        clients.Setup(value => value.Group(It.IsAny<string>())).Returns(Mock.Of<IClientProxy>());
+        var hub = CreateHub(provider, monitoring, "teacher-connection", "Teacher", "1", clients);
+
+        await hub.ForceLogout("student-connection");
+
+        await using var scope = provider.CreateAsyncScope();
+        var session = await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().LabSessions.SingleAsync();
+        Assert.False(session.IsActive);
+        Assert.Equal("Ended", session.Status);
+    }
+
+    [Fact]
+    public async Task GlobalSessionControl_RejectsTeacher()
+    {
+        await using var provider = CreateProvider();
+        var hub = CreateHub(provider, new MonitoringService(), "teacher-connection", "Teacher", "1");
+
+        var error = await Assert.ThrowsAsync<HubException>(() => hub.GlobalEndSession());
+
+        Assert.Equal("Only administrators can control the lab-wide session.", error.Message);
+    }
+
+    [Fact]
+    public async Task StudentDisconnect_PreservesLabSessionForAutomaticReconnect()
+    {
+        await using var provider = CreateProvider();
+        var student = await SeedStudentAsync(provider, "student-1", classTeacherId: 1);
+        await SeedLabSessionAsync(provider, student.Id, allowRemoteControl: false);
+        var monitoring = new MonitoringService();
+        monitoring.RegisterStudent("student-connection", "student-1", "PC-01");
+        var hub = CreateHub(provider, monitoring, "student-connection", "Student", student.Id.ToString(), clientAgent: true);
+
+        await hub.OnDisconnectedAsync(new IOException("temporary network interruption"));
+
+        await using var scope = provider.CreateAsyncScope();
+        var session = await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().LabSessions.SingleAsync();
+        Assert.True(session.IsActive);
+        Assert.Equal("Running", session.Status);
+    }
+
+    [Fact]
     public async Task Disconnect_CleansMonitoringStateAndRemoteSession()
     {
         await using var provider = CreateProvider();
@@ -167,6 +253,27 @@ public sealed class RemoteMonitoringHubSecurityTests
         var error = await Assert.ThrowsAsync<HubException>(() => hub.StartRemoteControl("student-connection"));
 
         Assert.Equal("Remote control is disabled by the active session rule.", error.Message);
+    }
+
+    [Fact]
+    public async Task StartRemoteControl_RejectsSessionOwnedByAnotherTeacher()
+    {
+        await using var provider = CreateProvider();
+        var student = await SeedStudentAsync(provider, "student-1", classTeacherId: 1);
+        await SeedLabSessionAsync(provider, student.Id, allowRemoteControl: true);
+        await using (var scope = provider.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            (await db.LabSessions.SingleAsync()).TeacherId = 2;
+            await db.SaveChangesAsync();
+        }
+        var monitoring = new MonitoringService();
+        monitoring.RegisterStudent("student-connection", "student-1", "PC-01");
+        var hub = CreateHub(provider, monitoring, "teacher-connection", "Teacher", "1");
+
+        var error = await Assert.ThrowsAsync<HubException>(() => hub.StartRemoteControl("student-connection"));
+
+        Assert.Equal("The workstation has no active lab session.", error.Message);
     }
 
     [Fact]
@@ -226,6 +333,7 @@ public sealed class RemoteMonitoringHubSecurityTests
         if (ownsClients)
             clients.Setup(c => c.Client(It.IsAny<string>())).Returns(proxy.Object);
         clients.Setup(c => c.Group(It.IsAny<string>())).Returns(groupProxy.Object);
+        clients.Setup(c => c.Groups(It.IsAny<IReadOnlyList<string>>())).Returns(groupProxy.Object);
         var hub = new RemoteMonitoringHub(monitoring, telemetryService ?? Mock.Of<ITelemetryService>(),
             new SessionManagerService(Mock.Of<IHubContext<RemoteMonitoringHub>>()),
             provider.GetRequiredService<IServiceScopeFactory>())
@@ -241,6 +349,8 @@ public sealed class RemoteMonitoringHubSecurityTests
         var services = new ServiceCollection();
         var databaseName = Guid.NewGuid().ToString();
         services.AddDbContext<ApplicationDbContext>(o => o.UseInMemoryDatabase(databaseName));
+        services.AddSingleton(Mock.Of<IHubContext<RemoteMonitoringHub>>());
+        services.AddScoped<LabSessionLifecycleService>();
         return services.BuildServiceProvider();
     }
 

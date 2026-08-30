@@ -41,6 +41,17 @@ namespace Server.Controllers
 
         private IActionResult Denied() => RedirectToAction("Login", "Account");
 
+        private async Task<bool> LoginIdentifierInUseAsync(string value, AccountRole? excludedRole = null, int? excludedId = null)
+        {
+            value = value.Trim().ToLower();
+            return (excludedRole != AccountRole.Admin && await _context.Admins.AnyAsync(a => a.Username.ToLower() == value)) ||
+                   (excludedRole == AccountRole.Admin && await _context.Admins.AnyAsync(a => a.Id != excludedId && a.Username.ToLower() == value)) ||
+                   (excludedRole != AccountRole.Teacher && await _context.Teachers.AnyAsync(t => t.Username.ToLower() == value)) ||
+                   (excludedRole == AccountRole.Teacher && await _context.Teachers.AnyAsync(t => t.TeacherId != excludedId && t.Username.ToLower() == value)) ||
+                   (excludedRole != AccountRole.Student && await _context.Students.AnyAsync(s => s.Username.ToLower() == value || s.StudentNumber.ToLower() == value)) ||
+                   (excludedRole == AccountRole.Student && await _context.Students.AnyAsync(s => s.Id != excludedId && (s.Username.ToLower() == value || s.StudentNumber.ToLower() == value)));
+        }
+
         private IActionResult AccountManagementRedirect(AccountRole accountRole) => accountRole switch
         {
             AccountRole.Admin => RedirectToAction(nameof(Settings)),
@@ -245,7 +256,7 @@ namespace Server.Controllers
             }
 
             teacher.Username = teacher.Username.Trim();
-            if (await _context.Teachers.AnyAsync(t => t.Username.ToLower() == teacher.Username.ToLower()))
+            if (await LoginIdentifierInUseAsync(teacher.Username))
             {
                 TempData["ErrorMessage"] = $"The username '{teacher.Username}' is already in use.";
                 return RedirectToAction("Teachers");
@@ -271,9 +282,7 @@ namespace Server.Controllers
             if (existing == null) return RedirectToAction("Teachers");
 
             var requestedUsername = string.IsNullOrWhiteSpace(teacher.Username) ? existing.Username : teacher.Username.Trim();
-            if (await _context.Teachers.AnyAsync(t =>
-                    t.TeacherId != existing.TeacherId &&
-                    t.Username.ToLower() == requestedUsername.ToLower()))
+            if (await LoginIdentifierInUseAsync(requestedUsername, AccountRole.Teacher, existing.TeacherId))
             {
                 TempData["ErrorMessage"] = $"The username '{requestedUsername}' is already in use.";
                 return RedirectToAction("Teachers");
@@ -324,6 +333,9 @@ namespace Server.Controllers
                 var students = await _context.Students.Where(s => s.AdviserId == id).ToListAsync();
                 foreach (var st in students) st.AdviserId = null;
 
+                var restrictions = await _context.RestrictionRules.Where(rule => rule.TeacherId == id).ToListAsync();
+                _context.RestrictionRules.RemoveRange(restrictions);
+
                 _context.Teachers.Remove(teacher);
                 await _context.SaveChangesAsync();
                 await AuditAsync("DeleteTeacher", $"Deleted teacher {teacher.Username}");
@@ -367,7 +379,7 @@ namespace Server.Controllers
             }
 
             student.Username = student.Username.Trim();
-            if (await _context.Students.AnyAsync(s => s.Username.ToLower() == student.Username.ToLower()))
+            if (await LoginIdentifierInUseAsync(student.Username))
             {
                 TempData["ErrorMessage"] = $"The username '{student.Username}' is already in use.";
                 return RedirectToAction("Students");
@@ -384,6 +396,11 @@ namespace Server.Controllers
             if (await _context.Students.AnyAsync(s => s.StudentNumber.ToLower() == student.StudentNumber.ToLower()))
             {
                 TempData["ErrorMessage"] = $"The student number '{student.StudentNumber}' is already in use.";
+                return RedirectToAction("Students");
+            }
+            if (await LoginIdentifierInUseAsync(student.StudentNumber))
+            {
+                TempData["ErrorMessage"] = $"The login identifier '{student.StudentNumber}' is already in use.";
                 return RedirectToAction("Students");
             }
 
@@ -417,10 +434,8 @@ namespace Server.Controllers
 
             var requestedStudentNumber = string.IsNullOrWhiteSpace(student.StudentNumber) ? existing.StudentNumber : student.StudentNumber.Trim();
             var requestedUsername = string.IsNullOrWhiteSpace(student.Username) ? existing.Username : student.Username.Trim();
-            if (await _context.Students.AnyAsync(s =>
-                    s.Id != existing.Id &&
-                    (s.StudentNumber.ToLower() == requestedStudentNumber.ToLower() ||
-                     s.Username.ToLower() == requestedUsername.ToLower())))
+            if (await LoginIdentifierInUseAsync(requestedStudentNumber, AccountRole.Student, existing.Id) ||
+                await LoginIdentifierInUseAsync(requestedUsername, AccountRole.Student, existing.Id))
             {
                 TempData["ErrorMessage"] = "The student number or username is already in use.";
                 return RedirectToAction("Students");
@@ -428,6 +443,10 @@ namespace Server.Controllers
 
             existing.StudentNumber = requestedStudentNumber;
             existing.Username = requestedUsername;
+            existing.Status = string.IsNullOrWhiteSpace(student.Status) ? existing.Status : student.Status.Trim();
+            existing.GradeSection = student.GradeSection?.Trim() ?? string.Empty;
+            existing.ClassId = student.ClassId;
+            existing.AdviserId = student.AdviserId;
 
             if (!string.IsNullOrWhiteSpace(student.FullName))
             {
@@ -435,6 +454,12 @@ namespace Server.Controllers
                 var parts = student.FullName.Trim().Split(' ', 2);
                 existing.FirstName = parts.Length > 0 ? parts[0] : "";
                 existing.LastName = parts.Length > 1 ? parts[1] : "";
+            }
+            else
+            {
+                existing.FirstName = string.IsNullOrWhiteSpace(student.FirstName) ? existing.FirstName : student.FirstName.Trim();
+                existing.LastName = string.IsNullOrWhiteSpace(student.LastName) ? existing.LastName : student.LastName.Trim();
+                existing.FullName = $"{existing.FirstName} {existing.LastName}".Trim();
             }
 
             if (!string.IsNullOrWhiteSpace(newPassword))
@@ -857,6 +882,12 @@ namespace Server.Controllers
                 TempData["ErrorMessage"] = "Laboratory station name is required.";
                 return RedirectToAction("Computers");
             }
+            computer.LaboratoryStation = computer.LaboratoryStation.Trim();
+            if (await _context.Computers.AnyAsync(c => c.LaboratoryStation.ToLower() == computer.LaboratoryStation.ToLower()))
+            {
+                TempData["ErrorMessage"] = "A workstation with that station name already exists.";
+                return RedirectToAction(nameof(Computers));
+            }
             computer.Status = string.IsNullOrWhiteSpace(computer.Status) ? "Available" : computer.Status;
             _context.Computers.Add(computer);
             await _context.SaveChangesAsync();
@@ -873,7 +904,13 @@ namespace Server.Controllers
             if (existing != null)
             {
                 var previousStatus = existing.Status;
-                existing.LaboratoryStation = string.IsNullOrWhiteSpace(computer.LaboratoryStation) ? existing.LaboratoryStation : computer.LaboratoryStation.Trim();
+                var station = string.IsNullOrWhiteSpace(computer.LaboratoryStation) ? existing.LaboratoryStation : computer.LaboratoryStation.Trim();
+                if (await _context.Computers.AnyAsync(c => c.ComputerId != existing.ComputerId && c.LaboratoryStation.ToLower() == station.ToLower()))
+                {
+                    TempData["ErrorMessage"] = "A workstation with that station name already exists.";
+                    return RedirectToAction(nameof(Computers));
+                }
+                existing.LaboratoryStation = station;
                 existing.Status = string.IsNullOrWhiteSpace(computer.Status) ? existing.Status : computer.Status.Trim();
                 existing.AssignedTo = computer.AssignedTo;
                 if (!string.Equals(previousStatus, existing.Status, StringComparison.OrdinalIgnoreCase))
@@ -906,22 +943,35 @@ namespace Server.Controllers
         {
             if (!CheckAccess()) return Denied();
 
-            var previous = await _context.Computers
-                .FirstOrDefaultAsync(c => c.AssignedTo == studentId.ToString());
-            if (previous != null)
+            if (!await _context.Students.AnyAsync(student => student.Id == studentId)) return NotFound();
+            Computer? selected = null;
+            if (computerId.HasValue)
+            {
+                selected = await _context.Computers.FindAsync(computerId.Value);
+                if (selected is null) return NotFound();
+                if (!string.IsNullOrWhiteSpace(selected.AssignedTo) && selected.AssignedTo != studentId.ToString())
+                {
+                    TempData["ErrorMessage"] = "That workstation is already assigned to another student.";
+                    return RedirectToAction(nameof(Students));
+                }
+                if (await _context.LabSessions.AnyAsync(session => session.ComputerId == selected.ComputerId && session.IsActive && session.Status != "Ended"))
+                {
+                    TempData["ErrorMessage"] = "That workstation is currently in use.";
+                    return RedirectToAction(nameof(Students));
+                }
+            }
+            var previousAssignments = await _context.Computers
+                .Where(c => c.AssignedTo == studentId.ToString() && (!computerId.HasValue || c.ComputerId != computerId.Value))
+                .ToListAsync();
+            foreach (var previous in previousAssignments)
             {
                 previous.AssignedTo = null;
                 if (previous.Status == "Assigned") previous.Status = "Available";
             }
-
-            if (computerId.HasValue)
+            if (selected is not null)
             {
-                var computer = await _context.Computers.FindAsync(computerId.Value);
-                if (computer != null)
-                {
-                    computer.AssignedTo = studentId.ToString();
-                    computer.Status = "Assigned";
-                }
+                selected.AssignedTo = studentId.ToString();
+                selected.Status = "Assigned";
             }
 
             await _context.SaveChangesAsync();
@@ -1294,6 +1344,29 @@ namespace Server.Controllers
         {
             if (!CheckAccess()) return Denied();
             return View(await _context.AuditLogs.OrderByDescending(a => a.Timestamp).Take(500).ToListAsync());
+        }
+
+        public async Task<IActionResult> SystemLogs()
+        {
+            if (!CheckAccess()) return Denied();
+            return View(await _context.SystemLogs.AsNoTracking()
+                .OrderByDescending(log => log.Timestamp)
+                .Take(500)
+                .ToListAsync());
+        }
+
+        public async Task<IActionResult> ExportSystemLogsCsv()
+        {
+            if (!CheckAccess()) return Denied();
+            var logs = await _context.SystemLogs.AsNoTracking()
+                .OrderByDescending(log => log.Timestamp)
+                .ToListAsync();
+            var csv = new System.Text.StringBuilder("Timestamp,Level,Message,Stack Trace\n");
+            foreach (var log in logs)
+                csv.AppendLine($"{log.Timestamp:O},{Csv(log.Level)},{Csv(log.Message)},{Csv(log.StackTrace)}");
+            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()),
+                "text/csv; charset=utf-8",
+                $"CAMS-SystemLogs-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv");
         }
 
         // ---------- Export audit trail as CSV ----------

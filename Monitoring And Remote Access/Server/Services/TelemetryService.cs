@@ -10,6 +10,7 @@ public sealed class TelemetryService : ITelemetryService
     private const int MaxTimestampAgeDays = 7;
     private const int MaxBatchSize = 50;
     private readonly ApplicationDbContext _db;
+    private readonly Dictionary<string, int?> _studentIds = new(StringComparer.OrdinalIgnoreCase);
 
     public TelemetryService(ApplicationDbContext db)
     {
@@ -123,7 +124,7 @@ public sealed class TelemetryService : ITelemetryService
     {
         _db.UsageLogs.Add(new UsageLog
         {
-            StudentId = int.TryParse(values.StudentId, out var parsedStudentId) ? parsedStudentId : null,
+            StudentId = await ResolveStudentIdAsync(values.StudentId, cancellationToken),
             PcName = values.PcName,
             AppName = applicationName,
             Timestamp = values.Timestamp
@@ -176,12 +177,24 @@ public sealed class TelemetryService : ITelemetryService
     {
         _db.WebsiteUsageLogs.Add(new WebsiteUsageLog
         {
-            StudentId = int.TryParse(values.StudentId, out var id) ? id : null,
+            StudentId = await ResolveStudentIdAsync(values.StudentId, cancellationToken),
             Domain = domain,
             Browser = browser,
             Timestamp = values.Timestamp
         });
         await RecordActivityEventCoreAsync(values, "WebsiteUsed", null, domain, cancellationToken);
+    }
+
+    private async Task<int?> ResolveStudentIdAsync(string studentNumber, CancellationToken cancellationToken)
+    {
+        if (_studentIds.TryGetValue(studentNumber, out var cached)) return cached;
+        var id = await _db.Students.AsNoTracking()
+            .Where(student => student.StudentNumber == studentNumber)
+            .Select(student => (int?)student.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (!id.HasValue && int.TryParse(studentNumber, out var legacyId)) id = legacyId;
+        _studentIds[studentNumber] = id;
+        return id;
     }
 
     private static void ValidateBatchItem(TelemetryBatchItem? item)

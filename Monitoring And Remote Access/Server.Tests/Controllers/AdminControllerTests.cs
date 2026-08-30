@@ -98,11 +98,20 @@ public class AdminControllerTests
         Assert.Equal("Maria Clara", updatedTeacher.FirstName);
         Assert.Equal("msantos_updated", updatedTeacher.Username);
         Assert.NotNull(updatedTeacher.PasswordHash);
+        db.RestrictionRules.Add(new RestrictionRule
+        {
+            TeacherId = teacher.TeacherId,
+            IsGlobal = false,
+            RuleType = "Website",
+            Target = "teacher-rule.test"
+        });
+        await db.SaveChangesAsync();
 
         // 3. Delete Teacher
         var deleteResult = await controller.DeleteTeacher(teacher.TeacherId);
         Assert.IsType<RedirectToActionResult>(deleteResult);
         Assert.Null(await db.Teachers.FindAsync(teacher.TeacherId));
+        Assert.Empty(await db.RestrictionRules.ToListAsync());
     }
 
     [Fact]

@@ -33,6 +33,25 @@ public class TelemetryServiceTests
     }
 
     [Fact]
+    public async Task RecordWebsiteUsage_ResolvesAlphanumericStudentNumber()
+    {
+        await using var db = CreateContext();
+        var student = new Server.Models.Student
+        {
+            StudentNumber = "STU-A10",
+            Username = "student-a10",
+            FullName = "Student A10"
+        };
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+        var service = new TelemetryService(db);
+
+        await service.RecordWebsiteUsageAsync("connection-1", "STU-A10", "PC-01", "example.com", "chrome", DateTime.UtcNow);
+
+        Assert.Equal(student.Id, (await db.WebsiteUsageLogs.SingleAsync()).StudentId);
+    }
+
+    [Fact]
     public async Task RecordIdleStatus_OpensThenClosesOneInterval()
     {
         await using var db = CreateContext();

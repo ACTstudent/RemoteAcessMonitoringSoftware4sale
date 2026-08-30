@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
+using System.Security.Claims;
 using Server.Services;
 using Shared.Contracts;
 using ServerAuthService = Server.Services.IAuthenticationService;
@@ -15,10 +16,14 @@ public sealed class ClientAuthController : ControllerBase
 {
     private static readonly MemoryCache LoginCache = new(new MemoryCacheOptions());
     private readonly ServerAuthService _authenticationService;
+    private readonly LabSessionLifecycleService _sessionLifecycle;
 
-    public ClientAuthController(ServerAuthService authenticationService)
+    public ClientAuthController(
+        ServerAuthService authenticationService,
+        LabSessionLifecycleService sessionLifecycle)
     {
         _authenticationService = authenticationService;
+        _sessionLifecycle = sessionLifecycle;
     }
 
     [AllowAnonymous]
@@ -75,6 +80,12 @@ public sealed class ClientAuthController : ControllerBase
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
+        if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var studentId))
+        {
+            await _sessionLifecycle.EndStudentSessionsAsync(
+                studentId,
+                User.FindFirstValue(AuthPrincipalFactory.PcNameClaim));
+        }
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         HttpContext.Session.Clear();
         return NoContent();

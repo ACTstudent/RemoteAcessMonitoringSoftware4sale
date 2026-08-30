@@ -41,6 +41,15 @@ namespace Server.Controllers
 
         private IActionResult Denied() => RedirectToAction("Login", "Account");
 
+        private async Task<bool> LoginIdentifierInUseAsync(string value, int excludedStudentId)
+        {
+            value = value.Trim().ToLower();
+            return await _context.Admins.AnyAsync(account => account.Username.ToLower() == value) ||
+                   await _context.Teachers.AnyAsync(account => account.Username.ToLower() == value) ||
+                   await _context.Students.AnyAsync(account => account.Id != excludedStudentId &&
+                       (account.Username.ToLower() == value || account.StudentNumber.ToLower() == value));
+        }
+
         private IQueryable<Student> AccessibleStudents(int teacherId) =>
             _context.Students.Where(student =>
                 student.AdviserId == teacherId ||
@@ -125,8 +134,13 @@ namespace Server.Controllers
         public async Task<IActionResult> Dashboard()
         {
             if (!CheckAccess()) return Denied();
-            ViewBag.RunningSessions = await _context.LabSessions.CountAsync(s => s.Status == "Running");
-            ViewBag.ActiveStudents = await _context.LabSessions.CountAsync(s => s.IsActive);
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
+            var studentIds = AccessibleStudents(teacherId.Value).Select(s => s.Id);
+            ViewBag.RunningSessions = await _context.LabSessions.CountAsync(s =>
+                studentIds.Contains(s.StudentId) && s.Status == "Running");
+            ViewBag.ActiveStudents = await _context.LabSessions.CountAsync(s =>
+                studentIds.Contains(s.StudentId) && s.IsActive);
             ViewBag.GlobalSession = _sessionManager.Snapshot();
             return View();
         }
@@ -144,6 +158,7 @@ namespace Server.Controllers
             if (!CheckAccess()) return Denied();
             ViewBag.SessionRules = await _context.SessionRules.Where(s => s.IsActive).ToListAsync();
             ViewBag.Computers = await _context.Computers.Where(c => c.Status == "Available").ToListAsync();
+            ViewBag.GlobalSession = _sessionManager.Snapshot();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
             ViewBag.Students = teacherId.HasValue
@@ -160,7 +175,7 @@ namespace Server.Controllers
             return View(sessions);
         }
 
-        [HttpPost]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> StartSession(int studentId, int? computerId, int? sessionRuleId)
         {
             if (!CheckAccess()) return Denied();
@@ -183,8 +198,30 @@ namespace Server.Controllers
             }
 
             var rule = sessionRuleId.HasValue
-                ? await _context.SessionRules.FindAsync(sessionRuleId.Value)
+                ? await _context.SessionRules.FirstOrDefaultAsync(r => r.SessionRuleId == sessionRuleId.Value && r.IsActive)
                 : await _context.SessionRules.FirstOrDefaultAsync(r => r.IsDefault);
+            if (sessionRuleId.HasValue && rule is null)
+            {
+                TempData["ErrorMessage"] = "The selected session rule is unavailable.";
+                return RedirectToAction(nameof(Sessions));
+            }
+            if (await _context.LabSessions.AnyAsync(s => s.StudentId == studentId && s.IsActive && s.Status != "Ended"))
+            {
+                TempData["ErrorMessage"] = "This student already has an active session.";
+                return RedirectToAction(nameof(Sessions));
+            }
+
+            Computer? computer = null;
+            if (computerId.HasValue)
+            {
+                computer = await _context.Computers.FirstOrDefaultAsync(c => c.ComputerId == computerId.Value);
+                if (computer is null || !string.Equals(computer.Status, "Available", StringComparison.OrdinalIgnoreCase) ||
+                    await _context.LabSessions.AnyAsync(s => s.ComputerId == computerId.Value && s.IsActive && s.Status != "Ended"))
+                {
+                    TempData["ErrorMessage"] = "The selected workstation is not available.";
+                    return RedirectToAction(nameof(Sessions));
+                }
+            }
 
             var session = new LabSession
             {
@@ -192,9 +229,7 @@ namespace Server.Controllers
                 TeacherId = teacherId,
                 ComputerId = computerId,
                 SessionRuleId = rule?.SessionRuleId,
-                PCName = computerId.HasValue
-                    ? (await _context.Computers.FindAsync(computerId.Value))?.LaboratoryStation ?? ""
-                    : student.Username,
+                PCName = computer?.LaboratoryStation ?? student.Username,
                 MaxDurationMinutes = rule?.MaxDurationMinutes,
                  StartTime = DateTime.UtcNow,
                 Status = "Running",
@@ -202,32 +237,35 @@ namespace Server.Controllers
             };
 
             _context.LabSessions.Add(session);
-            if (computerId.HasValue)
+            if (computer is not null)
             {
-                var computer = await _context.Computers.FindAsync(computerId.Value);
-                if (computer != null)
-                {
-                    computer.Status = "In Use";
-                    computer.AssignedTo = studentId.ToString();
-                }
+                computer.Status = "In Use";
+                computer.AssignedTo = studentId.ToString();
             }
             await _context.SaveChangesAsync();
+            await _sessionLifecycle.NotifyStateAsync(session);
             await AuditAsync("StartSession", $"Started session for student {studentId}");
             TempData["Message"] = "Lab Session started successfully!";
             return RedirectToAction("Sessions");
         }
 
-        [HttpPost]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> TogglePause(int id)
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
-            var session = await _context.LabSessions.FirstOrDefaultAsync(s => s.Id == id && s.TeacherId == teacherId.Value);
+            var session = await _context.LabSessions.Include(s => s.SessionRule)
+                .FirstOrDefaultAsync(s => s.Id == id && s.TeacherId == teacherId.Value && s.IsActive);
             if (session != null)
             {
                 if (session.Status == "Running")
                 {
+                    if (session.SessionRule is { AllowPause: false })
+                    {
+                        TempData["ErrorMessage"] = "The session rule does not allow pausing.";
+                        return RedirectToAction(nameof(Sessions));
+                    }
                     session.Status = "Paused";
                      session.PauseTime = DateTime.UtcNow;
                 }
@@ -241,19 +279,21 @@ namespace Server.Controllers
                     session.Status = "Running";
                 }
                 await _context.SaveChangesAsync();
+                await _sessionLifecycle.NotifyStateAsync(session);
                 await AuditAsync("TogglePause", $"Session {id} -> {session.Status}");
                 TempData["Message"] = $"Session status toggled to {session.Status}.";
             }
             return RedirectToAction("Sessions");
         }
 
-        [HttpPost]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> EndSession(int id)
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
-            var session = await _context.LabSessions.FirstOrDefaultAsync(s => s.Id == id && s.TeacherId == teacherId.Value);
+            var session = await _context.LabSessions.Include(s => s.Computer)
+                .FirstOrDefaultAsync(s => s.Id == id && s.TeacherId == teacherId.Value);
             if (session != null)
             {
                 await _sessionLifecycle.EndAsync(session);
@@ -261,6 +301,65 @@ namespace Server.Controllers
                 TempData["Message"] = "Lab Session ended successfully!";
             }
             return RedirectToAction("Sessions");
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> GlobalStartSession()
+        {
+            if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
+            var now = DateTime.UtcNow;
+            var paused = await _context.LabSessions
+                .Where(s => s.TeacherId == teacherId.Value && s.IsActive && s.Status == "Paused")
+                .ToListAsync();
+            foreach (var session in paused)
+            {
+                if (session.PauseTime.HasValue) session.StartTime = session.StartTime.Add(now - session.PauseTime.Value);
+                session.PauseTime = null;
+                session.Status = "Running";
+            }
+            await _context.SaveChangesAsync();
+            await _sessionLifecycle.NotifyStatesAsync(paused);
+            await AuditAsync("GlobalStartSession", $"Started or resumed {paused.Count} paused sessions");
+            return RedirectToAction(nameof(Sessions));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> GlobalPauseSession()
+        {
+            if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
+            var running = await _context.LabSessions.Include(s => s.SessionRule)
+                .Where(s => s.TeacherId == teacherId.Value && s.IsActive && s.Status == "Running")
+                .ToListAsync();
+            if (running.Any(s => s.SessionRule is { AllowPause: false }))
+            {
+                TempData["ErrorMessage"] = "One or more active session rules do not allow pausing.";
+                return RedirectToAction(nameof(Sessions));
+            }
+            var now = DateTime.UtcNow;
+            foreach (var session in running)
+            {
+                session.Status = "Paused";
+                session.PauseTime = now;
+            }
+            await _context.SaveChangesAsync();
+            await _sessionLifecycle.NotifyStatesAsync(running);
+            await AuditAsync("GlobalPauseSession", $"Paused {running.Count} sessions");
+            return RedirectToAction(nameof(Sessions));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> GlobalEndSession()
+        {
+            if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
+            var ended = await _sessionLifecycle.EndTeacherSessionsAsync(teacherId.Value);
+            await AuditAsync("GlobalEndSession", $"Ended {ended} sessions");
+            return RedirectToAction(nameof(Sessions));
         }
 
         // ---------- Live monitoring ----------
@@ -272,16 +371,24 @@ namespace Server.Controllers
         }
 
         // ---------- Snapshot of current monitoring state ----------
-        public IActionResult LiveState()
+        public async Task<IActionResult> LiveState()
         {
             if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
             var svc = HttpContext.RequestServices.GetService(typeof(IMonitoringService)) as IMonitoringService;
+            var studentNumbers = (await AccessibleStudents(teacherId.Value).AsNoTracking()
+                .Select(student => student.StudentNumber)
+                .ToListAsync()).ToHashSet(StringComparer.Ordinal);
+            var students = svc?.ActiveStudents.Where(student => studentNumbers.Contains(student.StudentId)).ToList()
+                ?? new List<StudentConnectionMessage>();
+            var connectionIds = students.Select(student => student.ConnectionId).ToHashSet(StringComparer.Ordinal);
             return Json(new
             {
-                Students = svc?.ActiveStudents,
-                Idle = svc?.IdleStatus,
-                Apps = svc?.ActiveApps,
-                Browsers = svc?.BrowserMonitoringStatus
+                Students = students,
+                Idle = svc?.IdleStatus.Where(status => connectionIds.Contains(status.ConnectionId)),
+                Apps = svc?.ActiveApps.Where(app => connectionIds.Contains(app.ConnectionId)),
+                Browsers = svc?.BrowserMonitoringStatus.Where(status => connectionIds.Contains(status.ConnectionId))
             });
         }
 
@@ -317,13 +424,18 @@ namespace Server.Controllers
         public async Task<IActionResult> Restrictions()
         {
             if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
+            ViewBag.TeacherId = teacherId.Value;
             ViewBag.SessionRules = await _context.SessionRules.Where(s => s.IsActive).ToListAsync();
             return View(new PolicyManagementViewModel
             {
-                Restrictions = await _context.RestrictionRules.OrderByDescending(r => r.CreatedAt).ToListAsync(),
-                Blacklist = await _context.BlacklistItems.OrderByDescending(b => b.CreatedAt).ToListAsync(),
-                ApplicationCategories = await _context.ApplicationCategories.OrderBy(c => c.Name).ToListAsync(),
-                WebsiteCategories = await _context.WebsiteCategories.OrderBy(c => c.Name).ToListAsync()
+                Restrictions = await _context.RestrictionRules
+                    .Where(r => r.IsGlobal || r.TeacherId == teacherId.Value)
+                    .OrderByDescending(r => r.CreatedAt).ToListAsync(),
+                Blacklist = new List<BlacklistItem>(),
+                ApplicationCategories = new List<ApplicationCategory>(),
+                WebsiteCategories = new List<WebsiteCategory>()
             });
         }
 
@@ -342,6 +454,8 @@ namespace Server.Controllers
                 return RedirectToAction(nameof(Restrictions));
             }
             rule.RuleType = rule.RuleType.Trim(); rule.Target = rule.Target.Trim(); rule.Description = rule.Description?.Trim() ?? "";
+            rule.TeacherId = HttpContext.Session.GetInt32("TeacherId");
+            rule.IsGlobal = false;
             rule.CreatedAt = DateTime.Now;
             _context.RestrictionRules.Add(rule);
             await _context.SaveChangesAsync();
@@ -353,11 +467,14 @@ namespace Server.Controllers
         public async Task<IActionResult> UpdateRestriction([Bind("RestrictionRuleId,RuleType,Target,Description,Mode,IsGlobal,IsActive")] RestrictionRule input)
         {
             if (!CheckAccess()) return Denied();
-            var rule = await _context.RestrictionRules.FindAsync(input.RestrictionRuleId);
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            var rule = teacherId.HasValue
+                ? await _context.RestrictionRules.FirstOrDefaultAsync(r => r.RestrictionRuleId == input.RestrictionRuleId && r.TeacherId == teacherId.Value)
+                : null;
             if (rule == null || !ValidRuleType(input.RuleType) || string.IsNullOrWhiteSpace(input.Target) || !ValidMode(input.Mode))
                 return RedirectToAction(nameof(Restrictions));
             rule.RuleType = input.RuleType.Trim(); rule.Target = input.Target.Trim(); rule.Description = input.Description?.Trim() ?? "";
-            rule.Mode = input.Mode; rule.IsGlobal = input.IsGlobal; rule.IsActive = input.IsActive;
+            rule.Mode = input.Mode; rule.IsGlobal = false; rule.IsActive = input.IsActive;
             await _context.SaveChangesAsync();
             await AuditAsync("UpdateRestriction", $"Updated restriction {rule.RestrictionRuleId}");
             return RedirectToAction(nameof(Restrictions));
@@ -367,7 +484,10 @@ namespace Server.Controllers
         public async Task<IActionResult> DeleteRestriction(int id)
         {
             if (!CheckAccess()) return Denied();
-            var rule = await _context.RestrictionRules.FindAsync(id);
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            var rule = teacherId.HasValue
+                ? await _context.RestrictionRules.FirstOrDefaultAsync(r => r.RestrictionRuleId == id && r.TeacherId == teacherId.Value)
+                : null;
             if (rule != null) { _context.RestrictionRules.Remove(rule); await _context.SaveChangesAsync(); await AuditAsync("DeleteRestriction", $"Removed restriction {id}"); }
             return RedirectToAction(nameof(Restrictions));
         }
@@ -837,10 +957,8 @@ namespace Server.Controllers
 
             var requestedStudentNumber = string.IsNullOrWhiteSpace(student.StudentNumber) ? existing.StudentNumber : student.StudentNumber.Trim();
             var requestedUsername = string.IsNullOrWhiteSpace(student.Username) ? existing.Username : student.Username.Trim();
-            if (await _context.Students.AnyAsync(s =>
-                    s.Id != existing.Id &&
-                    (s.StudentNumber.ToLower() == requestedStudentNumber.ToLower() ||
-                     s.Username.ToLower() == requestedUsername.ToLower())))
+            if (await LoginIdentifierInUseAsync(requestedStudentNumber, existing.Id) ||
+                await LoginIdentifierInUseAsync(requestedUsername, existing.Id))
             {
                 TempData["ErrorMessage"] = "The student number or username is already in use.";
                 return RedirectToAction("Students");
@@ -855,6 +973,12 @@ namespace Server.Controllers
                 var parts = student.FullName.Trim().Split(' ', 2);
                 existing.FirstName = parts.Length > 0 ? parts[0] : "";
                 existing.LastName = parts.Length > 1 ? parts[1] : "";
+            }
+            else
+            {
+                existing.FirstName = string.IsNullOrWhiteSpace(student.FirstName) ? existing.FirstName : student.FirstName.Trim();
+                existing.LastName = string.IsNullOrWhiteSpace(student.LastName) ? existing.LastName : student.LastName.Trim();
+                existing.FullName = $"{existing.FirstName} {existing.LastName}".Trim();
             }
 
             if (!string.IsNullOrWhiteSpace(newPassword))
@@ -984,14 +1108,18 @@ namespace Server.Controllers
         public async Task<IActionResult> SendNotification(string type, string title, string message)
         {
             if (!CheckAccess()) return Denied();
-            _context.Notifications.Add(new Notification
-            {
-                StudentId = null,
-                Type = type,
-                Title = title,
-                Message = message,
-                CreatedAt = DateTime.Now
-            });
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue || string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(message) ||
+                title.Length > 120 || message.Length > 2000) return BadRequest();
+            var studentIds = await AccessibleStudents(teacherId.Value).Select(student => student.Id).ToListAsync();
+            _context.Notifications.AddRange(studentIds.Select(studentId => new Notification
+                {
+                    StudentId = studentId,
+                    Type = type,
+                    Title = title.Trim(),
+                    Message = message.Trim(),
+                    CreatedAt = DateTime.UtcNow
+                }));
             await _context.SaveChangesAsync();
             return Json(new { Ok = true });
         }
