@@ -32,6 +32,7 @@ namespace Server.Data
         public DbSet<IdleInterval> IdleIntervals { get; set; } = null!;
         public DbSet<ActivityEvent> ActivityEvents { get; set; } = null!;
         public DbSet<MonitoringAlert> MonitoringAlerts { get; set; } = null!;
+        public DbSet<BrowserMonitoringRecord> BrowserMonitoringRecords { get; set; } = null!;
         public DbSet<RemoteControlSession> RemoteControlSessions { get; set; } = null!;
         public DbSet<RemoteCommandLog> RemoteCommandLogs { get; set; } = null!;
         public DbSet<Class> Classes { get; set; } = null!;
@@ -83,14 +84,32 @@ namespace Server.Data
             modelBuilder.Entity<IdleInterval>()
                 .HasIndex(interval => new { interval.ConnectionId, interval.StartedAt });
 
+            modelBuilder.Entity<IdleInterval>()
+                .HasIndex(interval => new { interval.StudentId, interval.StartedAt });
+
             modelBuilder.Entity<ActivityEvent>()
                 .HasIndex(activity => new { activity.PcName, activity.Timestamp });
+
+            modelBuilder.Entity<ActivityEvent>()
+                .HasIndex(activity => new { activity.StudentId, activity.Timestamp });
+
+            modelBuilder.Entity<LabSession>()
+                .HasIndex(session => new { session.StudentId, session.StartTime });
 
             modelBuilder.Entity<RemoteCommandLog>()
                 .HasIndex(log => new { log.TeacherId, log.StudentId, log.Timestamp });
 
             modelBuilder.Entity<MonitoringAlert>()
                 .HasIndex(alert => new { alert.StudentId, alert.DedupeKey, alert.CreatedAt });
+
+            modelBuilder.Entity<MonitoringAlert>()
+                .HasIndex(alert => new { alert.StudentId, alert.GroupKey, alert.LastSeenAt });
+
+            modelBuilder.Entity<BrowserMonitoringRecord>()
+                .HasIndex(record => new { record.StudentId, record.Timestamp });
+
+            modelBuilder.Entity<BrowserMonitoringRecord>()
+                .HasIndex(record => new { record.PcName, record.Timestamp });
 
             // Relationships matching pro CRUD model
             modelBuilder.Entity<Class>()

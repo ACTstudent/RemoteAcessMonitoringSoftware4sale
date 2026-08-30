@@ -1,9 +1,151 @@
-@model IReadOnlyList<Server.Models.MonitoringAlert>
-@{ ViewData["Title"] = "Monitoring Alerts"; Layout = "_TeacherLayout"; }
-<div class="d-flex justify-content-between align-items-center mb-4"><div><h2 class="fw-extrabold mb-1">Monitoring Alerts</h2><p class="text-muted mb-0">Review and acknowledge alerts from your students.</p></div><div class="d-flex gap-2"><a class="btn btn-outline-emerald rounded-pill" href="@Url.Action("ExportAlertsCsv", new { from = ViewBag.From, to = ViewBag.To, severity = ViewBag.Severity, studentId = ViewBag.StudentId })">Export CSV</a><a class="btn btn-outline-secondary rounded-pill" href="@Url.Action("Alerts", new { includeAcknowledged = true })">Show all</a></div></div>
-<form method="get" class="row g-2 mb-3"><input type="hidden" name="includeAcknowledged" value="@Context.Request.Query["includeAcknowledged"]" /><div class="col-md-3"><input type="date" name="from" class="form-control" value="@ViewBag.From" /></div><div class="col-md-3"><input type="date" name="to" class="form-control" value="@ViewBag.To" /></div><div class="col-md-2"><select name="severity" class="form-select"><option value="">All severities</option><option selected="@(ViewBag.Severity == "Critical")">Critical</option><option selected="@(ViewBag.Severity == "Warning")">Warning</option></select></div><div class="col-md-2"><input name="studentId" class="form-control" placeholder="Student ID" value="@ViewBag.StudentId" /></div><div class="col-md-2"><button class="btn btn-emerald w-100">Filter</button></div></form>
-<div class="card border-0 shadow-sm rounded-4 overflow-hidden"><div class="table-responsive"><table class="table custom-table mb-0"><thead><tr><th>Created</th><th>Student ID</th><th>Alert</th><th>Severity</th><th>Status</th><th></th></tr></thead><tbody>
-@foreach (var alert in Model) { <tr><td>@alert.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</td><td>@alert.StudentId</td><td><strong>@alert.Title</strong><br /><small>@alert.Message</small></td><td>@alert.Severity</td><td>@(alert.IsAcknowledged ? "Acknowledged" : "Open")</td><td><a class="btn btn-sm btn-outline-secondary rounded-pill" href="@Url.Action("AlertHistory", new { id = alert.MonitoringAlertId })">History</a> <form class="d-inline" method="post" asp-action="AcknowledgeAlert">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@alert.MonitoringAlertId" /><input type="hidden" name="acknowledged" value="@(alert.IsAcknowledged ? "false" : "true")" /><button class="btn btn-sm @(alert.IsAcknowledged ? "btn-outline-warning" : "btn-success") rounded-pill" type="submit">@(alert.IsAcknowledged ? "Reopen" : "Acknowledge")</button></form></td></tr> }
-@if (!Model.Any()) { <tr><td colspan="6" class="text-center text-muted py-4">No alerts found.</td></tr> }
-</tbody></table></div></div>
-@if (ViewBag.Paging is Server.Models.PagedResult<Server.Models.MonitoringAlert> p && p.PageCount > 1) { <nav class="mt-3"><a class="btn btn-sm btn-outline-secondary @(p.Page == 1 ? "disabled" : "")" href="@Url.Action("Alerts", new { includeAcknowledged = Context.Request.Query["includeAcknowledged"], from = ViewBag.From, to = ViewBag.To, severity = ViewBag.Severity, page = p.Page - 1 })">Previous</a> <span class="mx-2">Page @p.Page of @p.PageCount</span><a class="btn btn-sm btn-outline-secondary @(p.Page == p.PageCount ? "disabled" : "")" href="@Url.Action("Alerts", new { includeAcknowledged = Context.Request.Query["includeAcknowledged"], from = ViewBag.From, to = ViewBag.To, severity = ViewBag.Severity, page = p.Page + 1 })">Next</a></nav> }
+@using Server.Models
+@model IReadOnlyList<MonitoringAlert>
+@{
+    ViewData["Title"] = "Monitoring Alerts";
+    Layout = "_TeacherLayout";
+    var paging = ViewBag.Paging as PagedResult<MonitoringAlert>;
+    var requestedStatus = ViewBag.Status?.ToString() ?? Context.Request.Query["status"].ToString();
+    if (string.IsNullOrWhiteSpace(requestedStatus) && !string.Equals(Context.Request.Query["includeAcknowledged"], "true", StringComparison.OrdinalIgnoreCase))
+    {
+        requestedStatus = MonitoringAlertStatus.Open.ToString();
+    }
+}
+
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-extrabold mb-1">Monitoring Alerts</h2>
+        <p class="text-muted mb-0">Related occurrences stay grouped while each group moves through a clear alert lifecycle.</p>
+    </div>
+    <a class="btn btn-outline-emerald rounded-pill align-self-start" href="@Url.Action("ExportAlertsCsv", new { from = ViewBag.From, to = ViewBag.To, severity = ViewBag.Severity, studentId = ViewBag.StudentId, station = ViewBag.Station, status = requestedStatus })">
+        <i class="bi bi-download me-1"></i>Export CSV
+    </a>
+</div>
+
+<form method="get" class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-sm-6 col-xl-2"><label class="form-label small text-muted" for="alert-from">From</label><input id="alert-from" type="date" name="from" class="form-control" value="@ViewBag.From" /></div>
+        <div class="col-sm-6 col-xl-2"><label class="form-label small text-muted" for="alert-to">To</label><input id="alert-to" type="date" name="to" class="form-control" value="@ViewBag.To" /></div>
+        <div class="col-sm-6 col-xl-2">
+            <label class="form-label small text-muted" for="alert-severity">Severity</label>
+            <select id="alert-severity" name="severity" class="form-select">
+                <option value="">All severities</option>
+                <option value="Critical" selected="@(ViewBag.Severity == "Critical")">Critical</option>
+                <option value="Warning" selected="@(ViewBag.Severity == "Warning")">Warning</option>
+                <option value="Information" selected="@(ViewBag.Severity == "Information")">Information</option>
+            </select>
+        </div>
+        <div class="col-sm-6 col-xl-2">
+            <label class="form-label small text-muted" for="alert-status">Status</label>
+            <select id="alert-status" name="status" class="form-select">
+                <option value="" selected="@(string.IsNullOrWhiteSpace(requestedStatus))">All statuses</option>
+                @foreach (var status in Enum.GetValues<MonitoringAlertStatus>())
+                {
+                    <option value="@status" selected="@(requestedStatus == status.ToString())">@status</option>
+                }
+            </select>
+        </div>
+        <div class="col-sm-6 col-xl-2"><label class="form-label small text-muted" for="alert-student">Student ID</label><input id="alert-student" name="studentId" class="form-control" value="@ViewBag.StudentId" /></div>
+        <div class="col-sm-6 col-xl-2"><label class="form-label small text-muted" for="alert-station">Station</label><input id="alert-station" name="station" class="form-control" value="@ViewBag.Station" /></div>
+        <div class="col-sm-6 col-xl-2"><button class="btn btn-emerald w-100" type="submit"><i class="bi bi-funnel me-1"></i>Apply filters</button></div>
+    </div>
+</form>
+
+<form id="bulk-alert-form" method="post">
+    @Html.AntiForgeryToken()
+</form>
+<div class="card border-0 shadow-sm rounded-4 mb-3">
+    <div class="card-body d-flex flex-column flex-lg-row align-items-lg-end gap-3">
+        <div class="flex-grow-1">
+            <label for="dismissal-reason" class="form-label small text-muted mb-1">Dismissal reason (applies only to Dismiss)</label>
+            <input id="dismissal-reason" name="reason" form="bulk-alert-form" maxlength="500" class="form-control" placeholder="Optional operational note" />
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <button type="submit" form="bulk-alert-form" formaction="@Url.Action("BulkAcknowledgeAlerts", "Teacher")" class="btn btn-success rounded-pill"><i class="bi bi-check2-circle me-1"></i>Acknowledge</button>
+            <button type="submit" form="bulk-alert-form" formaction="@Url.Action("BulkDismissAlerts", "Teacher")" class="btn btn-outline-secondary rounded-pill"><i class="bi bi-archive me-1"></i>Dismiss</button>
+            <button type="submit" form="bulk-alert-form" formaction="@Url.Action("BulkReopenAlerts", "Teacher")" class="btn btn-outline-warning rounded-pill"><i class="bi bi-arrow-counterclockwise me-1"></i>Reopen</button>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table custom-table align-middle mb-0">
+            <thead><tr><th class="ps-3"><input id="select-all-alerts" class="form-check-input" type="checkbox" aria-label="Select all alerts" /></th><th>Alert group</th><th>Student / station</th><th>Occurrences</th><th>First / last seen</th><th>Status</th><th class="text-end pe-3">Actions</th></tr></thead>
+            <tbody>
+            @foreach (var alert in Model)
+            {
+                var status = alert.Status;
+                var statusClass = status switch
+                {
+                    MonitoringAlertStatus.Open => "text-bg-danger",
+                    MonitoringAlertStatus.Acknowledged => "text-bg-success",
+                    _ => "text-bg-secondary"
+                };
+                <tr>
+                    <td class="ps-3"><input class="form-check-input alert-selector" type="checkbox" name="alertIds" value="@alert.MonitoringAlertId" form="bulk-alert-form" aria-label="Select @alert.Title" /></td>
+                    <td><span class="badge rounded-pill bg-light text-dark border mb-1">@alert.Severity</span><strong class="d-block">@alert.Title</strong><small class="text-muted">@alert.Message</small></td>
+                    <td><span class="font-monospace">@alert.StudentId</span><small class="d-block text-muted">@alert.PcName</small></td>
+                    <td><span class="fs-5 fw-bold">@alert.OccurrenceCount</span></td>
+                    <td><span class="d-block">@alert.FirstSeenAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</span><small class="text-muted">Last: @alert.LastSeenAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</small></td>
+                    <td>
+                        <span class="badge rounded-pill @statusClass">@status</span>
+                        @if (status == MonitoringAlertStatus.Dismissed && !string.IsNullOrWhiteSpace(alert.DismissalReason))
+                        {
+                            <small class="d-block text-muted mt-1" title="@alert.DismissalReason">@alert.DismissalReason</small>
+                        }
+                        @if (status == MonitoringAlertStatus.Dismissed && alert.DismissedAt.HasValue)
+                        {
+                            <small class="d-block text-muted mt-1">Teacher #@alert.DismissedByTeacherId, @alert.DismissedAt.Value.ToLocalTime().ToString("MMM dd HH:mm")</small>
+                        }
+                        else if (status == MonitoringAlertStatus.Acknowledged && alert.AcknowledgedAt.HasValue)
+                        {
+                            <small class="d-block text-muted mt-1">Teacher #@alert.AcknowledgedByTeacherId, @alert.AcknowledgedAt.Value.ToLocalTime().ToString("MMM dd HH:mm")</small>
+                        }
+                    </td>
+                    <td class="text-end pe-3 text-nowrap">
+                        <a class="btn btn-sm btn-outline-secondary rounded-pill" href="@Url.Action("AlertHistory", new { id = alert.MonitoringAlertId })">History</a>
+                        <form class="d-inline" method="post" asp-action="AcknowledgeAlert">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@alert.MonitoringAlertId" />
+                            <input type="hidden" name="acknowledged" value="@(status == MonitoringAlertStatus.Open ? "true" : "false")" />
+                            <button class="btn btn-sm @(status == MonitoringAlertStatus.Open ? "btn-success" : "btn-outline-warning") rounded-pill" type="submit">@(status == MonitoringAlertStatus.Open ? "Acknowledge" : "Reopen")</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="7" class="text-center text-muted py-5"><i class="bi bi-check2-circle fs-3 d-block mb-2"></i>No alert groups match these filters.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (paging is not null && paging.PageCount > 1)
+{
+    <nav class="d-flex justify-content-between align-items-center mt-3" aria-label="Alert pages">
+        <span class="small text-muted">@paging.TotalCount grouped alerts</span>
+        <div class="d-flex align-items-center gap-2">
+            <a class="btn btn-sm btn-outline-secondary @(paging.Page == 1 ? "disabled" : "")" href="@Url.Action("Alerts", new { from = ViewBag.From, to = ViewBag.To, severity = ViewBag.Severity, studentId = ViewBag.StudentId, station = ViewBag.Station, status = requestedStatus, page = paging.Page - 1, pageSize = paging.PageSize })">Previous</a>
+            <span class="small">Page @paging.Page of @paging.PageCount</span>
+            <a class="btn btn-sm btn-outline-secondary @(paging.Page == paging.PageCount ? "disabled" : "")" href="@Url.Action("Alerts", new { from = ViewBag.From, to = ViewBag.To, severity = ViewBag.Severity, studentId = ViewBag.StudentId, station = ViewBag.Station, status = requestedStatus, page = paging.Page + 1, pageSize = paging.PageSize })">Next</a>
+        </div>
+    </nav>
+}
+
+@section Scripts {
+    <script>
+        (() => {
+            const selectAll = document.getElementById('select-all-alerts');
+            const selectors = Array.from(document.querySelectorAll('.alert-selector'));
+            selectAll?.addEventListener('change', () => selectors.forEach(box => box.checked = selectAll.checked));
+            document.getElementById('bulk-alert-form')?.addEventListener('submit', event => {
+                if (!selectors.some(box => box.checked)) {
+                    event.preventDefault();
+                    window.alert('Select at least one alert group.');
+                }
+            });
+        })();
+    </script>
+}

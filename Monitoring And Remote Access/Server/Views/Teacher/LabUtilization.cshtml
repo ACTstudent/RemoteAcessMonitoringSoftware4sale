@@ -1,0 +1,98 @@
+@model Server.Models.LabUtilizationReport
+@{
+    ViewData["Title"] = "Lab Utilization";
+    Layout = "_TeacherLayout";
+    var displayedTo = Model.To > Model.From ? Model.To.AddTicks(-1) : Model.To;
+}
+
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
+    <div>
+        <span class="text-uppercase small fw-bold text-success">Laboratory analytics</span>
+        <h2 class="fw-extrabold mb-1">Lab Utilization</h2>
+        <p class="text-muted mb-0">Occupied and idle time are clipped to authorized lab sessions, so percentages never exceed workstation capacity.</p>
+    </div>
+    <div class="small text-muted text-lg-end"><span class="d-block">Reporting window</span><strong class="text-dark">@Model.From.ToLocalTime().ToString("MMM dd, yyyy") - @displayedTo.ToLocalTime().ToString("MMM dd, yyyy")</strong></div>
+</div>
+
+<form method="get" class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-sm-6 col-lg-2"><label class="form-label small text-muted" for="util-from">From</label><input id="util-from" type="date" name="from" class="form-control" value="@Model.From.ToString("yyyy-MM-dd")" required /></div>
+        <div class="col-sm-6 col-lg-2"><label class="form-label small text-muted" for="util-to">To</label><input id="util-to" type="date" name="to" class="form-control" value="@displayedTo.ToString("yyyy-MM-dd")" required /></div>
+        <div class="col-sm-6 col-lg-3">
+            <label class="form-label small text-muted" for="util-station">Station</label>
+            <select id="util-station" name="station" class="form-select">
+                <option value="">All stations</option>
+                @foreach (var option in Model.AvailableStations)
+                {
+                    <option value="@option" selected="@(string.Equals(option, Model.Station, StringComparison.OrdinalIgnoreCase))">@option</option>
+                }
+            </select>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <label class="form-label small text-muted" for="util-class">Class</label>
+            <select id="util-class" name="classId" class="form-select">
+                <option value="">All authorized students</option>
+                @foreach (var option in Model.AvailableClasses)
+                {
+                    <option value="@option.ClassId" selected="@(option.ClassId == Model.ClassId)">@option.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-lg-2 d-flex gap-2"><button type="submit" class="btn btn-emerald flex-grow-1">Apply</button><a class="btn btn-outline-secondary" href="@Url.Action("LabUtilization", "Teacher")" title="Reset filters"><i class="bi bi-arrow-counterclockwise"></i></a></div>
+    </div>
+</form>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3"><div class="metric-card h-100"><div class="metric-title">Utilization</div><div class="metric-value">@Model.UtilizationPercent.ToString("0.0")%</div><small class="text-muted">@Model.Occupied.TotalHours.ToString("0.0") occupied hours</small></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="metric-card metric-card-emerald h-100"><div class="metric-title">Active time</div><div class="metric-value text-success">@Model.Active.TotalHours.ToString("0.0")h</div><small class="text-muted">Focused workstation time</small></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="metric-card h-100"><div class="metric-title">Idle share</div><div class="metric-value">@Model.IdlePercent.ToString("0.0")%</div><small class="text-muted">@Model.Idle.TotalHours.ToString("0.0") idle hours in sessions</small></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="metric-card h-100"><div class="metric-title">Coverage</div><div class="metric-value">@Model.UsedStations / @Model.Stations.Count</div><small class="text-muted">@Model.TotalSessions sessions, @Model.UniqueStudents students</small></div></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-8">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center"><div><h5 class="fw-bold mb-0">Workstation utilization</h5><small class="text-muted">Capacity includes registered stations and observed session-only stations</small></div><span class="badge rounded-pill bg-light text-dark border">@Model.RegisteredComputers registered</span></div>
+            <div class="table-responsive">
+                <table class="table custom-table align-middle mb-0">
+                    <thead><tr><th>Station</th><th>Sessions</th><th>Occupied</th><th>Active / idle</th><th style="min-width: 180px;">Utilization</th></tr></thead>
+                    <tbody>
+                    @foreach (var item in Model.Stations)
+                    {
+                        <tr>
+                            <td><strong>@item.Station</strong>@if (item.ComputerCount > 1) { <small class="d-block text-muted">@item.ComputerCount computers</small> }</td>
+                            <td>@item.SessionCount <small class="d-block text-muted">@item.UniqueStudents students</small></td>
+                            <td>@item.Occupied.TotalHours.ToString("0.0")h</td>
+                            <td><span class="text-success fw-semibold">@item.Active.TotalHours.ToString("0.0")h</span><span class="text-muted"> / @item.Idle.TotalHours.ToString("0.0")h</span></td>
+                            <td><div class="d-flex justify-content-between small mb-1"><span>@item.UtilizationPercent.ToString("0.0")%</span><span class="text-muted">@item.Capacity.TotalHours.ToString("0.0")h capacity</span></div><div class="progress" style="height: 7px;"><div class="progress-bar bg-success" role="progressbar" style="width: @item.UtilizationPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%" aria-valuenow="@item.UtilizationPercent" aria-valuemin="0" aria-valuemax="100"></div></div></td>
+                        </tr>
+                    }
+                    @if (!Model.Stations.Any())
+                    {
+                        <tr><td colspan="5" class="text-center text-muted py-5">No workstation matches this filter.</td></tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+            <div class="card-header bg-white border-0 py-3"><h5 class="fw-bold mb-0">Daily load</h5><small class="text-muted">Occupied, active, and idle hours by UTC reporting day</small></div>
+            <div class="list-group list-group-flush">
+                @foreach (var day in Model.Daily)
+                {
+                    <div class="list-group-item border-0 border-top px-3 py-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2"><strong>@day.Date.ToLocalTime().ToString("ddd, MMM dd")</strong><span class="badge rounded-pill bg-light text-dark border">@day.UtilizationPercent.ToString("0.0")%</span></div>
+                        <div class="progress mb-2" style="height: 6px;"><div class="progress-bar bg-success" role="progressbar" style="width: @day.UtilizationPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></div></div>
+                        <div class="d-flex justify-content-between small text-muted"><span>@day.Active.TotalHours.ToString("0.0")h active</span><span>@day.Idle.TotalHours.ToString("0.0")h idle</span></div>
+                    </div>
+                }
+                @if (!Model.Daily.Any())
+                {
+                    <div class="text-center text-muted py-5">No days in this reporting range.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

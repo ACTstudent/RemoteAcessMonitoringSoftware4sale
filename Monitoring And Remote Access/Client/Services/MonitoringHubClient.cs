@@ -7,14 +7,28 @@ namespace Client.Services;
 
 public class MonitoringHubClient : IMonitoringHubClient
 {
-    private const int MaxQueuedTelemetry = 100;
     private HubConnection? _connection;
     private readonly CookieContainer _cookies = new();
     private HttpClient? _httpClient;
     private string? _serverUrl;
-    private readonly object _telemetryQueueLock = new();
-    private readonly LinkedList<Func<Task>> _queuedTelemetry = new();
+    private readonly DurableTelemetryQueue _telemetryQueue;
+    private readonly int _telemetryBatchSize;
+    private readonly TimeSpan _policyRefreshInterval;
     private readonly SemaphoreSlim _telemetryFlushLock = new(1, 1);
+    private readonly SemaphoreSlim _policyRefreshLock = new(1, 1);
+    private CancellationTokenSource? _lifetimeCts;
+    private Task? _policyRefreshTask;
+    private bool _disposed;
+
+    public MonitoringHubClient()
+    {
+        var options = ClientResilienceOptions.Load();
+        _telemetryQueue = new DurableTelemetryQueue(
+            maxRecords: options.TelemetryQueue.MaxRecords,
+            maxBytes: options.TelemetryQueue.MaxBytes);
+        _telemetryBatchSize = options.TelemetryQueue.BatchSize;
+        _policyRefreshInterval = TimeSpan.FromSeconds(options.PolicyRefreshIntervalSeconds);
+    }
 
     public event Action<RemoteInputMessage>? RemoteInputReceived;
     public event Action<RemoteControlStateMessage>? RemoteControlStateReceived;
@@ -67,6 +81,10 @@ public class MonitoringHubClient : IMonitoringHubClient
 
     public async Task StartAsync(string serverUrl, CancellationToken cancellationToken = default)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (_connection is not null)
+            throw new InvalidOperationException("The monitoring hub client has already been started.");
+
         var hubUri = new Uri(serverUrl, UriKind.Absolute);
         if (!string.Equals(hubUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("CAMS requires an HTTPS server URL.");
@@ -76,11 +94,7 @@ public class MonitoringHubClient : IMonitoringHubClient
             .WithAutomaticReconnect()
             .Build();
 
-        connection.Reconnected += _connectionId =>
-        {
-            _ = FlushQueuedTelemetryAsync();
-            return Task.CompletedTask;
-        };
+        connection.Reconnected += _connectionId => HandleReconnectedAsync();
 
         connection.On<RemoteInputMessage>(HubEventNames.ExecuteRemoteInput,
             message => RemoteInputReceived?.Invoke(message));
@@ -102,11 +116,29 @@ public class MonitoringHubClient : IMonitoringHubClient
             message => WarningPopupReceived?.Invoke(message));
         connection.On<List<RestrictionRuleMessage>>(HubEventNames.RestrictionsReceived,
             rules => RestrictionsReceived?.Invoke(rules));
+        connection.On(HubEventNames.PolicyRefreshRequired,
+            () => RefreshRestrictionsSafelyAsync(_lifetimeCts?.Token ?? CancellationToken.None));
 
-        await connection.StartAsync(cancellationToken);
         _connection = connection;
         _serverUrl = serverUrl;
-        await FlushQueuedTelemetryAsync();
+        _lifetimeCts = new CancellationTokenSource();
+        try
+        {
+            await connection.StartAsync(cancellationToken);
+            await RefreshRestrictionsSafelyAsync(_lifetimeCts.Token);
+            await FlushQueuedTelemetrySafelyAsync(_lifetimeCts.Token);
+            _policyRefreshTask = RunPolicyRefreshLoopAsync(_lifetimeCts.Token);
+        }
+        catch
+        {
+            _lifetimeCts.Cancel();
+            _lifetimeCts.Dispose();
+            _lifetimeCts = null;
+            _connection = null;
+            _serverUrl = null;
+            await connection.DisposeAsync();
+            throw;
+        }
     }
 
     public async Task SendScreenFrameAsync(ScreenFrameMessage frame)
@@ -117,28 +149,27 @@ public class MonitoringHubClient : IMonitoringHubClient
 
     public async Task ReportIdleStatusAsync(IdleStatusMessage status)
     {
-        await SendTelemetryAsync(() => _connection!.InvokeAsync(HubMethodNames.ReportIdleStatus, status));
+        await QueueTelemetryAsync(TelemetryBatchItem.From(status));
     }
 
     public async Task ReportActiveAppAsync(ActiveAppMessage app)
     {
-        await SendTelemetryAsync(() => _connection!.InvokeAsync(HubMethodNames.ReportActiveApp, app));
+        await QueueTelemetryAsync(TelemetryBatchItem.From(app));
     }
 
     public async Task ReportWebsiteActivityAsync(WebsiteActivityMessage website)
     {
-        await SendTelemetryAsync(() => _connection!.InvokeAsync(HubMethodNames.ReportWebsiteActivity, website));
+        await QueueTelemetryAsync(TelemetryBatchItem.From(website));
     }
 
     public async Task ReportBrowserMonitoringStatusAsync(BrowserMonitoringStatusMessage status)
     {
-        await SendTelemetryAsync(() => _connection!.InvokeAsync(HubMethodNames.ReportBrowserMonitoringStatus, status));
+        await QueueTelemetryAsync(TelemetryBatchItem.From(status));
     }
 
     public async Task FetchRestrictionsAsync()
     {
-        EnsureConnected();
-        await _connection!.InvokeAsync(HubMethodNames.FetchRestrictions);
+        await RefreshRestrictionsAsync(ignoreDisconnected: false, CancellationToken.None);
     }
 
     public async Task ReportInfractionAsync(InfractionMessage infraction)
@@ -160,14 +191,38 @@ public class MonitoringHubClient : IMonitoringHubClient
 
     public async ValueTask DisposeAsync()
     {
+        if (_disposed)
+            return;
+        _disposed = true;
+
+        _lifetimeCts?.Cancel();
+        if (_policyRefreshTask is not null)
+        {
+            try
+            {
+                await _policyRefreshTask;
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+
         if (_connection is not null)
             await _connection.DisposeAsync();
+
+        await _telemetryFlushLock.WaitAsync();
+        _telemetryFlushLock.Release();
+        await _policyRefreshLock.WaitAsync();
+        _policyRefreshLock.Release();
 
         _httpClient?.Dispose();
         _httpClient = null;
         _connection = null;
         _serverUrl = null;
+        _lifetimeCts?.Dispose();
+        _lifetimeCts = null;
         _telemetryFlushLock.Dispose();
+        _policyRefreshLock.Dispose();
     }
 
     private static Uri GetRootUri(string serverUrl)
@@ -192,55 +247,56 @@ public class MonitoringHubClient : IMonitoringHubClient
         }
     }
 
-    private async Task SendTelemetryAsync(Func<Task> send)
+    private async Task QueueTelemetryAsync(TelemetryBatchItem item)
     {
-        for (var attempt = 0; attempt < 3; attempt++)
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (!DurableTelemetryQueue.TryNormalizeItem(item, out var normalized))
+            throw new ArgumentException("The telemetry item is invalid or is not privacy-safe.", nameof(item));
+        try
         {
-            try
-            {
-                EnsureConnected();
-                await send();
-                return;
-            }
-            catch when (attempt < 2)
-            {
-                await Task.Delay(TimeSpan.FromMilliseconds(100 * (attempt + 1)));
-            }
-            catch
-            {
-                break;
-            }
+            await _telemetryQueue.EnqueueAsync(normalized);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            await TrySendDirectAsync(normalized);
+            return;
         }
 
-        lock (_telemetryQueueLock)
-        {
-            if (_queuedTelemetry.Count == MaxQueuedTelemetry)
-                _queuedTelemetry.RemoveFirst();
-            _queuedTelemetry.AddLast(send);
-        }
+        var cancellationToken = _lifetimeCts?.Token ?? CancellationToken.None;
+        await FlushQueuedTelemetryAsync(cancellationToken);
     }
 
-    private async Task FlushQueuedTelemetryAsync()
+    private async Task FlushQueuedTelemetryAsync(CancellationToken cancellationToken)
     {
-        if (!await _telemetryFlushLock.WaitAsync(0))
-            return;
+        await _telemetryFlushLock.WaitAsync(cancellationToken);
 
         try
         {
-            while (true)
+            while (_connection?.State == HubConnectionState.Connected && !cancellationToken.IsCancellationRequested)
             {
-                Func<Task>? send;
-                lock (_telemetryQueueLock)
-                    send = _queuedTelemetry.First?.Value;
-                if (send is null)
+                var queued = await _telemetryQueue.ReadBatchAsync(_telemetryBatchSize, cancellationToken);
+                if (queued.Count == 0)
                     return;
 
                 try
                 {
-                    EnsureConnected();
-                    await send();
-                    lock (_telemetryQueueLock)
-                        _queuedTelemetry.RemoveFirst();
+                    var result = await _connection.InvokeCoreAsync<TelemetryBatchResult>(
+                        HubMethodNames.ReportTelemetryBatch,
+                        new object?[] { new TelemetryBatchMessage(queued.Select(record => record.Item).ToList()) },
+                        cancellationToken);
+                    var processed = Math.Clamp(result.ProcessedCount, 0, queued.Count);
+                    if (processed == 0)
+                        return;
+
+                    await _telemetryQueue.AcknowledgeAsync(
+                        queued.Take(processed).Select(record => record.Id),
+                        cancellationToken);
+                    if (processed < queued.Count)
+                        return;
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    return;
                 }
                 catch
                 {
@@ -251,6 +307,101 @@ public class MonitoringHubClient : IMonitoringHubClient
         finally
         {
             _telemetryFlushLock.Release();
+        }
+    }
+
+    private async Task TrySendDirectAsync(TelemetryBatchItem item)
+    {
+        var connection = _connection;
+        if (connection?.State != HubConnectionState.Connected)
+            return;
+
+        try
+        {
+            await connection.InvokeCoreAsync<TelemetryBatchResult>(
+                HubMethodNames.ReportTelemetryBatch,
+                new object?[] { new TelemetryBatchMessage(new[] { item }) },
+                _lifetimeCts?.Token ?? CancellationToken.None);
+        }
+        catch
+        {
+            // A disk failure leaves no durable fallback, so live delivery remains best effort.
+        }
+    }
+
+    private async Task HandleReconnectedAsync()
+    {
+        var cancellationToken = _lifetimeCts?.Token ?? CancellationToken.None;
+        await RefreshRestrictionsSafelyAsync(cancellationToken);
+        await FlushQueuedTelemetrySafelyAsync(cancellationToken);
+    }
+
+    private async Task RunPolicyRefreshLoopAsync(CancellationToken cancellationToken)
+    {
+        using var timer = new PeriodicTimer(_policyRefreshInterval);
+        while (await timer.WaitForNextTickAsync(cancellationToken))
+            await RefreshRestrictionsSafelyAsync(cancellationToken);
+    }
+
+    private async Task FlushQueuedTelemetrySafelyAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await FlushQueuedTelemetryAsync(cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch
+        {
+            // A later report or reconnect will retry the durable queue.
+        }
+    }
+
+    private async Task RefreshRestrictionsSafelyAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await RefreshRestrictionsAsync(ignoreDisconnected: true, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch
+        {
+            // The periodic/reconnect refresh will retry without interrupting monitoring.
+        }
+    }
+
+    private async Task RefreshRestrictionsAsync(bool ignoreDisconnected, CancellationToken cancellationToken)
+    {
+        var connection = _connection;
+        if (connection?.State != HubConnectionState.Connected)
+        {
+            if (ignoreDisconnected)
+                return;
+            EnsureConnected();
+        }
+
+        await _policyRefreshLock.WaitAsync(cancellationToken);
+        try
+        {
+            connection = _connection;
+            if (connection?.State != HubConnectionState.Connected)
+            {
+                if (ignoreDisconnected)
+                    return;
+                EnsureConnected();
+            }
+
+            await connection!.InvokeCoreAsync(
+                HubMethodNames.FetchRestrictions,
+                Array.Empty<object?>(),
+                cancellationToken);
+        }
+        finally
+        {
+            _policyRefreshLock.Release();
         }
     }
 }

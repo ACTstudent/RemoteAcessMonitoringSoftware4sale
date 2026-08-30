@@ -358,4 +358,59 @@ public class AuthenticationServiceTests
         Assert.NotNull(audit);
         Assert.Equal("System", audit.UserType);
     }
+
+    [Fact]
+    public async Task ChangeTeacherPasswordAsync_VerifiesCurrentPasswordMinimumLengthAndAudits()
+    {
+        var context = CreateContext();
+        var hasher = new PasswordHasher<object>();
+        var teacher = new Teacher
+        {
+            TeacherId = 15,
+            FirstName = "Password",
+            LastName = "Teacher",
+            Username = "password-teacher",
+            PasswordHash = hasher.HashPassword(new object(), "old-password"),
+            Status = "Active"
+        };
+        context.Teachers.Add(teacher);
+        await context.SaveChangesAsync();
+        var service = new AuthenticationService(context);
+
+        Assert.False(await service.ChangeTeacherPasswordAsync(teacher.TeacherId, "wrong-password", "valid-new-password", "127.0.0.1"));
+        Assert.False(await service.ChangeTeacherPasswordAsync(teacher.TeacherId, "old-password", "short", "127.0.0.1"));
+        Assert.True(await service.ChangeTeacherPasswordAsync(teacher.TeacherId, "old-password", "valid-new-password", "127.0.0.1"));
+
+        Assert.Equal(
+            PasswordVerificationResult.Success,
+            hasher.VerifyHashedPassword(new object(), teacher.PasswordHash, "valid-new-password"));
+        Assert.Equal(2, await context.AuditLogs.CountAsync(log => log.UserType == "Teacher" && log.Action == "PasswordChangeFailed"));
+        Assert.Single(await context.AuditLogs.Where(log => log.UserType == "Teacher" && log.Action == "PasswordChanged").ToListAsync());
+    }
+
+    [Fact]
+    public async Task ChangeAdminPasswordAsync_VerifiesCurrentPasswordAndAudits()
+    {
+        var context = CreateContext();
+        var hasher = new PasswordHasher<object>();
+        var admin = new Admin
+        {
+            Id = 8,
+            Username = "password-admin",
+            FullName = "Password Admin",
+            PasswordHash = hasher.HashPassword(new object(), "old-password")
+        };
+        context.Admins.Add(admin);
+        await context.SaveChangesAsync();
+        var service = new AuthenticationService(context);
+
+        Assert.True(await service.ChangeAdminPasswordAsync(admin.Id, "old-password", "new-password", "10.0.0.1"));
+
+        Assert.Equal(
+            PasswordVerificationResult.Success,
+            hasher.VerifyHashedPassword(new object(), admin.PasswordHash, "new-password"));
+        var audit = await context.AuditLogs.SingleAsync(log => log.UserType == "Admin" && log.Action == "PasswordChanged");
+        Assert.Equal(admin.Id, audit.UserId);
+        Assert.Equal("10.0.0.1", audit.IpAddress);
+    }
 }

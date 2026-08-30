@@ -73,6 +73,8 @@ namespace Server.Migrations
 
                     b.HasIndex("PcName", "Timestamp");
 
+                    b.HasIndex("StudentId", "Timestamp");
+
                     b.ToTable("ActivityEvents");
                 });
 
@@ -213,6 +215,51 @@ namespace Server.Migrations
                     b.HasKey("BlacklistItemId");
 
                     b.ToTable("BlacklistItems");
+                });
+
+            modelBuilder.Entity("Server.Models.BrowserMonitoringRecord", b =>
+                {
+                    b.Property<int>("BrowserMonitoringRecordId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Browser")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ConnectionId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Detail")
+                        .HasMaxLength(300)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Mode")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("PcName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("StudentId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("BrowserMonitoringRecordId");
+
+                    b.HasIndex("PcName", "Timestamp");
+
+                    b.HasIndex("StudentId", "Timestamp");
+
+                    b.ToTable("BrowserMonitoringRecords");
                 });
 
             modelBuilder.Entity("Server.Models.Class", b =>
@@ -382,6 +429,8 @@ namespace Server.Migrations
 
                     b.HasIndex("ConnectionId", "StartedAt");
 
+                    b.HasIndex("StudentId", "StartedAt");
+
                     b.ToTable("IdleIntervals");
                 });
 
@@ -439,9 +488,9 @@ namespace Server.Migrations
 
                     b.HasIndex("SessionRuleId");
 
-                    b.HasIndex("StudentId");
-
                     b.HasIndex("TeacherId");
+
+                    b.HasIndex("StudentId", "StartTime");
 
                     b.ToTable("LabSessions");
                 });
@@ -493,6 +542,12 @@ namespace Server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("AcknowledgedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("AcknowledgedByTeacherId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -501,13 +556,37 @@ namespace Server.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("DismissalReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DismissedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("DismissedByTeacherId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("FirstSeenAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GroupKey")
+                        .IsRequired()
+                        .HasMaxLength(350)
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("IsAcknowledged")
                         .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("LastSeenAt")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Message")
                         .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("OccurrenceCount")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("PcName")
                         .IsRequired()
@@ -532,6 +611,8 @@ namespace Server.Migrations
                     b.HasKey("MonitoringAlertId");
 
                     b.HasIndex("StudentId", "DedupeKey", "CreatedAt");
+
+                    b.HasIndex("StudentId", "GroupKey", "LastSeenAt");
 
                     b.ToTable("MonitoringAlerts");
                 });

@@ -88,6 +88,25 @@ public class TeacherControllerTests
     }
 
     [Fact]
+    public async Task BrowserMonitoringHistory_UsesStudentNumberAndScopesTeacherRoster()
+    {
+        using var db = GetDbContext();
+        db.Students.AddRange(
+            new Student { Id = 10, StudentNumber = "STU-A10", FullName = "Allowed", Username = "allowed", PasswordHash = "h", AdviserId = 1 },
+            new Student { Id = 20, StudentNumber = "STU-B20", FullName = "Denied", Username = "denied", PasswordHash = "h", AdviserId = 2 });
+        db.BrowserMonitoringRecords.AddRange(
+            new BrowserMonitoringRecord { StudentId = "STU-A10", ConnectionId = "a", PcName = "PC-01", Browser = "chrome", Mode = Shared.Contracts.BrowserMonitoringMode.ManagedProtocol, Timestamp = DateTime.UtcNow },
+            new BrowserMonitoringRecord { StudentId = "STU-B20", ConnectionId = "b", PcName = "PC-02", Browser = "brave", Mode = Shared.Contracts.BrowserMonitoringMode.ManagedProtocol, Timestamp = DateTime.UtcNow });
+        await db.SaveChangesAsync();
+
+        var result = Assert.IsType<ViewResult>(await CreateController(db).BrowserMonitoringHistory());
+        var records = Assert.IsAssignableFrom<IReadOnlyList<BrowserMonitoringRecord>>(result.Model);
+
+        var record = Assert.Single(records);
+        Assert.Equal("STU-A10", record.StudentId);
+    }
+
+    [Fact]
     public async Task Session_StartPauseEnd_WorksFlawlessly()
     {
         using var db = GetDbContext();
@@ -272,7 +291,17 @@ public class TeacherControllerTests
         using var db = GetDbContext();
         var controller = CreateController(db);
 
-        var comp = new Computer { LaboratoryStation = "Station-05", Status = "Available" };
+        var student = new Student
+        {
+            StudentNumber = "STU-COMP-1",
+            FullName = "Accessible Student",
+            Username = "accessible-computer-student",
+            PasswordHash = "hash",
+            AdviserId = 1
+        };
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+        var comp = new Computer { LaboratoryStation = "Station-05", Status = "Available", AssignedTo = student.Id.ToString() };
         db.Computers.Add(comp);
         await db.SaveChangesAsync();
 
@@ -349,7 +378,7 @@ public class TeacherControllerTests
             Status = "Active"
         });
         var cls = new Class { ClassName = "Grade 11 - STEM A", TeacherId = 1 };
-        var student = new Student { FullName = "Apolinario Mabini", Username = "amabini", PasswordHash = "hash" };
+        var student = new Student { FullName = "Apolinario Mabini", Username = "amabini", PasswordHash = "hash", AdviserId = 1 };
         db.Classes.Add(cls);
         db.Students.Add(student);
         await db.SaveChangesAsync();
@@ -361,5 +390,152 @@ public class TeacherControllerTests
         // 2. Remove
         var removeResult = await controller.RemoveStudent(cls.ClassId, student.Id);
         Assert.IsType<RedirectToActionResult>(removeResult);
+    }
+
+    [Fact]
+    public async Task Students_SearchReturnsOnlyAdvisedOrActiveClassStudents()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var activeClass = new Class { ClassName = "Active", TeacherId = 1, Status = "Active" };
+        var archivedClass = new Class { ClassName = "Archived", TeacherId = 1, Status = "Archived", IsArchived = true };
+        var foreignClass = new Class { ClassName = "Foreign", TeacherId = 2, Status = "Active" };
+        db.Classes.AddRange(activeClass, archivedClass, foreignClass);
+        await db.SaveChangesAsync();
+        db.Students.AddRange(
+            new Student { StudentNumber = "S-ADV", FirstName = "Alpha", LastName = "Advised", Username = "alpha-advised", PasswordHash = "hash", AdviserId = 1 },
+            new Student { StudentNumber = "S-CLASS", FirstName = "Alpha", LastName = "Class", Username = "alpha-class", PasswordHash = "hash", ClassId = activeClass.ClassId },
+            new Student { StudentNumber = "S-ARCH", FirstName = "Alpha", LastName = "Archived", Username = "alpha-archived", PasswordHash = "hash", ClassId = archivedClass.ClassId },
+            new Student { StudentNumber = "S-FOREIGN", FirstName = "Alpha", LastName = "Foreign", Username = "alpha-foreign", PasswordHash = "hash", ClassId = foreignClass.ClassId });
+        await db.SaveChangesAsync();
+
+        var result = Assert.IsType<ViewResult>(await controller.Students("alpha"));
+        var students = Assert.IsAssignableFrom<IEnumerable<Student>>(result.Model).ToList();
+
+        Assert.Equal(2, students.Count);
+        Assert.Contains(students, student => student.Username == "alpha-advised");
+        Assert.Contains(students, student => student.Username == "alpha-class");
+        Assert.DoesNotContain(students, student => student.Username == "alpha-archived");
+        Assert.DoesNotContain(students, student => student.Username == "alpha-foreign");
+    }
+
+    [Fact]
+    public async Task StudentMutations_InaccessibleStudentReturnNotFoundWithoutChanges()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var foreignStudent = new Student
+        {
+            StudentNumber = "S-FOREIGN",
+            FullName = "Foreign Student",
+            Username = "foreign-student",
+            PasswordHash = "hash",
+            AdviserId = 2
+        };
+        db.Students.Add(foreignStudent);
+        await db.SaveChangesAsync();
+
+        var update = await controller.UpdateStudent(new Student
+        {
+            Id = foreignStudent.Id,
+            StudentNumber = "CHANGED",
+            FullName = "Changed Name",
+            Username = "changed-user"
+        }, null);
+        var delete = await controller.DeleteStudent(foreignStudent.Id);
+
+        Assert.IsType<NotFoundResult>(update);
+        Assert.IsType<NotFoundResult>(delete);
+        var unchanged = await db.Students.FindAsync(foreignStudent.Id);
+        Assert.Equal("S-FOREIGN", unchanged?.StudentNumber);
+        Assert.Equal("foreign-student", unchanged?.Username);
+        Assert.Equal(2, unchanged?.AdviserId);
+    }
+
+    [Fact]
+    public async Task UpdateStudent_AdvisedStudentCanBeUpdated()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var student = new Student
+        {
+            StudentNumber = "S-ADVISED",
+            FullName = "Advised Student",
+            Username = "advised-student",
+            PasswordHash = "hash",
+            AdviserId = 1
+        };
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+
+        var result = await controller.UpdateStudent(new Student
+        {
+            Id = student.Id,
+            StudentNumber = student.StudentNumber,
+            FullName = "Updated Student",
+            Username = student.Username
+        }, null);
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Updated Student", (await db.Students.FindAsync(student.Id))?.FullName);
+    }
+
+    [Fact]
+    public async Task Computers_AndUpdatesAreLimitedToAccessibleStudents()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var accessibleStudent = new Student { StudentNumber = "S-1", FullName = "Own Student", Username = "own-student", PasswordHash = "hash", AdviserId = 1 };
+        var foreignStudent = new Student { StudentNumber = "S-2", FullName = "Other Student", Username = "other-student", PasswordHash = "hash", AdviserId = 2 };
+        db.Students.AddRange(accessibleStudent, foreignStudent);
+        await db.SaveChangesAsync();
+        var accessibleComputer = new Computer { LaboratoryStation = "OWN-PC", Status = "Available", AssignedTo = accessibleStudent.Id.ToString() };
+        var foreignComputer = new Computer { LaboratoryStation = "OTHER-PC", Status = "Available", AssignedTo = foreignStudent.Id.ToString() };
+        db.Computers.AddRange(accessibleComputer, foreignComputer);
+        await db.SaveChangesAsync();
+
+        var listResult = Assert.IsType<ViewResult>(await controller.Computers());
+        var computers = Assert.IsAssignableFrom<IEnumerable<Computer>>(listResult.Model).ToList();
+        Assert.Single(computers);
+        Assert.Equal(accessibleComputer.ComputerId, computers[0].ComputerId);
+
+        var denied = await controller.UpdateComputer(new Computer
+        {
+            ComputerId = foreignComputer.ComputerId,
+            LaboratoryStation = "HACKED",
+            Status = "Maintenance"
+        });
+        Assert.IsType<NotFoundResult>(denied);
+        Assert.Equal("OTHER-PC", (await db.Computers.FindAsync(foreignComputer.ComputerId))?.LaboratoryStation);
+
+        var saved = await controller.UpdateComputer(new Computer
+        {
+            ComputerId = accessibleComputer.ComputerId,
+            LaboratoryStation = "OWN-PC-EDITED",
+            Status = "Maintenance",
+            AssignedTo = foreignStudent.Id.ToString()
+        });
+        Assert.IsType<RedirectToActionResult>(saved);
+        var updated = await db.Computers.FindAsync(accessibleComputer.ComputerId);
+        Assert.Equal("OWN-PC-EDITED", updated?.LaboratoryStation);
+        Assert.Equal("Maintenance", updated?.Status);
+        Assert.Equal(accessibleStudent.Id.ToString(), updated?.AssignedTo);
+    }
+
+    [Fact]
+    public async Task EnrollStudent_InaccessibleStudentReturnsNotFound()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var cls = new Class { ClassName = "Own Class", TeacherId = 1 };
+        var student = new Student { StudentNumber = "S-3", FullName = "Unrelated Student", Username = "unrelated", PasswordHash = "hash" };
+        db.Classes.Add(cls);
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+
+        var result = await controller.EnrollStudent(cls.ClassId, student.Id);
+
+        Assert.IsType<NotFoundResult>(result);
+        Assert.Null((await db.Students.FindAsync(student.Id))?.ClassId);
     }
 }

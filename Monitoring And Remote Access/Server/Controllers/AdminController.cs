@@ -15,11 +15,16 @@ namespace Server.Controllers
         private readonly ApplicationDbContext _context;
         private readonly PasswordHasher<object> _hasher = new();
         private readonly IClassManagementService _classManagement;
+        private readonly IAuthenticationService _authentication;
 
-        public AdminController(ApplicationDbContext context, IClassManagementService? classManagement = null)
+        public AdminController(
+            ApplicationDbContext context,
+            IClassManagementService? classManagement = null,
+            IAuthenticationService? authentication = null)
         {
             _context = context;
             _classManagement = classManagement ?? new ClassManagementService(context);
+            _authentication = authentication ?? new AuthenticationService(context);
         }
 
         private bool CheckAccess() => HttpContext.IsAdmin();
@@ -36,6 +41,22 @@ namespace Server.Controllers
 
         private IActionResult Denied() => RedirectToAction("Login", "Account");
 
+        private IActionResult AccountManagementRedirect(AccountRole accountRole) => accountRole switch
+        {
+            AccountRole.Admin => RedirectToAction(nameof(Settings)),
+            AccountRole.Teacher => RedirectToAction(nameof(Teachers)),
+            AccountRole.Student => RedirectToAction(nameof(Students)),
+            _ => BadRequest()
+        };
+
+        private async Task LoadAdminAccountsAsync()
+        {
+            ViewBag.Admins = await _context.Admins
+                .AsNoTracking()
+                .OrderBy(admin => admin.Username)
+                .ToListAsync();
+        }
+
         private async Task AuditAsync(string action, string details)
         {
             _context.AuditLogs.Add(new AuditLog
@@ -48,6 +69,144 @@ namespace Server.Controllers
                  Timestamp = DateTime.UtcNow
             });
             await _context.SaveChangesAsync();
+        }
+
+        // ---------- Account settings and lockout management ----------
+        public async Task<IActionResult> Settings()
+        {
+            if (!CheckAccess()) return Denied();
+            await LoadAdminAccountsAsync();
+            return View(new PasswordChangeInput());
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword([Bind("CurrentPassword,NewPassword,ConfirmPassword")] PasswordChangeInput input)
+        {
+            if (!CheckAccess()) return Denied();
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+            if (!adminId.HasValue) return Denied();
+
+            if (!ModelState.IsValid)
+            {
+                await LoadAdminAccountsAsync();
+                return View("Settings", input);
+            }
+
+            var changed = await _authentication.ChangeAdminPasswordAsync(
+                adminId.Value,
+                input.CurrentPassword,
+                input.NewPassword,
+                HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty);
+            if (!changed)
+            {
+                ModelState.AddModelError(nameof(input.CurrentPassword), "The current password is incorrect.");
+                await LoadAdminAccountsAsync();
+                return View("Settings", input);
+            }
+
+            TempData["Message"] = "Your password was changed successfully.";
+            return RedirectToAction(nameof(Settings));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnlockAccount(AccountRole accountRole, int id)
+        {
+            if (!CheckAccess()) return Denied();
+
+            string accountName;
+            switch (accountRole)
+            {
+                case AccountRole.Admin:
+                {
+                    var account = await _context.Admins.FindAsync(id);
+                    if (account == null) return NotFound();
+                    account.FailedLoginAttempts = 0;
+                    account.LockoutEndUtc = null;
+                    accountName = account.Username;
+                    break;
+                }
+                case AccountRole.Teacher:
+                {
+                    var account = await _context.Teachers.FindAsync(id);
+                    if (account == null) return NotFound();
+                    account.FailedLoginAttempts = 0;
+                    account.LockoutEndUtc = null;
+                    accountName = account.Username;
+                    break;
+                }
+                case AccountRole.Student:
+                {
+                    var account = await _context.Students.FindAsync(id);
+                    if (account == null) return NotFound();
+                    account.FailedLoginAttempts = 0;
+                    account.LockoutEndUtc = null;
+                    accountName = account.Username;
+                    break;
+                }
+                default:
+                    return BadRequest();
+            }
+
+            await _context.SaveChangesAsync();
+            await AuditAsync("UnlockAccount", $"Unlocked {accountRole} account {id} ({accountName})");
+            TempData["Message"] = $"The {accountRole.ToString().ToLowerInvariant()} account was unlocked.";
+            return AccountManagementRedirect(accountRole);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetAccountActive(AccountRole accountRole, int id, bool isActive)
+        {
+            if (!CheckAccess()) return Denied();
+
+            string accountName;
+            switch (accountRole)
+            {
+                case AccountRole.Admin:
+                {
+                    var account = await _context.Admins.FindAsync(id);
+                    if (account == null) return NotFound();
+                    if (!isActive && account.IsActive && await _context.Admins.CountAsync(admin => admin.IsActive) <= 1)
+                    {
+                        TempData["ErrorMessage"] = "The last active administrator cannot be deactivated.";
+                        return RedirectToAction(nameof(Settings));
+                    }
+
+                    account.IsActive = isActive;
+                    accountName = account.Username;
+                    break;
+                }
+                case AccountRole.Teacher:
+                {
+                    var account = await _context.Teachers.FindAsync(id);
+                    if (account == null) return NotFound();
+                    if (!isActive && await _context.Classes.AnyAsync(cls => cls.TeacherId == id && !cls.IsArchived))
+                    {
+                        TempData["ErrorMessage"] = "Reassign or archive this teacher's active classes before deactivating the account.";
+                        return RedirectToAction(nameof(Teachers));
+                    }
+
+                    account.Status = isActive ? "Active" : "Inactive";
+                    accountName = account.Username;
+                    break;
+                }
+                case AccountRole.Student:
+                {
+                    var account = await _context.Students.FindAsync(id);
+                    if (account == null) return NotFound();
+                    account.Status = isActive ? "Active" : "Inactive";
+                    accountName = account.Username;
+                    break;
+                }
+                default:
+                    return BadRequest();
+            }
+
+            await _context.SaveChangesAsync();
+            await AuditAsync(
+                isActive ? "ActivateAccount" : "DeactivateAccount",
+                $"Set {accountRole} account {id} ({accountName}) to {(isActive ? "active" : "inactive")}");
+            TempData["Message"] = $"The {accountRole.ToString().ToLowerInvariant()} account is now {(isActive ? "active" : "inactive")}.";
+            return AccountManagementRedirect(accountRole);
         }
 
         // ---------- Dashboard ----------

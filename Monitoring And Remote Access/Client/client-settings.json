@@ -5,5 +5,11 @@
   "ManageBrave": true,
   "ChromePort": 9222,
   "BravePort": 9223,
-  "RestartDelayMilliseconds": 1000
+  "RestartDelayMilliseconds": 1000,
+  "PolicyRefreshIntervalSeconds": 30,
+  "TelemetryQueue": {
+    "MaxRecords": 1000,
+    "MaxBytes": 2097152,
+    "BatchSize": 25
+  }
 }

@@ -1,0 +1,49 @@
+@model Server.Models.PasswordChangeInput
+@{
+    ViewData["Title"] = "Account Settings";
+    Layout = "_TeacherLayout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-box-primary"><i class="bi bi-key-fill fs-3"></i></div>
+        <div>
+            <h2 class="fw-extrabold mb-0 text-dark">Account Settings</h2>
+            <p class="text-muted mb-0 small">Change the password for your signed-in teacher account</p>
+        </div>
+    </div>
+    <a href="/Teacher/Students" class="btn btn-outline-secondary rounded-pill px-3"><i class="bi bi-arrow-left me-1"></i>Student Roster</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-7 col-xl-6">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h5 class="fw-bold mb-0"><i class="bi bi-shield-lock me-2 text-emerald-700"></i>Change Password</h5>
+            </div>
+            <div class="card-body p-4">
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    @Html.ValidationSummary(false, "Please correct the following:", new { @class = "alert alert-danger" })
+                }
+                <form method="post" action="/Teacher/ChangePassword">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="teacherCurrentPassword">Current Password</label>
+                        <input id="teacherCurrentPassword" type="password" name="CurrentPassword" class="form-control filter-control" autocomplete="current-password" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="teacherNewPassword">New Password</label>
+                        <input id="teacherNewPassword" type="password" name="NewPassword" class="form-control filter-control" minlength="8" autocomplete="new-password" required />
+                        <div class="form-text">Use at least 8 characters.</div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold" for="teacherConfirmPassword">Confirm New Password</label>
+                        <input id="teacherConfirmPassword" type="password" name="ConfirmPassword" class="form-control filter-control" minlength="8" autocomplete="new-password" required />
+                    </div>
+                    <button type="submit" class="btn btn-emerald rounded-pill px-4 text-white">Change Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

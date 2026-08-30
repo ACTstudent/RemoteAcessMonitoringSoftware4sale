@@ -31,6 +31,8 @@ public static class DatabaseInitializer
 
         RemoveDuplicateMembershipLinks(db);
         EnsureTelemetryTables(db);
+        EnsureMonitoringAlertColumns(db);
+        EnsureBrowserMonitoringTable(db);
         EnsureCategoryTables(db);
 
         var hasDuplicateStudentNumbers = db.Students
@@ -141,5 +143,63 @@ public static class DatabaseInitializer
     {
         TryCreateIndex(db, "CREATE TABLE IF NOT EXISTS ApplicationCategories (ApplicationCategoryId INTEGER NOT NULL CONSTRAINT PK_ApplicationCategories PRIMARY KEY AUTOINCREMENT, Name TEXT NOT NULL, Pattern TEXT NOT NULL, Description TEXT NOT NULL, Mode TEXT NOT NULL, IsActive INTEGER NOT NULL, CreatedAt TEXT NOT NULL);");
         TryCreateIndex(db, "CREATE TABLE IF NOT EXISTS WebsiteCategories (WebsiteCategoryId INTEGER NOT NULL CONSTRAINT PK_WebsiteCategories PRIMARY KEY AUTOINCREMENT, Name TEXT NOT NULL, DomainPattern TEXT NOT NULL, Description TEXT NOT NULL, Mode TEXT NOT NULL, IsActive INTEGER NOT NULL, CreatedAt TEXT NOT NULL);");
+    }
+
+    private static void EnsureMonitoringAlertColumns(ApplicationDbContext db)
+    {
+        // Legacy databases were created without the alert-lifecycle columns, but they are
+        // baselined as fully migrated. Materialize the missing columns and backfill them so
+        // the alert lifecycle and analytics queries match the current model.
+        EnsureColumn(db, "MonitoringAlerts", "DedupeKey", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(db, "MonitoringAlerts", "AcknowledgedAt", "TEXT NULL");
+        EnsureColumn(db, "MonitoringAlerts", "AcknowledgedByTeacherId", "INTEGER NULL");
+        EnsureColumn(db, "MonitoringAlerts", "DismissalReason", "TEXT NULL");
+        EnsureColumn(db, "MonitoringAlerts", "DismissedAt", "TEXT NULL");
+        EnsureColumn(db, "MonitoringAlerts", "DismissedByTeacherId", "INTEGER NULL");
+        EnsureColumn(db, "MonitoringAlerts", "FirstSeenAt", "TEXT NOT NULL DEFAULT '0001-01-01 00:00:00'");
+        EnsureColumn(db, "MonitoringAlerts", "GroupKey", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(db, "MonitoringAlerts", "LastSeenAt", "TEXT NOT NULL DEFAULT '0001-01-01 00:00:00'");
+        EnsureColumn(db, "MonitoringAlerts", "OccurrenceCount", "INTEGER NOT NULL DEFAULT 1");
+
+        TryExecute(db,
+            "UPDATE MonitoringAlerts SET FirstSeenAt = CreatedAt, LastSeenAt = CreatedAt, OccurrenceCount = CASE WHEN OccurrenceCount < 1 THEN 1 ELSE OccurrenceCount END, GroupKey = lower(trim(StudentId)) || '|' || lower(trim(PcName)) || '|' || lower(trim(CASE WHEN DedupeKey = '' THEN Title ELSE DedupeKey END));");
+
+        TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_MonitoringAlerts_StudentId_GroupKey_LastSeenAt ON MonitoringAlerts (StudentId, GroupKey, LastSeenAt);");
+    }
+
+    private static void EnsureBrowserMonitoringTable(ApplicationDbContext db)
+    {
+        TryCreateIndex(db, "CREATE TABLE IF NOT EXISTS BrowserMonitoringRecords (BrowserMonitoringRecordId INTEGER NOT NULL CONSTRAINT PK_BrowserMonitoringRecords PRIMARY KEY AUTOINCREMENT, ConnectionId TEXT NOT NULL, StudentId TEXT NOT NULL, PcName TEXT NOT NULL, Browser TEXT NOT NULL, Mode INTEGER NOT NULL, Detail TEXT NULL, Timestamp TEXT NOT NULL);");
+        TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_BrowserMonitoringRecords_PcName_Timestamp ON BrowserMonitoringRecords (PcName, Timestamp);");
+        TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_BrowserMonitoringRecords_StudentId_Timestamp ON BrowserMonitoringRecords (StudentId, Timestamp);");
+    }
+
+    private static void EnsureColumn(ApplicationDbContext db, string table, string column, string definition)
+    {
+        var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        using var command = db.Database.GetDbConnection().CreateCommand();
+        command.CommandText = $"PRAGMA table_info({table});";
+        if (command.Connection!.State != ConnectionState.Open)
+            command.Connection.Open();
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+            columns.Add(reader.GetString(1));
+
+        if (columns.Contains(column))
+            return;
+
+        TryExecute(db, $"ALTER TABLE {table} ADD COLUMN {column} {definition};");
+    }
+
+    private static void TryExecute(ApplicationDbContext db, string statement)
+    {
+        try
+        {
+            db.Database.ExecuteSqlRaw(statement);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[CAMS] Legacy schema statement warning: {ex.Message}");
+        }
     }
 }

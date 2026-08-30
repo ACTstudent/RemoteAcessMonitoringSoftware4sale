@@ -1,5 +1,8 @@
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http.Json;
+using System.Net.WebSockets;
+using System.Text;
 using System.Text.Json;
 using Shared.Contracts;
 
@@ -47,6 +50,12 @@ public sealed class ManagedBrowserCollector : IDisposable
         => await TryGetActiveWebsiteAsync(null, cancellationToken);
 
     public async Task<BrowserWebsiteObservation?> TryGetActiveWebsiteAsync(string? browserIdentity, CancellationToken cancellationToken = default)
+        => await TryGetActiveWebsiteAsync(browserIdentity, null, cancellationToken);
+
+    public async Task<BrowserWebsiteObservation?> TryGetActiveWebsiteAsync(
+        string? browserIdentity,
+        string? foregroundWindowTitle,
+        CancellationToken cancellationToken = default)
     {
         foreach (var definition in Definitions().Where(definition =>
                      string.IsNullOrWhiteSpace(browserIdentity) || definition.Identity.Equals(browserIdentity, StringComparison.OrdinalIgnoreCase)))
@@ -61,7 +70,7 @@ public sealed class ManagedBrowserCollector : IDisposable
                 using var tabsResponse = await _httpClient.GetAsync($"http://127.0.0.1:{definition.Port}/json/list", cancellationToken);
                 if (!tabsResponse.IsSuccessStatusCode) continue;
                 var tabs = await tabsResponse.Content.ReadFromJsonAsync<List<DevToolsTab>>(cancellationToken: cancellationToken);
-                var tab = tabs?.FirstOrDefault(item => item.Type == "page" && !string.IsNullOrWhiteSpace(item.Url));
+                var tab = await SelectForegroundTabAsync(tabs, foregroundWindowTitle, cancellationToken);
                 if (tab != null && WebsiteDomainNormalizer.TryNormalize(tab.Url, out var domain))
                     return new BrowserWebsiteObservation(domain, definition.Identity, BrowserMonitoringStatus.Captured, BrowserMonitoringMode.ManagedProtocol);
             }
@@ -71,6 +80,90 @@ public sealed class ManagedBrowserCollector : IDisposable
         }
         return null;
     }
+
+    private async Task<DevToolsTab?> SelectForegroundTabAsync(
+        IReadOnlyList<DevToolsTab>? tabs,
+        string? foregroundWindowTitle,
+        CancellationToken cancellationToken)
+    {
+        var pages = tabs?.Where(item => item.Type == "page" &&
+                !string.IsNullOrWhiteSpace(item.Url) &&
+                WebsiteDomainNormalizer.TryNormalize(item.Url, out _))
+            .ToList() ?? new List<DevToolsTab>();
+        if (pages.Count == 0) return null;
+
+        if (!string.IsNullOrWhiteSpace(foregroundWindowTitle))
+        {
+            var titleMatch = pages.FirstOrDefault(page => IsForegroundTitleMatch(page.Title, foregroundWindowTitle));
+            if (titleMatch is not null) return titleMatch;
+        }
+
+        if (pages.Count == 1) return pages[0];
+        foreach (var page in pages)
+        {
+            if (await IsVisiblePageAsync(page.WebSocketDebuggerUrl, cancellationToken))
+                return page;
+        }
+
+        // Reporting no domain is safer than attributing a background tab as foreground.
+        return null;
+    }
+
+    private static async Task<bool> IsVisiblePageAsync(string? debuggerUrl, CancellationToken cancellationToken)
+    {
+        if (!Uri.TryCreate(debuggerUrl, UriKind.Absolute, out var uri) || uri.Scheme != "ws" || !IsLoopback(uri.Host))
+            return false;
+
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(TimeSpan.FromMilliseconds(500));
+        using var socket = new ClientWebSocket();
+        try
+        {
+            await socket.ConnectAsync(uri, timeout.Token);
+            var request = Encoding.UTF8.GetBytes("{\"id\":1,\"method\":\"Runtime.evaluate\",\"params\":{\"expression\":\"document.visibilityState\",\"returnByValue\":true}}");
+            await socket.SendAsync(request, WebSocketMessageType.Text, true, timeout.Token);
+
+            while (!timeout.IsCancellationRequested)
+            {
+                var message = await ReceiveMessageAsync(socket, timeout.Token);
+                if (message is null) return false;
+                using var document = JsonDocument.Parse(message);
+                if (!document.RootElement.TryGetProperty("id", out var id) || id.GetInt32() != 1) continue;
+                return document.RootElement.TryGetProperty("result", out var result) &&
+                       result.TryGetProperty("result", out var remoteResult) &&
+                       remoteResult.TryGetProperty("value", out var value) &&
+                       value.ValueKind == JsonValueKind.String &&
+                       value.GetString() == "visible";
+            }
+        }
+        catch (Exception ex) when (ex is WebSocketException or OperationCanceledException or JsonException)
+        {
+        }
+        return false;
+    }
+
+    private static async Task<string?> ReceiveMessageAsync(ClientWebSocket socket, CancellationToken cancellationToken)
+    {
+        var buffer = new byte[4096];
+        using var stream = new MemoryStream();
+        while (stream.Length <= 16 * 1024)
+        {
+            var result = await socket.ReceiveAsync(buffer, cancellationToken);
+            if (result.MessageType == WebSocketMessageType.Close) return null;
+            stream.Write(buffer, 0, result.Count);
+            if (result.EndOfMessage) return Encoding.UTF8.GetString(stream.ToArray());
+        }
+        return null;
+    }
+
+    private static bool IsLoopback(string host) =>
+        host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+        IPAddress.TryParse(host, out var address) && IPAddress.IsLoopback(address);
+
+    public static bool IsForegroundTitleMatch(string? tabTitle, string? foregroundWindowTitle) =>
+        !string.IsNullOrWhiteSpace(tabTitle) &&
+        !string.IsNullOrWhiteSpace(foregroundWindowTitle) &&
+        foregroundWindowTitle.Contains(tabTitle, StringComparison.OrdinalIgnoreCase);
 
     public static string BuildArguments(ManagedBrowserDefinition definition, string profileRoot) =>
         $"--remote-debugging-address=127.0.0.1 --remote-debugging-port={definition.Port} --user-data-dir=\"{Path.Combine(profileRoot, definition.Identity)}\" --no-first-run --no-default-browser-check";
@@ -158,5 +251,5 @@ public sealed class ManagedBrowserCollector : IDisposable
     }
 
     private sealed record DevToolsMetadata(string? Browser);
-    private sealed record DevToolsTab(string? Type, string? Url);
+    private sealed record DevToolsTab(string? Type, string? Url, string? Title, string? WebSocketDebuggerUrl);
 }

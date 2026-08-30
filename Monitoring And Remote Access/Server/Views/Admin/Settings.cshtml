@@ -1,0 +1,123 @@
+@using Microsoft.AspNetCore.Http
+@model Server.Models.PasswordChangeInput
+@{
+    ViewData["Title"] = "Account Security";
+    Layout = "_Layout";
+    var admins = ViewBag.Admins as IEnumerable<Server.Models.Admin> ?? Enumerable.Empty<Server.Models.Admin>();
+    var currentAdminId = Context.Session.GetInt32("AdminId");
+    var activeAdminCount = admins.Count(admin => admin.IsActive);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-box-primary"><i class="bi bi-shield-lock-fill fs-3"></i></div>
+        <div>
+            <h2 class="fw-extrabold mb-0 text-dark">Account Security</h2>
+            <p class="text-muted mb-0 small">Manage your password and administrator account availability</p>
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/Admin/Teachers" class="btn btn-outline-secondary rounded-pill px-3">Teacher Accounts</a>
+        <a href="/Admin/Students" class="btn btn-outline-secondary rounded-pill px-3">Student Accounts</a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h5 class="fw-bold mb-0"><i class="bi bi-key me-2 text-emerald-700"></i>Change My Password</h5>
+            </div>
+            <div class="card-body p-4">
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    @Html.ValidationSummary(false, "Please correct the following:", new { @class = "alert alert-danger" })
+                }
+                <form method="post" action="/Admin/ChangePassword">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="adminCurrentPassword">Current Password</label>
+                        <input id="adminCurrentPassword" type="password" name="CurrentPassword" class="form-control filter-control" autocomplete="current-password" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="adminNewPassword">New Password</label>
+                        <input id="adminNewPassword" type="password" name="NewPassword" class="form-control filter-control" minlength="8" autocomplete="new-password" required />
+                        <div class="form-text">Use at least 8 characters.</div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold" for="adminConfirmPassword">Confirm New Password</label>
+                        <input id="adminConfirmPassword" type="password" name="ConfirmPassword" class="form-control filter-control" minlength="8" autocomplete="new-password" required />
+                    </div>
+                    <button type="submit" class="btn btn-emerald rounded-pill px-4 text-white">Change Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="bi bi-person-gear me-2 text-emerald-700"></i>Administrator Accounts</h5>
+                <span class="badge bg-success rounded-pill">@activeAdminCount active</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table custom-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Administrator</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var admin in admins)
+                        {
+                            var isLocked = admin.LockoutEndUtc.HasValue && admin.LockoutEndUtc.Value > DateTime.UtcNow;
+                            var isCurrent = currentAdminId == admin.Id;
+                            var isLastActive = admin.IsActive && activeAdminCount <= 1;
+                            <tr>
+                                <td>
+                                    <span class="fw-bold">@admin.FullName</span>
+                                    @if (isCurrent)
+                                    {
+                                        <span class="badge bg-light text-dark ms-1">You</span>
+                                    }
+                                    <div class="small text-muted font-monospace">@@@admin.Username</div>
+                                </td>
+                                <td>
+                                    <span class="badge @(admin.IsActive ? "bg-success" : "bg-secondary") rounded-pill">@(admin.IsActive ? "Active" : "Inactive")</span>
+                                    @if (isLocked)
+                                    {
+                                        <span class="badge bg-danger rounded-pill ms-1">Locked</span>
+                                        <div class="small text-muted mt-1">Until @admin.LockoutEndUtc.GetValueOrDefault().ToLocalTime().ToString("g")</div>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="d-flex justify-content-end gap-1 flex-wrap">
+                                        @if (isLocked || admin.FailedLoginAttempts > 0)
+                                        {
+                                            <form method="post" action="/Admin/UnlockAccount" style="margin:0;">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="accountRole" value="Admin" />
+                                                <input type="hidden" name="id" value="@admin.Id" />
+                                                <button class="btn btn-sm btn-outline-warning rounded-pill px-3"><i class="bi bi-unlock me-1"></i>Unlock</button>
+                                            </form>
+                                        }
+                                        <form method="post" action="/Admin/SetAccountActive" style="margin:0;" onsubmit="return confirm('@(admin.IsActive ? "Deactivate" : "Activate") this administrator account?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="accountRole" value="Admin" />
+                                            <input type="hidden" name="id" value="@admin.Id" />
+                                            <input type="hidden" name="isActive" value="@(!admin.IsActive)" />
+                                            <button class="btn btn-sm @(admin.IsActive ? "btn-outline-secondary" : "btn-outline-success") rounded-pill px-3" disabled="@(isLastActive ? "disabled" : null)" title="@(isLastActive ? "The last active administrator cannot be deactivated." : null)">
+                                                @(admin.IsActive ? "Deactivate" : "Activate")
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

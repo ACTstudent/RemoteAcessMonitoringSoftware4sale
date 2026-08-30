@@ -6,6 +6,7 @@ using Server.Models;
 using Server.Services;
 using Microsoft.AspNetCore.SignalR;
 using Server.Hubs;
+using Shared.Contracts;
 
 namespace Server.Controllers
 {
@@ -18,24 +19,59 @@ namespace Server.Controllers
         private readonly LabSessionLifecycleService _sessionLifecycle;
         private readonly IClassManagementService _classManagement;
         private readonly IAnalyticsService _analytics;
+        private readonly IAuthenticationService _authentication;
 
         public TeacherController(
             ApplicationDbContext context,
             SessionManagerService sessionManager,
             LabSessionLifecycleService sessionLifecycle,
             IClassManagementService? classManagement = null,
-            IAnalyticsService? analytics = null)
+            IAnalyticsService? analytics = null,
+            IAuthenticationService? authentication = null)
         {
             _context = context;
             _sessionManager = sessionManager;
             _sessionLifecycle = sessionLifecycle;
             _classManagement = classManagement ?? new ClassManagementService(context);
             _analytics = analytics ?? new AnalyticsService(context);
+            _authentication = authentication ?? new AuthenticationService(context);
         }
 
         private bool CheckAccess() => HttpContext.IsTeacher();
 
         private IActionResult Denied() => RedirectToAction("Login", "Account");
+
+        private IQueryable<Student> AccessibleStudents(int teacherId) =>
+            _context.Students.Where(student =>
+                student.AdviserId == teacherId ||
+                _context.Classes.Any(cls =>
+                    cls.TeacherId == teacherId &&
+                    !cls.IsArchived &&
+                    (cls.Status == "Active" || string.IsNullOrEmpty(cls.Status)) &&
+                    (cls.ClassId == student.ClassId ||
+                     _context.ClassStudents.Any(link => link.ClassId == cls.ClassId && link.StudentId == student.Id))));
+
+        private IQueryable<Computer> AccessibleComputers(List<int> studentIds)
+        {
+            var studentKeys = studentIds.Select(id => id.ToString()).ToList();
+            return _context.Computers.Where(computer =>
+                (computer.AssignedTo != null && studentKeys.Contains(computer.AssignedTo)) ||
+                _context.LabSessions.Any(session =>
+                    session.ComputerId == computer.ComputerId &&
+                    session.IsActive &&
+                    studentIds.Contains(session.StudentId)));
+        }
+
+        private static string? NormalizeComputerStatus(string? status) => status?.Trim().ToLowerInvariant() switch
+        {
+            "available" => "Available",
+            "assigned" => "Assigned",
+            "in use" => "In Use",
+            "maintenance" => "Maintenance",
+            "online" => "Online",
+            "offline" => "Offline",
+            _ => null
+        };
 
         private async Task AuditAsync(string action, string details)
         {
@@ -49,6 +85,40 @@ namespace Server.Controllers
                 Timestamp = DateTime.Now
             });
             await _context.SaveChangesAsync();
+        }
+
+        // ---------- Account settings ----------
+        public IActionResult Settings()
+        {
+            if (!CheckAccess()) return Denied();
+            return View(new PasswordChangeInput());
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword([Bind("CurrentPassword,NewPassword,ConfirmPassword")] PasswordChangeInput input)
+        {
+            if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
+
+            if (!ModelState.IsValid)
+            {
+                return View("Settings", input);
+            }
+
+            var changed = await _authentication.ChangeTeacherPasswordAsync(
+                teacherId.Value,
+                input.CurrentPassword,
+                input.NewPassword,
+                HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty);
+            if (!changed)
+            {
+                ModelState.AddModelError(nameof(input.CurrentPassword), "The current password is incorrect.");
+                return View("Settings", input);
+            }
+
+            TempData["Message"] = "Your password was changed successfully.";
+            return RedirectToAction(nameof(Settings));
         }
 
         // ---------- Dashboard ----------
@@ -473,6 +543,111 @@ namespace Server.Controllers
             return report is null ? NotFound() : View(report);
         }
 
+        public async Task<IActionResult> LabUtilization(DateTime? from = null, DateTime? to = null, string? station = null, int? classId = null)
+        {
+            if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
+            var start = (from ?? DateTime.UtcNow.Date.AddDays(-30)).Date;
+            var end = (to ?? DateTime.UtcNow.Date).Date.AddDays(1);
+            if (end <= start || end - start > TimeSpan.FromDays(366)) return BadRequest("Invalid date range.");
+            var report = await _analytics.GetLabUtilizationAsync(teacherId.Value, start, end, station, classId);
+            return report is null ? NotFound() : View(report);
+        }
+
+        public async Task<IActionResult> UnifiedTimeline(
+            DateTime? from = null,
+            DateTime? to = null,
+            int? studentId = null,
+            int? classId = null,
+            string? station = null,
+            string? source = null,
+            string? eventType = null,
+            int page = 1,
+            int pageSize = 100)
+        {
+            if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
+            var start = (from ?? DateTime.UtcNow.Date.AddDays(-7)).Date;
+            var end = (to ?? DateTime.UtcNow.Date).Date.AddDays(1);
+            if (end <= start || end - start > TimeSpan.FromDays(366) || page < 1 || pageSize is < 1 or > 500)
+                return BadRequest("Invalid timeline filters.");
+            var report = await _analytics.GetUnifiedTimelineAsync(teacherId.Value,
+                new UnifiedTimelineFilter(start, end, studentId, classId, station, source, eventType, page, pageSize));
+            return report is null ? NotFound() : View(report);
+        }
+
+        public async Task<IActionResult> BrowserMonitoringHistory(
+            DateTime? from = null,
+            DateTime? to = null,
+            string? browser = null,
+            string? mode = null,
+            int page = 1,
+            int pageSize = 100)
+        {
+            if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
+            if (page < 1 || pageSize is < 1 or > 500) return BadRequest("Invalid paging.");
+            var start = (from ?? DateTime.UtcNow.Date.AddDays(-7)).Date;
+            var end = (to ?? DateTime.UtcNow.Date).Date.AddDays(1);
+            if (end <= start || end - start > TimeSpan.FromDays(366)) return BadRequest("Invalid date range.");
+
+            BrowserMonitoringMode? selectedMode = null;
+            if (!string.IsNullOrWhiteSpace(mode))
+            {
+                if (!Enum.TryParse<BrowserMonitoringMode>(mode, true, out var parsedMode)) return BadRequest("Invalid browser mode.");
+                selectedMode = parsedMode;
+            }
+            var studentIds = await AccessibleStudents(teacherId.Value).Select(student => student.StudentNumber).ToListAsync();
+            var query = _context.BrowserMonitoringRecords.AsNoTracking()
+                .Where(record => studentIds.Contains(record.StudentId) && record.Timestamp >= start && record.Timestamp < end);
+            if (!string.IsNullOrWhiteSpace(browser)) query = query.Where(record => record.Browser == browser.Trim().ToLowerInvariant());
+            if (selectedMode.HasValue) query = query.Where(record => record.Mode == selectedMode.Value);
+            var total = await query.CountAsync();
+            page = Math.Min(page, Math.Max(1, (int)Math.Ceiling(total / (double)pageSize)));
+            var records = await query.OrderByDescending(record => record.Timestamp)
+                .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+            ViewBag.From = start.ToString("yyyy-MM-dd");
+            ViewBag.To = end.AddDays(-1).ToString("yyyy-MM-dd");
+            ViewBag.Browser = browser;
+            ViewBag.Mode = selectedMode;
+            ViewBag.Paging = new PagedResult<BrowserMonitoringRecord>(records, page, pageSize, total);
+            return View(records);
+        }
+
+        public async Task<IActionResult> ExportBrowserMonitoringCsv(
+            DateTime? from = null,
+            DateTime? to = null,
+            string? browser = null,
+            string? mode = null)
+        {
+            if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
+            var start = (from ?? DateTime.UtcNow.Date.AddDays(-7)).Date;
+            var end = (to ?? DateTime.UtcNow.Date).Date.AddDays(1);
+            if (end <= start || end - start > TimeSpan.FromDays(366)) return BadRequest("Invalid date range.");
+            BrowserMonitoringMode? selectedMode = null;
+            if (!string.IsNullOrWhiteSpace(mode))
+            {
+                if (!Enum.TryParse<BrowserMonitoringMode>(mode, true, out var parsedMode)) return BadRequest("Invalid browser mode.");
+                selectedMode = parsedMode;
+            }
+            var studentIds = await AccessibleStudents(teacherId.Value).Select(student => student.StudentNumber).ToListAsync();
+            var query = _context.BrowserMonitoringRecords.AsNoTracking()
+                .Where(record => studentIds.Contains(record.StudentId) && record.Timestamp >= start && record.Timestamp < end);
+            if (!string.IsNullOrWhiteSpace(browser)) query = query.Where(record => record.Browser == browser.Trim().ToLowerInvariant());
+            if (selectedMode.HasValue) query = query.Where(record => record.Mode == selectedMode.Value);
+            var records = await query.OrderByDescending(record => record.Timestamp).Take(5000).ToListAsync();
+            var csv = new System.Text.StringBuilder("Timestamp,Student ID,Station,Browser,Mode,Detail\n");
+            foreach (var record in records)
+                csv.AppendLine($"{record.Timestamp:O},{Csv(record.StudentId)},{Csv(record.PcName)},{Csv(record.Browser)},{record.Mode},{Csv(record.Detail)}");
+            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv; charset=utf-8",
+                $"CAMS-Browser-Monitoring-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv");
+        }
+
         public async Task<IActionResult> ExportStudentAnalyticsCsv(int id, DateTime? from = null, DateTime? to = null)
         {
             if (!CheckAccess()) return Denied();
@@ -500,16 +675,24 @@ namespace Server.Controllers
             return Json(timeline);
         }
 
-        public async Task<IActionResult> Alerts(bool includeAcknowledged = false, DateTime? from = null, DateTime? to = null, string? severity = null, string? studentId = null, int page = 1, int pageSize = 100)
+        public async Task<IActionResult> Alerts(bool includeAcknowledged = false, DateTime? from = null, DateTime? to = null, string? severity = null, string? studentId = null, string? station = null, string? status = null, int page = 1, int pageSize = 100)
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
             if (from.HasValue && to.HasValue && to.Value.Date < from.Value.Date) return BadRequest("Invalid date range.");
             if (page < 1 || pageSize is < 1 or > 500) return BadRequest("Invalid paging.");
-            var alerts = await _analytics.GetAlertsAsync(teacherId.Value, includeAcknowledged, from, to, severity, studentId?.Trim(), page, pageSize);
+            MonitoringAlertStatus? selectedStatus = includeAcknowledged ? null : MonitoringAlertStatus.Open;
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                if (!Enum.TryParse<MonitoringAlertStatus>(status, true, out var parsedStatus)) return BadRequest("Invalid alert status.");
+                selectedStatus = parsedStatus;
+            }
+            var filter = new MonitoringAlertFilter(from, to, severity, studentId?.Trim(), station?.Trim(), selectedStatus, page, pageSize);
+            var alerts = await _analytics.GetAlertsAsync(teacherId.Value, filter);
             ViewBag.From = from?.ToString("yyyy-MM-dd"); ViewBag.To = to?.ToString("yyyy-MM-dd");
-            ViewBag.Severity = severity; ViewBag.StudentId = studentId; ViewBag.Paging = alerts;
+            ViewBag.Severity = severity; ViewBag.StudentId = studentId; ViewBag.Station = station;
+            ViewBag.Status = selectedStatus; ViewBag.Paging = alerts;
             return View(alerts.Items);
         }
 
@@ -525,15 +708,22 @@ namespace Server.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ExportAlertsCsv(DateTime? from = null, DateTime? to = null, string? severity = null, string? studentId = null)
+        public async Task<IActionResult> ExportAlertsCsv(DateTime? from = null, DateTime? to = null, string? severity = null, string? studentId = null, string? station = null, string? status = null)
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
-            var alerts = await _analytics.GetAlertExportAsync(teacherId.Value, from, to, severity, studentId);
-            var csv = new System.Text.StringBuilder("Created,Student ID,Station,Severity,Title,Message,Status\n");
+            MonitoringAlertStatus? selectedStatus = null;
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                if (!Enum.TryParse<MonitoringAlertStatus>(status, true, out var parsedStatus)) return BadRequest("Invalid alert status.");
+                selectedStatus = parsedStatus;
+            }
+            var alerts = await _analytics.GetAlertExportAsync(teacherId.Value,
+                new MonitoringAlertFilter(from, to, severity, studentId, station, selectedStatus, 1, 500));
+            var csv = new System.Text.StringBuilder("First Seen,Last Seen,Student ID,Station,Severity,Title,Message,Occurrences,Status\n");
             foreach (var alert in alerts)
-                csv.AppendLine($"{alert.CreatedAt:O},{Csv(alert.StudentId)},{Csv(alert.PcName)},{Csv(alert.Severity)},{Csv(alert.Title)},{Csv(alert.Message)},{(alert.IsAcknowledged ? "Acknowledged" : "Open")}");
+                csv.AppendLine($"{alert.FirstSeenAt:O},{alert.LastSeenAt:O},{Csv(alert.StudentId)},{Csv(alert.PcName)},{Csv(alert.Severity)},{Csv(alert.Title)},{Csv(alert.Message)},{alert.OccurrenceCount},{alert.Status}");
             return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv; charset=utf-8", $"CAMS-Alerts-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv");
         }
 
@@ -547,18 +737,68 @@ namespace Server.Controllers
             return RedirectToAction(nameof(Alerts), new { includeAcknowledged = true });
         }
 
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> BulkAcknowledgeAlerts(List<int>? alertIds) =>
+            await ChangeAlertGroups(alertIds, ids => _analytics.AcknowledgeAlertsAsync(ids, HttpContext.Session.GetInt32("TeacherId")!.Value));
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> BulkDismissAlerts(List<int>? alertIds, string? reason) =>
+            await ChangeAlertGroups(alertIds, ids => _analytics.DismissAlertsAsync(ids, HttpContext.Session.GetInt32("TeacherId")!.Value, reason));
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> BulkReopenAlerts(List<int>? alertIds) =>
+            await ChangeAlertGroups(alertIds, ids => _analytics.ReopenAlertsAsync(ids, HttpContext.Session.GetInt32("TeacherId")!.Value));
+
+        private async Task<IActionResult> ChangeAlertGroups(
+            List<int>? alertIds,
+            Func<IReadOnlyCollection<int>, Task<AlertBulkActionResult>> change)
+        {
+            if (!CheckAccess()) return Denied();
+            if (!HttpContext.Session.GetInt32("TeacherId").HasValue) return Denied();
+            var ids = alertIds?.Where(id => id > 0).Distinct().Take(500).ToList() ?? new List<int>();
+            if (ids.Count == 0)
+            {
+                TempData["ErrorMessage"] = "Select at least one alert group.";
+                return RedirectToAction(nameof(Alerts));
+            }
+            var result = await change(ids);
+            TempData["Message"] = $"Updated {result.ChangedGroupCount} alert group(s).";
+            return RedirectToAction(nameof(Alerts), new { includeAcknowledged = true });
+        }
+
         // ---------- Student Management ----------
-        public async Task<IActionResult> Students()
+        public async Task<IActionResult> Students(string? search = null)
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
-            var students = await _classManagement.GetStudentsForTeacherAsync(teacherId.Value);
+
+            var query = AccessibleStudents(teacherId.Value)
+                .Include(student => student.Class)
+                .AsNoTracking();
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim().ToLower();
+                query = query.Where(student =>
+                    student.StudentNumber.ToLower().Contains(term) ||
+                    student.FirstName.ToLower().Contains(term) ||
+                    student.LastName.ToLower().Contains(term) ||
+                    student.FullName.ToLower().Contains(term) ||
+                    student.Username.ToLower().Contains(term));
+            }
+
+            ViewBag.Search = search?.Trim();
+            var students = await query
+                .OrderBy(student => student.LastName)
+                .ThenBy(student => student.FirstName)
+                .ToListAsync();
             return View(students);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateStudent(Student student, int? classId = null)
+        public async Task<IActionResult> CreateStudent(
+            [Bind("StudentNumber,FirstName,LastName,FullName,Username,PasswordHash")] Student student,
+            int? classId = null)
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
@@ -583,22 +823,17 @@ namespace Server.Controllers
             return RedirectToAction("Students");
         }
 
-        [HttpPost]
-        public async Task<IActionResult> UpdateStudent(Student student, string? newPassword)
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateStudent(
+            [Bind("Id,StudentNumber,FirstName,LastName,FullName,Username")] Student student,
+            string? newPassword)
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             var existing = teacherId.HasValue
-                ? await _context.Students
-                    .Include(s => s.Class)
-                    .FirstOrDefaultAsync(s => s.Id == student.Id &&
-                                              _context.Classes.Any(c =>
-                                                  c.TeacherId == teacherId.Value &&
-                                                  !c.IsArchived &&
-                                                  (c.ClassId == s.ClassId ||
-                                                   _context.ClassStudents.Any(cs => cs.ClassId == c.ClassId && cs.StudentId == s.Id))))
+                ? await AccessibleStudents(teacherId.Value).FirstOrDefaultAsync(s => s.Id == student.Id)
                 : null;
-            if (existing == null) return RedirectToAction("Students");
+            if (existing == null) return NotFound();
 
             var requestedStudentNumber = string.IsNullOrWhiteSpace(student.StudentNumber) ? existing.StudentNumber : student.StudentNumber.Trim();
             var requestedUsername = string.IsNullOrWhiteSpace(student.Username) ? existing.Username : student.Username.Trim();
@@ -629,77 +864,119 @@ namespace Server.Controllers
             }
 
             await _context.SaveChangesAsync();
-            await AuditAsync("UpdateStudent", $"Updated student {student.StudentNumber}");
+            await AuditAsync("UpdateStudent", $"Updated student {existing.Id} ({existing.StudentNumber})");
             TempData["Message"] = $"Student '{existing.FullName}' updated successfully!";
             return RedirectToAction("Students");
         }
 
-        [HttpPost]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteStudent(int studentId)
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
 
-            var existing = await _context.Students.FindAsync(studentId);
-            var accessibleClassId = existing == null
-                ? 0
-                : await _context.Classes
-                    .Where(c => c.TeacherId == teacherId.Value &&
-                                !c.IsArchived &&
-                                (c.ClassId == existing.ClassId ||
-                                 _context.ClassStudents.Any(cs => cs.ClassId == c.ClassId && cs.StudentId == existing.Id)))
-                    .Select(c => c.ClassId)
-                    .FirstOrDefaultAsync();
-            if (existing != null && accessibleClassId != 0)
-            {
-                var computer = await _context.Computers.FirstOrDefaultAsync(c => c.AssignedTo == studentId.ToString());
-                if (computer != null)
-                {
-                    computer.AssignedTo = null;
-                    if (computer.Status == "Assigned") computer.Status = "Available";
-                }
+            var existing = await AccessibleStudents(teacherId.Value)
+                .FirstOrDefaultAsync(student => student.Id == studentId);
+            if (existing == null) return NotFound();
 
-                var result = await _classManagement.RemoveStudentAsync(accessibleClassId, studentId, teacherId.Value);
+            var accessibleClassIds = await _context.Classes
+                .Where(cls => cls.TeacherId == teacherId.Value &&
+                              !cls.IsArchived &&
+                              (cls.Status == "Active" || string.IsNullOrEmpty(cls.Status)) &&
+                              (cls.ClassId == existing.ClassId ||
+                               _context.ClassStudents.Any(link => link.ClassId == cls.ClassId && link.StudentId == existing.Id)))
+                .Select(cls => cls.ClassId)
+                .ToListAsync();
+
+            foreach (var classId in accessibleClassIds)
+            {
+                var result = await _classManagement.RemoveStudentAsync(classId, studentId, teacherId.Value);
                 if (!result.Success)
                 {
                     TempData["ErrorMessage"] = result.Error;
-                }
-                else
-                {
-                    await AuditAsync("RemoveStudent", $"Removed student {studentId} from class {accessibleClassId}");
-                    TempData["Message"] = $"Student '{result.Name}' removed from your roster. The account was preserved.";
+                    return RedirectToAction(nameof(Students));
                 }
             }
-            return RedirectToAction("Students");
+
+            if (existing.AdviserId == teacherId.Value)
+            {
+                existing.AdviserId = null;
+                await _context.SaveChangesAsync();
+            }
+
+            await AuditAsync("RemoveStudent", $"Removed student {studentId} from the teacher's roster");
+            TempData["Message"] = $"Student '{existing.FullName}' removed from your roster. The account was preserved.";
+            return RedirectToAction(nameof(Students));
         }
 
         // ---------- Computer Management ----------
         public async Task<IActionResult> Computers()
         {
             if (!CheckAccess()) return Denied();
-            var computers = await _context.Computers.OrderBy(c => c.LaboratoryStation).ToListAsync();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
+
+            var students = await AccessibleStudents(teacherId.Value)
+                .AsNoTracking()
+                .OrderBy(student => student.LastName)
+                .ThenBy(student => student.FirstName)
+                .ToListAsync();
+            var studentIds = students.Select(student => student.Id).ToList();
+            ViewBag.StudentNames = students.ToDictionary(student => student.Id.ToString(), student => student.FullName);
+            var computers = await AccessibleComputers(studentIds)
+                .AsNoTracking()
+                .OrderBy(computer => computer.LaboratoryStation)
+                .ToListAsync();
             return View(computers);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> UpdateComputer(Computer computer)
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateComputer([Bind("ComputerId,LaboratoryStation,Status")] Computer computer)
         {
             if (!CheckAccess()) return Denied();
-            var existing = await _context.Computers.FindAsync(computer.ComputerId);
-            if (existing != null)
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
+
+            var studentIds = await AccessibleStudents(teacherId.Value)
+                .Select(student => student.Id)
+                .ToListAsync();
+            var existing = await AccessibleComputers(studentIds)
+                .FirstOrDefaultAsync(candidate => candidate.ComputerId == computer.ComputerId);
+            if (existing == null) return NotFound();
+
+            var station = computer.LaboratoryStation?.Trim();
+            if (string.IsNullOrWhiteSpace(station) || station.Length > 50)
             {
-                var previousStatus = existing.Status;
-                existing.LaboratoryStation = string.IsNullOrWhiteSpace(computer.LaboratoryStation) ? existing.LaboratoryStation : computer.LaboratoryStation.Trim();
-                existing.Status = string.IsNullOrWhiteSpace(computer.Status) ? existing.Status : computer.Status.Trim();
-                existing.AssignedTo = computer.AssignedTo;
-                if (!string.Equals(previousStatus, existing.Status, StringComparison.OrdinalIgnoreCase))
-                    _context.ComputerStatusHistories.Add(new ComputerStatusHistory { ComputerId = existing.ComputerId, Status = existing.Status, ChangedByType = "Teacher", ChangedById = HttpContext.Session.GetInt32("TeacherId") });
-                await _context.SaveChangesAsync();
-                await AuditAsync("UpdateComputer", $"Updated computer {existing.LaboratoryStation}");
-                TempData["Message"] = $"Workstation '{existing.LaboratoryStation}' status updated!";
+                TempData["ErrorMessage"] = "A workstation name of 50 characters or fewer is required.";
+                return RedirectToAction(nameof(Computers));
             }
-            return RedirectToAction("Computers");
+
+            var status = NormalizeComputerStatus(computer.Status);
+            if (status == null)
+            {
+                TempData["ErrorMessage"] = "Choose a valid workstation status.";
+                return RedirectToAction(nameof(Computers));
+            }
+
+            var previousStatus = existing.Status;
+            existing.LaboratoryStation = station;
+            existing.Status = status;
+            if (!string.Equals(previousStatus, existing.Status, StringComparison.OrdinalIgnoreCase))
+            {
+                _context.ComputerStatusHistories.Add(new ComputerStatusHistory
+                {
+                    ComputerId = existing.ComputerId,
+                    Status = existing.Status,
+                    ChangedByType = "Teacher",
+                    ChangedById = teacherId.Value
+                });
+            }
+
+            await _context.SaveChangesAsync();
+            await AuditAsync("UpdateComputer", $"Updated computer {existing.ComputerId} ({existing.LaboratoryStation})");
+            TempData["Message"] = $"Workstation '{existing.LaboratoryStation}' updated successfully!";
+            return RedirectToAction(nameof(Computers));
         }
 
         // ---------- Notifications ----------
@@ -846,10 +1123,8 @@ namespace Server.Controllers
             var roster = await _classManagement.GetRosterAsync(id);
             cls.ClassStudents = roster.ToList();
             ViewBag.EnrolledStudents = roster;
-            ViewBag.AllStudents = await _context.Students
+            ViewBag.AllStudents = await AccessibleStudents(teacherId.Value)
                 .Include(s => s.Class)
-                .Where(s => s.ClassId == null || s.ClassId == id ||
-                            (s.Class != null && s.Class.TeacherId == teacherId.Value && !s.Class.IsArchived))
                 .OrderBy(s => s.LastName)
                 .ThenBy(s => s.FirstName)
                 .ToListAsync();
@@ -943,6 +1218,11 @@ namespace Server.Controllers
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
 
+            if (!await AccessibleStudents(teacherId.Value).AnyAsync(student => student.Id == studentId))
+            {
+                return NotFound();
+            }
+
             var result = await _classManagement.EnrollExistingStudentAsync(classId, studentId, moveStudent, teacherId.Value);
             if (!result.Success)
             {
@@ -962,6 +1242,11 @@ namespace Server.Controllers
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
+
+            if (!await AccessibleStudents(teacherId.Value).AnyAsync(student => student.Id == studentId))
+            {
+                return NotFound();
+            }
 
             var result = await _classManagement.RemoveStudentAsync(classId, studentId, teacherId.Value);
             if (!result.Success)

@@ -17,9 +17,14 @@
             <p class="text-muted mb-0 small">Manage assigned classroom students & credentials</p>
         </div>
     </div>
-    <a asp-controller="Teacher" asp-action="Classes" class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold shadow-sm text-white">
-        <i class="bi bi-folder-plus me-1"></i> Add from Class Roster
-    </a>
+    <div class="d-flex gap-2 flex-wrap justify-content-end">
+        <a href="/Teacher/Settings" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-semibold">
+            <i class="bi bi-key me-1"></i> Account Settings
+        </a>
+        <a asp-controller="Teacher" asp-action="Classes" class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold shadow-sm text-white">
+            <i class="bi bi-folder-plus me-1"></i> Add from Class Roster
+        </a>
+    </div>
 </div>
 
 <!-- Metric Summary Cards -->
@@ -50,9 +55,16 @@
 
 <!-- Student Table Card -->
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
         <h5 class="fw-bold mb-0 text-dark">Enrolled Student Roster</h5>
-        <span class="badge bg-light text-dark font-monospace fs-6">@totalStudents Students</span>
+        <form method="get" action="/Teacher/Students" class="d-flex gap-2" role="search">
+            <input type="search" name="search" value="@ViewBag.Search" class="form-control filter-control" placeholder="Search name, ID, or username" aria-label="Search students" />
+            <button type="submit" class="btn btn-outline-emerald rounded-pill px-3"><i class="bi bi-search"></i> Search</button>
+            @if (!string.IsNullOrWhiteSpace(ViewBag.Search as string))
+            {
+                <a href="/Teacher/Students" class="btn btn-light rounded-pill px-3">Clear</a>
+            }
+        </form>
     </div>
     <div class="table-responsive">
         <table class="table custom-table mb-0">
@@ -100,7 +112,7 @@
                 @if (!Model.Any())
                 {
                     <tr>
-                        <td colspan="4" class="text-center py-4 text-muted">No students in roster. Click "Register Student" above.</td>
+                        <td colspan="4" class="text-center py-4 text-muted">No accessible students match the current search.</td>
                     </tr>
                 }
             </tbody>

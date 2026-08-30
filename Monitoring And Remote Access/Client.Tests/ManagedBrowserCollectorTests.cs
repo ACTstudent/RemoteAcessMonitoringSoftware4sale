@@ -46,4 +46,13 @@ public class ManagedBrowserCollectorTests
         var path = ManagedBrowserCollector.FindExecutable("chrome.exe");
         Assert.True(path is null || !path.Contains("BraveSoftware", StringComparison.OrdinalIgnoreCase));
     }
+
+    [Theory]
+    [InlineData("CAMS Dashboard", "chrome - CAMS Dashboard - Google Chrome", true)]
+    [InlineData("Other tab", "brave - CAMS Dashboard - Brave", false)]
+    [InlineData("", "chrome - CAMS Dashboard", false)]
+    public void MatchesForegroundWindowTitle(string tabTitle, string windowTitle, bool expected)
+    {
+        Assert.Equal(expected, ManagedBrowserCollector.IsForegroundTitleMatch(tabTitle, windowTitle));
+    }
 }

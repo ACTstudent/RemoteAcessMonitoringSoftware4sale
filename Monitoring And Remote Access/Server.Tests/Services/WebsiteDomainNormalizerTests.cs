@@ -8,6 +8,7 @@ public class WebsiteDomainNormalizerTests
     [InlineData(" HTTPS://user:secret@Example.COM:443/path?q=1#fragment ", "example.com")]
     [InlineData("https://example.com./", "example.com")]
     [InlineData("http://localhost:8080/tool", "localhost")]
+    [InlineData("example.com", "example.com")]
     public void TryNormalize_StripsUrlDetails(string value, string expected)
     {
         Assert.True(WebsiteDomainNormalizer.TryNormalize(value, out var domain));

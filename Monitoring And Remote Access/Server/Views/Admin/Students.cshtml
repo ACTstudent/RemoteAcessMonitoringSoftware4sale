@@ -20,9 +20,14 @@
             <p class="text-muted mb-0 small">Manage student profiles, LRNs, and workstation assignments</p>
         </div>
     </div>
-    <button class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#createStudentModal">
-        <i class="bi bi-person-plus-fill me-1"></i> Register Student
-    </button>
+    <div class="d-flex gap-2 flex-wrap justify-content-end">
+        <a href="/Admin/Settings" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-semibold">
+            <i class="bi bi-shield-lock me-1"></i> Admin Accounts
+        </a>
+        <button class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#createStudentModal">
+            <i class="bi bi-person-plus-fill me-1"></i> Register Student
+        </button>
+    </div>
 </div>
 
 <!-- Metric Summary Cards -->
@@ -78,6 +83,7 @@
                     <th>Student ID</th>
                     <th>Full Name</th>
                     <th>Username</th>
+                    <th>Account Status</th>
                     <th>Class Assignment</th>
                     <th>Assigned Workstation</th>
                     <th class="text-end">Actions</th>
@@ -87,6 +93,8 @@
                 @foreach (var s in Model)
                 {
                     var assigned = computers.FirstOrDefault(c => c.AssignedTo == s.Id.ToString());
+                    var isActive = string.IsNullOrWhiteSpace(s.Status) || string.Equals(s.Status, "Active", StringComparison.OrdinalIgnoreCase);
+                    var isLocked = s.LockoutEndUtc.HasValue && s.LockoutEndUtc.Value > DateTime.UtcNow;
                     <tr>
                         <td class="fw-bold text-muted font-monospace">@s.StudentNumber</td>
                         <td>
@@ -98,6 +106,13 @@
                             </div>
                         </td>
                         <td class="font-monospace text-emerald-700">@@@s.Username</td>
+                        <td>
+                            <span class="badge @(isActive ? "bg-success" : "bg-secondary") rounded-pill px-3 py-1">@(isActive ? "Active" : "Inactive")</span>
+                            @if (isLocked)
+                            {
+                                <span class="badge bg-danger rounded-pill px-2 py-1 ms-1">Locked</span>
+                            }
+                        </td>
                         <td>
                             <form method="post" action="/Admin/AssignStudentToClass" class="student-class-form d-flex gap-2 align-items-center" style="margin:0;">
                                 @Html.AntiForgeryToken()
@@ -128,7 +143,25 @@
                             </form>
                         </td>
                         <td>
-                            <div class="d-flex justify-content-end gap-1">
+                            <div class="d-flex justify-content-end gap-1 flex-wrap">
+                                @if (isLocked || s.FailedLoginAttempts > 0)
+                                {
+                                    <form method="post" action="/Admin/UnlockAccount" style="margin:0;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="accountRole" value="Student" />
+                                        <input type="hidden" name="id" value="@s.Id" />
+                                        <button class="btn btn-sm btn-outline-warning rounded-pill px-3"><i class="bi bi-unlock me-1"></i>Unlock</button>
+                                    </form>
+                                }
+                                <form method="post" action="/Admin/SetAccountActive" style="margin:0;" onsubmit="return confirm('@(isActive ? "Deactivate" : "Activate") this student account?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="accountRole" value="Student" />
+                                    <input type="hidden" name="id" value="@s.Id" />
+                                    <input type="hidden" name="isActive" value="@(!isActive)" />
+                                    <button class="btn btn-sm @(isActive ? "btn-outline-secondary" : "btn-outline-success") rounded-pill px-3">
+                                        <i class="bi @(isActive ? "bi-person-dash" : "bi-person-check") me-1"></i>@(isActive ? "Deactivate" : "Activate")
+                                    </button>
+                                </form>
                                 <button type="button" class="btn btn-sm btn-outline-emerald rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editStudentModal-@s.Id">
                                     <i class="bi bi-pencil me-1"></i> Edit
                                 </button>
@@ -146,7 +179,7 @@
                 @if (!Model.Any())
                 {
                     <tr>
-                        <td colspan="6" class="text-center py-4 text-muted">No student records registered yet.</td>
+                        <td colspan="7" class="text-center py-4 text-muted">No student records registered yet.</td>
                     </tr>
                 }
             </tbody>

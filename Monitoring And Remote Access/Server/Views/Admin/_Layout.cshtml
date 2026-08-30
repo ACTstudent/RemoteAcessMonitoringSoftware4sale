@@ -66,6 +66,11 @@
                     <span>LAN Configuration</span>
                 </a>
 
+                <a href="@Url.Action("Index", "AdminDatabase")" class="nav-item-custom @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminDatabase" ? "active" : "")">
+                    <i class="bi bi-database-gear"></i>
+                    <span>Database Maintenance</span>
+                </a>
+
                 <div class="sidebar-label">Policy & Security</div>
 
                 <a href="@Url.Action("Restrictions", "Admin")" class="nav-item-custom @(currentAction == "Restrictions" ? "active" : "")">
@@ -98,6 +103,11 @@
                 <a href="@Url.Action("SystemLogs", "Admin")" class="nav-item-custom @(currentAction == "SystemLogs" ? "active" : "")">
                     <i class="bi bi-bug-fill"></i>
                     <span>System Logs</span>
+                </a>
+
+                <a href="@Url.Action("Settings", "Admin")" class="nav-item-custom @(currentAction == "Settings" ? "active" : "")">
+                    <i class="bi bi-person-gear"></i>
+                    <span>Account & Lockouts</span>
                 </a>
             </nav>
         </aside>

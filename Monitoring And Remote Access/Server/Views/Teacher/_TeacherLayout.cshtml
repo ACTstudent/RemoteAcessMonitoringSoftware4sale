@@ -76,14 +76,29 @@
                     <span>Classroom Records</span>
                 </a>
 
-                <a href="@Url.Action("Alerts", "Teacher")" class="nav-item-custom @(currentAction == "Alerts" ? "active" : "")">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    <span>Monitoring Alerts</span>
+                <a href="@Url.Action("LabUtilization", "Teacher")" class="nav-item-custom @(currentAction == "LabUtilization" ? "active" : "")">
+                    <i class="bi bi-bar-chart-fill"></i>
+                    <span>Lab Utilization</span>
+                </a>
+
+                <a href="@Url.Action("UnifiedTimeline", "Teacher")" class="nav-item-custom @(currentAction == "UnifiedTimeline" ? "active" : "")">
+                    <i class="bi bi-clock-history"></i>
+                    <span>Unified Timeline</span>
+                </a>
+
+                <a href="@Url.Action("BrowserMonitoringHistory", "Teacher")" class="nav-item-custom @(currentAction == "BrowserMonitoringHistory" ? "active" : "")">
+                    <i class="bi bi-browser-chrome"></i>
+                    <span>Browser Monitoring</span>
                 </a>
 
                 <a href="@Url.Action("Alerts", "Teacher")" class="nav-item-custom @(currentAction == "Alerts" ? "active" : "")">
                     <i class="bi bi-bell-fill"></i>
                     <span>Monitoring Alerts</span>
+                </a>
+
+                <a href="@Url.Action("Settings", "Teacher")" class="nav-item-custom @(currentAction == "Settings" ? "active" : "")">
+                    <i class="bi bi-person-gear"></i>
+                    <span>Account Settings</span>
                 </a>
             </nav>
         </aside>

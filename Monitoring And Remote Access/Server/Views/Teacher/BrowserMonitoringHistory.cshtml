@@ -1,0 +1,48 @@
+@using Server.Models
+@using Shared.Contracts
+@model IReadOnlyList<BrowserMonitoringRecord>
+@{
+    ViewData["Title"] = "Browser Monitoring History";
+    Layout = "_TeacherLayout";
+    var paging = ViewBag.Paging as PagedResult<BrowserMonitoringRecord>;
+}
+
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+    <div>
+        <span class="text-uppercase small fw-bold text-success">Privacy-safe browser diagnostics</span>
+        <h2 class="fw-extrabold mb-1">Browser Monitoring History</h2>
+        <p class="text-muted mb-0">Records monitoring availability and mode only. Page content, credentials, cookies, paths, queries, and fragments are not stored.</p>
+    </div>
+    <a class="btn btn-outline-emerald rounded-pill" href="@Url.Action("ExportBrowserMonitoringCsv", new { from = ViewBag.From, to = ViewBag.To, browser = ViewBag.Browser, mode = ViewBag.Mode })"><i class="bi bi-download me-1"></i>Export CSV</a>
+</div>
+
+<form method="get" class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-sm-6 col-lg-2"><label class="form-label small text-muted" for="browser-from">From</label><input id="browser-from" type="date" name="from" value="@ViewBag.From" class="form-control" /></div>
+        <div class="col-sm-6 col-lg-2"><label class="form-label small text-muted" for="browser-to">To</label><input id="browser-to" type="date" name="to" value="@ViewBag.To" class="form-control" /></div>
+        <div class="col-sm-6 col-lg-3"><label class="form-label small text-muted" for="browser-name">Browser</label><select id="browser-name" name="browser" class="form-select"><option value="">Chrome and Brave</option><option value="chrome" selected="@(ViewBag.Browser == "chrome")">Chrome</option><option value="brave" selected="@(ViewBag.Browser == "brave")">Brave</option></select></div>
+        <div class="col-sm-6 col-lg-3"><label class="form-label small text-muted" for="browser-mode">Mode</label><select id="browser-mode" name="mode" class="form-select"><option value="">All modes</option>@foreach (var option in Enum.GetValues<BrowserMonitoringMode>()) { <option value="@option" selected="@(ViewBag.Mode?.ToString() == option.ToString())">@option</option> }</select></div>
+        <div class="col-lg-2"><button class="btn btn-emerald w-100" type="submit"><i class="bi bi-funnel me-1"></i>Apply</button></div>
+    </div>
+</form>
+
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table custom-table align-middle mb-0">
+            <thead><tr><th>Time</th><th>Student</th><th>Station</th><th>Browser</th><th>Mode</th><th>Detail</th></tr></thead>
+            <tbody>
+            @foreach (var record in Model)
+            {
+                var modeClass = record.Mode switch { BrowserMonitoringMode.ManagedProtocol => "text-bg-success", BrowserMonitoringMode.WindowTitleFallback => "text-bg-warning", _ => "text-bg-secondary" };
+                <tr><td class="text-nowrap">@record.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td><td class="font-monospace">@record.StudentId</td><td>@record.PcName</td><td class="text-capitalize">@record.Browser</td><td><span class="badge rounded-pill @modeClass">@record.Mode</span></td><td class="text-muted">@(record.Detail ?? "-")</td></tr>
+            }
+            @if (!Model.Any()) { <tr><td colspan="6" class="text-center text-muted py-5">No browser monitoring records match these filters.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (paging is not null && paging.PageCount > 1)
+{
+    <nav class="d-flex justify-content-between align-items-center mt-3"><span class="small text-muted">@paging.TotalCount records</span><div class="d-flex gap-2"><a class="btn btn-sm btn-outline-secondary @(paging.Page == 1 ? "disabled" : "")" href="@Url.Action("BrowserMonitoringHistory", new { from = ViewBag.From, to = ViewBag.To, browser = ViewBag.Browser, mode = ViewBag.Mode, page = paging.Page - 1, pageSize = paging.PageSize })">Previous</a><span class="small align-self-center">Page @paging.Page of @paging.PageCount</span><a class="btn btn-sm btn-outline-secondary @(paging.Page == paging.PageCount ? "disabled" : "")" href="@Url.Action("BrowserMonitoringHistory", new { from = ViewBag.From, to = ViewBag.To, browser = ViewBag.Browser, mode = ViewBag.Mode, page = paging.Page + 1, pageSize = paging.PageSize })">Next</a></div></nav>
+}

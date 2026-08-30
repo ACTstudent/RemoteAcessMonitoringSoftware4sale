@@ -13,6 +13,8 @@ namespace Server.Hubs;
 public sealed class RemoteMonitoringHub : Hub
 {
     private const int MaxFrameBase64Length = 6 * 1024 * 1024;
+    private const int MaxTelemetryBatchSize = 50;
+    private static readonly ConcurrentDictionary<string, byte> ActiveTelemetryBatches = new();
 
     private readonly IMonitoringService _monitoringService;
     private readonly ITelemetryService _telemetryService;
@@ -586,6 +588,12 @@ public sealed class RemoteMonitoringHub : Hub
         {
             using var scope = _scopeFactory.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var dedupeKey = $"{canonicalInfraction.TargetType}:{canonicalInfraction.Target}".ToLowerInvariant();
+            var groupKey = MonitoringAlert.CreateGroupKey(
+                canonicalInfraction.StudentId,
+                canonicalInfraction.PcName,
+                dedupeKey,
+                "Restricted activity detected");
             var alert = new MonitoringAlert
             {
                 StudentId = canonicalInfraction.StudentId,
@@ -593,16 +601,29 @@ public sealed class RemoteMonitoringHub : Hub
                 Severity = "Warning",
                 Title = "Restricted activity detected",
                 Message = $"{canonicalInfraction.TargetType}: {canonicalInfraction.Target}",
-                DedupeKey = $"{canonicalInfraction.TargetType}:{canonicalInfraction.Target}".ToLowerInvariant(),
+                DedupeKey = dedupeKey,
+                GroupKey = groupKey,
+                OccurrenceCount = 1,
+                FirstSeenAt = canonicalInfraction.Timestamp,
+                LastSeenAt = canonicalInfraction.Timestamp,
                 CreatedAt = canonicalInfraction.Timestamp
             };
-            var duplicate = await context.MonitoringAlerts.AnyAsync(a =>
-                a.StudentId == canonicalInfraction.StudentId && !a.IsAcknowledged &&
-                a.DedupeKey == alert.DedupeKey &&
-                a.CreatedAt >= canonicalInfraction.Timestamp.AddMinutes(-5));
-            if (!duplicate)
+            var existing = await context.MonitoringAlerts
+                .Where(a => a.GroupKey == groupKey && !a.IsAcknowledged && a.DismissedAt == null)
+                .OrderByDescending(a => a.LastSeenAt)
+                .FirstOrDefaultAsync();
+            var suppressNotification = existing is not null &&
+                existing.LastSeenAt >= canonicalInfraction.Timestamp.AddMinutes(-5);
+            if (existing is null)
             {
                 context.MonitoringAlerts.Add(alert);
+            }
+            else
+            {
+                existing.OccurrenceCount = Math.Max(1, existing.OccurrenceCount) + 1;
+                existing.LastSeenAt = canonicalInfraction.Timestamp;
+                existing.Message = alert.Message;
+                alert = existing;
             }
             context.AuditLogs.Add(new AuditLog
             {
@@ -612,7 +633,7 @@ public sealed class RemoteMonitoringHub : Hub
                 Timestamp = canonicalInfraction.Timestamp
             });
             await context.SaveChangesAsync();
-            if (!duplicate)
+            if (!suppressNotification)
             {
                 await Clients.Group(HubEventNames.TeachersGroup)
                     .SendAsync(HubEventNames.MonitoringAlertReceived, alert);
@@ -630,96 +651,184 @@ public sealed class RemoteMonitoringHub : Hub
     public async Task ReportIdleStatus(IdleStatusMessage status)
     {
         var student = RequireStudent();
-        if (status is null)
-            throw new HubException("The idle status report is invalid.");
-        var canonicalStatus = status with
-        {
-            ConnectionId = Context.ConnectionId,
-            StudentId = student.StudentId,
-            PcName = student.PcName,
-            Timestamp = DateTime.UtcNow
-        };
+        var canonicalStatus = CanonicalizeIdleStatus(student, status);
 
-        _monitoringService.ReportIdleStatus(canonicalStatus);
         await TryRecordTelemetryAsync(() => _telemetryService.RecordIdleStatusAsync(
             canonicalStatus.ConnectionId,
             canonicalStatus.StudentId,
             canonicalStatus.PcName,
             canonicalStatus.IsIdle,
             canonicalStatus.Timestamp));
-        await Clients.Group(HubEventNames.TeachersGroup)
-            .SendAsync(HubEventNames.IdleStatusReceived, canonicalStatus);
+        await PublishIdleStatusAsync(canonicalStatus);
     }
 
     public async Task ReportActiveApp(ActiveAppMessage app)
     {
         var student = RequireStudent();
-        if (app is null || string.IsNullOrWhiteSpace(app.ApplicationName) || app.ApplicationName.Length > 500)
-            throw new HubException("The active application report is invalid.");
+        var canonicalApp = CanonicalizeActiveApp(student, app);
 
-        var canonicalApp = app with
-        {
-            ConnectionId = Context.ConnectionId,
-            StudentId = student.StudentId,
-            PcName = student.PcName,
-            Timestamp = DateTime.UtcNow
-        };
-
-        _monitoringService.ReportActiveApp(canonicalApp);
         await TryRecordTelemetryAsync(() => _telemetryService.RecordApplicationUsageAsync(
             canonicalApp.ConnectionId,
             canonicalApp.StudentId,
             canonicalApp.PcName,
             canonicalApp.ApplicationName,
             canonicalApp.Timestamp));
-        await Clients.Group(HubEventNames.TeachersGroup)
-            .SendAsync(HubEventNames.ActiveAppReceived, canonicalApp);
+        await PublishActiveAppAsync(canonicalApp);
     }
 
     public async Task ReportWebsiteActivity(WebsiteActivityMessage website)
     {
         var student = RequireStudent();
-        if (website is null || !WebsiteDomainNormalizer.TryNormalize(website.Domain, out var domain) || domain.Length > 300 ||
-            string.IsNullOrWhiteSpace(website.Browser) || website.Browser.Length > 50)
-            throw new HubException("The website activity report is invalid.");
-
-        var canonical = website with
-        {
-            ConnectionId = Context.ConnectionId,
-            StudentId = student.StudentId,
-            PcName = student.PcName,
-            Domain = domain,
-            Timestamp = DateTime.UtcNow
-        };
+        var canonical = CanonicalizeWebsiteActivity(student, website);
         await TryRecordTelemetryAsync(() => _telemetryService.RecordWebsiteUsageAsync(
             canonical.ConnectionId, canonical.StudentId, canonical.PcName,
             canonical.Domain, canonical.Browser, canonical.Timestamp));
-        await Clients.Group(HubEventNames.TeachersGroup)
-            .SendAsync(HubEventNames.WebsiteActivityReceived, canonical);
+        await PublishWebsiteActivityAsync(canonical);
     }
 
     public async Task ReportBrowserMonitoringStatus(BrowserMonitoringStatusMessage status)
     {
         var student = RequireStudent();
-        if (status is null || string.IsNullOrWhiteSpace(status.Browser) || status.Browser.Length > 50 ||
-            !Enum.IsDefined(status.Mode) || (status.Detail?.Length ?? 0) > 300)
-            throw new HubException("The browser monitoring status is invalid.");
+        var canonical = CanonicalizeBrowserMonitoringStatus(student, status);
+        await TryRecordTelemetryAsync(() => _telemetryService.RecordBrowserMonitoringStatusAsync(canonical));
+        await PublishBrowserMonitoringStatusAsync(canonical);
+    }
 
-        var canonical = status with
+    public async Task<TelemetryBatchResult> ReportTelemetryBatch(TelemetryBatchMessage batch)
+    {
+        var student = RequireStudent();
+        if (batch?.Items is null || batch.Items.Count is 0 or > MaxTelemetryBatchSize)
+            throw new HubException($"Telemetry batches must contain between 1 and {MaxTelemetryBatchSize} items.");
+        if (!ActiveTelemetryBatches.TryAdd(Context.ConnectionId, 0))
+            throw new HubException("A telemetry batch is already being processed; retry after backpressure clears.");
+
+        try
+        {
+            var canonicalItems = new List<TelemetryBatchItem>(batch.Items.Count);
+            foreach (var item in batch.Items)
+            {
+                if (item is null || item.PayloadCount != 1)
+                    throw new HubException("Each telemetry batch item must contain exactly one payload.");
+
+                if (item.IdleStatus is { } idle)
+                    canonicalItems.Add(TelemetryBatchItem.From(CanonicalizeIdleStatus(student, idle)));
+                else if (item.ActiveApp is { } app)
+                    canonicalItems.Add(TelemetryBatchItem.From(CanonicalizeActiveApp(student, app)));
+                else if (item.WebsiteActivity is { } website)
+                    canonicalItems.Add(TelemetryBatchItem.From(CanonicalizeWebsiteActivity(student, website)));
+                else if (item.BrowserMonitoringStatus is { } browserStatus)
+                    canonicalItems.Add(TelemetryBatchItem.From(CanonicalizeBrowserMonitoringStatus(student, browserStatus)));
+            }
+
+            // Durable clients acknowledge a batch only after SQLite commits it successfully.
+            await _telemetryService.RecordBatchAsync(canonicalItems);
+            foreach (var item in canonicalItems)
+            {
+                if (item.IdleStatus is { } idle)
+                    await PublishIdleStatusAsync(idle);
+                else if (item.ActiveApp is { } app)
+                    await PublishActiveAppAsync(app);
+                else if (item.WebsiteActivity is { } website)
+                    await PublishWebsiteActivityAsync(website);
+                else if (item.BrowserMonitoringStatus is { } browserStatus)
+                    await PublishBrowserMonitoringStatusAsync(browserStatus);
+            }
+
+            return new TelemetryBatchResult(canonicalItems.Count);
+        }
+        finally
+        {
+            ActiveTelemetryBatches.TryRemove(Context.ConnectionId, out _);
+        }
+    }
+
+    private IdleStatusMessage CanonicalizeIdleStatus(StudentConnectionMessage student, IdleStatusMessage? status)
+    {
+        if (status is null)
+            throw new HubException("The idle status report is invalid.");
+        return status with
+        {
+            ConnectionId = Context.ConnectionId,
+            StudentId = student.StudentId,
+            PcName = student.PcName
+        };
+    }
+
+    private ActiveAppMessage CanonicalizeActiveApp(StudentConnectionMessage student, ActiveAppMessage? app)
+    {
+        if (app is null || !TelemetryValueNormalizer.TryNormalizeApplicationName(app.ApplicationName, out var applicationName))
+            throw new HubException("The active application report is invalid.");
+        return app with
+        {
+            ConnectionId = Context.ConnectionId,
+            StudentId = student.StudentId,
+            PcName = student.PcName,
+            ApplicationName = applicationName
+        };
+    }
+
+    private WebsiteActivityMessage CanonicalizeWebsiteActivity(StudentConnectionMessage student, WebsiteActivityMessage? website)
+    {
+        if (website is null || !WebsiteDomainNormalizer.TryNormalize(website.Domain, out var domain) || domain.Length > 300 ||
+            string.IsNullOrWhiteSpace(website.Browser) || website.Browser.Length > 50 || website.Browser.Any(char.IsControl))
+            throw new HubException("The website activity report is invalid.");
+        return website with
+        {
+            ConnectionId = Context.ConnectionId,
+            StudentId = student.StudentId,
+            PcName = student.PcName,
+            Domain = domain,
+            Browser = website.Browser.Trim().ToLowerInvariant()
+        };
+    }
+
+    private BrowserMonitoringStatusMessage CanonicalizeBrowserMonitoringStatus(
+        StudentConnectionMessage student,
+        BrowserMonitoringStatusMessage? status)
+    {
+        if (status is null || string.IsNullOrWhiteSpace(status.Browser) || status.Browser.Length > 50 ||
+            status.Browser.Any(char.IsControl) || !Enum.IsDefined(status.Mode))
+            throw new HubException("The browser monitoring status is invalid.");
+        return status with
         {
             ConnectionId = Context.ConnectionId,
             StudentId = student.StudentId,
             PcName = student.PcName,
             Browser = status.Browser.Trim().ToLowerInvariant(),
-            Timestamp = DateTime.UtcNow
+            Detail = BrowserMonitoringStatusMessage.NormalizeDetail(status.Detail)
         };
-        _monitoringService.ReportBrowserMonitoringStatus(canonical);
+    }
+
+    private async Task PublishIdleStatusAsync(IdleStatusMessage status)
+    {
+        _monitoringService.ReportIdleStatus(status);
         await Clients.Group(HubEventNames.TeachersGroup)
-            .SendAsync(HubEventNames.BrowserMonitoringStatusReceived, canonical);
+            .SendAsync(HubEventNames.IdleStatusReceived, status);
+    }
+
+    private async Task PublishActiveAppAsync(ActiveAppMessage app)
+    {
+        _monitoringService.ReportActiveApp(app);
+        await Clients.Group(HubEventNames.TeachersGroup)
+            .SendAsync(HubEventNames.ActiveAppReceived, app);
+    }
+
+    private async Task PublishWebsiteActivityAsync(WebsiteActivityMessage website)
+    {
+        await Clients.Group(HubEventNames.TeachersGroup)
+            .SendAsync(HubEventNames.WebsiteActivityReceived, website);
+    }
+
+    private async Task PublishBrowserMonitoringStatusAsync(BrowserMonitoringStatusMessage status)
+    {
+        _monitoringService.ReportBrowserMonitoringStatus(status);
+        await Clients.Group(HubEventNames.TeachersGroup)
+            .SendAsync(HubEventNames.BrowserMonitoringStatusReceived, status);
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
+        ActiveTelemetryBatches.TryRemove(Context.ConnectionId, out _);
         if (_remoteSessions.TryRemove(Context.ConnectionId, out var sessionId))
         {
             try

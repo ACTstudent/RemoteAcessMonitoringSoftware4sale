@@ -519,8 +519,8 @@ namespace Client
                 .OrderByDescending(r => r.Target.Count(c => c != '*')).ThenByDescending(r => r.Mode == "Allow").FirstOrDefault();
             if (matchingApp is not null && matchingApp.Mode != "Allow") await HandleViolation(matchingApp, app, processName, token);
 
-            if (_allowRules.Any(r => r.RuleType == "Application") && matchingApp is null && processName is not ("explorer" or "shellexperiencehost" or "searchapp"))
-                await ReportViolation("Application", app, processName, kill: true, token);
+if (_allowRules.Any(r => r.RuleType == "Application") && matchingApp is null && processName is not ("explorer" or "shellexperiencehost" or "searchapp"))
+                await ReportViolation("Application", app, processName, kill: true, token, reportedTarget: processName);
 
             var websiteRules = _blockRules.Concat(_allowRules).Where(r => r.RuleType == "Website");
             var matchingWebsite = websiteRules.Where(r => windowTitle.Contains(r.Target.Trim().ToLowerInvariant()))
@@ -528,14 +528,16 @@ namespace Client
             if (matchingWebsite is not null && matchingWebsite.Mode != "Allow") await HandleViolation(matchingWebsite, app, processName, token);
         }
 
-        private async Task HandleViolation(RestrictionRuleMessage rule, string app, string processName, CancellationToken token)
+private async Task HandleViolation(RestrictionRuleMessage rule, string app, string processName, CancellationToken token)
         {
             // Kill the offending process for blocked applications/games
             bool kill = rule.RuleType == "Application";
-            await ReportViolation(rule.RuleType, app, processName, kill, token);
+            // Persist only a normalized process name or the matched rule target, never raw window titles.
+            var reportedTarget = rule.RuleType == "Website" ? rule.Target : processName;
+            await ReportViolation(rule.RuleType, app, processName, kill, token, reportedTarget);
         }
 
-        private async Task ReportViolation(string targetType, string app, string processName, bool kill, CancellationToken token)
+        private async Task ReportViolation(string targetType, string app, string processName, bool kill, CancellationToken token, string? reportedTarget = null)
         {
             var key = targetType + ":" + app;
             if (_lastInfraction.TryGetValue(key, out var last) && DateTime.UtcNow - last < TimeSpan.FromSeconds(30))
@@ -564,7 +566,7 @@ namespace Client
             {
                 try
                 {
-                    await hub.ReportInfractionAsync(new InfractionMessage("", _studentId, Environment.MachineName, app, targetType, DateTime.UtcNow));
+                    await hub.ReportInfractionAsync(new InfractionMessage("", _studentId, Environment.MachineName, reportedTarget ?? app, targetType, DateTime.UtcNow));
                 }
                 catch
                 {
@@ -630,9 +632,13 @@ namespace Client
                                     ApplicationName: appName,
                                     Timestamp: DateTime.UtcNow));
                                 var foregroundBrowser = appName.Split(" - ")[0].Trim().ToLowerInvariant();
-                                var website = BrowserUrlCollector.TryGetForegroundWebsite();
+                                var fallbackWebsite = BrowserUrlCollector.TryGetForegroundWebsite();
+                                var website = fallbackWebsite is { Status: BrowserMonitoringStatus.Captured }
+                                    ? fallbackWebsite
+                                    : null;
                                 if (website == null && foregroundBrowser is "chrome" or "brave")
-                                    website = await _managedBrowserCollector.TryGetActiveWebsiteAsync(foregroundBrowser, token);
+                                    website = await _managedBrowserCollector.TryGetActiveWebsiteAsync(foregroundBrowser, appName, token);
+                                website ??= fallbackWebsite;
                                 if (website is { Status: BrowserMonitoringStatus.Captured, Domain: not null } &&
                                     website.Domain != _lastWebsiteReport)
                                 {

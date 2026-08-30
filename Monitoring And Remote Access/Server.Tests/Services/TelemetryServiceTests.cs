@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Services;
+using Shared.Contracts;
 
 namespace Server.Tests.Services;
 
@@ -124,5 +125,61 @@ public class TelemetryServiceTests
         await Assert.ThrowsAsync<ArgumentException>(() => service.RecordWebsiteUsageAsync(
             "connection-1", "student-1", "PC-01", "example.com", new string('b', 51), DateTime.UtcNow));
         Assert.Empty(await db.WebsiteUsageLogs.ToListAsync());
+    }
+
+    [Fact]
+    public async Task RecordBatch_PersistsOnceInOrderAndNormalizesPrivateValues()
+    {
+        await using var db = CreateContext();
+        var service = new TelemetryService(db);
+        var started = DateTime.UtcNow.AddMinutes(-2);
+        var ended = started.AddSeconds(10);
+        var items = new List<TelemetryBatchItem>
+        {
+            TelemetryBatchItem.From(new IdleStatusMessage("connection-1", "42", "PC-01", true, started)),
+            TelemetryBatchItem.From(new IdleStatusMessage("connection-1", "42", "PC-01", false, ended)),
+            TelemetryBatchItem.From(new ActiveAppMessage("connection-1", "42", "PC-01",
+                "chrome - Private page title", ended.AddSeconds(1))),
+            TelemetryBatchItem.From(new WebsiteActivityMessage("connection-1", "42", "PC-01",
+                "https://user:secret@example.com/private", "Chrome", ended.AddSeconds(2))),
+            TelemetryBatchItem.From(new BrowserMonitoringStatusMessage("connection-1", "42", "PC-01",
+                "chrome", BrowserMonitoringMode.ManagedProtocol, ended.AddSeconds(3)))
+        };
+
+        await service.RecordBatchAsync(items);
+
+        var interval = await db.IdleIntervals.SingleAsync();
+        Assert.Equal(ended, interval.EndedAt);
+        Assert.Equal("chrome", (await db.UsageLogs.SingleAsync()).AppName);
+        Assert.Equal("example.com", (await db.WebsiteUsageLogs.SingleAsync()).Domain);
+        var browserStatus = await db.BrowserMonitoringRecords.SingleAsync();
+        Assert.Equal(BrowserMonitoringMode.ManagedProtocol, browserStatus.Mode);
+        Assert.Equal("chrome", browserStatus.Browser);
+        Assert.Equal(4, await db.ActivityEvents.CountAsync());
+    }
+
+    [Fact]
+    public async Task RecordBatch_ClosesExistingIdleIntervalThenOpensNextInterval()
+    {
+        await using var db = CreateContext();
+        var service = new TelemetryService(db);
+        var started = DateTime.UtcNow.AddMinutes(-3);
+        var resumed = started.AddMinutes(1);
+        var idleAgain = resumed.AddMinutes(1);
+        await service.RecordIdleStatusAsync("connection-1", "student-1", "PC-01", true, started);
+
+        await service.RecordBatchAsync(new[]
+        {
+            TelemetryBatchItem.From(new IdleStatusMessage(
+                "connection-1", "student-1", "PC-01", false, resumed)),
+            TelemetryBatchItem.From(new IdleStatusMessage(
+                "connection-1", "student-1", "PC-01", true, idleAgain))
+        });
+
+        var intervals = await db.IdleIntervals.OrderBy(interval => interval.StartedAt).ToListAsync();
+        Assert.Equal(2, intervals.Count);
+        Assert.Equal(resumed, intervals[0].EndedAt);
+        Assert.Null(intervals[1].EndedAt);
+        Assert.Equal(idleAgain, intervals[1].StartedAt);
     }
 }

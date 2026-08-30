@@ -1,0 +1,281 @@
+@model Server.Services.DatabaseMaintenanceOverview
+@{
+    ViewData["Title"] = "Database Maintenance";
+    Layout = "~/Views/Admin/_Layout.cshtml";
+
+    static string FormatBytes(long? bytes)
+    {
+        if (!bytes.HasValue)
+        {
+            return "Unavailable";
+        }
+
+        string[] units = ["B", "KB", "MB", "GB", "TB"];
+        var value = (double)bytes.Value;
+        var unit = 0;
+        while (value >= 1024 && unit < units.Length - 1)
+        {
+            value /= 1024;
+            unit++;
+        }
+
+        return $"{value:0.##} {units[unit]} ({bytes.Value:N0} bytes)";
+    }
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-box-primary">
+            <i class="bi bi-database-gear fs-3"></i>
+        </div>
+        <div>
+            <h2 class="fw-extrabold mb-0 text-dark">Database Maintenance</h2>
+            <p class="text-muted mb-0 small">Local SQLite health, online backups, and restart-safe recovery</p>
+        </div>
+    </div>
+    <span class="badge @(Model.Health.Integrity.IsHealthy ? "bg-success" : "bg-danger") rounded-pill px-3 py-2">
+        <i class="bi @(Model.Health.Integrity.IsHealthy ? "bi-check-circle" : "bi-exclamation-triangle") me-1"></i>
+        Integrity: @(Model.Health.Integrity.IsHealthy ? "Healthy" : "Attention required")
+    </span>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-danger" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>@Model.ErrorMessage
+    </div>
+}
+
+@if (Model.PendingRestore is { } pendingRestore)
+{
+    <div class="alert @(pendingRestore.IsReady ? "alert-warning" : "alert-danger")" role="alert">
+        <h5 class="alert-heading fw-bold">
+            <i class="bi bi-arrow-repeat me-2"></i>Restart-time restore pending
+        </h5>
+        <p class="mb-1">@pendingRestore.Status</p>
+        <div class="small font-monospace text-break">Backup: @pendingRestore.BackupFileName</div>
+        @if (pendingRestore.StagedAtUtc.HasValue)
+        {
+            <div class="small">Staged: @pendingRestore.StagedAtUtc.Value.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss zzz")</div>
+        }
+        @if (!string.IsNullOrWhiteSpace(pendingRestore.SafetyBackupFileName))
+        {
+            <div class="small font-monospace text-break">Safety backup: @pendingRestore.SafetyBackupFileName</div>
+        }
+    </div>
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-hdd text-emerald-700 fs-4"></i>
+                    <h5 class="fw-bold mb-0">Database File</h5>
+                </div>
+                <div class="small text-muted mb-1">Local path</div>
+                <div class="font-monospace small text-break mb-3">@Model.Health.DatabasePath</div>
+                <div class="small text-muted mb-1">Main file size</div>
+                <div class="fw-semibold">@FormatBytes(Model.Health.DatabaseSizeBytes)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-shield-check text-emerald-700 fs-4"></i>
+                    <h5 class="fw-bold mb-0">PRAGMA integrity_check</h5>
+                </div>
+                @if (Model.Health.Integrity.Results.Count == 0)
+                {
+                    <p class="text-muted mb-0">No integrity result was returned.</p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var result in Model.Health.Integrity.Results)
+                        {
+                            <li class="list-group-item px-0 py-1 font-monospace small text-break">@result</li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-clock-history text-emerald-700 fs-4"></i>
+                    <h5 class="fw-bold mb-0">Latest Backup</h5>
+                </div>
+                @if (Model.Health.LatestBackup is { } latestBackup)
+                {
+                    <div class="font-monospace small text-break mb-2">@latestBackup.FileName</div>
+                    <div class="small text-muted">@latestBackup.CreatedAtUtc.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss zzz")</div>
+                    <div class="small text-muted">@FormatBytes(latestBackup.SizeBytes)</div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">No CAMS-managed backup exists yet.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-xl-6">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-white border-bottom p-4">
+                <h5 class="fw-bold mb-1"><i class="bi bi-plus-circle me-2 text-emerald-700"></i>Create Online Backup</h5>
+                <p class="text-muted small mb-0">Uses the SQLite backup API so active readers and writers can continue safely.</p>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" action="@Url.Action("CreateBackup", "AdminDatabase")">
+                    @Html.AntiForgeryToken()
+                    <label for="backupLabel" class="form-label fw-semibold">Optional label</label>
+                    <input id="backupLabel" name="label" maxlength="200" class="form-control mb-2" placeholder="Before semester rollover" autocomplete="off" />
+                    <div class="form-text mb-3">Only ASCII letters and numbers are retained; other characters become separators. A UTC timestamp is always added.</div>
+                    <button type="submit" class="btn btn-emerald text-white fw-semibold">
+                        <i class="bi bi-database-add me-1"></i>Create and validate backup
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="card border-danger shadow-sm rounded-4 h-100">
+            <div class="card-header bg-white border-bottom p-4">
+                <h5 class="fw-bold text-danger mb-1"><i class="bi bi-arrow-counterclockwise me-2"></i>Stage Restore</h5>
+                <p class="text-muted small mb-0">The selected managed backup is validated and copied beside the database. The live database is not replaced until a server restart.</p>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" action="@Url.Action("StageRestore", "AdminDatabase")">
+                    @Html.AntiForgeryToken()
+                    <label for="restoreBackup" class="form-label fw-semibold">Known backup</label>
+                    <select id="restoreBackup" name="backupFileName" class="form-select mb-3" required disabled="@(Model.Backups.Count == 0)">
+                        <option value="">Select a managed backup</option>
+                        @foreach (var backup in Model.Backups)
+                        {
+                            <option value="@backup.FileName">@backup.FileName</option>
+                        }
+                    </select>
+                    <label for="restoreConfirmation" class="form-label fw-semibold">Type RESTORE to confirm</label>
+                    <input id="restoreConfirmation" name="confirmation" class="form-control mb-2 font-monospace" maxlength="20" autocomplete="off" required disabled="@(Model.Backups.Count == 0)" />
+                    <div class="form-text mb-3">Restart CAMS after staging. Startup rechecks the SHA-256 hash, integrity, CAMS schema, WAL checkpoint, and safety backup before atomic replacement.</div>
+                    <button type="submit" class="btn btn-danger fw-semibold" disabled="@(Model.Backups.Count == 0)">
+                        <i class="bi bi-exclamation-triangle me-1"></i>Validate and stage restore
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h5 class="fw-bold mb-1"><i class="bi bi-diagram-3 me-2 text-emerald-700"></i>EF Core Migrations</h5>
+            <p class="text-muted small mb-0">Applied and pending migrations reported by the application DbContext.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <span class="badge bg-success">@Model.Health.AppliedMigrations.Count applied</span>
+            <span class="badge @(Model.Health.PendingMigrations.Count == 0 ? "bg-secondary" : "bg-warning text-dark")">@Model.Health.PendingMigrations.Count pending</span>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        @if (!string.IsNullOrWhiteSpace(Model.Health.MigrationStatusError))
+        {
+            <div class="alert alert-warning">@Model.Health.MigrationStatusError</div>
+        }
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <h6 class="fw-bold">Applied</h6>
+                @if (Model.Health.AppliedMigrations.Count == 0)
+                {
+                    <p class="text-muted small mb-0">No applied migrations were reported.</p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var migration in Model.Health.AppliedMigrations)
+                        {
+                            <li class="list-group-item px-0 py-1 font-monospace small text-break">@migration</li>
+                        }
+                    </ul>
+                }
+            </div>
+            <div class="col-lg-6">
+                <h6 class="fw-bold">Pending</h6>
+                @if (!string.IsNullOrWhiteSpace(Model.Health.MigrationStatusError))
+                {
+                    <p class="text-muted small mb-0">Pending migration status is unavailable.</p>
+                }
+                else if (Model.Health.PendingMigrations.Count == 0)
+                {
+                    <p class="text-success small mb-0"><i class="bi bi-check-circle me-1"></i>Database schema is current.</p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var migration in Model.Health.PendingMigrations)
+                        {
+                            <li class="list-group-item px-0 py-1 font-monospace small text-break">@migration</li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h5 class="fw-bold mb-1"><i class="bi bi-archive me-2 text-emerald-700"></i>CAMS Backups</h5>
+            <p class="text-muted small mb-0">Only valid managed-name files in the controlled CAMS Backups directory are listed.</p>
+        </div>
+        <span class="badge bg-light text-dark">@Model.Backups.Count backup(s)</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table custom-table mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>Created</th>
+                    <th>File</th>
+                    <th>Label</th>
+                    <th>Size</th>
+                    <th class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var backup in Model.Backups)
+                {
+                    <tr>
+                        <td class="small text-nowrap">@backup.CreatedAtUtc.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td>
+                        <td class="font-monospace small text-break">@backup.FileName</td>
+                        <td>@(backup.Label ?? "-")</td>
+                        <td class="text-nowrap">@FormatBytes(backup.SizeBytes)</td>
+                        <td class="text-end">
+                            <form method="post" action="@Url.Action("ValidateBackup", "AdminDatabase")" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="backupFileName" value="@backup.FileName" />
+                                <button type="submit" class="btn btn-outline-success btn-sm">
+                                    <i class="bi bi-shield-check me-1"></i>Validate
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                @if (Model.Backups.Count == 0)
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">No managed backups found.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

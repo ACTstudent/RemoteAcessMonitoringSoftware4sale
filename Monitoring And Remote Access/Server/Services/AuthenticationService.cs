@@ -177,9 +177,82 @@ public class AuthenticationService : IAuthenticationService
 
     public async Task<bool> ChangeStudentPasswordAsync(int studentId, string currentPassword, string newPassword)
     {
-        var student = await _context.Students.FindAsync(studentId);
-        if (student == null || !VerifyPassword(student.PasswordHash, currentPassword) || string.IsNullOrWhiteSpace(newPassword)) return false;
-        student.PasswordHash = _hasher.HashPassword(new object(), newPassword.Trim());
+        return await ChangePasswordAsync("Student", studentId, currentPassword, newPassword, string.Empty);
+    }
+
+    public async Task<bool> ChangeTeacherPasswordAsync(
+        int teacherId,
+        string currentPassword,
+        string newPassword,
+        string ipAddress)
+    {
+        return await ChangePasswordAsync("Teacher", teacherId, currentPassword, newPassword, ipAddress);
+    }
+
+    public async Task<bool> ChangeAdminPasswordAsync(
+        int adminId,
+        string currentPassword,
+        string newPassword,
+        string ipAddress)
+    {
+        return await ChangePasswordAsync("Admin", adminId, currentPassword, newPassword, ipAddress);
+    }
+
+    private async Task<bool> ChangePasswordAsync(
+        string userType,
+        int accountId,
+        string currentPassword,
+        string newPassword,
+        string ipAddress)
+    {
+        string? passwordHash = null;
+        Action<string>? setPasswordHash = null;
+
+        if (userType == "Admin")
+        {
+            var admin = await _context.Admins.FindAsync(accountId);
+            if (admin != null)
+            {
+                passwordHash = admin.PasswordHash;
+                setPasswordHash = value => admin.PasswordHash = value;
+            }
+        }
+        else if (userType == "Teacher")
+        {
+            var teacher = await _context.Teachers.FindAsync(accountId);
+            if (teacher != null)
+            {
+                passwordHash = teacher.PasswordHash;
+                setPasswordHash = value => teacher.PasswordHash = value;
+            }
+        }
+        else if (userType == "Student")
+        {
+            var student = await _context.Students.FindAsync(accountId);
+            if (student != null)
+            {
+                passwordHash = student.PasswordHash;
+                setPasswordHash = value => student.PasswordHash = value;
+            }
+        }
+
+        if (setPasswordHash == null || string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 8 ||
+            !VerifyPassword(passwordHash ?? string.Empty, currentPassword))
+        {
+            await AuditAsync(userType, accountId, "PasswordChangeFailed", "Password change rejected after credential validation.", ipAddress);
+            return false;
+        }
+
+        setPasswordHash(_hasher.HashPassword(new object(), newPassword));
+        _context.AuditLogs.Add(new AuditLog
+        {
+            UserType = userType,
+            UserId = accountId,
+            Action = "PasswordChanged",
+            Details = $"{userType} changed their password.",
+            IpAddress = ipAddress,
+            Timestamp = DateTime.UtcNow
+        });
         await _context.SaveChangesAsync();
         return true;
     }

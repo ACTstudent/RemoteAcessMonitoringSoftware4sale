@@ -36,6 +36,7 @@ public static class HubEventNames
     // Restriction enforcement
     public const string FetchRestrictions = "FetchRestrictions";
     public const string RestrictionsReceived = "RestrictionsReceived";
+    public const string PolicyRefreshRequired = "PolicyRefreshRequired";
     public const string ReportInfraction = "ReportInfraction";
     public const string InfractionDetected = "InfractionDetected";
     public const string MonitoringAlertReceived = "MonitoringAlertReceived";

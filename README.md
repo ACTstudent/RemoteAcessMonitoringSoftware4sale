@@ -57,6 +57,14 @@ Pre-built installer setup executables published as versioned GitHub release asse
 - **Lab Sessions**: Configurable timed laboratory sessions with real-time countdown timers and attendance logs.
 - **Security Policies**: Application executable & website URL blacklists/whitelists enforced across workstations during active sessions.
 
+### 📊 Lab Analytics, Alerts & Database Maintenance
+- **Scoped Account & Workstation Management**: Teacher-scoped student/computer CRUD and roster management with per-object authorization checks, plus admin/teacher self-service password changes and account unlock/activation controls.
+- **Lab Utilization & Unified Timeline**: Teacher dashboards for per-station occupancy and active/idle durations, plus a unified activity timeline across sessions, applications, websites, alerts, and remote commands.
+- **Alert Lifecycle**: Grouped restriction alerts with occurrence counts, acknowledge/dismiss/reopen transitions, filtering, and CSV export.
+- **Browser Monitoring History**: Managed-browser status history (domain/status only — never credentials, paths, queries, or page content) with teacher filtering and CSV export.
+- **Durable Telemetry**: A bounded offline telemetry queue on each student PC with batched acknowledgment, configurable retention cleanup, and immediate policy-refresh broadcasts after rule changes.
+- **Database Maintenance**: Admin-controlled online SQLite backups, integrity validation, and restart-safe staged restore.
+
 ### 🛡️ Clean Installation & Crash Prevention Features
 - **Clean Installation (`cleaninstall`)**: Installers automatically close running processes and clean out old binary files, cached DLLs, static assets, and `wwwroot` folders before extracting new builds.
 - **Launch Crash Prevention**: `AppContext.BaseDirectory` working directory enforcement prevents launch failures when executing `Server.exe` from Desktop icons or custom shortcuts.

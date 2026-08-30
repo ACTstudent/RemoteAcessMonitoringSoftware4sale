@@ -113,14 +113,23 @@ builder.WebHost.ConfigureKestrel(options =>
 });
 builder.Services.AddHttpsRedirection(options => options.HttpsPort = httpsPort);
 
+DatabaseRestoreStartup.ApplyPendingRestore(
+    builder.Configuration,
+    builder.Environment.ContentRootPath);
+
 // CAMS is intentionally SQLite-only. Ignore legacy provider configuration.
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddSingleton<PolicyChangeBroadcastInterceptor>();
+builder.Services.AddDbContext<ApplicationDbContext>((services, options) =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
         ?? $"Data Source={Path.Combine(AppContext.BaseDirectory, "CAMS.db")}";
     options.UseSqlite(connectionString);
+    options.AddInterceptors(services.GetRequiredService<PolicyChangeBroadcastInterceptor>());
 });
 builder.Services.AddScoped<ITelemetryService, TelemetryService>();
+builder.Services.Configure<TelemetryRetentionOptions>(builder.Configuration.GetSection("TelemetryRetention"));
+builder.Services.AddHostedService<TelemetryRetentionCleanupService>();
+builder.Services.AddScoped<IDatabaseMaintenanceService, DatabaseMaintenanceService>();
 builder.Services.AddScoped<LabSessionLifecycleService>();
 builder.Services.AddHostedService<ExpiredLabSessionCleanupService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();

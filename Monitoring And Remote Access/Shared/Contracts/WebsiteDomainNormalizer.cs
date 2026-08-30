@@ -5,9 +5,25 @@ public static class WebsiteDomainNormalizer
     public static bool TryNormalize(string? value, out string domain)
     {
         domain = string.Empty;
-        if (!Uri.TryCreate(value?.Trim(), UriKind.Absolute, out var uri) ||
-            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) ||
-            string.IsNullOrWhiteSpace(uri.DnsSafeHost))
+        var candidate = value?.Trim();
+        if (string.IsNullOrWhiteSpace(candidate) || candidate.Length > 2048)
+            return false;
+
+        Uri? uri;
+        if (Uri.TryCreate(candidate, UriKind.Absolute, out var absoluteUri))
+        {
+            if (absoluteUri.Scheme != Uri.UriSchemeHttp && absoluteUri.Scheme != Uri.UriSchemeHttps)
+                return false;
+            uri = absoluteUri;
+        }
+        else
+        {
+            if (candidate.Contains(':') ||
+                !Uri.TryCreate($"https://{candidate}", UriKind.Absolute, out uri))
+                return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(uri.DnsSafeHost))
             return false;
 
         var host = uri.DnsSafeHost.TrimEnd('.').ToLowerInvariant();

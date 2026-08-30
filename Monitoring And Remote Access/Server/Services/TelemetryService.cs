@@ -1,12 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Models;
+using Shared.Contracts;
 
 namespace Server.Services;
 
 public sealed class TelemetryService : ITelemetryService
 {
     private const int MaxTimestampAgeDays = 7;
+    private const int MaxBatchSize = 50;
     private readonly ApplicationDbContext _db;
 
     public TelemetryService(ApplicationDbContext db)
@@ -18,16 +20,9 @@ public sealed class TelemetryService : ITelemetryService
         string applicationName, DateTime timestamp, CancellationToken cancellationToken = default)
     {
         var values = ValidateIdentity(connectionId, studentId, pcName, timestamp);
-        var app = Required(applicationName, 300, nameof(applicationName));
+        var app = NormalizeApplicationName(applicationName);
 
-        _db.UsageLogs.Add(new UsageLog
-        {
-            StudentId = int.TryParse(values.StudentId, out var parsedStudentId) ? parsedStudentId : null,
-            PcName = values.PcName,
-            AppName = app,
-            Timestamp = values.Timestamp
-        });
-        await RecordActivityEventCoreAsync(values, "ApplicationUsed", app, null, cancellationToken);
+        await AddApplicationUsageCoreAsync(values, app, cancellationToken);
         await _db.SaveChangesAsync(cancellationToken);
     }
 
@@ -35,10 +30,124 @@ public sealed class TelemetryService : ITelemetryService
         bool isIdle, DateTime timestamp, CancellationToken cancellationToken = default)
     {
         var values = ValidateIdentity(connectionId, studentId, pcName, timestamp);
-        var open = await _db.IdleIntervals
-            .Where(interval => interval.ConnectionId == values.ConnectionId && interval.EndedAt == null)
+        await AddIdleStatusCoreAsync(values, isIdle, cancellationToken);
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task RecordActivityEventAsync(string connectionId, string studentId, string pcName,
+        string eventType, string? applicationName = null, string? details = null,
+        DateTime? timestamp = null, CancellationToken cancellationToken = default)
+    {
+        var values = ValidateIdentity(connectionId, studentId, pcName, timestamp ?? DateTime.UtcNow);
+        var type = Required(eventType, 50, nameof(eventType));
+        var app = applicationName is null ? null : NormalizeApplicationName(applicationName);
+        var boundedDetails = Optional(details, 1000, nameof(details));
+        await RecordActivityEventCoreAsync(values, type, app, boundedDetails, cancellationToken);
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task RecordWebsiteUsageAsync(string connectionId, string studentId, string pcName,
+        string domain, string browser, DateTime timestamp, CancellationToken cancellationToken = default)
+    {
+        var values = ValidateIdentity(connectionId, studentId, pcName, timestamp);
+        var normalizedDomain = NormalizeDomain(domain);
+        var normalizedBrowser = Required(browser, 50, nameof(browser)).ToLowerInvariant();
+        await AddWebsiteUsageCoreAsync(values, normalizedDomain, normalizedBrowser, cancellationToken);
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task RecordBrowserMonitoringStatusAsync(
+        BrowserMonitoringStatusMessage status,
+        CancellationToken cancellationToken = default)
+    {
+        AddBrowserMonitoringStatus(status);
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task RecordBatchAsync(IReadOnlyList<TelemetryBatchItem> items,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+        if (items.Count > MaxBatchSize)
+            throw new ArgumentException($"Telemetry batches are limited to {MaxBatchSize} items.", nameof(items));
+
+        foreach (var item in items)
+            ValidateBatchItem(item);
+
+        foreach (var item in items)
+        {
+            if (item.IdleStatus is { } idle)
+            {
+                var values = ValidateIdentity(idle.ConnectionId, idle.StudentId, idle.PcName, idle.Timestamp);
+                await AddIdleStatusCoreAsync(values, idle.IsIdle, cancellationToken);
+            }
+            else if (item.ActiveApp is { } app)
+            {
+                var values = ValidateIdentity(app.ConnectionId, app.StudentId, app.PcName, app.Timestamp);
+                await AddApplicationUsageCoreAsync(values, NormalizeApplicationName(app.ApplicationName), cancellationToken);
+            }
+            else if (item.WebsiteActivity is { } website)
+            {
+                var values = ValidateIdentity(website.ConnectionId, website.StudentId, website.PcName, website.Timestamp);
+                await AddWebsiteUsageCoreAsync(values, NormalizeDomain(website.Domain),
+                    Required(website.Browser, 50, nameof(website.Browser)).ToLowerInvariant(), cancellationToken);
+            }
+            else if (item.BrowserMonitoringStatus is { } browserStatus)
+            {
+                AddBrowserMonitoringStatus(browserStatus);
+            }
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    private void AddBrowserMonitoringStatus(BrowserMonitoringStatusMessage status)
+    {
+        var values = ValidateIdentity(status.ConnectionId, status.StudentId, status.PcName, status.Timestamp);
+        var browser = Required(status.Browser, 50, nameof(status.Browser)).ToLowerInvariant();
+        if (!Enum.IsDefined(status.Mode)) throw new ArgumentException("The browser monitoring mode is invalid.", nameof(status));
+        _db.BrowserMonitoringRecords.Add(new BrowserMonitoringRecord
+        {
+            ConnectionId = values.ConnectionId,
+            StudentId = values.StudentId,
+            PcName = values.PcName,
+            Browser = browser,
+            Mode = status.Mode,
+            Detail = BrowserMonitoringStatusMessage.NormalizeDetail(status.Detail),
+            Timestamp = values.Timestamp
+        });
+    }
+
+    private async Task AddApplicationUsageCoreAsync(Identity values, string applicationName,
+        CancellationToken cancellationToken)
+    {
+        _db.UsageLogs.Add(new UsageLog
+        {
+            StudentId = int.TryParse(values.StudentId, out var parsedStudentId) ? parsedStudentId : null,
+            PcName = values.PcName,
+            AppName = applicationName,
+            Timestamp = values.Timestamp
+        });
+        await RecordActivityEventCoreAsync(values, "ApplicationUsed", applicationName, null, cancellationToken);
+    }
+
+    private async Task AddIdleStatusCoreAsync(Identity values, bool isIdle, CancellationToken cancellationToken)
+    {
+        var tracked = _db.IdleIntervals.Local
+            .Where(interval => interval.ConnectionId == values.ConnectionId &&
+                _db.Entry(interval).State != EntityState.Deleted)
+            .ToList();
+        var open = tracked
+            .Where(interval => interval.EndedAt == null)
             .OrderByDescending(interval => interval.StartedAt)
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefault();
+        if (open is null && tracked.Count == 0)
+        {
+            open = await _db.IdleIntervals
+                .Where(interval => interval.ConnectionId == values.ConnectionId && interval.EndedAt == null)
+                .OrderByDescending(interval => interval.StartedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
 
         var stateChanged = false;
         if (isIdle && open is null)
@@ -60,34 +169,46 @@ public sealed class TelemetryService : ITelemetryService
 
         if (stateChanged)
             await RecordActivityEventCoreAsync(values, isIdle ? "IdleStarted" : "IdleEnded", null, null, cancellationToken);
-        await _db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task RecordActivityEventAsync(string connectionId, string studentId, string pcName,
-        string eventType, string? applicationName = null, string? details = null,
-        DateTime? timestamp = null, CancellationToken cancellationToken = default)
+    private async Task AddWebsiteUsageCoreAsync(Identity values, string domain, string browser,
+        CancellationToken cancellationToken)
     {
-        var values = ValidateIdentity(connectionId, studentId, pcName, timestamp ?? DateTime.UtcNow);
-        var type = Required(eventType, 50, nameof(eventType));
-        var app = Optional(applicationName, 300, nameof(applicationName));
-        var boundedDetails = Optional(details, 1000, nameof(details));
-        await RecordActivityEventCoreAsync(values, type, app, boundedDetails, cancellationToken);
-        await _db.SaveChangesAsync(cancellationToken);
-    }
-
-    public async Task RecordWebsiteUsageAsync(string connectionId, string studentId, string pcName,
-        string domain, string browser, DateTime timestamp, CancellationToken cancellationToken = default)
-    {
-        var values = ValidateIdentity(connectionId, studentId, pcName, timestamp);
         _db.WebsiteUsageLogs.Add(new WebsiteUsageLog
         {
             StudentId = int.TryParse(values.StudentId, out var id) ? id : null,
-            Domain = Required(domain, 300, nameof(domain)),
-            Browser = Required(browser, 50, nameof(browser)),
+            Domain = domain,
+            Browser = browser,
             Timestamp = values.Timestamp
         });
         await RecordActivityEventCoreAsync(values, "WebsiteUsed", null, domain, cancellationToken);
-        await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static void ValidateBatchItem(TelemetryBatchItem? item)
+    {
+        if (item is null || item.PayloadCount != 1)
+            throw new ArgumentException("Each telemetry batch item must contain exactly one payload.", nameof(item));
+
+        if (item.IdleStatus is { } idle)
+            _ = ValidateIdentity(idle.ConnectionId, idle.StudentId, idle.PcName, idle.Timestamp);
+        else if (item.ActiveApp is { } app)
+        {
+            _ = ValidateIdentity(app.ConnectionId, app.StudentId, app.PcName, app.Timestamp);
+            _ = NormalizeApplicationName(app.ApplicationName);
+        }
+        else if (item.WebsiteActivity is { } website)
+        {
+            _ = ValidateIdentity(website.ConnectionId, website.StudentId, website.PcName, website.Timestamp);
+            _ = NormalizeDomain(website.Domain);
+            _ = Required(website.Browser, 50, nameof(website.Browser));
+        }
+        else if (item.BrowserMonitoringStatus is { } browserStatus)
+        {
+            _ = ValidateIdentity(browserStatus.ConnectionId, browserStatus.StudentId, browserStatus.PcName, browserStatus.Timestamp);
+            _ = Required(browserStatus.Browser, 50, nameof(browserStatus.Browser));
+            if (!Enum.IsDefined(browserStatus.Mode)) throw new ArgumentException("The browser monitoring mode is invalid.", nameof(item));
+            _ = BrowserMonitoringStatusMessage.NormalizeDetail(browserStatus.Detail);
+        }
     }
 
     private Task RecordActivityEventCoreAsync(Identity values, string eventType, string? applicationName,
@@ -133,6 +254,20 @@ public sealed class TelemetryService : ITelemetryService
         if (value.Length > maxLength)
             throw new ArgumentException($"{name} must be at most {maxLength} characters.", name);
         return value.Trim();
+    }
+
+    private static string NormalizeApplicationName(string value)
+    {
+        if (!TelemetryValueNormalizer.TryNormalizeApplicationName(value, out var applicationName))
+            throw new ArgumentException("applicationName is required and must identify an application, not window content.", nameof(value));
+        return applicationName;
+    }
+
+    private static string NormalizeDomain(string value)
+    {
+        if (!WebsiteDomainNormalizer.TryNormalize(value, out var domain) || domain.Length > 300)
+            throw new ArgumentException("domain must be a valid website domain.", nameof(value));
+        return domain;
     }
 
     private sealed record Identity(string ConnectionId, string StudentId, string PcName, DateTime Timestamp);

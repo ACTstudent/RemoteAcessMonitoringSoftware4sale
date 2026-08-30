@@ -6,6 +6,7 @@ using Moq;
 using Server.Controllers;
 using Server.Data;
 using Server.Models;
+using Server.Services;
 
 namespace Server.Tests.Controllers;
 
@@ -522,5 +523,116 @@ public class AdminControllerTests
 
         var removed = await db.Students.FindAsync(student.Id);
         Assert.Null(removed?.ClassId);
+    }
+
+    [Fact]
+    public async Task UnlockAccount_ClearsLockoutForEveryAccountRole()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var lockout = DateTime.UtcNow.AddMinutes(10);
+        var admin = new Admin { Id = 1, Username = "admin", FullName = "Admin", PasswordHash = "hash", FailedLoginAttempts = 3, LockoutEndUtc = lockout };
+        var teacher = new Teacher { TeacherId = 2, FirstName = "Locked", LastName = "Teacher", Username = "teacher", PasswordHash = "hash", FailedLoginAttempts = 4, LockoutEndUtc = lockout };
+        var student = new Student { Id = 3, StudentNumber = "S-LOCK", FullName = "Locked Student", Username = "student", PasswordHash = "hash", FailedLoginAttempts = 2, LockoutEndUtc = lockout };
+        db.AddRange(admin, teacher, student);
+        await db.SaveChangesAsync();
+
+        Assert.IsType<RedirectToActionResult>(await controller.UnlockAccount(AccountRole.Admin, admin.Id));
+        Assert.IsType<RedirectToActionResult>(await controller.UnlockAccount(AccountRole.Teacher, teacher.TeacherId));
+        Assert.IsType<RedirectToActionResult>(await controller.UnlockAccount(AccountRole.Student, student.Id));
+
+        Assert.Equal(0, admin.FailedLoginAttempts);
+        Assert.Null(admin.LockoutEndUtc);
+        Assert.Equal(0, teacher.FailedLoginAttempts);
+        Assert.Null(teacher.LockoutEndUtc);
+        Assert.Equal(0, student.FailedLoginAttempts);
+        Assert.Null(student.LockoutEndUtc);
+        Assert.Equal(3, await db.AuditLogs.CountAsync(log => log.Action == "UnlockAccount"));
+    }
+
+    [Fact]
+    public async Task SetAccountActive_RejectsDeactivatingLastActiveAdmin()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var admin = new Admin { Id = 1, Username = "only-admin", FullName = "Only Admin", PasswordHash = "hash", IsActive = true };
+        db.Admins.Add(admin);
+        await db.SaveChangesAsync();
+
+        var result = await controller.SetAccountActive(AccountRole.Admin, admin.Id, false);
+
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Settings", redirect.ActionName);
+        Assert.True((await db.Admins.FindAsync(admin.Id))?.IsActive);
+        Assert.Empty(await db.AuditLogs.Where(log => log.Action == "DeactivateAccount").ToListAsync());
+    }
+
+    [Fact]
+    public async Task SetAccountActive_UpdatesAdminTeacherAndStudentSafely()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var currentAdmin = new Admin { Id = 1, Username = "current", FullName = "Current", PasswordHash = "hash", IsActive = true };
+        var otherAdmin = new Admin { Id = 2, Username = "other", FullName = "Other", PasswordHash = "hash", IsActive = false };
+        var teacher = new Teacher { TeacherId = 3, FirstName = "A", LastName = "Teacher", Username = "teacher", PasswordHash = "hash", Status = "Active" };
+        var student = new Student { Id = 4, StudentNumber = "S-STATE", FullName = "A Student", Username = "student", PasswordHash = "hash", Status = "Active" };
+        db.AddRange(currentAdmin, otherAdmin, teacher, student);
+        await db.SaveChangesAsync();
+
+        await controller.SetAccountActive(AccountRole.Admin, otherAdmin.Id, true);
+        await controller.SetAccountActive(AccountRole.Teacher, teacher.TeacherId, false);
+        await controller.SetAccountActive(AccountRole.Student, student.Id, false);
+
+        Assert.True(otherAdmin.IsActive);
+        Assert.Equal("Inactive", teacher.Status);
+        Assert.Equal("Inactive", student.Status);
+        Assert.Equal(3, await db.AuditLogs.CountAsync(log => log.Action == "ActivateAccount" || log.Action == "DeactivateAccount"));
+    }
+
+    [Fact]
+    public async Task SetAccountActive_RejectsTeacherWithActiveClass()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var teacher = new Teacher { TeacherId = 5, FirstName = "Busy", LastName = "Teacher", Username = "busy", PasswordHash = "hash", Status = "Active" };
+        db.Teachers.Add(teacher);
+        await db.SaveChangesAsync();
+        db.Classes.Add(new Class { ClassName = "Active Class", TeacherId = teacher.TeacherId });
+        await db.SaveChangesAsync();
+
+        var result = await controller.SetAccountActive(AccountRole.Teacher, teacher.TeacherId, false);
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Active", teacher.Status);
+    }
+
+    [Fact]
+    public async Task ChangePassword_VerifiesCurrentPasswordAndCreatesAudit()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var hasher = new Microsoft.AspNetCore.Identity.PasswordHasher<object>();
+        var admin = new Admin
+        {
+            Id = 1,
+            Username = "admin",
+            FullName = "Admin",
+            PasswordHash = hasher.HashPassword(new object(), "old-password")
+        };
+        db.Admins.Add(admin);
+        await db.SaveChangesAsync();
+
+        var result = await controller.ChangePassword(new PasswordChangeInput
+        {
+            CurrentPassword = "old-password",
+            NewPassword = "new-password",
+            ConfirmPassword = "new-password"
+        });
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(
+            Microsoft.AspNetCore.Identity.PasswordVerificationResult.Success,
+            hasher.VerifyHashedPassword(new object(), admin.PasswordHash, "new-password"));
+        Assert.NotNull(await db.AuditLogs.FirstOrDefaultAsync(log => log.Action == "PasswordChanged" && log.UserType == "Admin"));
     }
 }

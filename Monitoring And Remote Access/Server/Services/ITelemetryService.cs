@@ -1,3 +1,5 @@
+using Shared.Contracts;
+
 namespace Server.Services;
 
 public interface ITelemetryService
@@ -14,4 +16,10 @@ public interface ITelemetryService
 
     Task RecordWebsiteUsageAsync(string connectionId, string studentId, string pcName,
         string domain, string browser, DateTime timestamp, CancellationToken cancellationToken = default);
+
+    Task RecordBrowserMonitoringStatusAsync(BrowserMonitoringStatusMessage status,
+        CancellationToken cancellationToken = default);
+
+    Task RecordBatchAsync(IReadOnlyList<TelemetryBatchItem> items,
+        CancellationToken cancellationToken = default);
 }

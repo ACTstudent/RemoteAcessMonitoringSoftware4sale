@@ -1,0 +1,128 @@
+@model Server.Models.UnifiedTimelineReport
+@{
+    ViewData["Title"] = "Unified Timeline";
+    Layout = "_TeacherLayout";
+    var filter = Model.Filter;
+    var timelinePage = Model.Timeline;
+    var displayedTo = filter.To > filter.From ? filter.To.AddTicks(-1) : filter.To;
+}
+
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+    <div>
+        <span class="text-uppercase small fw-bold text-success">Authorized activity record</span>
+        <h2 class="fw-extrabold mb-1">Unified Teacher Timeline</h2>
+        <p class="text-muted mb-0">Session boundaries, telemetry, alert groups, and your remote commands in one ordered audit view.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap" aria-label="Timeline source legend">
+        <span class="badge rounded-pill text-bg-primary">Session</span>
+        <span class="badge rounded-pill text-bg-info">Activity</span>
+        <span class="badge rounded-pill text-bg-danger">Alert</span>
+        <span class="badge rounded-pill text-bg-dark">Remote command</span>
+    </div>
+</div>
+
+<form method="get" class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-sm-6 col-xl-2"><label class="form-label small text-muted" for="timeline-from">From</label><input id="timeline-from" type="date" name="from" class="form-control" value="@filter.From.ToString("yyyy-MM-dd")" required /></div>
+        <div class="col-sm-6 col-xl-2"><label class="form-label small text-muted" for="timeline-to">To</label><input id="timeline-to" type="date" name="to" class="form-control" value="@displayedTo.ToString("yyyy-MM-dd")" required /></div>
+        <div class="col-sm-6 col-xl-2">
+            <label class="form-label small text-muted" for="timeline-source">Source</label>
+            <select id="timeline-source" name="source" class="form-select">
+                <option value="">All sources</option>
+                <option value="Session" selected="@(filter.Source == "Session")">Session</option>
+                <option value="Activity" selected="@(filter.Source == "Activity")">Activity</option>
+                <option value="Alert" selected="@(filter.Source == "Alert")">Alert</option>
+                <option value="RemoteCommand" selected="@(filter.Source == "RemoteCommand")">Remote command</option>
+            </select>
+        </div>
+        <div class="col-sm-6 col-xl-2"><label class="form-label small text-muted" for="timeline-event">Event type</label><input id="timeline-event" name="eventType" class="form-control" value="@filter.EventType" placeholder="e.g. Disconnected" /></div>
+        <div class="col-sm-6 col-xl-2">
+            <label class="form-label small text-muted" for="timeline-class">Class</label>
+            <select id="timeline-class" name="classId" class="form-select">
+                <option value="">All classes</option>
+                @foreach (var option in Model.AvailableClasses)
+                {
+                    <option value="@option.ClassId" selected="@(option.ClassId == filter.ClassId)">@option.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-sm-6 col-xl-2">
+            <label class="form-label small text-muted" for="timeline-student">Student</label>
+            <select id="timeline-student" name="studentId" class="form-select">
+                <option value="">All authorized students</option>
+                @foreach (var option in Model.AvailableStudents)
+                {
+                    <option value="@option.StudentId" selected="@(option.StudentId == filter.StudentId)">@option.Name (@option.StudentNumber)</option>
+                }
+            </select>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <label class="form-label small text-muted" for="timeline-station">Station</label>
+            <select id="timeline-station" name="station" class="form-select">
+                <option value="">All stations</option>
+                @foreach (var option in Model.AvailableStations)
+                {
+                    <option value="@option" selected="@(string.Equals(option, filter.Station, StringComparison.OrdinalIgnoreCase))">@option</option>
+                }
+            </select>
+        </div>
+        <div class="col-sm-6 col-xl-2"><label class="form-label small text-muted" for="timeline-page-size">Rows</label><select id="timeline-page-size" name="pageSize" class="form-select"><option value="25" selected="@(filter.PageSize == 25)">25</option><option value="50" selected="@(filter.PageSize == 50)">50</option><option value="100" selected="@(filter.PageSize == 100)">100</option><option value="250" selected="@(filter.PageSize == 250)">250</option></select></div>
+        <div class="col-xl-3 d-flex gap-2"><button class="btn btn-emerald flex-grow-1" type="submit"><i class="bi bi-funnel me-1"></i>Apply filters</button><a class="btn btn-outline-secondary" href="@Url.Action("UnifiedTimeline", "Teacher")">Reset</a></div>
+    </div>
+</form>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0">Chronology</h5>
+    <span class="small text-muted">@timelinePage.TotalCount events</span>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="list-group list-group-flush">
+        @foreach (var item in timelinePage.Items)
+        {
+            var sourceStyle = item.Source switch
+            {
+                "Session" => ("bi-clock-history", "text-bg-primary"),
+                "Activity" => ("bi-activity", "text-bg-info"),
+                "Alert" => ("bi-exclamation-triangle-fill", "text-bg-danger"),
+                _ => ("bi-terminal-fill", "text-bg-dark")
+            };
+            <article class="list-group-item border-0 border-bottom px-3 px-lg-4 py-3">
+                <div class="d-flex gap-3">
+                    <div class="badge @sourceStyle.Item2 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px;"><i class="bi @sourceStyle.Item1 fs-5"></i></div>
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="d-flex flex-column flex-md-row justify-content-between gap-1">
+                            <div><span class="badge rounded-pill bg-light text-dark border me-2">@item.EventType</span><strong>@item.Title</strong></div>
+                            <time class="small text-muted text-nowrap" datetime="@item.Timestamp.ToString("O")">@item.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</time>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(item.Details))
+                        {
+                            <p class="text-muted small mb-2 mt-2 text-break">@item.Details</p>
+                        }
+                        <div class="d-flex flex-wrap gap-2 small">
+                            <span><i class="bi bi-person me-1 text-muted"></i>@item.StudentName <span class="text-muted">(@item.StudentNumber)</span></span>
+                            <span><i class="bi bi-pc-display me-1 text-muted"></i>@item.Station</span>
+                            @if (!string.IsNullOrWhiteSpace(item.Severity)) { <span class="badge rounded-pill text-bg-warning">@item.Severity</span> }
+                            @if (!string.IsNullOrWhiteSpace(item.Status)) { <span class="badge rounded-pill bg-light text-dark border">@item.Status</span> }
+                        </div>
+                    </div>
+                </div>
+            </article>
+        }
+        @if (!timelinePage.Items.Any())
+        {
+            <div class="text-center text-muted py-5"><i class="bi bi-calendar2-x fs-2 d-block mb-2"></i>No authorized events match this reporting window.</div>
+        }
+    </div>
+</div>
+
+@if (timelinePage.PageCount > 1)
+{
+    <nav class="d-flex justify-content-between align-items-center mt-3" aria-label="Timeline pages">
+        <span class="small text-muted">Page @timelinePage.Page of @timelinePage.PageCount</span>
+        <div class="d-flex gap-2">
+            <a class="btn btn-sm btn-outline-secondary @(timelinePage.Page == 1 ? "disabled" : "")" href="@Url.Action("UnifiedTimeline", new { from = filter.From.ToString("yyyy-MM-dd"), to = displayedTo.ToString("yyyy-MM-dd"), filter.StudentId, filter.ClassId, filter.Station, filter.Source, filter.EventType, page = timelinePage.Page - 1, pageSize = timelinePage.PageSize })">Previous</a>
+            <a class="btn btn-sm btn-outline-secondary @(timelinePage.Page == timelinePage.PageCount ? "disabled" : "")" href="@Url.Action("UnifiedTimeline", new { from = filter.From.ToString("yyyy-MM-dd"), to = displayedTo.ToString("yyyy-MM-dd"), filter.StudentId, filter.ClassId, filter.Station, filter.Source, filter.EventType, page = timelinePage.Page + 1, pageSize = timelinePage.PageSize })">Next</a>
+        </div>
+    </nav>
+}

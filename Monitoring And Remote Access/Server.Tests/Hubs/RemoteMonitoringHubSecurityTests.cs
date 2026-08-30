@@ -69,6 +69,68 @@ public sealed class RemoteMonitoringHubSecurityTests
     }
 
     [Fact]
+    public async Task ReportTelemetryBatch_CanonicalizesIdentityAndPrivateValues()
+    {
+        await using var provider = CreateProvider();
+        var monitoring = new MonitoringService();
+        monitoring.RegisterStudent("student-connection", "student-1", "PC-01");
+        IReadOnlyList<TelemetryBatchItem>? recorded = null;
+        var telemetry = new Mock<ITelemetryService>();
+        telemetry.Setup(service => service.RecordBatchAsync(
+                It.IsAny<IReadOnlyList<TelemetryBatchItem>>(), It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyList<TelemetryBatchItem>, CancellationToken>((items, _) => recorded = items)
+            .Returns(Task.CompletedTask);
+        var hub = CreateHub(provider, monitoring, "student-connection", "Student", "1",
+            clientAgent: true, telemetryService: telemetry.Object);
+
+        var timestamp = DateTime.UtcNow.AddMinutes(-3);
+        var result = await hub.ReportTelemetryBatch(new TelemetryBatchMessage(new[]
+        {
+            TelemetryBatchItem.From(new ActiveAppMessage("spoofed", "spoofed", "spoofed",
+                "chrome - Private title", timestamp)),
+            TelemetryBatchItem.From(new WebsiteActivityMessage("spoofed", "spoofed", "spoofed",
+                "https://user:secret@example.com/private", "Chrome", timestamp))
+        }));
+
+        Assert.Equal(2, result.ProcessedCount);
+        Assert.NotNull(recorded);
+        Assert.Equal("student-connection", recorded![0].ActiveApp!.ConnectionId);
+        Assert.Equal("student-1", recorded[0].ActiveApp!.StudentId);
+        Assert.Equal("PC-01", recorded[0].ActiveApp!.PcName);
+        Assert.Equal("chrome", recorded[0].ActiveApp!.ApplicationName);
+        Assert.Equal(timestamp, recorded[0].ActiveApp!.Timestamp);
+        Assert.Equal("example.com", recorded[1].WebsiteActivity!.Domain);
+        Assert.Equal("chrome", recorded[1].WebsiteActivity!.Browser);
+        Assert.Single(monitoring.ActiveApps);
+    }
+
+    [Fact]
+    public async Task ReportTelemetryBatch_StripsNonAllowlistedBrowserDetail()
+    {
+        await using var provider = CreateProvider();
+        var monitoring = new MonitoringService();
+        monitoring.RegisterStudent("student-connection", "student-1", "PC-01");
+        IReadOnlyList<TelemetryBatchItem>? recorded = null;
+        var telemetry = new Mock<ITelemetryService>();
+        telemetry.Setup(service => service.RecordBatchAsync(
+                It.IsAny<IReadOnlyList<TelemetryBatchItem>>(), It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyList<TelemetryBatchItem>, CancellationToken>((items, _) => recorded = items)
+            .Returns(Task.CompletedTask);
+        var hub = CreateHub(provider, monitoring, "student-connection", "Student", "1",
+            clientAgent: true, telemetryService: telemetry.Object);
+
+        var result = await hub.ReportTelemetryBatch(new TelemetryBatchMessage(new[]
+        {
+            TelemetryBatchItem.From(new BrowserMonitoringStatusMessage("spoofed", "spoofed", "spoofed",
+                "chrome", BrowserMonitoringMode.ManagedProtocol, DateTime.UtcNow, "https://private.example.com/secret"))
+        }));
+
+        Assert.Equal(1, result.ProcessedCount);
+        Assert.NotNull(recorded);
+        Assert.Null(recorded![0].BrowserMonitoringStatus!.Detail);
+    }
+
+    [Fact]
     public async Task Disconnect_CleansMonitoringStateAndRemoteSession()
     {
         await using var provider = CreateProvider();
@@ -143,7 +205,8 @@ public sealed class RemoteMonitoringHubSecurityTests
     }
 
     private static RemoteMonitoringHub CreateHub(IServiceProvider provider, IMonitoringService monitoring,
-        string connectionId, string role, string userId, Mock<IHubCallerClients>? clients = null, bool clientAgent = false)
+        string connectionId, string role, string userId, Mock<IHubCallerClients>? clients = null,
+        bool clientAgent = false, ITelemetryService? telemetryService = null)
     {
         var context = new Mock<HubCallerContext>();
         var claims = new List<Claim>
@@ -163,7 +226,7 @@ public sealed class RemoteMonitoringHubSecurityTests
         if (ownsClients)
             clients.Setup(c => c.Client(It.IsAny<string>())).Returns(proxy.Object);
         clients.Setup(c => c.Group(It.IsAny<string>())).Returns(groupProxy.Object);
-        var hub = new RemoteMonitoringHub(monitoring, Mock.Of<ITelemetryService>(),
+        var hub = new RemoteMonitoringHub(monitoring, telemetryService ?? Mock.Of<ITelemetryService>(),
             new SessionManagerService(Mock.Of<IHubContext<RemoteMonitoringHub>>()),
             provider.GetRequiredService<IServiceScopeFactory>())
         {
