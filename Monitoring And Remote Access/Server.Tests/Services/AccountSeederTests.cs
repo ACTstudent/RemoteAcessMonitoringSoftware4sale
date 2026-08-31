@@ -73,6 +73,22 @@ public class AccountSeederTests
         Assert.Empty(db.Students);
     }
 
+    [Fact]
+    public void SeedConfiguredAccounts_RejectsWeakInitialAdminPassword()
+    {
+        using var db = CreateContext();
+        var configuration = CreateConfiguration(new Dictionary<string, string?>
+        {
+            ["Cams:InitialAdminPassword"] = "too-short"
+        });
+
+        var error = Assert.Throws<InvalidOperationException>(() =>
+            AccountSeeder.SeedConfiguredAccounts(db, configuration));
+
+        Assert.Contains("at least 12 characters", error.Message);
+        Assert.Empty(db.Admins);
+    }
+
     private static ApplicationDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()

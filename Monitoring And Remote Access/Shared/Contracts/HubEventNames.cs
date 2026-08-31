@@ -19,6 +19,7 @@ public static class HubEventNames
     public const string UnlockStudent = "UnlockStudent";
     public const string ForceLogout = "ForceLogout";
     public const string BroadcastScreen = "BroadcastScreen";
+    public const string BroadcastStopped = "BroadcastStopped";
     public const string SendNotification = "SendNotification";
 
     // Student status reporting

@@ -1,128 +1,101 @@
-# Use Case Diagram
+# CAMS Use Case Diagram
+
+The actors use fixed roles. Every authenticated operation includes server-side role and object-scope validation; CAMS does not expose configurable RBAC.
 
 ```mermaid
-flowchart TD
-    ADMIN([ADMIN])
-    TEACHER([TEACHER])
+flowchart LR
+    ADMIN([Admin])
+    TEACHER([Teacher])
+    STUDENT([Student])
+    CLIENT([Student at assigned Windows workstation])
+    PUBLIC([Public visitor])
 
-    subgraph Login["PROCESS LOG IN"]
-        direction TB
-        L1([LOGIN USER])
-        L2([VERIFY CREDENTIALS])
-        L3([VERIFY ACCESS CONTROL])
-        L1 -. include .-> L2
-        L1 -. include .-> L3
+    subgraph PublicUse[Public release surface]
+        P1[Read product/deployment guidance]
+        P2[Download public release artifacts and hashes]
     end
+
+    subgraph Auth[Authentication]
+        L1[Browser login]
+        L2[CLIENT login with PC name]
+        L3[Verify password hash, role, active/lockout state]
+        L4[Verify student-workstation assignment]
+        L1 -. includes .-> L3
+        L2 -. includes .-> L3
+        L2 -. includes .-> L4
+    end
+
+    subgraph AdminUse[Global administration]
+        A1[Manage teacher/student accounts and lockouts]
+        A2[Manage classes, rosters, computers, mappings]
+        A3[Manage global restrictions and session rules]
+        A4[Pause, resume, or end lab-wide sessions]
+        A5[Review/export reports, alerts, audit, system records]
+        A6[Back up/validate/stage restore of SQLite]
+        A7[View detected read-only LAN Status]
+        A8[Use authenticated Deployment Hub]
+        A9[Validate versions, hashes, certificate, endpoints]
+        A10[Create offline client bundle and confirm clients]
+        A8 -. includes .-> A9
+        A10 -. extends .-> A8
+    end
+
+    subgraph TeacherUse[Teacher-scoped classroom operation]
+        T1[Manage assigned classes and rosters]
+        T2[Create/edit accessible student account]
+        T3[Remove roster association but preserve account]
+        T4[Edit accessible workstation name/status]
+        T5[Start/pause/resume/end owned sessions]
+        T6[Monitor accessible screens/status]
+        T7[Send warning/broadcast/authorized commands]
+        T8[Manage teacher-owned restrictions]
+        T9[Manage scoped alerts and exports]
+    end
+
+    subgraph StudentUse[Student experience]
+        S1[Use web session/alerts/account portal]
+        S2[Enter assigned-workstation client session]
+        S3[See timer/session state]
+        S4[Receive CAMS topmost dialogs and policies]
+    end
+
+    PUBLIC --> P1
+    PUBLIC --> P2
     ADMIN --> L1
     TEACHER --> L1
-
-    subgraph AdmComputer["MANAGE ADMIN COMPUTER PROFILE"]
-        direction TB
-        C_CREATE([CREATE COMPUTER PROFILE])
-        C_VIEW([VIEW COMPUTER PROFILE])
-        C_DELETE([DELETE COMPUTER PROFILE])
-        C_EDIT([EDIT COMPUTER PROFILE])
-        C_CREATE -. extend .-> C_VIEW
-        C_DELETE -. extend .-> C_VIEW
-        C_EDIT -. extend .-> C_VIEW
-    end
-    ADMIN --> C_VIEW
-
-    subgraph AdmTeacher["MANAGE ADMIN TEACHER PROFILE"]
-        direction TB
-        T_CREATE([CREATE TEACHER ACCOUNT])
-        T_VIEW([VIEW TEACHER ACCOUNT])
-        T_DELETE([DELETE TEACHER ACCOUNT])
-        T_EDIT([EDIT TEACHER ACCOUNT])
-        T_SEARCH([SEARCH TEACHER ACCOUNT])
-        T_CREATE -. extend .-> T_VIEW
-        T_DELETE -. extend .-> T_VIEW
-        T_EDIT -. extend .-> T_VIEW
-        T_SEARCH -. extend .-> T_VIEW
-    end
-    ADMIN --> T_VIEW
-
-    subgraph AdmStudent["MANAGE ADMIN STUDENT PROFILE"]
-        direction TB
-        S_CREATE([CREATE STUDENT ACCOUNT])
-        S_VIEW([VIEW STUDENT PROFILE])
-        S_DELETE([DELETE STUDENT ACCOUNT])
-        S_EDIT([EDIT STUDENT ACCOUNT])
-        S_SEARCH([SEARCH STUDENT PROFILE])
-        S_CREATE -. extend .-> S_VIEW
-        S_DELETE -. extend .-> S_VIEW
-        S_EDIT -. extend .-> S_VIEW
-        S_SEARCH -. extend .-> S_VIEW
-    end
-    ADMIN --> S_VIEW
-
-    subgraph AdmClass["MANAGE ADMIN CLASS"]
-        direction TB
-        CL_CREATE([CREATE CLASS])
-        CL_VIEW([VIEW CLASS MANAGEMENT])
-        CL_DETAILS([VIEW CLASS DETAILS])
-        CL_DELETE([DELETE CLASS])
-        CL_EDIT([EDIT CLASS])
-        CL_SEARCH([SEARCH CLASS])
-        CL_ADD([ADD STUDENT])
-        CL_BULK([ADD BULK STUDENT])
-        CL_ARCHIVE([ARCHIVE CLASS])
-        CL_CREATE -. extend .-> CL_VIEW
-        CL_DELETE -. extend .-> CL_VIEW
-        CL_EDIT -. extend .-> CL_VIEW
-        CL_SEARCH -. extend .-> CL_VIEW
-        CL_DETAILS -. extend .-> CL_VIEW
-        CL_ADD -. extend .-> CL_DETAILS
-        CL_BULK -. extend .-> CL_DETAILS
-        CL_ARCHIVE -. extend .-> CL_DETAILS
-    end
-    ADMIN --> CL_VIEW
-
-    subgraph TeachComputer["MANAGE TEACHER COMPUTER PROFILE"]
-        direction TB
-        TC_VIEW([VIEW COMPUTER PROFILE])
-        TC_EDIT([EDIT COMPUTER PROFILE])
-        TC_EDIT -. extend .-> TC_VIEW
-    end
-    TEACHER --> TC_VIEW
-
-    subgraph TeachStudent["MANAGE TEACHER STUDENT PROFILE"]
-        direction TB
-        TS_CREATE([CREATE STUDENT ACCOUNT])
-        TS_VIEW([VIEW STUDENT ACCOUNT])
-        TS_DELETE([DELETE STUDENT ACCOUNT])
-        TS_EDIT([EDIT STUDENT ACCOUNT])
-        TS_SEARCH([SEARCH STUDENT PROFILE])
-        TS_CREATE -. extend .-> TS_VIEW
-        TS_DELETE -. extend .-> TS_VIEW
-        TS_EDIT -. extend .-> TS_VIEW
-        TS_SEARCH -. extend .-> TS_VIEW
-    end
-    TEACHER --> TS_VIEW
-
-    subgraph TeachClass["MANAGE TEACHER CLASS"]
-        direction TB
-        TCL_VIEW([VIEW CLASS])
-        TCL_SEARCH([SEARCH CLASS])
-        TCL_DETAILS([VIEW CLASS DETAILS])
-        TCL_SEARCH -. extend .-> TCL_VIEW
-        TCL_DETAILS -. extend .-> TCL_VIEW
-    end
-    TEACHER --> TCL_VIEW
+    STUDENT --> L1
+    CLIENT --> L2
+    ADMIN --> A1
+    ADMIN --> A2
+    ADMIN --> A3
+    ADMIN --> A4
+    ADMIN --> A5
+    ADMIN --> A6
+    ADMIN --> A7
+    ADMIN --> A8
+    TEACHER --> T1
+    TEACHER --> T2
+    TEACHER --> T3
+    TEACHER --> T4
+    TEACHER --> T5
+    TEACHER --> T6
+    TEACHER --> T7
+    TEACHER --> T8
+    TEACHER --> T9
+    STUDENT --> S1
+    CLIENT --> S2
+    CLIENT --> S3
+    CLIENT --> S4
 ```
 
-## Actors
+## Scope And Limits
 
-| Actor | Description |
+| Actor | Boundary |
 | --- | --- |
-| **ADMIN** | Full management rights: computer profiles, teacher accounts, student profiles, and classes. |
-| **TEACHER** | Limited rights: view/edit own computer profile, manage student accounts, and view classes. |
+| Public visitor | Receives public packages and documentation only. No local root CER, PFX, credentials, offline bundle, or Admin access. |
+| Admin | Global controls and deployment administration through the UI. LAN Status is read-only and does not configure DHCP/DNS/network adapters. |
+| Teacher | Only assigned/access-checked classes, students, computers, sessions, alerts, records, and teacher-owned restrictions. Cannot reassign teachers or globally delete a student through roster removal. |
+| Student browser user | Can use Student portal without workstation identity; this is not a monitored CLIENT session. |
+| Student CLIENT user | Must match the assigned workstation and then participates in monitoring, policy, and authorized command flows. |
 
-## Legend
-
-- `include` — the base use case always runs the included one (e.g. **LOGIN USER** always verifies credentials and access control).
-- `extend` — the extension is optional and triggered from the base use case (e.g. **VIEW COMPUTER PROFILE** can optionally lead to create/edit/delete/search).
-
-## Notes
-
-Recreated from the draw.io source. The original canvas had a duplicated "PROCESS LOG IN" block and some stray shapes — those were omitted here.
+Windows execution remains subject to the target environment. In particular, CAMS unlock cannot unlock the Windows secure desktop, 50 ms is a capture target rather than guaranteed FPS, and restart/shutdown/remote input must be validated under local policy.

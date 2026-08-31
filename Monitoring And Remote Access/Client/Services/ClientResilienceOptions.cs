@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 namespace Client.Services;
 
 public sealed class ClientResilienceOptions
@@ -9,21 +7,12 @@ public sealed class ClientResilienceOptions
 
     public static ClientResilienceOptions Load()
     {
-        try
+        var settings = new ClientSettingsStore().LoadOrDefault();
+        return Normalize(new ClientResilienceOptions
         {
-            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "client-settings.json");
-            var options = File.Exists(path)
-                ? JsonSerializer.Deserialize<ClientResilienceOptions>(File.ReadAllText(path), new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                })
-                : null;
-            return Normalize(options ?? new ClientResilienceOptions());
-        }
-        catch
-        {
-            return Normalize(new ClientResilienceOptions());
-        }
+            PolicyRefreshIntervalSeconds = settings.PolicyRefreshIntervalSeconds,
+            TelemetryQueue = settings.TelemetryQueue
+        });
     }
 
     private static ClientResilienceOptions Normalize(ClientResilienceOptions options)

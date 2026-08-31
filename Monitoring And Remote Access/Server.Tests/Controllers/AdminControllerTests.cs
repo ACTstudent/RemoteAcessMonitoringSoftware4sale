@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.SignalR;
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using Server.Controllers;
 using Server.Data;
+using Server.Hubs;
 using Server.Models;
 using Server.Services;
 
@@ -12,6 +15,18 @@ namespace Server.Tests.Controllers;
 
 public class AdminControllerTests
 {
+    [Theory]
+    [InlineData(nameof(AdminController.PauseAllSessions))]
+    [InlineData(nameof(AdminController.ResumeAllSessions))]
+    [InlineData(nameof(AdminController.EndAllSessions))]
+    public void GlobalSessionActions_ArePostOnlyAndValidateAntiforgery(string actionName)
+    {
+        var action = typeof(AdminController).GetMethod(actionName)!;
+
+        Assert.NotNull(action.GetCustomAttribute<HttpPostAttribute>());
+        Assert.NotNull(action.GetCustomAttribute<ValidateAntiForgeryTokenAttribute>());
+    }
+
     private ApplicationDbContext GetDbContext()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -22,7 +37,13 @@ public class AdminControllerTests
 
     private AdminController CreateController(ApplicationDbContext context, bool isAdmin = true)
     {
-        var controller = new AdminController(context);
+        var hub = new Mock<IHubContext<RemoteMonitoringHub>>();
+        var clients = new Mock<IHubClients>();
+        clients.Setup(value => value.User(It.IsAny<string>())).Returns(Mock.Of<IClientProxy>());
+        clients.Setup(value => value.Users(It.IsAny<IReadOnlyList<string>>())).Returns(Mock.Of<IClientProxy>());
+        clients.Setup(value => value.Client(It.IsAny<string>())).Returns(Mock.Of<ISingleClientProxy>());
+        hub.SetupGet(value => value.Clients).Returns(clients.Object);
+        var controller = new AdminController(context, new LabSessionLifecycleService(context, hub.Object));
         var httpContext = new DefaultHttpContext();
         httpContext.Session = new FakeSession();
         if (isAdmin)
@@ -57,6 +78,28 @@ public class AdminControllerTests
         var controller = CreateController(db);
         var result = await controller.Index();
         Assert.IsType<ViewResult>(result);
+    }
+
+    [Fact]
+    public async Task GlobalSessionActions_PersistTransitionsAndAuditThem()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var student = new Student { StudentNumber = "S-GLOBAL", FullName = "Student", Username = "global", PasswordHash = "hash" };
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+        db.LabSessions.Add(new LabSession { StudentId = student.Id, PCName = "PC-G", Status = "Running", IsActive = true });
+        await db.SaveChangesAsync();
+
+        await controller.PauseAllSessions();
+        Assert.Equal("Paused", (await db.LabSessions.SingleAsync()).Status);
+        await controller.ResumeAllSessions();
+        Assert.Equal("Running", (await db.LabSessions.SingleAsync()).Status);
+        await controller.EndAllSessions();
+
+        Assert.Equal("Ended", (await db.LabSessions.SingleAsync()).Status);
+        Assert.False((await db.LabSessions.SingleAsync()).IsActive);
+        Assert.Equal(3, await db.AuditLogs.CountAsync(log => log.Action.StartsWith("Global")));
     }
 
     [Fact]
@@ -110,8 +153,8 @@ public class AdminControllerTests
         // 3. Delete Teacher
         var deleteResult = await controller.DeleteTeacher(teacher.TeacherId);
         Assert.IsType<RedirectToActionResult>(deleteResult);
-        Assert.Null(await db.Teachers.FindAsync(teacher.TeacherId));
-        Assert.Empty(await db.RestrictionRules.ToListAsync());
+        Assert.Equal("Inactive", (await db.Teachers.FindAsync(teacher.TeacherId))?.Status);
+        Assert.Single(await db.RestrictionRules.ToListAsync());
     }
 
     [Fact]
@@ -193,7 +236,7 @@ public class AdminControllerTests
         // 4. Delete Student
         var deleteResult = await controller.DeleteStudent(student.Id);
         Assert.IsType<RedirectToActionResult>(deleteResult);
-        Assert.Null(await db.Students.FindAsync(student.Id));
+        Assert.Equal("Inactive", (await db.Students.FindAsync(student.Id))?.Status);
 
         var unassignedComp = await db.Computers.FindAsync(comp.ComputerId);
         Assert.Null(unassignedComp?.AssignedTo);
@@ -303,7 +346,7 @@ public class AdminControllerTests
         // 3. Delete Computer
         var deleteResult = await controller.DeleteComputer(computer.ComputerId);
         Assert.IsType<RedirectToActionResult>(deleteResult);
-        Assert.Null(await db.Computers.FindAsync(computer.ComputerId));
+        Assert.Equal("Archived", (await db.Computers.FindAsync(computer.ComputerId))?.Status);
     }
 
     [Fact]
@@ -400,7 +443,7 @@ public class AdminControllerTests
         // 2. Delete Session Rule
         var deleteResult = await controller.DeleteSessionRule(rule.SessionRuleId);
         Assert.IsType<RedirectToActionResult>(deleteResult);
-        Assert.Null(await db.SessionRules.FindAsync(rule.SessionRuleId));
+        Assert.False((await db.SessionRules.FindAsync(rule.SessionRuleId))?.IsActive);
     }
 
     [Fact]
@@ -429,27 +472,16 @@ public class AdminControllerTests
     }
 
     [Fact]
-    public async Task LanConfig_Save_WorksFlawlessly()
+    public void LanConfig_IsDetectedReadOnlyStatus()
     {
         using var db = GetDbContext();
         var controller = CreateController(db);
+        controller.HttpContext.Request.Scheme = "https";
+        controller.HttpContext.Request.Host = new HostString("cams.test", 5000);
 
-        var saveResult = await controller.SaveLanConfig(new LanConfiguration
-        {
-            ServerAddress = "192.168.1.100",
-            ServerPort = 5000,
-            Gateway = "192.168.1.1",
-            DhcpRangeStart = "192.168.1.10",
-            DhcpRangeEnd = "192.168.1.200",
-            DnsServer = "8.8.8.8",
-            IsActive = true
-        });
-        Assert.IsType<RedirectToActionResult>(saveResult);
-
-        var config = await db.LanConfigurations.FirstOrDefaultAsync();
-        Assert.NotNull(config);
-        Assert.Equal("192.168.1.100", config.ServerAddress);
-        Assert.Equal(5000, config.ServerPort);
+        Assert.IsType<ViewResult>(controller.LanConfig());
+        Assert.Equal("https://cams.test:5000", controller.ViewBag.DetectedEndpoint);
+        Assert.Empty(db.LanConfigurations);
     }
 
     [Fact]

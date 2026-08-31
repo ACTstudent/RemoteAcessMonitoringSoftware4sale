@@ -57,6 +57,7 @@ public class AuthenticationServiceTests
             Username = "student_test",
             PasswordHash = hasher.HashPassword(new object(), "pass123")
         });
+        context.Computers.Add(new Computer { LaboratoryStation = "PC01", AssignedTo = "1", Status = "Assigned" });
         await context.SaveChangesAsync();
 
         var service = new AuthenticationService(context);
@@ -141,6 +142,7 @@ public class AuthenticationServiceTests
             Username = "student_three",
             PasswordHash = hasher.HashPassword(new object(), "pass123")
         });
+        context.Computers.Add(new Computer { LaboratoryStation = "PC01", AssignedTo = "3", Status = "Assigned" });
         await context.SaveChangesAsync();
 
         var service = new AuthenticationService(context);
@@ -299,8 +301,36 @@ public class AuthenticationServiceTests
         await context.SaveChangesAsync();
 
         var service = new AuthenticationService(context);
-        var result = await service.LoginAsync("sameuser", "pass", "PC1", "127.0.0.1");
+        var result = await service.LoginAsync("sameuser", "pass", "", "127.0.0.1");
         Assert.Equal(AccountRole.Student, result.Role);
+    }
+
+    [Fact]
+    public async Task LoginAsync_CannotTakeAnotherStudentsWorkstation()
+    {
+        var context = CreateContext();
+        var hasher = new PasswordHasher<object>();
+        context.Students.Add(new Student
+        {
+            Id = 20,
+            StudentNumber = "STU020",
+            Username = "student_twenty",
+            PasswordHash = hasher.HashPassword(new object(), "pass")
+        });
+        context.Computers.Add(new Computer
+        {
+            LaboratoryStation = "PC-TAKEN",
+            AssignedTo = "21",
+            Status = "Assigned"
+        });
+        await context.SaveChangesAsync();
+
+        var result = await new AuthenticationService(context)
+            .LoginAsync("student_twenty", "pass", "PC-TAKEN", "127.0.0.1");
+
+        Assert.Equal(AccountRole.Invalid, result.Role);
+        Assert.Equal("21", (await context.Computers.SingleAsync()).AssignedTo);
+        Assert.Empty(await context.LabSessions.ToListAsync());
     }
 
     [Fact]

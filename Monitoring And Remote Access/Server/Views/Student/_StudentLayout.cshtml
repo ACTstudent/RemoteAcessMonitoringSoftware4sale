@@ -152,8 +152,9 @@
             document.getElementById("alertModalHeader").style.backgroundColor = "var(--sidebar-bg)";
             document.getElementById("alertModalTitle").textContent = "Teacher Screen Broadcast";
             document.getElementById("alertModalBody").innerHTML = "The teacher is sharing their screen on this unit. Watch the broadcast window on the Student Client.";
-            new bootstrap.Modal(alertModalEl).show();
+            bootstrap.Modal.getOrCreateInstance(alertModalEl).show();
         });
+        conn.on("BroadcastStopped", () => bootstrap.Modal.getInstance(alertModalEl)?.hide());
 
         function escapeHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
         conn.start().catch(console.error);

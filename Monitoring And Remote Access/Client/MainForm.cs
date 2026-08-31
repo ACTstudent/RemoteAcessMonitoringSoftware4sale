@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
-using System.Text.Json;
 using Client.Services;
 using Shared.Contracts;
 
@@ -12,7 +11,7 @@ namespace Client
     {
         private static async Task<string> GetServerUrlAsync(bool forceDiscovery = false)
         {
-            var configured = ReadConfiguredServerUrl();
+            var configured = new ClientSettingsStore().LoadOrDefault().ServerUrl;
             if (!forceDiscovery && configured != null && !IsLocalhost(configured))
                 return configured;
 
@@ -20,29 +19,7 @@ namespace Client
             if (discovered != null)
                 return discovered;
 
-            return configured ?? "https://localhost:5000/remoteMonitoringHub";
-        }
-
-        private static string? ReadConfiguredServerUrl()
-        {
-            try
-            {
-                var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "client-settings.json");
-                if (File.Exists(path))
-                {
-                    var json = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
-                    if (json.RootElement.TryGetProperty("ServerUrl", out var urlElement) &&
-                        Uri.TryCreate(urlElement.GetString(), UriKind.Absolute, out var url) &&
-                        string.Equals(url.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) &&
-                        !string.IsNullOrWhiteSpace(url.Host))
-                    {
-                        return url.ToString();
-                    }
-                }
-            }
-            catch { }
-
-            return null;
+            return configured ?? ClientSettingsStore.DefaultServerUrl;
         }
 
         private static bool IsLocalhost(string serverUrl)
@@ -59,6 +36,8 @@ namespace Client
         private CancellationTokenSource? _streamCts;
         private bool _isLocked = false;
         private bool _isClosing;
+        private Form? _broadcastForm;
+        private PictureBox? _broadcastPicture;
         private string _studentId = "";
         private string _studentName = "";
 
@@ -247,6 +226,7 @@ namespace Client
             lblStatus.Text = "Status: Searching for server...";
 
             string? serverUrl = null;
+            MonitoringHubClient? pendingClient = null;
 
             try
             {
@@ -254,12 +234,14 @@ namespace Client
                 lblStatus.Text = $"Status: Connecting to {serverUrl}...";
 
                 var hubClient = new MonitoringHubClient();
+                pendingClient = hubClient;
                 hubClient.RemoteInputReceived += InputSimulator.ProcessRemoteInput;
                  hubClient.RemoteControlStateReceived += state => this.Invoke(() => OnRemoteControlStateChanged(state));
                 hubClient.Locked += () => this.Invoke(() => SetLocked(true));
                 hubClient.Unlocked += () => this.Invoke(() => SetLocked(false));
                 hubClient.ForceLogoutRequested += () => this.Invoke(async () => await ForceLogout(false));
                 hubClient.BroadcastReceived += msg => this.Invoke(() => ShowBroadcast(msg));
+                hubClient.BroadcastStopped += () => this.Invoke(CloseBroadcast);
                 hubClient.NotificationReceived += msg => this.Invoke(() => ShowPopup("Notification", msg.Title, msg.Message, false));
                 hubClient.WarningPopupReceived += msg => this.Invoke(() => ShowPopup("Teacher Warning", msg.Title, msg.Message, true));
                 hubClient.GlobalSessionStateReceived += state => this.Invoke(() => OnSessionStateChanged(state));
@@ -351,6 +333,14 @@ namespace Client
                 if (choice == DialogResult.Yes)
                     ShowServerUrlDialog();
             }
+            finally
+            {
+                if (pendingClient is not null && !ReferenceEquals(_hubClient, pendingClient))
+                {
+                    try { await pendingClient.LogoutAsync(); } catch { }
+                    try { await pendingClient.DisposeAsync(); } catch { }
+                }
+            }
         }
 
         private static bool IsCertificateError(Exception exception)
@@ -406,25 +396,22 @@ namespace Client
             };
             btnOk.Click += (_, _) =>
             {
-                if (!Uri.TryCreate(txt.Text.Trim(), UriKind.Absolute, out var serverUri) ||
-                    serverUri.Scheme != Uri.UriSchemeHttps ||
-                    string.IsNullOrWhiteSpace(serverUri.Host))
+                if (!ClientSettingsStore.TryNormalizeServerUrl(txt.Text.Trim(), out var serverUrl, out var error))
                 {
-                    MessageBox.Show("Enter a valid HTTPS CAMS server URL.", "Invalid Server URL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(error, "Invalid Server URL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
                 try
                 {
-                    var settingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "client-settings.json");
-                    var settings = File.Exists(settingsPath)
-                        ? JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(File.ReadAllText(settingsPath)) ?? new()
-                        : new Dictionary<string, JsonElement>();
-                    settings["ServerUrl"] = JsonSerializer.SerializeToElement(serverUri.ToString());
-                    File.WriteAllText(settingsPath, JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true }));
+                    new ClientSettingsStore().UpdateServerUrl(serverUrl);
                     ServerDiscoveryClient.ResetCache();
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"The server URL could not be saved.\n\n{ex.Message}", "Settings Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
                 prompt.Close();
                 BtnLogin_Click(null, EventArgs.Empty);
             };
@@ -510,17 +497,22 @@ namespace Client
             if (_hubClient == null || _isLocked) return;
 
             var app = ActiveAppInfo.Get(); // e.g. "chrome - Facebook - Google Chrome" or "game.exe"
-            if (string.IsNullOrWhiteSpace(app)) return;
-
-            var processName = app.Split(" - ")[0].Trim().ToLowerInvariant();
-
-            var appRules = _blockRules.Concat(_allowRules).Where(r => r.RuleType == "Application");
-            var matchingApp = appRules.Where(r => PolicyPatternMatcher.MatchesApplication(processName, r.Target))
-                .OrderByDescending(r => r.Target.Count(c => c != '*')).ThenByDescending(r => r.Mode == "Allow").FirstOrDefault();
-            if (matchingApp is not null && matchingApp.Mode != "Allow") await HandleViolation(matchingApp, app, processName, token);
-
-            if (_allowRules.Any(r => r.RuleType == "Application") && matchingApp is null && processName is not ("explorer" or "shellexperiencehost" or "searchapp"))
-                await ReportViolation("Application", app, processName, kill: true, token, reportedTarget: processName);
+            var processName = string.IsNullOrWhiteSpace(app)
+                ? string.Empty
+                : app.Split(" - ")[0].Trim().ToLowerInvariant();
+            var appRules = _blockRules.Concat(_allowRules).Where(r => r.RuleType == "Application").ToList();
+            var hasApplicationAllowlist = appRules.Any(rule => rule.Mode == "Allow");
+            foreach (var running in GetRunningApplications())
+            {
+                var matchingApp = appRules.Where(rule => PolicyPatternMatcher.MatchesApplication(running.Name, rule.Target))
+                    .OrderByDescending(rule => rule.Target.Count(c => c != '*'))
+                    .ThenByDescending(rule => rule.Mode == "Allow")
+                    .FirstOrDefault();
+                if (matchingApp is not null && matchingApp.Mode != "Allow")
+                    await HandleViolation(matchingApp, running.Name, running.Name, token);
+                else if (hasApplicationAllowlist && matchingApp is null && running.HasWindow && !IsRequiredProcess(running.Name))
+                    await ReportViolation("Application", running.Name, running.Name, kill: true, token, reportedTarget: running.Name);
+            }
 
             var website = _lastForegroundWebsite;
             if (website is not { Status: BrowserMonitoringStatus.Captured, Domain: not null }) return;
@@ -595,11 +587,39 @@ namespace Client
         {
             try
             {
-                var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "client-settings.json");
-                var options = File.Exists(path) ? JsonSerializer.Deserialize<ManagedBrowserOptions>(File.ReadAllText(path)) : null;
-                return new ManagedBrowserCollector(options);
+                return new ManagedBrowserCollector(new ClientSettingsStore().Load().ToManagedBrowserOptions());
             }
             catch { return new ManagedBrowserCollector(); }
+        }
+
+        private static IEnumerable<(string Name, bool HasWindow)> GetRunningApplications()
+        {
+            foreach (var process in Process.GetProcesses())
+            {
+                using (process)
+                {
+                    string name;
+                    bool hasWindow;
+                    try
+                    {
+                        name = process.ProcessName.Trim().ToLowerInvariant();
+                        hasWindow = process.MainWindowHandle != IntPtr.Zero;
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                    if (!string.IsNullOrWhiteSpace(name)) yield return (name, hasWindow);
+                }
+            }
+        }
+
+        private static bool IsRequiredProcess(string processName)
+        {
+            var clientName = Path.GetFileNameWithoutExtension(Environment.ProcessPath ?? "Client").ToLowerInvariant();
+            return processName == clientName || processName is "explorer" or "shellexperiencehost" or "searchapp" or
+                "searchhost" or "startmenuexperiencehost" or "textinputhost" or "dwm" or "winlogon" or "csrss" or
+                "services" or "lsass" or "svchost" or "system" or "idle";
         }
 
         // Reports idle/active status and the active foreground app periodically.
@@ -771,24 +791,39 @@ namespace Client
             {
                 using var ms = new MemoryStream(Convert.FromBase64String(msg.FrameBase64));
                 using var img = Image.FromStream(ms);
-                var form = new Form
+                if (_broadcastForm is null || _broadcastForm.IsDisposed)
                 {
-                    Text = "Teacher Screen Broadcast",
-                    WindowState = FormWindowState.Maximized,
-                    StartPosition = FormStartPosition.CenterScreen,
-                    TopMost = true,
-                    BackColor = Color.Black
-                };
-                var pic = new PictureBox { Dock = DockStyle.Fill, SizeMode = PictureBoxSizeMode.Zoom, Image = (Image)img.Clone() };
-                form.Controls.Add(pic);
-                form.Show(this);
-                form.KeyPreview = true;
-                form.KeyDown += (_, e) => { if (e.KeyCode == Keys.Escape) form.Close(); };
+                    _broadcastForm = new Form
+                    {
+                        Text = "Teacher Screen Broadcast",
+                        WindowState = FormWindowState.Maximized,
+                        StartPosition = FormStartPosition.CenterScreen,
+                        TopMost = true,
+                        BackColor = Color.Black
+                    };
+                    _broadcastPicture = new PictureBox { Dock = DockStyle.Fill, SizeMode = PictureBoxSizeMode.Zoom };
+                    _broadcastForm.Controls.Add(_broadcastPicture);
+                    _broadcastForm.FormClosed += (_, _) =>
+                    {
+                        _broadcastPicture?.Image?.Dispose();
+                        _broadcastPicture = null;
+                        _broadcastForm = null;
+                    };
+                    _broadcastForm.Show(this);
+                }
+                var previous = _broadcastPicture!.Image;
+                _broadcastPicture.Image = (Image)img.Clone();
+                previous?.Dispose();
             }
             catch
             {
                 // ignore corrupt frames
             }
+        }
+
+        private void CloseBroadcast()
+        {
+            if (_broadcastForm is { IsDisposed: false }) _broadcastForm.Close();
         }
 
         private void ShowPopup(string title, string heading, string message, bool warning)
@@ -848,6 +883,7 @@ namespace Client
             _streamCts?.Cancel();
             _countdownTimer.Stop();
             _managedBrowserCollector.Dispose();
+            CloseBroadcast();
             _ = _hubClient?.DisposeAsync();
             base.OnFormClosing(e);
         }

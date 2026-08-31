@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-and-build:
+  test-build-package:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,68 +20,18 @@ jobs:
       - name: Install Inno Setup
         run: choco install innosetup -y --no-progress
 
-      - name: Run xUnit tests
-        run: dotnet test "Monitoring And Remote Access\Server.Tests\Server.Tests.csproj" -c Release --verbosity minimal
+      - name: Run canonical build and installer validation
+        shell: powershell
+        run: .\build-everything.ps1
 
-      - name: Run client tests
-        run: dotnet test "Monitoring And Remote Access\Client.Tests\Client.Tests.csproj" -c Release --verbosity minimal
-
-      - name: Validate release metadata
-        shell: pwsh
-        run: |
-          $version = (Get-Content version.json -Raw | ConvertFrom-Json).version
-          if ([string]::IsNullOrWhiteSpace($version)) { throw "version.json has no version" }
-          Write-Host "Building CAMS version $version"
-          "CAMS_VERSION=$version" >> $env:GITHUB_ENV
-
-      - name: Build solution
-        run: dotnet build "Monitoring And Remote Access\RemoteMonitoring.sln" -c Release
-
-      - name: Publish server
-        run: dotnet publish "Monitoring And Remote Access\Server\Server.csproj" -c Release -o server-publish
-
-      - name: Publish client (self-contained, single-file)
-        run: dotnet publish "Monitoring And Remote Access\Client\Client.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o client-publish
-
-      - name: Find Inno Setup
-        id: iscc
-        run: |
-          $paths = @(
-            "${env:ProgramFiles}\Inno Setup 6\ISCC.exe",
-            "${env:LOCALAPPDATA}\Programs\Inno Setup 6\ISCC.exe",
-            "C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
-            "C:\Program Files\Inno Setup 6\ISCC.exe"
-          )
-          foreach ($p in $paths) {
-            if (Test-Path $p) {
-              Write-Host "Found ISCC at: $p"
-              "path=$p" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
-              exit 0
-            }
-          }
-          Write-Host "Searching entire drive..."
-          $found = Get-ChildItem -Path C:\ -Filter ISCC.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($found) {
-            Write-Host "Found ISCC at: $($found.FullName)"
-            "path=$($found.FullName)" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
-          } else {
-            Write-Error "ISCC.exe not found anywhere"
-            exit 1
-          }
-
-      - name: Build server installer
-        run: |
-          $iscc = "${{ steps.iscc.outputs.path }}"
-           Write-Host "Running: $iscc /DMyAppVersion=$env:CAMS_VERSION /Oserver-dist server-installer.iss"
-           $output = & cmd /c "`"$iscc`" /DMyAppVersion=$env:CAMS_VERSION /Oserver-dist server-installer.iss 2>&1"
-          $output | ForEach-Object { Write-Host $_ }
-          if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
-
-      - name: Build client installer
-        run: |
-          $iscc = "${{ steps.iscc.outputs.path }}"
-           Write-Host "Running: $iscc /DMyAppVersion=$env:CAMS_VERSION /Oclient-dist client-installer.iss"
-           $output = & cmd /c "`"$iscc`" /DMyAppVersion=$env:CAMS_VERSION /Oclient-dist client-installer.iss 2>&1"
-          $output | ForEach-Object { Write-Host $_ }
-          if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
-
+      - name: Upload validated installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: cams-installers
+          if-no-files-found: error
+          path: |
+            server-dist/CAMS-Server-Setup.exe
+            server-dist/CAMS-Server-Setup.exe.sha256
+            server-dist/release-manifest.json
+            client-dist/CAMS-Client-Setup.exe
+            client-dist/CAMS-Client-Setup.exe.sha256

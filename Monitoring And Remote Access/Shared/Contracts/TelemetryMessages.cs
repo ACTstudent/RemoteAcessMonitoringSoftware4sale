@@ -6,19 +6,22 @@ public sealed record TelemetryBatchItem(
     IdleStatusMessage? IdleStatus = null,
     ActiveAppMessage? ActiveApp = null,
     WebsiteActivityMessage? WebsiteActivity = null,
-    BrowserMonitoringStatusMessage? BrowserMonitoringStatus = null)
+    BrowserMonitoringStatusMessage? BrowserMonitoringStatus = null,
+    InfractionMessage? Infraction = null)
 {
     [JsonIgnore]
     public int PayloadCount =>
         (IdleStatus is null ? 0 : 1) +
         (ActiveApp is null ? 0 : 1) +
         (WebsiteActivity is null ? 0 : 1) +
-        (BrowserMonitoringStatus is null ? 0 : 1);
+        (BrowserMonitoringStatus is null ? 0 : 1) +
+        (Infraction is null ? 0 : 1);
 
     public static TelemetryBatchItem From(IdleStatusMessage status) => new(IdleStatus: status);
     public static TelemetryBatchItem From(ActiveAppMessage app) => new(ActiveApp: app);
     public static TelemetryBatchItem From(WebsiteActivityMessage website) => new(WebsiteActivity: website);
     public static TelemetryBatchItem From(BrowserMonitoringStatusMessage status) => new(BrowserMonitoringStatus: status);
+    public static TelemetryBatchItem From(InfractionMessage infraction) => new(Infraction: infraction);
 }
 
 public sealed record TelemetryBatchMessage(IReadOnlyList<TelemetryBatchItem> Items);

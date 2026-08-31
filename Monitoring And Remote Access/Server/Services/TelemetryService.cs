@@ -35,6 +35,20 @@ public sealed class TelemetryService : ITelemetryService
         await _db.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task RecordDisconnectedAsync(string connectionId, string studentId, string pcName,
+        string? details = null, DateTime? timestamp = null, CancellationToken cancellationToken = default)
+    {
+        var values = ValidateIdentity(connectionId, studentId, pcName, timestamp ?? DateTime.UtcNow);
+        var openIntervals = await _db.IdleIntervals
+            .Where(interval => interval.ConnectionId == values.ConnectionId && interval.EndedAt == null)
+            .ToListAsync(cancellationToken);
+        foreach (var interval in openIntervals.Where(interval => values.Timestamp >= interval.StartedAt))
+            interval.EndedAt = values.Timestamp;
+        await RecordActivityEventCoreAsync(values, "Disconnected", null,
+            Optional(details, 1000, nameof(details)), cancellationToken);
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task RecordActivityEventAsync(string connectionId, string studentId, string pcName,
         string eventType, string? applicationName = null, string? details = null,
         DateTime? timestamp = null, CancellationToken cancellationToken = default)
@@ -96,6 +110,13 @@ public sealed class TelemetryService : ITelemetryService
             else if (item.BrowserMonitoringStatus is { } browserStatus)
             {
                 AddBrowserMonitoringStatus(browserStatus);
+            }
+            else if (item.Infraction is { } infraction)
+            {
+                var values = ValidateIdentity(infraction.ConnectionId, infraction.StudentId, infraction.PcName, infraction.Timestamp);
+                await RecordActivityEventCoreAsync(values, "RestrictionViolation", null,
+                    $"{Required(infraction.TargetType, 50, nameof(infraction.TargetType))}: {Required(infraction.Target, 500, nameof(infraction.Target))}",
+                    cancellationToken);
             }
         }
 
@@ -221,6 +242,12 @@ public sealed class TelemetryService : ITelemetryService
             _ = Required(browserStatus.Browser, 50, nameof(browserStatus.Browser));
             if (!Enum.IsDefined(browserStatus.Mode)) throw new ArgumentException("The browser monitoring mode is invalid.", nameof(item));
             _ = BrowserMonitoringStatusMessage.NormalizeDetail(browserStatus.Detail);
+        }
+        else if (item.Infraction is { } infraction)
+        {
+            _ = ValidateIdentity(infraction.ConnectionId, infraction.StudentId, infraction.PcName, infraction.Timestamp);
+            _ = Required(infraction.TargetType, 50, nameof(infraction.TargetType));
+            _ = Required(infraction.Target, 500, nameof(infraction.Target));
         }
     }
 

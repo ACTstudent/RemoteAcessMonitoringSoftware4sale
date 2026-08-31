@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">CAMS</title>
+  <desc id="desc">Emerald geometric CAMS product mark</desc>
+  <rect width="64" height="64" rx="12" fill="#0b3c26"/>
+  <path d="M13 17h38v7H20v16h31v7H13z" fill="#72e6b7"/>
+  <path d="M27 28h24v7H34v17h-7z" fill="#10b981"/>
+  <circle cx="51" cy="51" r="4" fill="#f5c45e"/>
+</svg>

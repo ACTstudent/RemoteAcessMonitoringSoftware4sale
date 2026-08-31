@@ -15,6 +15,9 @@ public static class AccountSeeder
         var adminPassword = configuration["Cams:InitialAdminPassword"];
         if (!string.IsNullOrWhiteSpace(adminPassword))
         {
+            if (adminPassword.Length < 12)
+                throw new InvalidOperationException("Cams:InitialAdminPassword must contain at least 12 characters.");
+
             var adminUsername = GetValue(configuration, "Cams:InitialAdminUsername", "admin");
             if (!HasAdmin(db, adminUsername))
             {

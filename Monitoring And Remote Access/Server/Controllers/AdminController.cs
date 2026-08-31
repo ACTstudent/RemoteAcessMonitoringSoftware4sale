@@ -16,15 +16,18 @@ namespace Server.Controllers
         private readonly PasswordHasher<object> _hasher = new();
         private readonly IClassManagementService _classManagement;
         private readonly IAuthenticationService _authentication;
+        private readonly LabSessionLifecycleService _sessionLifecycle;
 
         public AdminController(
             ApplicationDbContext context,
+            LabSessionLifecycleService sessionLifecycle,
             IClassManagementService? classManagement = null,
             IAuthenticationService? authentication = null)
         {
             _context = context;
             _classManagement = classManagement ?? new ClassManagementService(context);
             _authentication = authentication ?? new AuthenticationService(context);
+            _sessionLifecycle = sessionLifecycle;
         }
 
         private bool CheckAccess() => HttpContext.IsAdmin();
@@ -229,7 +232,39 @@ namespace Server.Controllers
             ViewBag.TeacherCount = await _context.Teachers.CountAsync();
             ViewBag.ComputerCount = await _context.Computers.CountAsync();
             ViewBag.ActiveSessions = await _context.LabSessions.CountAsync(s => s.IsActive);
+            ViewBag.RunningSessions = await _context.LabSessions.CountAsync(s => s.IsActive && s.Status == "Running");
+            ViewBag.PausedSessions = await _context.LabSessions.CountAsync(s => s.IsActive && s.Status == "Paused");
             return View();
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> PauseAllSessions()
+        {
+            if (!CheckAccess()) return Denied();
+            var changed = await _sessionLifecycle.PauseAllSessionsAsync();
+            await AuditAsync("GlobalPauseSession", $"Paused {changed} active lab session(s)");
+            TempData["Message"] = $"Paused {changed} lab session(s).";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResumeAllSessions()
+        {
+            if (!CheckAccess()) return Denied();
+            var changed = await _sessionLifecycle.ResumeAllSessionsAsync();
+            await AuditAsync("GlobalResumeSession", $"Resumed {changed} paused lab session(s)");
+            TempData["Message"] = $"Resumed {changed} lab session(s).";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> EndAllSessions()
+        {
+            if (!CheckAccess()) return Denied();
+            var changed = await _sessionLifecycle.EndAllSessionsAsync();
+            await AuditAsync("GlobalEndSession", $"Ended {changed} active lab session(s)");
+            TempData["Message"] = $"Ended {changed} lab session(s).";
+            return RedirectToAction(nameof(Index));
         }
 
         // ---------- Teacher accounts ----------
@@ -328,18 +363,10 @@ namespace Server.Controllers
                     return RedirectToAction("Teachers");
                 }
 
-                foreach (var c in classes) c.TeacherId = null;
-
-                var students = await _context.Students.Where(s => s.AdviserId == id).ToListAsync();
-                foreach (var st in students) st.AdviserId = null;
-
-                var restrictions = await _context.RestrictionRules.Where(rule => rule.TeacherId == id).ToListAsync();
-                _context.RestrictionRules.RemoveRange(restrictions);
-
-                _context.Teachers.Remove(teacher);
+                teacher.Status = "Inactive";
                 await _context.SaveChangesAsync();
-                await AuditAsync("DeleteTeacher", $"Deleted teacher {teacher.Username}");
-                TempData["Message"] = $"Teacher '{teacher.Username}' deleted successfully!";
+                await AuditAsync("DeactivateTeacher", $"Deactivated teacher {teacher.Username}; historical records retained");
+                TempData["Message"] = $"Teacher '{teacher.Username}' deactivated. Historical records were retained.";
             }
             return RedirectToAction("Teachers");
         }
@@ -348,7 +375,7 @@ namespace Server.Controllers
         public async Task<IActionResult> Students()
         {
             if (!CheckAccess()) return Denied();
-            ViewBag.Computers = await _context.Computers.ToListAsync();
+            ViewBag.Computers = await _context.Computers.Where(c => c.Status != "Archived").ToListAsync();
             ViewBag.Classes = await _context.Classes
                 .Where(c => !c.IsArchived && c.TeacherId.HasValue &&
                             (c.Teacher!.Status == "Active" || string.IsNullOrEmpty(c.Teacher.Status)))
@@ -487,13 +514,11 @@ namespace Server.Controllers
                     if (computer.Status == "Assigned") computer.Status = "Available";
                 }
 
-                var joinRecords = await _context.ClassStudents.Where(cs => cs.StudentId == id).ToListAsync();
-                _context.ClassStudents.RemoveRange(joinRecords);
-
-                _context.Students.Remove(student);
+                await _sessionLifecycle.EndStudentSessionsAndNotifyAsync(student.Id);
+                student.Status = "Inactive";
                 await _context.SaveChangesAsync();
-                await AuditAsync("DeleteStudent", $"Deleted student {student.Username}");
-                TempData["Message"] = $"Student '{student.Username}' deleted successfully!";
+                await AuditAsync("DeactivateStudent", $"Deactivated student {student.Username}; historical records retained");
+                TempData["Message"] = $"Student '{student.Username}' deactivated. Historical records were retained.";
             }
             return RedirectToAction("Students");
         }
@@ -815,46 +840,22 @@ namespace Server.Controllers
             var rule = await _context.SessionRules.FindAsync(id);
             if (rule != null)
             {
-                _context.SessionRules.Remove(rule);
+                rule.IsActive = false;
+                rule.IsDefault = false;
                 await _context.SaveChangesAsync();
-                TempData["Message"] = "Session rule deleted.";
+                await AuditAsync("DeactivateSessionRule", $"Deactivated session rule {rule.Name}; historical sessions retained");
+                TempData["Message"] = "Session rule deactivated. Historical sessions were retained.";
             }
             return RedirectToAction("SessionRules");
         }
 
         // ---------- LAN configuration ----------
-        public async Task<IActionResult> LanConfig()
+        public IActionResult LanConfig()
         {
             if (!CheckAccess()) return Denied();
-            var config = await _context.LanConfigurations.FirstOrDefaultAsync();
-            return View(config ?? new LanConfiguration());
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> SaveLanConfig(LanConfiguration config)
-        {
-            if (!CheckAccess()) return Denied();
-            config.UpdatedAt = DateTime.Now;
-            var existing = await _context.LanConfigurations.FirstOrDefaultAsync();
-            if (existing == null)
-            {
-                _context.LanConfigurations.Add(config);
-            }
-            else
-            {
-                existing.ServerAddress = config.ServerAddress;
-                existing.ServerPort = config.ServerPort;
-                existing.DhcpRangeStart = config.DhcpRangeStart;
-                existing.DhcpRangeEnd = config.DhcpRangeEnd;
-                existing.Gateway = config.Gateway;
-                existing.DnsServer = config.DnsServer;
-                existing.IsActive = config.IsActive;
-                existing.UpdatedAt = config.UpdatedAt;
-            }
-            await _context.SaveChangesAsync();
-            await AuditAsync("SaveLanConfig", "Updated LAN configuration");
-            TempData["Message"] = "LAN Configuration saved successfully!";
-            return RedirectToAction("LanConfig");
+            ViewBag.DetectedEndpoint = $"{Request.Scheme}://{Request.Host}";
+            ViewBag.RemoteMonitoringEndpoint = $"{Request.Scheme}://{Request.Host}/remoteMonitoringHub";
+            return View();
         }
 
         // ---------- Computers ----------
@@ -929,10 +930,16 @@ namespace Server.Controllers
             var computer = await _context.Computers.FindAsync(id);
             if (computer != null)
             {
-                _context.Computers.Remove(computer);
+                if (await _context.LabSessions.AnyAsync(s => s.ComputerId == id && s.IsActive))
+                {
+                    TempData["ErrorMessage"] = "End the active lab session before archiving this workstation.";
+                    return RedirectToAction(nameof(Computers));
+                }
+                computer.Status = "Archived";
+                computer.AssignedTo = null;
                 await _context.SaveChangesAsync();
-                await AuditAsync("DeleteComputer", $"Removed {computer.LaboratoryStation}");
-                TempData["Message"] = $"Workstation '{computer.LaboratoryStation}' deleted.";
+                await AuditAsync("ArchiveComputer", $"Archived {computer.LaboratoryStation}; historical records retained");
+                TempData["Message"] = $"Workstation '{computer.LaboratoryStation}' archived. Historical records were retained.";
             }
             return RedirectToAction(nameof(Computers));
         }
@@ -949,6 +956,11 @@ namespace Server.Controllers
             {
                 selected = await _context.Computers.FindAsync(computerId.Value);
                 if (selected is null) return NotFound();
+                if (selected.Status == "Archived")
+                {
+                    TempData["ErrorMessage"] = "Archived workstations cannot be assigned.";
+                    return RedirectToAction(nameof(Students));
+                }
                 if (!string.IsNullOrWhiteSpace(selected.AssignedTo) && selected.AssignedTo != studentId.ToString())
                 {
                     TempData["ErrorMessage"] = "That workstation is already assigned to another student.";

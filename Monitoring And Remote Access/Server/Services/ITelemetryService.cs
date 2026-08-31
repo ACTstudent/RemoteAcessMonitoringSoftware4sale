@@ -10,6 +10,9 @@ public interface ITelemetryService
     Task RecordIdleStatusAsync(string connectionId, string studentId, string pcName,
         bool isIdle, DateTime timestamp, CancellationToken cancellationToken = default);
 
+    Task RecordDisconnectedAsync(string connectionId, string studentId, string pcName,
+        string? details = null, DateTime? timestamp = null, CancellationToken cancellationToken = default);
+
     Task RecordActivityEventAsync(string connectionId, string studentId, string pcName,
         string eventType, string? applicationName = null, string? details = null,
         DateTime? timestamp = null, CancellationToken cancellationToken = default);

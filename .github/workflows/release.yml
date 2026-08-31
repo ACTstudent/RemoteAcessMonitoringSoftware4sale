@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Release tag (e.g. v2.6.0)"
+        description: "Release tag (e.g. v2.8.0)"
         required: true
 
 permissions:
@@ -25,86 +25,29 @@ jobs:
       - name: Install Inno Setup
         run: choco install innosetup -y --no-progress
 
-      - name: Determine version
+      - name: Determine and verify release version
         id: version
-        shell: bash
+        shell: powershell
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ github.event.inputs.tag }}"
-          else
-            TAG="${GITHUB_REF#refs/tags/}"
-          fi
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
-          echo "Release tag: $TAG"
-
-      - name: Run xUnit tests
-        run: dotnet test "Monitoring And Remote Access\Server.Tests\Server.Tests.csproj" -c Release --verbosity minimal
-
-      - name: Run client tests
-        run: dotnet test "Monitoring And Remote Access\Client.Tests\Client.Tests.csproj" -c Release --verbosity minimal
-
-      - name: Build solution
-        run: dotnet build "Monitoring And Remote Access\RemoteMonitoring.sln" -c Release
-
-      - name: Publish server
-        run: dotnet publish "Monitoring And Remote Access\Server\Server.csproj" -c Release -o server-publish
-
-      - name: Publish client (self-contained, single-file)
-        run: dotnet publish "Monitoring And Remote Access\Client\Client.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o client-publish
-
-      - name: Find Inno Setup
-        id: iscc
-        run: |
-          $paths = @(
-            "${env:ProgramFiles}\Inno Setup 6\ISCC.exe",
-            "${env:LOCALAPPDATA}\Programs\Inno Setup 6\ISCC.exe",
-            "C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
-            "C:\Program Files\Inno Setup 6\ISCC.exe"
-          )
-          foreach ($p in $paths) {
-            if (Test-Path $p) {
-              Write-Host "Found ISCC at: $p"
-              "path=$p" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
-              exit 0
-            }
-          }
-          Write-Host "Searching entire drive..."
-          $found = Get-ChildItem -Path C:\ -Filter ISCC.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($found) {
-            Write-Host "Found ISCC at: $($found.FullName)"
-            "path=$($found.FullName)" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
+          if ('${{ github.event_name }}' -eq 'workflow_dispatch') {
+            $tag = '${{ github.event.inputs.tag }}'
           } else {
-            Write-Error "ISCC.exe not found anywhere"
-            exit 1
+            $tag = '${{ github.ref_name }}'
           }
+          if ($tag -notmatch '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') {
+            throw "Release tag '$tag' must have the form v2.8.0."
+          }
+          $version = $tag.Substring(1)
+          $metadataVersion = [string](Get-Content -LiteralPath version.json -Raw | ConvertFrom-Json).version
+          if ($metadataVersion -ne $version) {
+            throw "Release tag version $version does not match version.json $metadataVersion."
+          }
+          "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding ascii -Append
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding ascii -Append
 
-      - name: Build server installer
-        run: |
-          $iscc = "${{ steps.iscc.outputs.path }}"
-          if (-not (Test-Path -LiteralPath $iscc)) { throw "ISCC.exe not found: $iscc" }
-          Write-Host "Running: $iscc /Oserver-dist server-installer.iss"
-          & $iscc "/Oserver-dist" "/DMyAppVersion=${{ steps.version.outputs.version }}" "server-installer.iss"
-          if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
-
-      - name: Build client installer
-        run: |
-          $iscc = "${{ steps.iscc.outputs.path }}"
-          if (-not (Test-Path -LiteralPath $iscc)) { throw "ISCC.exe not found: $iscc" }
-          Write-Host "Running: $iscc /Oclient-dist client-installer.iss"
-          & $iscc "/Oclient-dist" "/DMyAppVersion=${{ steps.version.outputs.version }}" "client-installer.iss"
-          if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
-
-      - name: Verify installer output
-        run: |
-          if (!(Test-Path "server-dist\CAMS-Server-Setup.exe")) { throw "Server installer not found" }
-          if (!(Test-Path "client-dist\CAMS-Client-Setup.exe")) { throw "Client installer not found" }
-          $serverHash = (Get-FileHash "server-dist\CAMS-Server-Setup.exe" -Algorithm SHA256).Hash
-          $clientHash = (Get-FileHash "client-dist\CAMS-Client-Setup.exe" -Algorithm SHA256).Hash
-          "$serverHash  CAMS-Server-Setup.exe" | Set-Content "server-dist\CAMS-Server-Setup.exe.sha256" -Encoding ascii
-          "$clientHash  CAMS-Client-Setup.exe" | Set-Content "client-dist\CAMS-Client-Setup.exe.sha256" -Encoding ascii
-          Write-Host "Server installer: $((Get-Item server-dist\CAMS-Server-Setup.exe).Length / 1MB) MB"
-          Write-Host "Client installer: $((Get-Item client-dist\CAMS-Client-Setup.exe).Length / 1MB) MB"
+      - name: Run canonical build and installer validation
+        shell: powershell
+        run: .\build-everything.ps1
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -117,5 +60,6 @@ jobs:
           files: |
             server-dist/CAMS-Server-Setup.exe
             server-dist/CAMS-Server-Setup.exe.sha256
+            server-dist/release-manifest.json
             client-dist/CAMS-Client-Setup.exe
             client-dist/CAMS-Client-Setup.exe.sha256

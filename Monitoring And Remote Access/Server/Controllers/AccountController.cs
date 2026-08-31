@@ -10,11 +10,13 @@ namespace Server.Controllers
     public class AccountController : Controller
     {
         private readonly ServerAuthService _authService;
+        private readonly LabSessionLifecycleService? _sessionLifecycle;
         private static readonly MemoryCache _loginCache = new(new MemoryCacheOptions());
 
-        public AccountController(ServerAuthService authService)
+        public AccountController(ServerAuthService authService, LabSessionLifecycleService? sessionLifecycle = null)
         {
             _authService = authService;
+            _sessionLifecycle = sessionLifecycle;
         }
 
         [HttpGet]
@@ -98,7 +100,10 @@ namespace Server.Controllers
             var studentId = HttpContext.Session.GetInt32("StudentId");
             if (studentId.HasValue)
             {
-                await _authService.LogoutAsync(studentId.Value);
+                if (_sessionLifecycle is not null)
+                    await _sessionLifecycle.EndStudentSessionsAndNotifyAsync(studentId.Value);
+                else
+                    await _authService.LogoutAsync(studentId.Value);
             }
             HttpContext.Session.Clear();
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);

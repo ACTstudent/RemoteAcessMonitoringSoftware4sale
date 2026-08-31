@@ -18,11 +18,16 @@ public static class ServerDiscoveryClient
         {
             try
             {
-                using var client = new UdpClient();
+                using var client = new UdpClient(AddressFamily.InterNetwork);
+                client.ExclusiveAddressUse = false;
+                client.Client.SetSocketOption(
+                    SocketOptionLevel.Socket,
+                    SocketOptionName.ReuseAddress,
+                    true);
                 client.EnableBroadcast = true;
-                client.Client.Bind(new IPEndPoint(IPAddress.Any, 0));
+                client.Client.Bind(new IPEndPoint(IPAddress.Any, DiscoveryPort));
 
-                var cts = new CancellationTokenSource(timeoutMs);
+                using var cts = new CancellationTokenSource(timeoutMs);
 
                 try
                 {

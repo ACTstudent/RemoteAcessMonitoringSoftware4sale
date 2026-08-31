@@ -1,10 +1,24 @@
 @using Microsoft.AspNetCore.Http
+@using Microsoft.EntityFrameworkCore
+@inject Server.Data.ApplicationDbContext Db
 @{
     Layout = null;
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
     var teacherName = ViewContext.HttpContext.Session.GetString("TeacherName") ?? "Teacher";
     var successMessage = TempData["Message"]?.ToString();
     var errorMessage = TempData["ErrorMessage"]?.ToString();
+    var teacherId = ViewContext.HttpContext.Session.GetInt32("TeacherId");
+    var openAlertCount = teacherId.HasValue
+        ? await Db.MonitoringAlerts.AsNoTracking()
+            .Where(alert => !alert.IsAcknowledged && alert.DismissedAt == null)
+            .Where(alert => Db.Students.Any(student => student.StudentNumber == alert.StudentId &&
+                (student.AdviserId == teacherId.Value || Db.Classes.Any(cls => cls.TeacherId == teacherId.Value &&
+                    !cls.IsArchived && (cls.Status == "Active" || string.IsNullOrEmpty(cls.Status)) &&
+                    (cls.ClassId == student.ClassId || Db.ClassStudents.Any(join => join.ClassId == cls.ClassId && join.StudentId == student.Id))))))
+            .Select(alert => alert.GroupKey)
+            .Distinct()
+            .CountAsync()
+        : 0;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -94,6 +108,7 @@
                 <a href="@Url.Action("Alerts", "Teacher")" class="nav-item-custom @(currentAction == "Alerts" ? "active" : "")">
                     <i class="bi bi-bell-fill"></i>
                     <span>Monitoring Alerts</span>
+                    <span id="monitoringAlertBadge" class="badge bg-danger rounded-pill ms-auto @(openAlertCount == 0 ? "d-none" : "")">@openAlertCount</span>
                 </a>
 
                 <a href="@Url.Action("Settings", "Teacher")" class="nav-item-custom @(currentAction == "Settings" ? "active" : "")">
@@ -144,6 +159,7 @@
     </div>
 
     <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/signalr/signalr.min.js"></script>
     <script>
         (() => {
             const sidebar = document.getElementById('appSidebar');
@@ -160,6 +176,29 @@
             sidebar?.querySelectorAll('a').forEach(link => link.addEventListener('click', () => setOpen(false)));
             document.addEventListener('keydown', event => { if (event.key === 'Escape') setOpen(false); });
             window.addEventListener('resize', () => { if (window.innerWidth > 991) setOpen(false); });
+        })();
+    </script>
+    <script>
+        (() => {
+            const badge = document.getElementById("monitoringAlertBadge");
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/remoteMonitoringHub")
+                .withAutomaticReconnect()
+                .build();
+            const refreshAlertCount = async () => {
+                if (!badge) return;
+                const response = await fetch("/Teacher/OpenAlertCount", { credentials: "same-origin" });
+                if (!response.ok) return;
+                const count = Number((await response.json()).count) || 0;
+                badge.textContent = String(count);
+                badge.classList.toggle("d-none", count === 0);
+            };
+            connection.on("MonitoringAlertReceived", () => refreshAlertCount().catch(() => {}));
+            window.teacherHubConnection = connection;
+            window.teacherHubStarted = connection.start();
+            window.teacherHubStarted.catch(error => {
+                console.error("Teacher notifications connection failed", error);
+            });
         })();
     </script>
     @await RenderSectionAsync("Scripts", required: false)

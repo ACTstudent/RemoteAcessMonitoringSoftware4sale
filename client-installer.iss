@@ -46,7 +46,8 @@ Type: files; Name: "{app}\*.json"; Tasks: cleaninstall
 Type: files; Name: "{app}\*.pdb"; Tasks: cleaninstall
 
 [Files]
-Source: "client-publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "client-publish\*"; DestDir: "{app}"; Excludes: "client-settings.json"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "client-publish\client-settings.json"; DestDir: "{app}"; Flags: onlyifdoesntexist
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
@@ -58,17 +59,73 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 [Code]
 var
   ServerUrlPage: TInputQueryWizardPage;
-  ServerTrustPage: TInputQueryWizardPage;
+  ServerTrustPage: TInputFileWizardPage;
   ServerUrlOverride: string;
   ServerRootCertificateOverride: string;
 
-function InitializeSetup: Boolean;
+function IsValidServerUrl(const Value: string): Boolean;
+var
+  Authority: string;
+  HubPath: string;
+  Normalized: string;
 begin
-  ServerUrlOverride := ExpandConstant('{param:ServerIP}');
-  ServerRootCertificateOverride := ExpandConstant('{param:ServerRootCert}');
+  HubPath := '/remoteMonitoringHub';
+  Normalized := Trim(Value);
+  if (Normalized <> Value) or
+     (Copy(LowerCase(Normalized), 1, 8) <> 'https://') or
+     (Length(Normalized) <= 8 + Length(HubPath)) or
+     (Copy(Normalized, Length(Normalized) - Length(HubPath) + 1, Length(HubPath)) <> HubPath) then
+  begin
+    Result := False;
+    Exit;
+  end;
+
+  Authority := Copy(Normalized, 9, Length(Normalized) - 8 - Length(HubPath));
+  Result := (Authority <> '') and
+    (Pos('/', Authority) = 0) and (Pos('\', Authority) = 0) and
+    (Pos('@', Authority) = 0) and (Pos(' ', Authority) = 0) and
+    (Pos('?', Authority) = 0) and (Pos('#', Authority) = 0) and
+    (Authority[1] <> ':') and (Authority[Length(Authority)] <> ':');
+end;
+
+function InitializeSetup: Boolean;
+var
+  PreferredServerUrl: string;
+  LegacyServerUrl: string;
+begin
+  PreferredServerUrl := ExpandConstant('{param:ServerUrl|}');
+  LegacyServerUrl := ExpandConstant('{param:ServerIP|}');
+  if (PreferredServerUrl <> '') and (LegacyServerUrl <> '') and
+     (CompareText(Trim(PreferredServerUrl), Trim(LegacyServerUrl)) <> 0) then
+  begin
+    MsgBox('/ServerUrl and /ServerIP specify different values. Use only /ServerUrl, or provide the same URL to both.', mbError, MB_OK);
+    Result := False;
+    Exit;
+  end;
+
+  if PreferredServerUrl <> '' then
+    ServerUrlOverride := PreferredServerUrl
+  else
+    ServerUrlOverride := LegacyServerUrl;
+
+  ServerRootCertificateOverride := ExpandConstant('{param:ServerRootCert|}');
   if (ServerRootCertificateOverride = '') and
      FileExists(ExpandConstant('{localappdata}\CAMS Server\CAMS-Server-Root.cer')) then
     ServerRootCertificateOverride := ExpandConstant('{localappdata}\CAMS Server\CAMS-Server-Root.cer');
+  if (ServerUrlOverride <> '') and (not IsValidServerUrl(ServerUrlOverride)) then
+  begin
+    MsgBox('/ServerUrl must be the exact HTTPS CAMS hub URL, for example https://192.168.1.100:5000/remoteMonitoringHub. /ServerIP is retained as an alias.', mbError, MB_OK);
+    Result := False;
+    Exit;
+  end;
+  if (ServerRootCertificateOverride <> '') and
+     ((not FileExists(ServerRootCertificateOverride)) or
+      (CompareText(ExtractFileExt(ServerRootCertificateOverride), '.cer') <> 0)) then
+  begin
+    MsgBox('/ServerRootCert must name an existing .cer certificate file.', mbError, MB_OK);
+    Result := False;
+    Exit;
+  end;
   Result := True;
 end;
 
@@ -84,15 +141,16 @@ begin
   end;
 
   if ServerUrlOverride = '' then
-    ServerTrustPage := CreateInputQueryPage(ServerUrlPage.ID,
-      'Server Trust', 'Trust the CAMS server certificate',
-      'Copy CAMS-Server-Root.cer from the teacher PC to this workstation. Leave this blank only when the server uses a publicly trusted certificate.')
+    ServerTrustPage := CreateInputFilePage(ServerUrlPage.ID,
+      'Current-User Server Trust', 'Trust the CAMS server for the current Windows user',
+      'Select CAMS-Server-Root.cer from the teacher PC. Leave this blank only when the server uses a publicly trusted certificate.')
   else
-    ServerTrustPage := CreateInputQueryPage(wpSelectDir,
-      'Server Trust', 'Trust the CAMS server certificate',
-      'Copy CAMS-Server-Root.cer from the teacher PC to this workstation. Leave this blank only when the server uses a publicly trusted certificate.');
+    ServerTrustPage := CreateInputFilePage(wpSelectDir,
+      'Current-User Server Trust', 'Trust the CAMS server for the current Windows user',
+      'Select CAMS-Server-Root.cer from the teacher PC. Leave this blank only when the server uses a publicly trusted certificate.');
 
-  ServerTrustPage.Add('Public root certificate path (optional):', False);
+  ServerTrustPage.Add('Current-user trusted root certificate (optional):',
+    'Certificate files (*.cer)|*.cer|All files (*.*)|*.*', '.cer');
   ServerTrustPage.Values[0] := ServerRootCertificateOverride;
 end;
 
@@ -102,7 +160,7 @@ var
 begin
   Result := True;
   if (ServerUrlPage <> nil) and (CurPageID = ServerUrlPage.ID) and
-     (Pos('https://', LowerCase(Trim(ServerUrlPage.Values[0]))) <> 1) then
+     (not IsValidServerUrl(ServerUrlPage.Values[0])) then
   begin
     MsgBox('Enter an HTTPS CAMS server URL, for example https://192.168.1.100:5000/remoteMonitoringHub.', mbError, MB_OK);
     Result := False;
@@ -112,9 +170,11 @@ begin
   if (ServerTrustPage <> nil) and (CurPageID = ServerTrustPage.ID) then
   begin
     certificatePath := Trim(ServerTrustPage.Values[0]);
-    if (certificatePath <> '') and (not FileExists(certificatePath)) then
+    if (certificatePath <> '') and
+       ((not FileExists(certificatePath)) or
+        (CompareText(ExtractFileExt(certificatePath), '.cer') <> 0)) then
     begin
-      MsgBox('The selected CAMS root certificate was not found.', mbError, MB_OK);
+      MsgBox('Select an existing CAMS root certificate with a .cer extension.', mbError, MB_OK);
       Result := False;
     end;
   end;
@@ -131,12 +191,13 @@ end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 var
-  SettingsPath: string;
   ServerUrl: string;
   RootCertificatePath: string;
+  ResultCode: Integer;
 begin
   if CurStep = ssPostInstall then
   begin
+    ResultCode := -1;
     if ServerUrlOverride <> '' then
       ServerUrl := ServerUrlOverride
     else
@@ -146,17 +207,12 @@ begin
     if RootCertificatePath <> '' then
     begin
       if not InstallRootCertificate(RootCertificatePath) then
-        MsgBox('CAMS was installed, but Windows could not trust the selected root certificate. ' +
-          'Run the installer again as the current student user or install the certificate manually.',
-          mbError, MB_OK);
+        RaiseException('Windows could not add the selected certificate to the current user trusted root store.');
     end;
 
-    SettingsPath := ExpandConstant('{app}\client-settings.json');
-    StringChangeEx(ServerUrl, '\', '\\', True);
-    StringChangeEx(ServerUrl, '"', '\"', True);
-    SaveStringToFile(SettingsPath,
-      '{' + #13#10 +
-      '  "ServerUrl": "' + ServerUrl + '"' + #13#10 +
-      '}', False);
+    if (not Exec(ExpandConstant('{app}\{#MyAppExeName}'),
+         '--configure-server "' + ServerUrl + '"', ExpandConstant('{app}'),
+         SW_HIDE, ewWaitUntilTerminated, ResultCode)) or (ResultCode <> 0) then
+      RaiseException(Format('CAMS client server configuration failed (exit code %d).', [ResultCode]));
   end;
 end;

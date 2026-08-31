@@ -10,6 +10,7 @@ public interface IMonitoringHubClient
     event Action? Unlocked;
     event Action? ForceLogoutRequested;
     event Action<BroadcastMessage>? BroadcastReceived;
+    event Action? BroadcastStopped;
     event Action<NotificationMessage>? NotificationReceived;
     event Action<GlobalSessionMessage>? GlobalSessionStateReceived;
     event Action? SessionEnded;

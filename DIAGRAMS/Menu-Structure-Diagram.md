@@ -1,81 +1,60 @@
-# CAMS Menu Structure Diagram
+# CAMS Menu Structure
 
-**Computer Account Management System** for Pardo Elementary School — B.S. in Information Technology, March 2026.
+CAMS Computer Account Management System uses three fixed roles. The Roles and Permissions Admin page displays metadata; it is not a configurable RBAC editor.
 
 ```mermaid
 flowchart TD
-    CAMS["CAMS (COMPUTER ACCOUNT MANAGEMENT SYSTEM)"]
+    CAMS[CAMS classroom monitoring]
+    CAMS --> PUB[Public portal]
+    CAMS --> AUTH[Authenticated local server]
+    CAMS --> CLIENT[Windows Student Client]
 
-    CAMS --> ADM["ADMINISTRATOR MENU (FULL SYSTEM CONTROL)"]
-    CAMS --> TCH["TEACHER MENU (LABORATORY SESSION CONTROL)"]
-    CAMS --> STD["STUDENT INTERFACE (RESTRICTED USAGE)"]
-    CAMS --> SHR["SHARED MODULES (SECURE AUTHENTICATION)"]
+    PUB --> PR[Capabilities, privacy, install guidance]
+    PUB --> REL[GitHub release downloads and hashes]
 
-    %% ===== ADMINISTRATOR =====
-    ADM --> ADM1["User Management"]
-    ADM1 --> ADM1a["Manage Teacher Accounts"]
-    ADM1 --> ADM1b["Manage Student Accounts"]
-    ADM1 --> ADM1c["Manage Roles & Permissions"]
-    ADM --> ADM2["System Configuration"]
-    ADM2 --> ADM2a["Define Global Restriction Rules"]
-    ADM2 --> ADM2b["Manage Website/App Blacklists"]
-    ADM2 --> ADM2c["Set Default Session Rules"]
-    ADM2 --> ADM2d["LAN Configuration Settings"]
-    ADM --> ADM3["Administrative Reports"]
-    ADM3 --> ADM3a["Generate Lab Usage Reports"]
-    ADM3 --> ADM3b["Generate Resource Allocation Summaries"]
-    ADM --> ADM4["System Logs"]
-    ADM4 --> ADM4a["View Basic Audit Trail"]
-    ADM4 --> ADM4b["View System Error Logs"]
+    AUTH --> ADM[Admin]
+    AUTH --> TCH[Teacher]
+    AUTH --> STD[Student web portal]
 
-    %% ===== TEACHER =====
-    TCH --> TCH1["Session Management"]
-    TCH1 --> TCH1a["Start laboratory session"]
-    TCH1 --> TCH1b["Pause laboratory session"]
-    TCH1 --> TCH1c["End laboratory session"]
-    TCH --> TCH2["Live Monitoring"]
-    TCH2 --> TCH2a["Student Screen Grid View"]
-    TCH2 --> TCH2b["Active Application Tracker"]
-    TCH2 --> TCH2c["Idle/Active Status Monitor"]
-    TCH --> TCH3["Remote Control Panel"]
-    TCH3 --> TCH3a["Lock/Unlock Student PCs Remotely"]
-    TCH3 --> TCH3b["Broadcast Screen"]
-    TCH3 --> TCH3c["Force Remote Logout"]
-    TCH --> TCH4["Access Restriction Control"]
-    TCH4 --> TCH4a["Apply Application Restrictions"]
-    TCH4 --> TCH4b["Apply Website Restrictions for Current Session"]
-    TCH --> TCH5["Classroom Records"]
-    TCH5 --> TCH5a["View Session Usage Logs"]
-    TCH5 --> TCH5b["Generate Simple Class Reports"]
+    ADM --> AD[Dashboard and lab-wide pause/resume/end]
+    ADM --> AU[Teachers, students, classes, fixed-role metadata]
+    ADM --> AC[Computer profiles and student mappings]
+    ADM --> AL[LAN Status - detected/read-only]
+    ADM --> AH[Deployment Hub]
+    AH --> AHI[Validated installer, manifest, public root CER]
+    AH --> AHB[Offline workstation bundle]
+    AH --> AHC[Certificate/endpoints and connected clients]
+    ADM --> AP[Global restrictions and session rules]
+    ADM --> AR[Reports, audit, system logs]
+    ADM --> AB[Database backup, validation, staged restore]
+    ADM --> AS[Account settings and lockouts]
 
-    %% ===== STUDENT =====
-    STD --> STD1["Session Info"]
-    STD1 --> STD1a["View Remaining Time Countdown"]
-    STD1 --> STD1b["View Assigned Unit Details"]
-    STD --> STD2["Alert Center"]
-    STD2 --> STD2a["View Teacher Notifications"]
-    STD2 --> STD2b["View Warnings/Alerts"]
-    STD --> STD3["Account Settings"]
-    STD3 --> STD3a["Manage Profile / Reset Password"]
+    TCH --> TD[Dashboard and teacher-owned session controls]
+    TCH --> TM[Scoped live monitoring]
+    TM --> TMC[Lock/CAMS unlock, logout, restart, shutdown]
+    TM --> TMR[Warning, broadcast, permitted remote input]
+    TCH --> TS[Accessible students and workstations]
+    TCH --> TC[Assigned classes and rosters]
+    TC --> TCR[Create/edit roster; removal preserves account]
+    TCH --> TP[Teacher-owned restrictions]
+    TCH --> TA[Scoped alerts, analytics, records, exports]
 
-    %% ===== SHARED =====
-    SHR --> SHR1["User Authentication"]
-    SHR1 --> SHR1a["Secure User Login"]
-    SHR1 --> SHR1b["Secure User Logout"]
-    SHR1 --> SHR1c["Session Validation"]
+    STD --> SI[Session information]
+    STD --> SN[Alerts and notifications]
+    STD --> SA[Account/password settings]
 
-classDef role fill:#1c1f27,stroke:#2a2e38,color:#e6e6e6;
-classDef item fill:#2d3142,stroke:#3b3f56,color:#fff;
-class ADM,TCH,STD,SHR role;
+    CLIENT --> CL[Strict assigned-workstation login]
+    CLIENT --> CS[Session toolbar and screen/status reporting]
+    CLIENT --> CE[Policy enforcement and CAMS topmost dialogs]
+    CLIENT --> CC[Authorized workstation commands]
 ```
 
-## Legend
+## Scope Summary
 
-| Menu | Access | Capability |
-| --- | --- | --- |
-| **ADMINISTRATOR MENU** | Full system control | User management, system configuration, reports, logs |
-| **TEACHER MENU** | Laboratory session control | Session, monitoring, remote control, restrictions, records |
-| **STUDENT INTERFACE** | Restricted usage | Session info, alerts, account settings |
-| **SHARED MODULES** | Secure authentication | Login, logout, session validation |
-
-*Reconstructed from the draw.io menu structure diagram.*
+| Surface | Scope |
+| --- | --- |
+| Public portal | Informational static GitHub Pages site and public release links; no local certificate, credentials, or authenticated controls. |
+| Admin | Global control UI and all system/deployment administration. LAN Status does not configure the network. |
+| Teacher | Assigned/access-checked classroom objects and teacher-owned sessions/policies; no global account deletion or teacher reassignment. |
+| Student web portal | Session, alert, and account views without strict station validation. |
+| Windows CLIENT | Student credentials plus assigned workstation validation, monitoring agent, policy UI, and command receiver. |

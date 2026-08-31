@@ -1,76 +1,70 @@
-# SignalR Message Flow
+# CAMS SignalR Message Flow
 
-How real-time events flow between the Student Client, the Server Hub, and the Teacher Dashboard over SignalR.
+Operational events use authenticated HTTPS SignalR on server TCP `5000`. UDP `5001` is separate, optional server-to-client discovery and is not part of the hub flow.
 
 ```mermaid
-flowchart TD
-    subgraph Client[Student Client - WinForms]
-        C1[MonitoringHubClient]
-        C2[ScreenCaptureService]
-        C3[InputSimulator]
-    end
+sequenceDiagram
+    participant C as Student WinForms Client
+    participant API as HTTPS Client Login API
+    participant H as RemoteMonitoringHub
+    participant T as Teacher Dashboard
+    participant A as Admin Dashboard
+    participant DB as SQLite
 
-    subgraph Server[ASP.NET Core Server]
-        H[RemoteMonitoringHub]
-        subgraph Groups[SignalR Groups]
-            G1[StudentsGroup]
-            G2[TeachersGroup]
+    C->>API: Credentials plus PC name
+    API->>DB: Validate hash, active account, assigned station
+    alt Invalid credentials or station
+        API-->>C: Reject and audit
+    else Valid assigned workstation
+        API->>DB: Create or resume active LabSession
+        API-->>C: Auth cookie and student identity
+        C->>H: Authenticated connect as client agent
+        T->>H: Authenticated connect as Teacher
+        A->>H: Authenticated connect as Admin
+        H-->>T: StudentConnected if teacher is authorized
+        H-->>A: StudentConnected
+
+        loop Capture target 50 ms; effective rate varies
+            C->>H: SendScreenFrame
+            H-->>T: ReceiveScreenFrame if authorized
+            H-->>A: ReceiveScreenFrame
         end
+
+        C->>H: Activity, idle, website status, infraction, telemetry batch
+        H->>DB: Persist normalized operational records
+        H-->>T: Scoped status or InfractionDetected
+
+        T->>H: Scoped warning, lock, logout, restart, shutdown, input, broadcast
+        H->>DB: Recheck scope and audit authorized command
+        H-->>C: Target command/event
+        A->>H: Authorized global/session action
+        H->>DB: Persist state and audit
+        H-->>C: GlobalSessionState, RestrictionsReceived, or SessionEnded
+
+        C--xH: Temporary disconnect
+        H-->>T: StudentDisconnected
+        Note over C,DB: Persisted active session can remain for reconnect
+        C->>H: Reconnect with authenticated identity
     end
-
-    subgraph Dashboard[Teacher Dashboard - Web]
-        D1[signalR.js client]
-        D2[Canvas / remote modal]
-    end
-
-    C1 -- "1. HTTPS client login + authenticated hub connection" --> H
-    C2 -- "2. SendScreenFrame(ScreenFrameMessage)" --> H
-
-    H -->|student added| G1
-
-    D1 -- "3. Authenticated hub connection" --> H
-    H -->|teacher claims validated| G2
-
-    H -- "ReceiveScreenFrame(connId, frame)" --> D1
-    H -- "StudentConnected(student)" --> D2
-    H -- "StudentDisconnected(connId)" --> D2
-
-    D2 -- "SendRemoteInput(targetConnId, RemoteInputMessage)" --> H
-    H -- "ExecuteRemoteInput(RemoteInputMessage)" --> C1
-    C1 --> C3
-    D2 -- "SendWarningPopup(id, NotificationMessage)" --> H
-    H -- "SendWarningPopup(NotificationMessage)" --> C1
-    D2 -- "ShutdownStudent(connectionId)" --> H
-    H -- "ShutdownStudent" --> C1
-    C1 -- "ReportInfraction(InfractionMessage)" --> H
-    H -- "InfractionDetected(InfractionMessage)" --> D1
-    H -- "GlobalSessionState(GlobalSessionMessage)" --> C1
-    H -- "GlobalSessionState(GlobalSessionMessage)" --> D1
-    H -- "SessionEnded" --> C1
-    H -- "SessionEnded" --> D2
-    D1 -- "BroadcastScreen(frameBase64)" --> H
-    H -- "BroadcastScreen(BroadcastMessage)" --> C1
 ```
 
-## Event reference
+## Event Reference
 
-| Direction | Event | Sent by | Payload | Purpose |
-| --- | --- | --- | --- | --- |
-| Client → Server | HTTPS login + hub connection | Student client | credentials over TLS, workstation name | Validate identity, add connection to `StudentsGroup`, notify teachers |
-| Client → Server | `SendScreenFrame` | Student client | `ScreenFrameMessage` | Broadcast live frame to `TeachersGroup` |
-| Dashboard → Server | Authenticated hub connection | Teacher dashboard | auth cookie | Validate teacher role and add connection to `TeachersGroup` |
-| Server → Dashboard | `ReceiveScreenFrame` | Server hub | `connectionId`, `ScreenFrameMessage` | Render live frame / feed the remote canvas |
-| Server → Dashboard | `StudentConnected` / `StudentDisconnected` | Server hub | `StudentConnectionMessage` / `connectionId` | Add / remove student cards |
-| Dashboard → Server | `SendRemoteInput` | Teacher dashboard | `targetConnectionId`, `RemoteInputMessage` | Forward a mouse/keyboard event to one student |
-| Server → Client | `ExecuteRemoteInput` | Server hub | `RemoteInputMessage` | Target the specific student connection; handled by `InputSimulator` |
-| Dashboard → Server | `SendWarningPopup` | Teacher dashboard | `targetConnectionId`, `NotificationMessage` | Send a warning dialog to a student or all students |
-| Dashboard → Server | `ShutdownStudent` | Teacher dashboard | `connectionId` | Remotely shut down a student workstation |
-| Client → Server | `ReportInfraction` | Student client | `InfractionMessage` | Report a blocked app/site attempt to the teacher |
-| Server → Dashboard | `InfractionDetected` | Server hub | `InfractionMessage` | Flash the violation card and increment the alert badge |
-| Server → Client | `GlobalSessionState` | Server hub | `GlobalSessionMessage` | Push start/pause/ended state with elapsed seconds |
-| Server → Client | `SessionEnded` | Server hub | — | Force logout + lock when teacher/admin ends the session |
-| Client → Server | `FetchRestrictions` | Student client | — | Pull the active restriction rules after login |
-| Server → Client | `RestrictionsReceived` | Server hub | `List<RestrictionRuleMessage>` | Deliver whitelist/blacklist rules to the client |
-| Server → Client | `SendWarningPopup` | Server hub | `NotificationMessage` | Show a warning popup on one or all student screens |
-| Dashboard → Server | `BroadcastScreen` | Teacher dashboard | frameBase64 string | Send the teacher's own screen to all students |
-| Server → Client | `BroadcastScreen` | Server hub | `BroadcastMessage` | Render the teacher's screen on student clients |
+| Direction | Event/method | Purpose and scope |
+| --- | --- | --- |
+| Client to Server | HTTPS `/api/client/login` | Validates student credentials and exact assigned workstation before issuing the client-agent identity. |
+| Client to Hub | `SendScreenFrame` | Sends a screen frame; the server forwards it only to authorized teacher/admin viewers. The 50 ms delay is a target, not guaranteed FPS. |
+| Client to Hub | activity/idle/browser/infraction and telemetry batch methods | Reports bounded, normalized classroom state. Browser data excludes credentials, page content, paths, queries, and fragments. |
+| Hub to Dashboard | `StudentConnected` / `StudentDisconnected` | Adds/removes a live card within viewer scope; disconnect does not necessarily end the persisted session. |
+| Hub to Dashboard | `ReceiveScreenFrame` / `InfractionDetected` | Updates authorized monitoring UI and alert state. |
+| Dashboard to Hub | `SendRemoteInput` | Rechecks target scope and session permission, audits, then targets one client. |
+| Hub to Client | `ExecuteRemoteInput` | Requests input simulation. Result depends on Windows desktop, privilege, and security policy. |
+| Dashboard to Hub | warning method / `BroadcastScreen` | Sends a CAMS topmost warning dialog or teacher screen to accessible clients. |
+| Dashboard to Hub | lock/unlock/logout/restart/shutdown methods | Rechecks target scope and audits before routing. Unlock releases CAMS state only, not Windows secure desktop. |
+| Hub to Client | `GlobalSessionState` / `SessionEnded` | Synchronizes persisted session state or ends/logs out the target client. Admin has global controls; teacher bulk actions remain teacher-owned. |
+| Client to Hub | `FetchRestrictions` | Requests active global plus active-session teacher rules. |
+| Hub to Client | `RestrictionsReceived` | Delivers applicable application/domain allow/block rules and refreshes after policy changes. |
+
+## Trust And Discovery Boundary
+
+SignalR starts only after HTTPS trust and authentication. The interactive installer configures the endpoint and current-user certificate trust; the offline bundle verifies the installer/hash, configures `/ServerUrl`, and tests `/api/deployment/ping`. Discovery merely advertises candidate URLs over server outbound UDP to client port `5001`; it does not authenticate a user or replace TLS validation.

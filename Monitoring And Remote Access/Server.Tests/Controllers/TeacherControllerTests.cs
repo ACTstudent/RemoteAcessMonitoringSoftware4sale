@@ -14,6 +14,18 @@ namespace Server.Tests.Controllers;
 
 public class TeacherControllerTests
 {
+    [Fact]
+    public void TeacherController_DoesNotExposeGlobalPolicyMutationActions()
+    {
+        var actionNames = typeof(TeacherController).GetMethods().Select(method => method.Name).ToHashSet();
+
+        Assert.DoesNotContain("CreateBlacklist", actionNames);
+        Assert.DoesNotContain("UpdateBlacklist", actionNames);
+        Assert.DoesNotContain("DeleteBlacklist", actionNames);
+        Assert.DoesNotContain("CreateApplicationCategory", actionNames);
+        Assert.DoesNotContain("CreateWebsiteCategory", actionNames);
+    }
+
     private ApplicationDbContext GetDbContext()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -69,6 +81,27 @@ public class TeacherControllerTests
         var controller = CreateController(db);
         var result = await controller.Dashboard();
         Assert.IsType<ViewResult>(result);
+    }
+
+    [Fact]
+    public async Task OpenAlertCount_UsesPersistedDistinctGroupsAndClassMembership()
+    {
+        using var db = GetDbContext();
+        var student = new Student { StudentNumber = "S-ALERT", FullName = "Student", Username = "alert-student", PasswordHash = "hash", AdviserId = 2 };
+        var cls = new Class { ClassName = "Teacher class", TeacherId = 1 };
+        db.AddRange(student, cls);
+        await db.SaveChangesAsync();
+        db.ClassStudents.Add(new ClassStudent { ClassId = cls.ClassId, StudentId = student.Id });
+        db.MonitoringAlerts.AddRange(
+            new MonitoringAlert { StudentId = student.StudentNumber, PcName = "PC-01", Title = "Alert", Message = "One", GroupKey = "same" },
+            new MonitoringAlert { StudentId = student.StudentNumber, PcName = "PC-01", Title = "Alert", Message = "Two", GroupKey = "same" },
+            new MonitoringAlert { StudentId = student.StudentNumber, PcName = "PC-01", Title = "Old", Message = "Acknowledged", GroupKey = "old", IsAcknowledged = true });
+        await db.SaveChangesAsync();
+
+        var result = Assert.IsType<JsonResult>(await CreateController(db).OpenAlertCount());
+        var count = result.Value!.GetType().GetProperty("count")!.GetValue(result.Value);
+
+        Assert.Equal(1, count);
     }
 
     [Fact]
@@ -167,7 +200,8 @@ public class TeacherControllerTests
         Assert.False(endedSession?.IsActive);
 
         var freedComp = await db.Computers.FindAsync(computer.ComputerId);
-        Assert.Equal("Available", freedComp?.Status);
+        Assert.Equal("Assigned", freedComp?.Status);
+        Assert.Equal(student.Id.ToString(), freedComp?.AssignedTo);
     }
 
     [Fact]

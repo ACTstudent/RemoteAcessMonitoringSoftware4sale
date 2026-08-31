@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CAMS | Secure classroom computer management</title>
+  <meta name="description" content="CAMS is a local-first classroom monitoring and computer laboratory management system for Windows networks.">
+  <meta name="theme-color" content="#071d15">
+  <meta name="color-scheme" content="dark">
+  <meta property="og:title" content="CAMS | Classroom computer management">
+  <meta property="og:description" content="Deploy, monitor, and manage classroom Windows workstations on your own local network.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://actstudent.github.io/RemoteAcessMonitoringSoftware4sale/">
+  <meta property="og:site_name" content="CAMS">
+  <meta name="twitter:card" content="summary">
+  <link rel="canonical" href="https://actstudent.github.io/RemoteAcessMonitoringSoftware4sale/">
+  <link rel="icon" href="assets/cams-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/styles.css">
+  <script src="assets/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
+  <header class="site-header" data-header>
+    <div class="shell header-inner">
+      <a class="brand" href="#top" aria-label="CAMS home">
+        <img src="assets/cams-mark.svg" width="42" height="42" alt="">
+        <span><strong>CAMS</strong><small>Classroom systems, locally controlled</small></span>
+      </a>
+      <button class="menu-button" type="button" aria-expanded="false" aria-controls="site-nav" data-menu-button>
+        <span class="sr-only">Open navigation</span>
+        <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+      </button>
+      <nav class="site-nav" id="site-nav" aria-label="Primary" data-menu>
+        <a href="#capabilities">Capabilities</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#install">Install</a>
+        <a href="#support">Support</a>
+        <a class="nav-download" href="#downloads">Get v<span data-version>2.8.0</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <section class="hero" id="top" aria-labelledby="hero-title">
+      <div class="hero-grid" aria-hidden="true"></div>
+      <div class="shell hero-layout">
+        <div class="hero-copy">
+          <p class="eyebrow"><span></span> Windows classroom operations, without the cloud</p>
+          <h1 id="hero-title">See the lab.<br><em>Keep control local.</em></h1>
+          <p class="hero-lead">CAMS brings live workstation visibility, timed sessions, policy enforcement, and accountable remote actions into one private LAN deployment.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#downloads">Download v<span data-version>2.8.0</span></a>
+            <a class="button button-quiet" href="#install">Read installation guide</a>
+          </div>
+          <ul class="trust-line">
+            <li>Local SQLite</li>
+            <li>HTTPS SignalR</li>
+            <li>Role-scoped access</li>
+          </ul>
+        </div>
+
+        <section class="command-panel" aria-label="CAMS deployment summary">
+          <div class="panel-topline"><span class="status-dot"></span> LAB CONTROL / ONLINE <span>v<span data-version>2.8.0</span></span></div>
+          <div class="lab-map">
+            <div class="station station-wide"><small>SERVER</small><strong>Teacher console</strong><span>HTTPS :5000</span></div>
+            <div class="signal-line"><i></i><i></i><i></i></div>
+            <div class="stations">
+              <div class="station"><small>PC-01</small><strong>Active</strong><span class="live">Live</span></div>
+              <div class="station"><small>PC-02</small><strong>Idle</strong><span>03:42</span></div>
+              <div class="station"><small>PC-03</small><strong>Active</strong><span class="live">Live</span></div>
+              <div class="station"><small>PC-04</small><strong>Paused</strong><span>Session</span></div>
+            </div>
+          </div>
+          <div class="panel-metrics">
+            <div><strong>LAN</strong><span>Data boundary</span></div>
+            <div><strong>TLS</strong><span>Transport</span></div>
+            <div><strong>3</strong><span>User roles</span></div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="section overview" aria-labelledby="overview-title">
+      <div class="shell split-heading">
+        <div>
+          <p class="section-kicker">Purpose-built for computer laboratories</p>
+          <h2 id="overview-title">One operational picture, from first login to final logout.</h2>
+        </div>
+        <p>CAMS replaces paper logs and disconnected utilities with a coordinated server, browser portal, and Windows workstation agent. Teachers act on the computers assigned to them; administrators retain policy and deployment control.</p>
+      </div>
+      <div class="shell outcome-strip">
+        <article><span>01</span><h3>Observe</h3><p>Authenticated live screen grids, active app state, idle status, and alerts.</p></article>
+        <article><span>02</span><h3>Guide</h3><p>Warnings, screen broadcast, timed sessions, and teacher-scoped policies.</p></article>
+        <article><span>03</span><h3>Act</h3><p>Authorized lock, unlock, logout, restart, shutdown, and remote input.</p></article>
+        <article><span>04</span><h3>Account</h3><p>Local attendance, activity timelines, reports, and audit records.</p></article>
+      </div>
+    </section>
+
+    <section class="section section-dark" id="capabilities" aria-labelledby="capabilities-title">
+      <div class="shell">
+        <div class="section-heading">
+          <p class="section-kicker">Roles and capabilities</p>
+          <h2 id="capabilities-title">Clear authority at every layer.</h2>
+          <p>Each interface is shaped around the work that role is allowed to perform.</p>
+        </div>
+        <div class="role-grid">
+          <article class="role-card role-admin">
+            <div class="role-index">A</div><p class="role-label">Administrator</p>
+            <h3>Configure the environment</h3>
+            <ul>
+              <li>Manage accounts, classes, computers, and mappings</li>
+              <li>Set global restrictions and session rules</li>
+              <li>Review audit, usage, session, and system records</li>
+              <li>Back up, validate, and stage restore of local SQLite data</li>
+              <li>Prepare trusted packages in the local Deployment Hub</li>
+            </ul>
+          </article>
+          <article class="role-card">
+            <div class="role-index">T</div><p class="role-label">Teacher</p>
+            <h3>Run the active laboratory</h3>
+            <ul>
+              <li>Monitor assigned workstations in a live grid</li>
+              <li>Start, pause, resume, and end timed sessions</li>
+              <li>Send warnings and broadcast the teacher screen</li>
+              <li>Use permitted workstation and remote controls</li>
+              <li>Review scoped alerts, records, and exports</li>
+            </ul>
+          </article>
+          <article class="role-card">
+            <div class="role-index">S</div><p class="role-label">Student</p>
+            <h3>Enter a managed session</h3>
+            <ul>
+              <li>Sign in from an assigned Windows workstation</li>
+              <li>See unit, identity, and elapsed session time</li>
+              <li>Receive policy notices and teacher messages</li>
+              <li>Review alerts in the student portal</li>
+              <li>Exit cleanly when the teacher ends the session</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section privacy" id="privacy" aria-labelledby="privacy-title">
+      <div class="shell privacy-layout">
+        <div class="privacy-statement">
+          <p class="section-kicker">Privacy boundary</p>
+          <h2 id="privacy-title">Monitoring with a defined edge.</h2>
+          <p>CAMS is designed for supervised classroom sessions on a private local network. Operational records remain on the CAMS server's local SQLite database; there is no required CAMS cloud service.</p>
+          <div class="boundary-badge"><span>Data boundary</span><strong>Your classroom LAN</strong></div>
+        </div>
+        <div class="boundary-grid">
+          <article class="boundary-card collected">
+            <p>Used for classroom operations</p>
+            <ul>
+              <li>Live screen frames during authenticated sessions</li>
+              <li>Active application and idle status</li>
+              <li>Normalized browser domain and policy status</li>
+              <li>Session, alert, attendance, and command events</li>
+              <li>Bounded client telemetry queued during brief outages</li>
+            </ul>
+          </article>
+          <article class="boundary-card excluded">
+            <p>Outside the product boundary</p>
+            <ul>
+              <li>No keystroke logging or clipboard capture</li>
+              <li>No microphone, camera, or ambient recording</li>
+              <li>No browser credentials, cookies, or page content</li>
+              <li>No full URL paths, queries, or fragments</li>
+              <li>No required third-party analytics or cloud upload</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section architecture" id="architecture" aria-labelledby="architecture-title">
+      <div class="shell">
+        <div class="section-heading">
+          <p class="section-kicker">Deployment architecture</p>
+          <h2 id="architecture-title">A compact system with explicit trust paths.</h2>
+          <p>Run the self-contained server on the teacher or lab control PC. Student agents discover it on the LAN or use a manually configured HTTPS endpoint.</p>
+        </div>
+        <div class="architecture-board" role="img" aria-label="CAMS server connects to teacher browser portals and student Windows clients over a private network">
+          <article class="node teacher-node"><span>CONTROL SURFACE</span><strong>Teacher / Admin browser</strong><small>Authenticated role portals</small></article>
+          <div class="connector connector-a"><span>HTTPS</span></div>
+          <article class="node server-node"><span>CAMS SERVER</span><strong>ASP.NET Core + SignalR</strong><small>EF Core / local SQLite</small><b>TCP 5000</b></article>
+          <div class="connector connector-b"><span>HTTPS + UDP discovery</span></div>
+          <article class="node client-node"><span>WORKSTATIONS</span><strong>Windows student clients</strong><small>Self-contained .NET 8 agents</small><b>UDP 5001</b></article>
+        </div>
+        <div class="architecture-notes">
+          <p><strong>Traffic:</strong> Authenticated screen and control messages travel over HTTPS SignalR. UDP broadcast assists discovery only.</p>
+          <p><strong>Fallback:</strong> If a network blocks broadcast, configure <code>https://&lt;server-ip&gt;:5000/remoteMonitoringHub</code> manually.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="certificate-warning" aria-labelledby="certificate-title">
+      <div class="shell warning-inner">
+        <div class="warning-symbol" aria-hidden="true">!</div>
+        <div>
+          <p class="warning-label">Deployment certificate warning</p>
+          <h2 id="certificate-title"><code>CAMS-Server-Root.cer</code> never comes from this public site.</h2>
+          <p>That public trust certificate is unique to your CAMS server. Download it only after signing in to your own local server at <code>/Admin/Deployment</code>. Never distribute either <code>.pfx</code> private-key file.</p>
+        </div>
+        <button class="copy-button" type="button" data-copy="/Admin/Deployment" data-copy-label="Copy local path">Copy local path</button>
+      </div>
+    </section>
+
+    <section class="section install" id="install" aria-labelledby="install-title">
+      <div class="shell install-layout">
+        <div class="install-intro">
+          <p class="section-kicker">Step-by-step installation</p>
+          <h2 id="install-title">From clean PC to managed lab.</h2>
+          <p>Plan one Windows control PC for the server and one CAMS client installation per student workstation. Keep every machine on the same trusted, non-guest network.</p>
+          <div class="requirements">
+            <span>Windows x64</span><span>TCP 5000</span><span>UDP 5001</span><span>No separate .NET runtime</span>
+          </div>
+        </div>
+        <ol class="steps">
+          <li><div><span>01</span></div><article><h3>Prepare the server PC</h3><p>Set a protected <code>Cams__InitialAdminPassword</code> environment variable before first launch. Do not reuse a classroom account password.</p></article></li>
+          <li><div><span>02</span></div><article><h3>Install CAMS Server</h3><p>Download and run <a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Setup.exe">CAMS-Server-Setup.exe</a>. The installer configures the application and refreshes its TCP 5000 firewall rule.</p></article></li>
+          <li><div><span>03</span></div><article><h3>Start on the target network</h3><p>Connect the control PC to the classroom LAN first, then start CAMS. Local CA mode creates a server certificate covering the current machine name and LAN addresses.</p></article></li>
+          <li><div><span>04</span></div><article><h3>Use the authenticated Deployment Hub</h3><p>Sign in as administrator and open <code>https://&lt;server-ip&gt;:5000/Admin/Deployment</code>. Confirm the endpoint is certificate-compatible; download the local trust certificate or prepare the verified workstation bundle there.</p></article></li>
+          <li><div><span>05</span></div><article><h3>Install each student client</h3><p>Run <a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe">CAMS-Client-Setup.exe</a>, enter the displayed SignalR endpoint, and select only the <code>CAMS-Server-Root.cer</code> obtained from your local Deployment Hub.</p></article></li>
+          <li><div><span>06</span></div><article><h3>Verify before class</h3><p>Sign in with a test student account, confirm the workstation appears in the teacher monitoring grid, and test a permitted warning or lock action before enrolling the full lab.</p></article></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section downloads" id="downloads" aria-labelledby="downloads-title">
+      <div class="shell">
+        <div class="download-heading">
+          <div><p class="section-kicker">Current stable release</p><h2 id="downloads-title">CAMS v<span data-version>2.8.0</span></h2></div>
+          <p>Release downloads are hosted by GitHub. Verify each installer against its published SHA-256 file before deployment.</p>
+        </div>
+        <div class="download-grid">
+          <article class="download-card primary-download"><span class="file-type">SERVER / EXE</span><h3>CAMS Server Setup</h3><p>Teacher or lab control PC. Self-contained Windows x64 installer.</p><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Setup.exe">Download server <span aria-hidden="true">-&gt;</span></a></article>
+          <article class="download-card primary-download"><span class="file-type">CLIENT / EXE</span><h3>CAMS Client Setup</h3><p>Student workstations. Self-contained Windows x64 installer.</p><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe">Download client <span aria-hidden="true">-&gt;</span></a></article>
+          <article class="download-card"><span class="file-type">SERVER / SHA256</span><h3>Server checksum</h3><p>Published digest for independent installer integrity verification.</p><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Setup.exe.sha256">Get checksum <span aria-hidden="true">-&gt;</span></a></article>
+          <article class="download-card"><span class="file-type">CLIENT / SHA256</span><h3>Client checksum</h3><p>Published digest for independent installer integrity verification.</p><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe.sha256">Get checksum <span aria-hidden="true">-&gt;</span></a></article>
+          <article class="download-card manifest-card"><span class="file-type">METADATA / JSON</span><h3>Release manifest</h3><p>Machine-readable product, version, file, size, and digest metadata.</p><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/deployment-manifest.json">Open manifest <span aria-hidden="true">-&gt;</span></a></article>
+        </div>
+        <div class="verify-box">
+          <div><span>VERIFY ON WINDOWS</span><code>Get-FileHash .\CAMS-Client-Setup.exe -Algorithm SHA256</code></div>
+          <button class="copy-button copy-dark" type="button" data-copy="Get-FileHash .\CAMS-Client-Setup.exe -Algorithm SHA256" data-copy-label="Copy command">Copy command</button>
+        </div>
+        <p class="release-link">Need notes or an older build? <a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest">View the complete GitHub release</a>.</p>
+      </div>
+    </section>
+
+    <section class="section trust" aria-labelledby="trust-title">
+      <div class="shell trust-layout">
+        <div><p class="section-kicker">Security and trust</p><h2 id="trust-title">Trust is established at deployment, not assumed.</h2></div>
+        <div class="trust-grid">
+          <article><span>01</span><h3>Authenticated roles</h3><p>Admin, teacher, and student identities enter through role-aware authorization. Teacher actions are scoped to accessible sessions and workstations.</p></article>
+          <article><span>02</span><h3>Encrypted local transport</h3><p>Web portals and SignalR traffic use HTTPS. The endpoint must match the active certificate before clients are deployed.</p></article>
+          <article><span>03</span><h3>Private keys stay private</h3><p>Local CA private keys remain on the server. Student PCs receive only the deployment-specific public root certificate.</p></article>
+          <article><span>04</span><h3>Verifiable packages</h3><p>GitHub release checksums and manifest metadata let administrators verify downloads before execution or redistribution.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section support" id="support" aria-labelledby="support-title">
+      <div class="shell support-layout">
+        <div class="support-intro"><p class="section-kicker">Troubleshooting</p><h2 id="support-title">Resolve the network first.</h2><p>Most onboarding issues come from endpoint selection, certificate mismatch, firewall policy, or Wi-Fi client isolation.</p></div>
+        <div class="faq-list">
+          <details><summary>The client cannot discover the server.<span aria-hidden="true">+</span></summary><p>Confirm both PCs are on the same non-guest subnet. Allow UDP 5001 on student PCs, or skip discovery and enter <code>https://&lt;server-ip&gt;:5000/remoteMonitoringHub</code> manually.</p></details>
+          <details><summary>The browser or client reports an untrusted certificate.<span aria-hidden="true">+</span></summary><p>Do not bypass the warning. Sign in to the local CAMS server, open <code>/Admin/Deployment</code>, and install that deployment's public <code>CAMS-Server-Root.cer</code> for the current Windows user.</p></details>
+          <details><summary>The certificate does not match the server IP.<span aria-hidden="true">+</span></summary><p>Connect the server PC to the target network and restart CAMS so local CA mode can issue a certificate for the current LAN address. Use an endpoint marked compatible in the Deployment Hub.</p></details>
+          <details><summary>A phone hotspot connects devices but CAMS cannot reach them.<span aria-hidden="true">+</span></summary><p>Some hotspots isolate clients or block broadcast. Disable client isolation if available, use the teacher PC's Wi-Fi IPv4 address instead of <code>localhost</code>, and verify TCP 5000 is reachable.</p></details>
+          <details><summary>An installer hash does not match.<span aria-hidden="true">+</span></summary><p>Do not run the file. Delete it, download the installer and checksum again from the same GitHub release, and repeat SHA-256 verification.</p></details>
+          <details><summary>The server moved to another network.<span aria-hidden="true">+</span></summary><p>Restart CAMS after joining the new network. Confirm the new compatible endpoint in <code>/Admin/Deployment</code>; update clients if the saved server address changed.</p></details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell footer-main">
+      <div class="footer-brand"><img src="assets/cams-mark.svg" width="54" height="54" alt=""><div><strong>CAMS</strong><span>Computer laboratory operations on your network.</span></div></div>
+      <div class="footer-links"><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale">Source repository</a><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest">Release notes</a><a href="#privacy">Privacy boundary</a><a href="#install">Installation</a></div>
+    </div>
+    <div class="shell footer-base"><span>CAMS v<span data-version>2.8.0</span></span><span>MIT licensed</span><span>Static portal: no analytics, cookies, remote fonts, or CDN assets.</span></div>
+  </footer>
+
+  <noscript><div class="noscript">JavaScript is disabled. All documentation and download links remain available; menu and copy-button enhancements are inactive.</div></noscript>
+</body>
+</html>

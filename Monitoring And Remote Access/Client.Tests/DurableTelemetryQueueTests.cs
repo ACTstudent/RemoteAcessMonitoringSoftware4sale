@@ -6,6 +6,19 @@ namespace Client.Tests;
 public sealed class DurableTelemetryQueueTests
 {
     [Fact]
+    public void NormalizeInfraction_RemovesClientIdentityAndPreservesPolicyTarget()
+    {
+        var item = TelemetryBatchItem.From(new InfractionMessage(
+            "spoofed-connection", "spoofed-student", "spoofed-pc", "game.exe", "Application", DateTime.UtcNow));
+
+        Assert.True(DurableTelemetryQueue.TryNormalizeItem(item, out var normalized));
+        Assert.Equal(string.Empty, normalized.Infraction!.ConnectionId);
+        Assert.Equal(string.Empty, normalized.Infraction.StudentId);
+        Assert.Equal(string.Empty, normalized.Infraction.PcName);
+        Assert.Equal("game.exe", normalized.Infraction.Target);
+    }
+
+    [Fact]
     public async Task Queue_SurvivesRestartAndStoresOnlyNormalizedDtoValues()
     {
         var directory = CreateTemporaryDirectory();

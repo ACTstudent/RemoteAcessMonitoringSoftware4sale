@@ -53,29 +53,38 @@ public class AuthenticationService : IAuthenticationService
         if (student != null && IsUsable(student.Status, student.LockoutEndUtc) && VerifyPassword(student.PasswordHash, password))
         {
             ClearFailures(student);
+            var assignedPc = string.IsNullOrWhiteSpace(pcName)
+                ? null
+                : await _context.Computers.FirstOrDefaultAsync(c => c.AssignedTo == student.Id.ToString());
+            var requestedPc = string.IsNullOrWhiteSpace(pcName)
+                ? null
+                : await _context.Computers.FirstOrDefaultAsync(c => c.LaboratoryStation == pcName);
+            if (!string.IsNullOrWhiteSpace(pcName) &&
+                (assignedPc is null || requestedPc is null || assignedPc.ComputerId != requestedPc.ComputerId))
+            {
+                await AuditAsync("Student", student.Id, "LoginDenied",
+                    $"Student {username} attempted from unassigned station: {pcName}", ipAddress);
+                return new LoginResult(AccountRole.Invalid, null, null);
+            }
             var existingSession = string.IsNullOrWhiteSpace(pcName)
                 ? null
                 : await _context.LabSessions.FirstOrDefaultAsync(s => s.StudentId == student.Id && s.IsActive && s.Status != "Ended");
             if (existingSession is not null)
             {
-                if (!string.IsNullOrWhiteSpace(pcName) && !string.Equals(existingSession.PCName, pcName, StringComparison.OrdinalIgnoreCase))
+                if (!string.IsNullOrWhiteSpace(existingSession.PCName) &&
+                    !string.Equals(existingSession.PCName, pcName, StringComparison.OrdinalIgnoreCase))
                     return new LoginResult(AccountRole.Invalid, null, null);
+                existingSession.PCName = pcName;
+                existingSession.IPAddress = ipAddress;
+                existingSession.ComputerId ??= assignedPc?.ComputerId;
+                if (assignedPc is not null) assignedPc.Status = "In Use";
+                await _context.SaveChangesAsync();
                 return new LoginResult(AccountRole.Student, student.Id, student.FullName, student.Username, student.StudentNumber);
             }
             if (!string.IsNullOrEmpty(student.Status) && !string.Equals(student.Status, "Active", StringComparison.OrdinalIgnoreCase))
             {
                 await AuditAsync("Student", student.Id, "LoginDenied",
                     $"Student {username} attempted login while account status is {student.Status}", ipAddress);
-                return new LoginResult(AccountRole.Invalid, null, null);
-            }
-
-            var assignedPc = string.IsNullOrWhiteSpace(pcName)
-                ? null
-                : await _context.Computers.FirstOrDefaultAsync(c => c.AssignedTo == student.Id.ToString());
-            if (assignedPc != null && !string.IsNullOrEmpty(pcName) && !string.Equals(assignedPc.LaboratoryStation, pcName, StringComparison.OrdinalIgnoreCase))
-            {
-                await AuditAsync("Student", student.Id, "LoginDenied",
-                    $"Student {username} attempted from wrong station: {pcName} (needs {assignedPc.LaboratoryStation})", ipAddress);
                 return new LoginResult(AccountRole.Invalid, null, null);
             }
 
@@ -86,8 +95,7 @@ public class AuthenticationService : IAuthenticationService
                         .Select(c => c.TeacherId).FirstOrDefaultAsync()
                     : null;
                 var rule = await _context.SessionRules.FirstOrDefaultAsync(r => r.IsActive && r.IsDefault);
-                var computer = assignedPc ?? await _context.Computers
-                    .FirstOrDefaultAsync(c => c.LaboratoryStation == pcName);
+                var computer = assignedPc;
                 _context.LabSessions.Add(new LabSession
                 {
                     StudentId = student.Id,
@@ -104,7 +112,6 @@ public class AuthenticationService : IAuthenticationService
                 if (computer is not null)
                 {
                     computer.Status = "In Use";
-                    computer.AssignedTo = student.Id.ToString();
                 }
                 await _context.SaveChangesAsync();
             }

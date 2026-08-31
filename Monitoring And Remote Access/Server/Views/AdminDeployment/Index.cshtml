@@ -1,0 +1,113 @@
+@model Server.Models.DeploymentViewModel
+@{
+    ViewData["Title"] = "Deployment Hub";
+    Layout = "~/Views/Admin/_Layout.cshtml";
+    var viableEndpoints = Model.Endpoints.Where(endpoint => endpoint.CertificateCompatible).ToList();
+}
+
+<div class="deployment-heading mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-box-primary"><i class="bi bi-box-seam-fill fs-3"></i></div>
+        <div>
+            <h2 class="fw-extrabold mb-0 text-dark">CAMS Deployment Hub</h2>
+            <p class="text-muted mb-0 small">Verified packages for authenticated local workstation deployment</p>
+        </div>
+    </div>
+    <span class="badge @(Model.AssetsReady && viableEndpoints.Count > 0 ? "bg-success" : "bg-warning text-dark") rounded-pill px-3 py-2">
+        <i class="bi bi-shield-check me-1"></i>@(Model.AssetsReady && viableEndpoints.Count > 0 ? "Ready" : "Attention required")
+    </span>
+</div>
+
+@foreach (var warning in Model.Warnings)
+{
+    <div class="alert alert-warning border-0 rounded-4 shadow-sm"><i class="bi bi-exclamation-triangle me-2"></i>@warning</div>
+}
+
+<div class="row g-4 mb-4">
+    <div class="col-xl-7">
+        <section class="card border-0 shadow-sm rounded-4 h-100 p-4">
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+                <div>
+                    <h5 class="fw-bold mb-1">Client package</h5>
+                    <div class="text-muted small">Every download is revalidated against the packaged manifest.</div>
+                </div>
+                <i class="bi bi-file-earmark-lock2 fs-2 text-emerald-700"></i>
+            </div>
+            <dl class="row small deployment-details">
+                <dt class="col-sm-4">Product</dt><dd class="col-sm-8">@(Model.Product ?? "Unavailable")</dd>
+                <dt class="col-sm-4">Client version</dt><dd class="col-sm-8">@(Model.ClientVersion ?? "Unavailable")</dd>
+                <dt class="col-sm-4">Server version</dt><dd class="col-sm-8">@Model.ServerVersion</dd>
+                <dt class="col-sm-4">Installer size</dt><dd class="col-sm-8">@(Model.InstallerSize.HasValue ? $"{Model.InstallerSize.Value / 1024d / 1024d:N1} MB" : "Unavailable")</dd>
+                <dt class="col-sm-4">SHA256</dt><dd class="col-sm-8"><code class="hash-value">@(Model.InstallerSha256 ?? "Unavailable")</code></dd>
+                <dt class="col-sm-4">Connected clients</dt><dd class="col-sm-8 mb-0">@Model.ConnectedClientCount</dd>
+            </dl>
+            <div class="d-flex flex-wrap gap-2 mt-4">
+                <a class="btn btn-outline-success rounded-pill px-3 @(Model.AssetsReady ? "" : "disabled")" href="@Url.Action("Installer")"><i class="bi bi-download me-1"></i>Installer</a>
+                <a class="btn btn-outline-secondary rounded-pill px-3 @(Model.AssetsReady ? "" : "disabled")" href="@Url.Action("Manifest")">Manifest</a>
+                @if (Model.RootCertificateAvailable)
+                {
+                    <a class="btn btn-outline-secondary rounded-pill px-3" href="@Url.Action("RootCertificate")">Public root CER</a>
+                }
+            </div>
+        </section>
+    </div>
+    <div class="col-xl-5">
+        <section class="card border-0 shadow-sm rounded-4 h-100 p-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-patch-check-fill me-2 text-emerald-700"></i>Active HTTPS certificate</h5>
+            <div class="badge bg-light text-dark border align-self-start mb-3">@Model.CertificateMode</div>
+            <dl class="small deployment-details mb-0">
+                <dt>Subject</dt><dd>@(Model.CertificateSubject ?? "Unavailable")</dd>
+                <dt>Thumbprint</dt><dd><code class="hash-value">@(Model.CertificateThumbprint ?? "Unavailable")</code></dd>
+                <dt>Certificate SHA256</dt><dd><code class="hash-value">@(Model.CertificateSha256 ?? "Unavailable")</code></dd>
+                <dt>Expires UTC</dt><dd class="mb-0">@(Model.CertificateExpiresUtc?.ToString("u") ?? "Unavailable")</dd>
+            </dl>
+        </section>
+    </div>
+</div>
+
+<section class="card border-0 shadow-sm rounded-4 p-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h5 class="fw-bold mb-1">Build a workstation bundle</h5>
+            <div class="text-muted small">Choose a detected endpoint covered by the active certificate.</div>
+        </div>
+        <span class="small text-muted"><i class="bi bi-lock-fill me-1"></i>No credentials included</span>
+    </div>
+    <form method="post" action="@Url.Action("Bundle")" class="deployment-bundle-form">
+        @Html.AntiForgeryToken()
+        <label class="form-label fw-semibold" for="deploymentEndpoint">Server endpoint</label>
+        <div class="input-group">
+            <select id="deploymentEndpoint" name="endpoint" class="form-select" required disabled="@(viableEndpoints.Count == 0 ? "disabled" : null)">
+                @foreach (var endpoint in Model.Endpoints.OrderByDescending(endpoint => endpoint.CertificateCompatible))
+                {
+                    <option value="@endpoint.Url" disabled="@(!endpoint.CertificateCompatible ? "disabled" : null)">@endpoint.Url@(endpoint.CertificateCompatible ? "" : " - certificate mismatch")</option>
+                }
+            </select>
+            <button class="btn btn-success px-4" type="submit" disabled="@(!Model.AssetsReady || viableEndpoints.Count == 0 ? "disabled" : null)"><i class="bi bi-file-earmark-zip me-1"></i>Create bundle</button>
+        </div>
+        <div id="endpointHelp" class="form-text">The bundle contains only the verified installer metadata, install scripts, and the public root certificate when local CA mode requires it.</div>
+    </form>
+</section>
+
+@section Scripts {
+<script>
+    (() => {
+        const select = document.getElementById('deploymentEndpoint');
+        const help = document.getElementById('endpointHelp');
+        select?.addEventListener('change', () => { help.textContent = `Selected endpoint: ${select.value}`; });
+    })();
+</script>
+}
+
+<style>
+    .deployment-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+    .deployment-details dt { color: #64748b; font-weight: 600; }
+    .deployment-details dd { overflow-wrap: anywhere; }
+    .hash-value { color: #166534; font-size: .78rem; }
+    .deployment-bundle-form { max-width: 920px; }
+    @@media (max-width: 767px) {
+        .deployment-heading { align-items: flex-start; flex-direction: column; }
+        .deployment-bundle-form .input-group { display: grid; gap: .75rem; }
+        .deployment-bundle-form .form-select, .deployment-bundle-form .btn { width: 100%; border-radius: .5rem !important; }
+    }
+</style>

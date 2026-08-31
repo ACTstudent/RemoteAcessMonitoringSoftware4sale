@@ -15,7 +15,6 @@ public sealed class RemoteMonitoringHub : Hub
     private const int MaxFrameBase64Length = 6 * 1024 * 1024;
     private const int MaxTelemetryBatchSize = 50;
     private static readonly ConcurrentDictionary<string, byte> ActiveTelemetryBatches = new();
-    private static readonly ConcurrentDictionary<string, string[]> StudentViewerGroups = new();
 
     private readonly IMonitoringService _monitoringService;
     private readonly ITelemetryService _telemetryService;
@@ -95,7 +94,9 @@ public sealed class RemoteMonitoringHub : Hub
         var authorized = await context.Students
             .AsNoTracking()
             .AnyAsync(s => s.StudentNumber == target.StudentId &&
-                (s.AdviserId == teacherId || context.Classes.Any(c => c.ClassId == s.ClassId && c.TeacherId == teacherId)));
+                (s.AdviserId == teacherId || context.Classes.Any(c => c.TeacherId == teacherId && !c.IsArchived &&
+                    (c.Status == "Active" || string.IsNullOrEmpty(c.Status)) &&
+                    (c.ClassId == s.ClassId || context.ClassStudents.Any(cs => cs.ClassId == c.ClassId && cs.StudentId == s.Id)))));
         if (!authorized)
             throw new HubException("You are not authorized to control this workstation.");
 
@@ -147,13 +148,8 @@ public sealed class RemoteMonitoringHub : Hub
         return rows.Select(row => (row.Id, row.StudentNumber)).ToList();
     }
 
-    private IClientProxy AuthorizedViewers(StudentConnectionMessage student)
-    {
-        var groups = StudentViewerGroups.TryGetValue(student.ConnectionId, out var resolved)
-            ? resolved
-            : new[] { HubEventNames.AdminsGroup };
-        return Clients.Groups(groups);
-    }
+    private async Task<IClientProxy> AuthorizedViewersAsync(StudentConnectionMessage student) =>
+        Clients.Groups(await ResolveViewerGroupsAsync(student.StudentId));
 
     private async Task AuditCommandAsync(string action, StudentConnectionMessage target, int? remoteSessionId = null)
     {
@@ -232,7 +228,7 @@ public sealed class RemoteMonitoringHub : Hub
             throw new HubException("Remote control is disabled by the active session rule.");
 
         var duration = labSession.MaxDurationMinutes ?? labSession.SessionRule?.MaxDurationMinutes;
-        if (duration is > 0 && DateTime.UtcNow >= labSession.StartTime.ToUniversalTime().AddMinutes(duration.Value))
+        if (duration is > 0 && LabSessionLifecycleService.GetElapsedSeconds(labSession, DateTime.UtcNow) >= duration.Value * 60)
         {
             labSession.IsActive = false;
             labSession.Status = "Ended";
@@ -284,7 +280,6 @@ public sealed class RemoteMonitoringHub : Hub
             }
 
             var student = _monitoringService.RegisterStudent(Context.ConnectionId, studentNumber, pcName);
-            StudentViewerGroups[Context.ConnectionId] = await ResolveViewerGroupsAsync(studentNumber);
             await UpdateComputerProfileAsync(accountId, studentNumber, pcName);
             GlobalSessionMessage sessionState;
             using (var scope = _scopeFactory.CreateScope())
@@ -298,7 +293,7 @@ public sealed class RemoteMonitoringHub : Hub
             }
             await TryRecordTelemetryAsync(() => _telemetryService.RecordActivityEventAsync(Context.ConnectionId, student.StudentId, student.PcName, "Connected"));
             await Groups.AddToGroupAsync(Context.ConnectionId, HubEventNames.StudentsGroup);
-            await AuthorizedViewers(student)
+            await (await AuthorizedViewersAsync(student))
                 .SendAsync(HubEventNames.StudentConnected, student);
             await Clients.Client(Context.ConnectionId)
                 .SendAsync(HubEventNames.GlobalSessionState, sessionState);
@@ -335,22 +330,10 @@ public sealed class RemoteMonitoringHub : Hub
         {
             using var scope = _scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var computer = await db.Computers.FirstOrDefaultAsync(c => c.LaboratoryStation == pcName);
-            if (computer == null)
-            {
-                computer = new Computer
-                {
-                    LaboratoryStation = pcName,
-                    Status = "Online",
-                    AssignedTo = accountId.ToString()
-                };
-                db.Computers.Add(computer);
-            }
-            else
-            {
-                computer.Status = "Online";
-                computer.AssignedTo = accountId.ToString();
-            }
+            var computer = await db.Computers.FirstOrDefaultAsync(c =>
+                c.LaboratoryStation == pcName && c.AssignedTo == accountId.ToString());
+            if (computer == null) return;
+            computer.Status = "In Use";
 
             await db.SaveChangesAsync();
         }
@@ -373,7 +356,7 @@ public sealed class RemoteMonitoringHub : Hub
             frame.FrameBase64,
             DateTime.UtcNow);
 
-        await AuthorizedViewers(student)
+        await (await AuthorizedViewersAsync(student))
             .SendAsync(HubEventNames.ReceiveScreenFrame, Context.ConnectionId, canonicalFrame);
     }
 
@@ -448,7 +431,7 @@ public sealed class RemoteMonitoringHub : Hub
         }
         await Clients.Client(target.ConnectionId).SendAsync(HubEventNames.ForceLogout);
         _monitoringService.UnregisterStudent(target.ConnectionId);
-        await AuthorizedViewers(target)
+        await (await AuthorizedViewersAsync(target))
             .SendAsync(HubEventNames.StudentDisconnected, target.ConnectionId);
     }
 
@@ -486,7 +469,7 @@ public sealed class RemoteMonitoringHub : Hub
     {
         var (target, session) = await RequireActiveRemoteSessionAsync(targetConnectionId);
         if (input is null || string.IsNullOrWhiteSpace(input.EventType) || input.EventType.Length > 32 ||
-            input.X < 0 || input.Y < 0)
+            input.X is < 0 or > 10000 || input.Y is < 0 or > 10000)
             throw new HubException("Invalid remote input.");
 
         await Clients.Client(target.ConnectionId)
@@ -513,7 +496,7 @@ public sealed class RemoteMonitoringHub : Hub
         if (labSession.SessionRule is not null && !labSession.SessionRule.AllowRemoteControl)
             throw new HubException("Remote control is disabled by the active session rule.");
         var duration = labSession.MaxDurationMinutes ?? labSession.SessionRule?.MaxDurationMinutes;
-        if (duration is > 0 && DateTime.UtcNow >= labSession.StartTime.ToUniversalTime().AddMinutes(duration.Value))
+        if (duration is > 0 && LabSessionLifecycleService.GetElapsedSeconds(labSession, DateTime.UtcNow) >= duration.Value * 60)
         {
             labSession.IsActive = false;
             labSession.Status = "Ended";
@@ -588,6 +571,15 @@ public sealed class RemoteMonitoringHub : Hub
             await Clients.Client(student.ConnectionId).SendAsync(HubEventNames.BroadcastScreen, message);
     }
 
+    public async Task StopBroadcast()
+    {
+        RequireTeacher();
+        var accessible = await AccessibleStudentRowsAsync();
+        var numbers = accessible.Select(row => row.StudentNumber).ToHashSet(StringComparer.Ordinal);
+        foreach (var student in _monitoringService.ActiveStudents.Where(student => numbers.Contains(student.StudentId)))
+            await Clients.Client(student.ConnectionId).SendAsync(HubEventNames.BroadcastStopped);
+    }
+
     public async Task SendNotification(NotificationMessage notification)
     {
         RequireTeacher();
@@ -620,25 +612,25 @@ public sealed class RemoteMonitoringHub : Hub
             await Clients.Client(student.ConnectionId).SendAsync(HubEventNames.SendNotification, notification);
     }
 
-    public Task GlobalStartSession()
+    public async Task GlobalStartSession()
     {
         RequireAdmin();
-        _sessionManager.StartSession();
-        return Task.CompletedTask;
+        using var scope = _scopeFactory.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<LabSessionLifecycleService>().ResumeAllSessionsAsync();
     }
 
-    public Task GlobalPauseSession()
+    public async Task GlobalPauseSession()
     {
         RequireAdmin();
-        _sessionManager.PauseSession();
-        return Task.CompletedTask;
+        using var scope = _scopeFactory.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<LabSessionLifecycleService>().PauseAllSessionsAsync();
     }
 
-    public Task GlobalEndSession()
+    public async Task GlobalEndSession()
     {
         RequireAdmin();
-        _sessionManager.EndSession();
-        return Task.CompletedTask;
+        using var scope = _scopeFactory.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<LabSessionLifecycleService>().EndAllSessionsAsync();
     }
 
     public async Task FetchRestrictions()
@@ -692,16 +684,7 @@ public sealed class RemoteMonitoringHub : Hub
     public async Task ReportInfraction(InfractionMessage infraction)
     {
         var student = RequireStudent();
-        if (infraction is null || string.IsNullOrWhiteSpace(infraction.Target) || string.IsNullOrWhiteSpace(infraction.TargetType) || infraction.Target.Length > 500 || infraction.TargetType.Length > 50)
-            throw new HubException("The infraction report is invalid.");
-
-        var canonicalInfraction = infraction with
-        {
-            ConnectionId = Context.ConnectionId,
-            StudentId = student.StudentId,
-            PcName = student.PcName,
-            Timestamp = DateTime.UtcNow
-        };
+        var canonicalInfraction = CanonicalizeInfraction(student, infraction, useReportedTimestamp: false);
 
         await TryRecordTelemetryAsync(() => _telemetryService.RecordActivityEventAsync(
             canonicalInfraction.ConnectionId,
@@ -711,6 +694,11 @@ public sealed class RemoteMonitoringHub : Hub
             details: $"{canonicalInfraction.TargetType}: {canonicalInfraction.Target}",
             timestamp: canonicalInfraction.Timestamp));
 
+        await PersistAndPublishInfractionAsync(student, canonicalInfraction);
+    }
+
+    private async Task PersistAndPublishInfractionAsync(StudentConnectionMessage student, InfractionMessage canonicalInfraction)
+    {
         try
         {
             using var scope = _scopeFactory.CreateScope();
@@ -762,7 +750,7 @@ public sealed class RemoteMonitoringHub : Hub
             await context.SaveChangesAsync();
             if (!suppressNotification)
             {
-                await AuthorizedViewers(student)
+                await (await AuthorizedViewersAsync(student))
                     .SendAsync(HubEventNames.MonitoringAlertReceived, alert);
             }
         }
@@ -771,8 +759,29 @@ public sealed class RemoteMonitoringHub : Hub
             // Audit persistence must never break the real-time alert.
         }
 
-        await AuthorizedViewers(student)
+        await (await AuthorizedViewersAsync(student))
             .SendAsync(HubEventNames.InfractionDetected, canonicalInfraction);
+    }
+
+    private InfractionMessage CanonicalizeInfraction(
+        StudentConnectionMessage student,
+        InfractionMessage? infraction,
+        bool useReportedTimestamp)
+    {
+        if (infraction is null || string.IsNullOrWhiteSpace(infraction.Target) ||
+            string.IsNullOrWhiteSpace(infraction.TargetType) || infraction.Target.Length > 500 ||
+            infraction.TargetType.Length > 50 || infraction.Target.Any(char.IsControl) ||
+            infraction.TargetType.Any(char.IsControl))
+            throw new HubException("The infraction report is invalid.");
+        return infraction with
+        {
+            ConnectionId = Context.ConnectionId,
+            StudentId = student.StudentId,
+            PcName = student.PcName,
+            Target = infraction.Target.Trim(),
+            TargetType = infraction.TargetType.Trim(),
+            Timestamp = useReportedTimestamp ? infraction.Timestamp : DateTime.UtcNow
+        };
     }
 
     public async Task ReportIdleStatus(IdleStatusMessage status)
@@ -845,6 +854,8 @@ public sealed class RemoteMonitoringHub : Hub
                     canonicalItems.Add(TelemetryBatchItem.From(CanonicalizeWebsiteActivity(student, website)));
                 else if (item.BrowserMonitoringStatus is { } browserStatus)
                     canonicalItems.Add(TelemetryBatchItem.From(CanonicalizeBrowserMonitoringStatus(student, browserStatus)));
+                else if (item.Infraction is { } infraction)
+                    canonicalItems.Add(TelemetryBatchItem.From(CanonicalizeInfraction(student, infraction, useReportedTimestamp: true)));
             }
 
             // Durable clients acknowledge a batch only after SQLite commits it successfully.
@@ -859,6 +870,8 @@ public sealed class RemoteMonitoringHub : Hub
                     await PublishWebsiteActivityAsync(website);
                 else if (item.BrowserMonitoringStatus is { } browserStatus)
                     await PublishBrowserMonitoringStatusAsync(browserStatus);
+                else if (item.Infraction is { } infraction)
+                    await PersistAndPublishInfractionAsync(student, infraction);
             }
 
             return new TelemetryBatchResult(canonicalItems.Count);
@@ -931,7 +944,7 @@ public sealed class RemoteMonitoringHub : Hub
         _monitoringService.ReportIdleStatus(status);
         var student = _monitoringService.FindStudent(status.ConnectionId);
         if (student is null) return;
-        await AuthorizedViewers(student)
+        await (await AuthorizedViewersAsync(student))
             .SendAsync(HubEventNames.IdleStatusReceived, status);
     }
 
@@ -940,7 +953,7 @@ public sealed class RemoteMonitoringHub : Hub
         _monitoringService.ReportActiveApp(app);
         var student = _monitoringService.FindStudent(app.ConnectionId);
         if (student is null) return;
-        await AuthorizedViewers(student)
+        await (await AuthorizedViewersAsync(student))
             .SendAsync(HubEventNames.ActiveAppReceived, app);
     }
 
@@ -948,7 +961,7 @@ public sealed class RemoteMonitoringHub : Hub
     {
         var student = _monitoringService.FindStudent(website.ConnectionId);
         if (student is null) return;
-        await AuthorizedViewers(student)
+        await (await AuthorizedViewersAsync(student))
             .SendAsync(HubEventNames.WebsiteActivityReceived, website);
     }
 
@@ -957,26 +970,30 @@ public sealed class RemoteMonitoringHub : Hub
         _monitoringService.ReportBrowserMonitoringStatus(status);
         var student = _monitoringService.FindStudent(status.ConnectionId);
         if (student is null) return;
-        await AuthorizedViewers(student)
+        await (await AuthorizedViewersAsync(student))
             .SendAsync(HubEventNames.BrowserMonitoringStatusReceived, status);
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         ActiveTelemetryBatches.TryRemove(Context.ConnectionId, out _);
-        var remoteSessionIds = RemoteSessions
+        var remoteSessions = RemoteSessions
             .Where(item => item.Key.StartsWith($"{Context.ConnectionId}\n", StringComparison.Ordinal))
-            .Select(item => item.Value)
-            .Distinct()
+            .Select(item => new
+            {
+                StudentConnectionId = item.Key[(item.Key.IndexOf('\n') + 1)..],
+                SessionId = item.Value
+            })
             .ToList();
         foreach (var key in RemoteSessions.Keys.Where(key => key.StartsWith($"{Context.ConnectionId}\n", StringComparison.Ordinal)))
             RemoteSessions.TryRemove(key, out _);
-        if (remoteSessionIds.Count > 0)
+        if (remoteSessions.Count > 0)
         {
             try
             {
                 using var scope = _scopeFactory.CreateScope();
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                var remoteSessionIds = remoteSessions.Select(item => item.SessionId).Distinct().ToList();
                 var sessions = await context.RemoteControlSessions
                     .Where(session => remoteSessionIds.Contains(session.RemoteControlSessionId))
                     .ToListAsync();
@@ -986,6 +1003,13 @@ public sealed class RemoteMonitoringHub : Hub
                     session.EndedAt = DateTime.UtcNow;
                 }
                 await context.SaveChangesAsync();
+                foreach (var remote in remoteSessions.DistinctBy(item => item.StudentConnectionId))
+                {
+                    var session = sessions.FirstOrDefault(item => item.RemoteControlSessionId == remote.SessionId);
+                    if (session is not null)
+                        await Clients.Client(remote.StudentConnectionId).SendAsync(HubEventNames.RemoteControlState,
+                            new RemoteControlStateMessage(session.StudentId, false, DateTime.UtcNow));
+                }
             }
             catch
             {
@@ -996,11 +1020,11 @@ public sealed class RemoteMonitoringHub : Hub
         var student = _monitoringService.UnregisterStudent(Context.ConnectionId);
         if (student != null)
         {
-            await TryRecordTelemetryAsync(() => _telemetryService.RecordActivityEventAsync(Context.ConnectionId, student.StudentId, student.PcName, "Disconnected", details: exception?.Message));
-            await AuthorizedViewers(student)
+            await TryRecordTelemetryAsync(() => _telemetryService.RecordDisconnectedAsync(
+                Context.ConnectionId, student.StudentId, student.PcName, exception?.Message));
+            await (await AuthorizedViewersAsync(student))
                 .SendAsync(HubEventNames.StudentDisconnected, student.ConnectionId);
         }
-        StudentViewerGroups.TryRemove(Context.ConnectionId, out _);
 
         await base.OnDisconnectedAsync(exception);
     }

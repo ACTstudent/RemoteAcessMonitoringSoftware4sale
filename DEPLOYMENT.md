@@ -1,95 +1,165 @@
-# Deployment Guide
+# CAMS Deployment Guide
 
-## Easy Install (Recommended)
+This guide deploys CAMS Computer Account Management System for supervised classroom monitoring on a trusted Windows LAN. The server and client installers are self-contained Windows x64 packages; no separate .NET runtime is required on target machines.
 
-Download the installer wizards directly from the [latest release](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest).
+## Deployment Surfaces
 
-Or build them from source on a machine with the .NET 8 SDK and Inno Setup 6:
+| Surface | Audience | Contents |
+| --- | --- | --- |
+| [Public portal source](portal/) and expected GitHub Pages deployment | Anyone | Product information and links to public GitHub release files. No deployment certificate or credentials. Verify the Pages deployment before publishing its expected URL. |
+| [GitHub Releases](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest) | Administrators | Versioned server/client installers, checksum files, release notes, and `release-manifest.json`. |
+| Local `/Admin/Deployment` | Authenticated Admin only | Validated local client package, endpoint/certificate status, public root CER, offline bundle generation, and connected-client count. |
 
-```powershell
-.\build-everything.ps1
-```
+Do not obtain `CAMS-Server-Root.cer` from a public website. It is unique to a local CAMS server.
 
-This creates **`server-dist\CAMS-Server-Setup.exe`** and **`client-dist\CAMS-Client-Setup.exe`**, plus SHA-256 checksum files beside them. Verify the checksums before copying the installers to target PCs.
+## 1. Prepare The Server
 
-The wizard does everything:
-- Installs to `%LOCALAPPDATA%\CAMS Server`
-- Refreshes Windows Firewall HTTPS TCP port **5000** and UDP discovery port **5001** rules
-- Optionally starts the server automatically with Windows
-- Launches the server after install
-- Generates a local CA and a LAN HTTPS certificate on first server start
+1. Choose a Windows x64 control PC and connect it to the final trusted, non-guest classroom network.
+2. Enter the first Admin username and a password of at least 12 characters on the installer page. The secret is passed only to the initial server process and is not written to `appsettings.json`. For a manual folder deployment, set protected `Cams__InitialAdminPassword` and optional `Cams__InitialAdminUsername` environment variables before first start.
+3. Download `CAMS-Server-Setup.exe` and its `.sha256` from the same GitHub release. Also download `release-manifest.json` when that release was produced by the current release workflow; older releases may not contain it.
+4. Compare `Get-FileHash .\CAMS-Server-Setup.exe -Algorithm SHA256` with the checksum file and, when present, the server artifact entry in the release manifest.
+5. Run the installer. It installs under the installing user's `%LOCALAPPDATA%\CAMS Server`, refreshes only the inbound Private-profile TCP `5000` rule, and can configure current-user startup. CAMS is not installed as a Windows Service.
+6. Start CAMS. It creates/migrates local `CAMS.db`; in local CA mode it also creates the certificate files described below.
 
-**SQLite is the supported database** - migrations create `CAMS.db` next to `Server.exe` on first run.
+There are no default passwords. Interactive server setup collects the initial Admin credentials. Silent first-time setup requires `/AdminUsername=... /AdminPassword=...`; the password must contain at least 12 characters. The initial Admin is created only when that username does not already exist, and existing accounts are never overwritten. Optional teacher/student seed accounts require explicit protected configuration and are intended for controlled setup, not as defaults.
 
-## Secure LAN Certificate Setup
+## 2. Bootstrap HTTPS Trust
 
-The server generates these files in `%LOCALAPPDATA%\CAMS Server` when no production certificate is configured:
+### Local CAMS CA mode
 
-- `CAMS-Server-Root.cer` — public trust certificate to copy to student PCs
-- `CAMS-Server.cer` — public server certificate for inspection
-- `certificates\CAMS-Server-Root.pfx` — private CA key; never distribute it
-- `certificates\CAMS-Server.pfx` — private server key; never distribute it
+First start creates:
 
-Copy only `CAMS-Server-Root.cer` to each student PC. The client installer has a **Server Trust** page where the teacher can select that file. It imports the certificate into the current user's Windows root store; no private key is copied to the student PC.
+| File | Purpose | Distribution |
+| --- | --- | --- |
+| `%LOCALAPPDATA%\CAMS Server\CAMS-Server-Root.cer` | Public local root CA | May be copied to PCs that must trust this CAMS server. |
+| `%LOCALAPPDATA%\CAMS Server\CAMS-Server.cer` | Public leaf/server certificate for inspection | Optional inspection only. |
+| `%LOCALAPPDATA%\CAMS Server\certificates\CAMS-Server-Root.pfx` | Root CA private key | Never copy or distribute. |
+| `%LOCALAPPDATA%\CAMS Server\certificates\CAMS-Server.pfx` | Server private key | Never copy or distribute. |
 
-For a production certificate, set `Cams__CertificatePath` and `Cams__CertificatePassword`. The certificate must contain the hostname or LAN IP used by the client in its Subject Alternative Name list.
+For the first Admin connection, work on the server PC: inspect the public root CER and its fingerprint from the local installation directory, install that CER into the trust store for the Windows account running the Admin browser, and then open `https://localhost:5000/Account/Login`. Do not bypass a certificate warning. After Admin login, `/Admin/Deployment` shows the active certificate fingerprint/SHA-256 and is the authenticated source for distributing the public root and bundle.
 
-## Publishing the client installer
+The interactive client installer imports a selected root CER into the current Windows user's Root store and installs the client/settings under that user's `%LOCALAPPDATA%`. Install and run CAMS under the intended workstation user. A different Windows user does not automatically inherit that per-user client installation or trust.
 
-The `build-everything.ps1` script builds both server and client installers. The client installer is **`client-dist\CAMS-Client-Setup.exe`** — a self-contained installer (no .NET required on student PCs). Students run the wizard, enter the server address, and select the copied `CAMS-Server-Root.cer` file.
+The generated offline bundle script is a separate elevated path: it imports the validated public root into `LocalMachine\Root`, invokes the client installer, and performs a TLS ping. Because the client installer itself is per-user, run the bundle while signed in as the intended workstation user and verify the resulting client location and launch context. Use local policy to decide whether machine-wide root trust is acceptable.
 
-## Manual folder install (fallback)
+### Production/public certificate mode
 
-If you can't build installers, do the folder-copy approach:
+Set `Cams__CertificatePath` and `Cams__CertificatePassword` to a protected server certificate whose SAN covers every hostname or IP used by clients. A publicly trusted chain does not need the local root bootstrap. In this mode Deployment Hub does not offer `CAMS-Server-Root.cer`.
 
-### Server
+## 3. Use CAMS Deployment Hub
 
-```powershell
-cd "Monitoring And Remote Access"
-dotnet publish Server\Server.csproj -c Release -o ..\publish
-```
+Sign in as Admin and open `https://<server-ip>:5000/Admin/Deployment`.
 
-Copy the `publish\` folder to the server PC, then run `Server.exe`. CAMS creates and migrates the local `CAMS.db` SQLite database automatically.
+Before enabling downloads, CAMS validates that:
 
-### Client
+- `DeploymentAssets` contains the client installer, `.sha256`, and `deployment-manifest.json`.
+- Installer name, size, and computed SHA-256 match the deployment manifest and checksum file.
+- The installer product version matches the client version in the manifest.
+- The manifest server version matches the running server version.
+- The active HTTPS certificate is valid and covers the selected detected LAN IPv4 endpoint.
+- The local root CER, when offered, is a public CA certificate without a private key.
 
-```powershell
-cd "Monitoring And Remote Access\Client"
-dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ..\..\client-publish
-```
+The page displays warnings instead of claiming readiness when validation fails. It also displays currently connected clients. After each rollout, confirm that count increases and verify the same client in the teacher's authorized monitoring grid; the count alone is not proof of complete classroom behavior.
 
-Copy `client-publish\` to each student PC. Copy `CAMS-Server-Root.cer` beside the folder, install it into the current user's Trusted Root Certification Authorities store, edit `client-settings.json` with `https://<server-ip>:5000/remoteMonitoringHub`, then run `Client.exe`. Start or restart `Server.exe` after connecting the server PC to the target Wi-Fi so its certificate contains the current LAN address.
+### Offline bundle
 
-## Firewall
+Choose a certificate-compatible endpoint and create `CAMS-Client-<version>-Deployment.zip`. The bundle contains:
 
-The server installer refreshes the named rules automatically. To do it manually:
+- `CAMS-Client-Setup.exe`
+- `CAMS-Client-Setup.exe.sha256`
+- `deployment-manifest.json`
+- `CAMS-Server-Root.cer` only in local CA mode
+- `README.txt`
+- `Install-CAMS-Client.ps1`
+- `Install-CAMS-Client.cmd`
 
-```powershell
-netsh advfirewall firewall delete rule name="CAMS Server"
-netsh advfirewall firewall add rule name="CAMS Server" dir=in action=allow protocol=TCP localport=5000 profile=any
-netsh advfirewall firewall delete rule name="CAMS Discovery"
-netsh advfirewall firewall add rule name="CAMS Discovery" dir=in action=allow protocol=UDP localport=5001 profile=any
-```
+No account credentials or PFX private keys are included. Keep all files together, transfer the ZIP through approved offline media, extract it on the intended workstation, and run `Install-CAMS-Client.cmd` as Administrator. The script verifies the installer SHA-256, validates the root CA when present, passes the exact endpoint to Setup, and calls `/api/deployment/ping` over TLS. A successful ping validates that endpoint at that moment; still confirm student login and connected-client/monitoring behavior.
 
-For a Wi-Fi network or cellphone hotspot, use the teacher PC's Wi-Fi IPv4 address from `ipconfig`. Both PCs must be on the same non-guest network subnet. If the network blocks client-to-client traffic or UDP broadcast, disable client isolation if possible and use the manual server URL in the client setup; TCP port 5000 must still be reachable.
+## 4. Interactive Or Unattended Client Install
 
-## URLs
+For interactive installation, run the client installer as the Windows user who will run CAMS, enter the exact URL shown by Deployment Hub, and select only that server's `CAMS-Server-Root.cer` when local CA mode is used.
 
-| URL | Role |
-|---|---|
-| `https://<server-ip>:5000/Account/Login` | Login page |
-| `https://<server-ip>:5000/Admin` | Admin dashboard |
-| `https://<server-ip>:5000/Teacher/Monitoring` | Teacher monitoring panel |
-| `https://<server-ip>:5000/Student` | Student portal |
-| `https://<server-ip>:5000/remoteMonitoringHub` | SignalR hub (client connects here) |
-
-## Initial account setup
-
-The testing release seeds `admin1` / `admin123` and `student1` / `student123`. Replace those values with protected configuration before production deployment. Teacher accounts can be seeded with `Cams__SeededTeacherPassword`; otherwise create them through the authenticated admin portal. Existing accounts are never overwritten.
-
-## Optional: run as a Windows Service
+For unattended configuration:
 
 ```powershell
-sc create CAMS binPath= "%LOCALAPPDATA%\CAMS Server\Server.exe" start= auto
-sc start CAMS
+.\CAMS-Client-Setup.exe /ServerUrl=https://192.168.1.100:5000/remoteMonitoringHub /ServerRootCert=C:\Deploy\CAMS-Server-Root.cer
 ```
+
+`/ServerUrl` is the preferred switch. Legacy `/ServerIP` remains an alias and still expects the complete HTTPS hub URL, not a bare IP. If both are supplied, they must have the same value. `/ServerRootCert` must point to an existing `.cer`. The endpoint must use HTTPS and end exactly in `/remoteMonitoringHub` with no query or fragment.
+
+The client saves the normalized URL in its per-user installation settings. UDP discovery can find a server, but a manual saved URL remains the fallback.
+
+## 5. Firewall And Discovery
+
+Required paths:
+
+| Host | Direction | Protocol/port | Purpose |
+| --- | --- | --- | --- |
+| Server | Inbound | TCP `5000`, Private profile | HTTPS browser, API, and SignalR traffic. |
+| Server | Outbound | UDP to destination `5001` | Periodic discovery broadcasts. |
+| Student client | Inbound | UDP `5001` when discovery is used | Receives discovery broadcasts. |
+| Student client | Outbound | TCP `5000` | Connects to the server. |
+
+The server does not listen on UDP `5001` and needs no inbound UDP `5001` rule. If discovery is blocked by VLANs, hotspot isolation, guest Wi-Fi, endpoint security, or firewall policy, use the manual HTTPS URL. Device-to-device TCP `5000` must still be reachable.
+
+LAN Status is a detected, read-only page. It does not set DHCP, DNS, gateways, adapter addresses, firewall policy, or server binding.
+
+## Network Changes And Restart Behavior
+
+The generated root CA remains stable while its private root PFX remains in the server installation. On every server start, local CA mode issues a leaf certificate for the machine name and LAN addresses detected at that start; discovery advertises current viable addresses while the process runs.
+
+After joining another LAN, changing an address, or switching hotspots:
+
+1. Restart CAMS Server after the network is active.
+2. Open LAN Status and Deployment Hub.
+3. Confirm the intended endpoint is detected and certificate-compatible.
+4. Update clients whose saved `/ServerUrl` address changed; trusting the same root alone does not rewrite the saved endpoint.
+5. Confirm TLS connection, strict assigned-workstation login, Deployment Hub connected-client count, and the teacher monitoring card.
+
+Do not claim seamless reconnection across an address change until it has been tested on that LAN. Discovery, certificate coverage, saved URLs, firewall policy, and client isolation can each affect recovery.
+
+## Manual Folder Publish
+
+Build from the repository root:
+
+```powershell
+dotnet publish "Monitoring And Remote Access\Server\Server.csproj" -c Release -r win-x64 --self-contained true -o server-publish
+dotnet publish "Monitoring And Remote Access\Client\Client.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o client-publish
+```
+
+The canonical `build-everything.ps1` path is preferred because it tests, creates installers and hashes, stages exact Deployment Hub assets, enforces blank packaged secrets, rejects packaged PFX/database files, aligns versions, and runs installer validation. A manually copied server folder must include the correct `DeploymentAssets` if Deployment Hub downloads are required.
+
+## Release And Public Portal Publishing
+
+1. Set the three-part version in `version.json` and build with `build-everything.ps1`.
+2. Verify both installer checksum files and `server-dist\release-manifest.json`.
+3. Push a matching `vMAJOR.MINOR.PATCH` tag, or manually dispatch the release workflow with that tag.
+4. `.github/workflows/release.yml` rejects mismatched tags, rebuilds/validates on Windows, and publishes both installers, both checksums, and `release-manifest.json`.
+5. Changes under `portal/**` pushed to `main`, or a manual Pages dispatch, are configured to publish the static public site through `.github/workflows/pages.yml`. Enable GitHub Pages and verify the workflow's reported URL before advertising the site.
+6. Keep the public flow limited to public artifacts. Never add a local root CER, PFX, database, settings with secrets, credentials, or an offline deployment bundle to the public portal or release.
+
+## Windows And LAN Validation Checklist
+
+- Verify installer and manifest versions/hashes before execution.
+- Verify first trust using the expected certificate SHA-256 without bypassing TLS warnings.
+- Verify interactive per-user install/trust or explicitly approve the bundle's machine-wide root import.
+- Verify browser student portal login separately from strict assigned-workstation CLIENT login.
+- Verify server inbound Private TCP `5000`; verify client inbound UDP `5001` only if discovery is required.
+- Verify connected-client count and the correct teacher-scoped monitoring card.
+- Verify screen updates under realistic load; 50 ms is a capture-loop target, not guaranteed FPS.
+- Verify CAMS topmost warning dialogs, application/domain policies, telemetry reconnect, and session pause/resume/end.
+- Verify lock behavior; CAMS cannot programmatically unlock the Windows secure desktop.
+- Verify restart/shutdown and remote input under local Windows privilege, endpoint-security, and classroom policy.
+- Verify a server network/address change using the restart and client URL update procedure above.
+
+## Troubleshooting
+
+| Symptom | Check |
+| --- | --- |
+| Browser/client reports untrusted TLS | Confirm the expected public root CER is trusted for the relevant Windows user, or the approved machine store for bundle deployment. Do not use a PFX or bypass the warning. |
+| Certificate name mismatch | Restart the server on the target network and select an endpoint marked compatible by Deployment Hub. |
+| Discovery fails | Allow client inbound UDP `5001`, remove client isolation, or use `/ServerUrl`. Do not add server inbound UDP `5001`. |
+| TCP connection fails | Confirm server is running, network is Private, inbound TCP `5000` is allowed, and devices can communicate. |
+| CLIENT rejects valid student credentials | Confirm that student is active and mapped to the workstation name reported by the client. Browser portal login does not perform this station check. |
+| Client remains absent | Confirm TLS ping, saved endpoint, client process/user, SignalR login, Deployment Hub count, and teacher scope. |
+| Server moved networks | Restart server, verify certificate-compatible endpoint, update saved client URLs, and retest. |

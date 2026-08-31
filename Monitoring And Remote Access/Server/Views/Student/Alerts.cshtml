@@ -28,6 +28,7 @@
                     @if (!n.IsRead)
                     {
                         <form method="post" action="/Student/MarkRead" class="mt-2">
+                            @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@n.NotificationId" />
                             <button class="btn btn-sm btn-outline-light">Mark as read</button>
                         </form>

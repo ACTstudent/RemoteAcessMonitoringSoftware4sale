@@ -15,7 +15,7 @@ namespace Server.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "8.0.2");
+            modelBuilder.HasAnnotation("ProductVersion", "8.0.30");
 
             modelBuilder.Entity("PermissionRole", b =>
                 {
@@ -354,7 +354,8 @@ namespace Server.Migrations
                     b.Property<string>("LaboratoryStation")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .UseCollation("NOCASE");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -362,6 +363,13 @@ namespace Server.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("ComputerId");
+
+                    b.HasIndex("AssignedTo")
+                        .IsUnique()
+                        .HasFilter("\"AssignedTo\" IS NOT NULL");
+
+                    b.HasIndex("LaboratoryStation")
+                        .IsUnique();
 
                     b.ToTable("Computers");
                 });
@@ -440,6 +448,9 @@ namespace Server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("AccumulatedPauseSeconds")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("ComputerId")
                         .HasColumnType("INTEGER");
 
@@ -484,9 +495,15 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ComputerId");
+                    b.HasIndex("ComputerId")
+                        .IsUnique()
+                        .HasFilter("\"IsActive\" = 1 AND \"ComputerId\" IS NOT NULL");
 
                     b.HasIndex("SessionRuleId");
+
+                    b.HasIndex("StudentId")
+                        .IsUnique()
+                        .HasFilter("\"IsActive\" = 1");
 
                     b.HasIndex("TeacherId");
 

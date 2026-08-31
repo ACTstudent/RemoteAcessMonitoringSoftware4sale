@@ -29,20 +29,23 @@ namespace Client
 
         public static void ProcessRemoteInput(string eventType, int x, int y, int keyCode, bool isShift)
         {
+            var screen = System.Windows.Forms.SystemInformation.VirtualScreen;
+            var screenX = screen.Left + ScaleCoordinate(x, screen.Width);
+            var screenY = screen.Top + ScaleCoordinate(y, screen.Height);
             switch (eventType)
             {
                 case "mousemove":
-                    SetCursorPos(x, y);
+                    SetCursorPos(screenX, screenY);
                     break;
 
                 case "mousedown":
-                    SetCursorPos(x, y);
+                    SetCursorPos(screenX, screenY);
                     if (keyCode == 0) mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, UIntPtr.Zero);
                     else if (keyCode == 2) mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, UIntPtr.Zero);
                     break;
 
                 case "mouseup":
-                    SetCursorPos(x, y);
+                    SetCursorPos(screenX, screenY);
                     if (keyCode == 0) mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, UIntPtr.Zero);
                     else if (keyCode == 2) mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, UIntPtr.Zero);
                     break;
@@ -59,5 +62,8 @@ namespace Client
                     break;
             }
         }
+
+        public static int ScaleCoordinate(int normalizedCoordinate, int screenSize) =>
+            screenSize <= 1 ? 0 : (int)Math.Round(Math.Clamp(normalizedCoordinate, 0, 10000) / 10000d * (screenSize - 1));
     }
 }

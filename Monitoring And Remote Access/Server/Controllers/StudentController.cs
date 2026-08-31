@@ -41,11 +41,8 @@ namespace Server.Controllers
             var maxDuration = session?.MaxDurationMinutes ?? session?.SessionRule?.MaxDurationMinutes;
             if (session != null && maxDuration.HasValue)
             {
-                var effectiveNow = session.Status == "Paused" && session.PauseTime.HasValue
-                    ? session.PauseTime.Value.ToUniversalTime()
-                    : DateTime.UtcNow;
-                var elapsed = (effectiveNow - session.StartTime.ToUniversalTime()).TotalMinutes;
-                ViewBag.Remaining = Math.Max(0, maxDuration.Value - (int)elapsed);
+                var elapsedMinutes = LabSessionLifecycleService.GetElapsedSeconds(session, DateTime.UtcNow) / 60;
+                ViewBag.Remaining = Math.Max(0, maxDuration.Value - elapsedMinutes);
             }
 
             if (session?.Computer?.LaboratoryStation != null)
@@ -118,12 +115,11 @@ namespace Server.Controllers
                 .FirstOrDefaultAsync();
 
             if (session == null) return Json(new { active = false });
-            var effectiveNow = session.Status == "Paused" && session.PauseTime.HasValue
-                ? session.PauseTime.Value.ToUniversalTime()
-                : DateTime.UtcNow;
-            var elapsed = session.StartTime != default ? (effectiveNow - session.StartTime.ToUniversalTime()).TotalMinutes : 0;
+            var elapsed = session.StartTime != default
+                ? LabSessionLifecycleService.GetElapsedSeconds(session, DateTime.UtcNow) / 60
+                : 0;
             var maxDuration = session.MaxDurationMinutes ?? session.SessionRule?.MaxDurationMinutes;
-            var remaining = maxDuration.HasValue ? Math.Max(0, maxDuration.Value - (int)elapsed) : (int?)null;
+            var remaining = maxDuration.HasValue ? Math.Max(0, maxDuration.Value - elapsed) : (int?)null;
             return Json(new { active = true, status = session.Status, remaining, station = session.Computer?.LaboratoryStation });
         }
     }

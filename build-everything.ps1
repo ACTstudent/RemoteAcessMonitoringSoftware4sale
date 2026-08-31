@@ -1,142 +1,225 @@
-# CAMS -- One-shot build pipeline
-# Run:  powershell -NoProfile -ExecutionPolicy Bypass -File build-everything.ps1
-#
-# Output (2 installers plus checksums):
-#   server-dist\CAMS-Server-Setup.exe       -- installer wizard for teacher PC
-#   client-dist\CAMS-Client-Setup.exe       -- installer wizard for student PCs
+# CAMS canonical Windows build, package, and validation pipeline.
+# Output:
+#   server-dist\CAMS-Server-Setup.exe
+#   server-dist\CAMS-Server-Setup.exe.sha256
+#   server-dist\release-manifest.json
+#   client-dist\CAMS-Client-Setup.exe
+#   client-dist\CAMS-Client-Setup.exe.sha256
 
 $ErrorActionPreference = "Stop"
-$root = $PSScriptRoot
-$versionConfig = Get-Content (Join-Path $root "version.json") -Raw | ConvertFrom-Json
+$root = [System.IO.Path]::GetFullPath($PSScriptRoot)
+
+function Invoke-Native {
+    param(
+        [Parameter(Mandatory = $true)][string]$Command,
+        [Parameter(Mandatory = $true)][string[]]$Arguments,
+        [Parameter(Mandatory = $true)][string]$FailureMessage
+    )
+
+    & $Command @Arguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "$FailureMessage (exit code $LASTEXITCODE)."
+    }
+}
+
+function Reset-BuildDirectory {
+    param([Parameter(Mandatory = $true)][string]$Name)
+
+    $allowed = @("client-publish", "client-dist", "server-publish", "server-dist")
+    if ($allowed -notcontains $Name) {
+        throw "Refusing to clean unexpected build directory '$Name'."
+    }
+
+    $path = [System.IO.Path]::GetFullPath((Join-Path $root $Name))
+    $expected = Join-Path ($root.TrimEnd('\')) $Name
+    if (-not $path.Equals($expected, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to clean path outside the repository build outputs: $path"
+    }
+
+    if (Test-Path -LiteralPath $path) {
+        Remove-Item -LiteralPath $path -Recurse -Force
+    }
+    New-Item -ItemType Directory -Path $path | Out-Null
+    return $path
+}
+
+function Write-Checksum {
+    param(
+        [Parameter(Mandatory = $true)][string]$FilePath,
+        [Parameter(Mandatory = $true)][string]$ChecksumPath
+    )
+
+    $hash = (Get-FileHash -LiteralPath $FilePath -Algorithm SHA256).Hash.ToUpperInvariant()
+    "$hash  $([System.IO.Path]::GetFileName($FilePath))" |
+        Set-Content -LiteralPath $ChecksumPath -Encoding Ascii
+    return $hash
+}
+
+$versionPath = Join-Path $root "version.json"
+$versionConfig = Get-Content -LiteralPath $versionPath -Raw | ConvertFrom-Json
 $version = [string]$versionConfig.version
-if ([string]::IsNullOrWhiteSpace($version)) {
-    throw "version.json does not contain a version."
+if ($version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') {
+    throw "version.json version '$version' must be a three-part numeric version such as 2.8.0."
 }
+$versionArguments = @("-p:Version=$version", "-p:InformationalVersion=$version")
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Magenta
-Write-Host "  CAMS $version - FULL BUILD PIPELINE" -ForegroundColor Magenta
+Write-Host " CAMS $version - CANONICAL BUILD" -ForegroundColor Magenta
 Write-Host "========================================" -ForegroundColor Magenta
-Write-Host ""
 
-# ---- 0. Prerequisites ----
-Write-Host "[0/6] Checking prerequisites..." -ForegroundColor Cyan
-
+Write-Host "[1/9] Checking prerequisites and cleaning generated outputs..." -ForegroundColor Cyan
 if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
-    Write-Host "  FAIL: .NET 8 SDK not found." -ForegroundColor Red
-    exit 1
+    throw ".NET 8 SDK was not found."
 }
-Write-Host "  dotnet $(dotnet --version)" -ForegroundColor Green
 
 $iscc = $null
-foreach ($c in @("${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe", "$env:ProgramFiles\Inno Setup 6\ISCC.exe", "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe")) {
-    if (Test-Path $c) { $iscc = $c; break }
+foreach ($candidate in @(
+    "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+    "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
+    "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
+)) {
+    if ($candidate -and (Test-Path -LiteralPath $candidate)) {
+        $iscc = $candidate
+        break
+    }
 }
 if (-not $iscc) {
-    Write-Host "  FAIL: Inno Setup 6 not found. Install from https://jrsoftware.org/isdl.php" -ForegroundColor Red
-    exit 1
+    throw "Inno Setup 6 was not found. Install it from https://jrsoftware.org/isdl.php."
 }
-Write-Host "  Inno Setup 6 -> $iscc" -ForegroundColor Green
-Write-Host "  OK." -ForegroundColor Green
 
-# ---- 1. Run tests ----
-Write-Host ""
-Write-Host "[2/6] Running tests..." -ForegroundColor Cyan
-$testProject = Join-Path $root "Monitoring And Remote Access\Server.Tests\Server.Tests.csproj"
-dotnet test $testProject -c Release --verbosity minimal
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "  FAIL: tests failed. Fix before building." -ForegroundColor Red
-    exit $LASTEXITCODE
-}
-Write-Host "  Tests passed." -ForegroundColor Green
+$clientPub = Reset-BuildDirectory "client-publish"
+$clientDist = Reset-BuildDirectory "client-dist"
+$serverPub = Reset-BuildDirectory "server-publish"
+$serverDist = Reset-BuildDirectory "server-dist"
+Write-Host "  dotnet $(dotnet --version); Inno Setup: $iscc" -ForegroundColor Green
+
+$serverTestProject = Join-Path $root "Monitoring And Remote Access\Server.Tests\Server.Tests.csproj"
 $clientTestProject = Join-Path $root "Monitoring And Remote Access\Client.Tests\Client.Tests.csproj"
-dotnet test $clientTestProject -c Release --verbosity minimal
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-# ---- 2. Build solution ----
-Write-Host ""
-Write-Host "[3/6] Building solution..." -ForegroundColor Cyan
-$sln = Join-Path $root "Monitoring And Remote Access\RemoteMonitoring.sln"
-dotnet build $sln -c Release -v q
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "  FAIL: build failed." -ForegroundColor Red
-    exit $LASTEXITCODE
-}
-Write-Host "  Build ok." -ForegroundColor Green
-
-# ---- 3. Publish server ----
-Write-Host ""
-Write-Host "[4/6] Publishing server..." -ForegroundColor Cyan
-$serverProject = Join-Path $root "Monitoring And Remote Access\Server\Server.csproj"
-$serverPub = Join-Path $root "server-publish"
-dotnet publish $serverProject -c Release -o $serverPub
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "  FAIL: server publish failed." -ForegroundColor Red
-    exit $LASTEXITCODE
-}
-# Runtime data belongs on the target machine, never inside a release installer.
-Get-ChildItem -LiteralPath $serverPub -Filter "CAMS.db*" -File -ErrorAction SilentlyContinue |
-    Remove-Item -Force
-Write-Host "  Removed local database files from server publish output." -ForegroundColor Green
-Write-Host "  Server published." -ForegroundColor Green
-
-# ---- 4. Publish client (self-contained) ----
-Write-Host ""
-Write-Host "[5/6] Publishing client (self-contained, single-file)..." -ForegroundColor Cyan
+$solution = Join-Path $root "Monitoring And Remote Access\RemoteMonitoring.sln"
 $clientProject = Join-Path $root "Monitoring And Remote Access\Client\Client.csproj"
-$clientPub = Join-Path $root "client-publish"
-dotnet publish $clientProject -c Release -r win-x64 --self-contained true `
-    -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true `
-    -o $clientPub
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "  FAIL: client publish failed." -ForegroundColor Red
-    exit $LASTEXITCODE
+$serverProject = Join-Path $root "Monitoring And Remote Access\Server\Server.csproj"
+
+Write-Host "[2/9] Running server and client tests..." -ForegroundColor Cyan
+Invoke-Native "dotnet" (@("test", $serverTestProject, "-c", "Release", "--verbosity", "minimal") + $versionArguments) "Server tests failed"
+Invoke-Native "dotnet" (@("test", $clientTestProject, "-c", "Release", "--verbosity", "minimal") + $versionArguments) "Client tests failed"
+
+Write-Host "[3/9] Building the solution..." -ForegroundColor Cyan
+Invoke-Native "dotnet" (@("build", $solution, "-c", "Release", "-v", "minimal") + $versionArguments) "Solution build failed"
+
+Write-Host "[4/9] Publishing and packaging the client first..." -ForegroundColor Cyan
+$clientPublishArguments = @(
+    "publish", $clientProject, "-c", "Release", "-r", "win-x64", "--self-contained", "true",
+    "-p:PublishSingleFile=true", "-p:IncludeNativeLibrariesForSelfExtract=true",
+    "-p:EnableCompressionInSingleFile=true", "-o", $clientPub
+) + $versionArguments
+Invoke-Native "dotnet" $clientPublishArguments "Client publish failed"
+Invoke-Native $iscc @("/DMyAppVersion=$version", "/o$clientDist", (Join-Path $root "client-installer.iss")) "Client installer build failed"
+
+$clientInstallerName = "CAMS-Client-Setup.exe"
+$clientChecksumName = "$clientInstallerName.sha256"
+$clientInstaller = Join-Path $clientDist $clientInstallerName
+$clientChecksum = Join-Path $clientDist $clientChecksumName
+if (-not (Test-Path -LiteralPath $clientInstaller -PathType Leaf)) {
+    throw "Client installer was not produced: $clientInstaller"
 }
-Write-Host "  Client published." -ForegroundColor Green
+$clientHash = Write-Checksum $clientInstaller $clientChecksum
+$clientSize = (Get-Item -LiteralPath $clientInstaller).Length
 
-# ---- 5. Build installers ----
-Write-Host ""
-Write-Host "[6/6] Building installers with Inno Setup..." -ForegroundColor Cyan
-$serverDist = Join-Path $root "server-dist"
-$clientDist = Join-Path $root "client-dist"
-New-Item -ItemType Directory -Force -Path $serverDist | Out-Null
-New-Item -ItemType Directory -Force -Path $clientDist | Out-Null
+Write-Host "[5/9] Publishing the server with release version metadata..." -ForegroundColor Cyan
+$serverPublishArguments = @(
+    "publish", $serverProject, "-c", "Release", "-r", "win-x64", "--self-contained", "true",
+    "-o", $serverPub
+) + $versionArguments
+Invoke-Native "dotnet" $serverPublishArguments "Server publish failed"
 
-& $iscc "/DMyAppVersion=$version" "/o$serverDist" (Join-Path $root "server-installer.iss")
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "  FAIL: server installer build failed." -ForegroundColor Red
-    exit $LASTEXITCODE
+# Only the checked-in, blank-secret base settings file may enter the installer.
+Get-ChildItem -LiteralPath $serverPub -Recurse -File -Filter "appsettings.*.json" -ErrorAction SilentlyContinue |
+    Remove-Item -Force
+$publishedSettingsPath = Join-Path $serverPub "appsettings.json"
+if (-not (Test-Path -LiteralPath $publishedSettingsPath -PathType Leaf)) {
+    throw "Published server is missing appsettings.json."
 }
-Write-Host "  Server installer built." -ForegroundColor Green
-
-& $iscc "/DMyAppVersion=$version" "/o$clientDist" (Join-Path $root "client-installer.iss")
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "  FAIL: client installer build failed." -ForegroundColor Red
-    exit $LASTEXITCODE
+$publishedSettings = Get-Content -LiteralPath $publishedSettingsPath -Raw | ConvertFrom-Json
+foreach ($property in @("CertificatePassword", "InitialAdminPassword", "SeededTeacherPassword", "SeededStudentPassword")) {
+    if (-not [string]::IsNullOrEmpty([string]$publishedSettings.Cams.$property)) {
+        throw "Refusing to package a non-empty Cams:$property appsettings secret."
+    }
 }
-Write-Host "  Client installer built." -ForegroundColor Green
 
-# Generate release checksums beside the installers for release verification.
-$serverInstaller = Join-Path $serverDist "CAMS-Server-Setup.exe"
-$clientInstaller = Join-Path $clientDist "CAMS-Client-Setup.exe"
-"$((Get-FileHash $serverInstaller -Algorithm SHA256).Hash)  CAMS-Server-Setup.exe" |
-    Set-Content -LiteralPath (Join-Path $serverDist "CAMS-Server-Setup.exe.sha256") -Encoding ascii
-"$((Get-FileHash $clientInstaller -Algorithm SHA256).Hash)  CAMS-Client-Setup.exe" |
-    Set-Content -LiteralPath (Join-Path $clientDist "CAMS-Client-Setup.exe.sha256") -Encoding ascii
-Write-Host "  SHA-256 checksums generated." -ForegroundColor Green
+$forbiddenPublishFiles = @(Get-ChildItem -LiteralPath $serverPub -Recurse -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.Extension -ieq ".pfx" -or $_.Name -like "CAMS.db*" })
+if ($forbiddenPublishFiles.Count -ne 0) {
+    throw "Refusing to package PFX or CAMS database files from server-publish."
+}
 
-# ---- Done ----
+Write-Host "[6/9] Staging exact Deployment Hub assets..." -ForegroundColor Cyan
+$deploymentAssets = Join-Path $serverPub "DeploymentAssets"
+New-Item -ItemType Directory -Path $deploymentAssets | Out-Null
+Copy-Item -LiteralPath $clientInstaller -Destination (Join-Path $deploymentAssets $clientInstallerName)
+Copy-Item -LiteralPath $clientChecksum -Destination (Join-Path $deploymentAssets $clientChecksumName)
+
+$deploymentManifest = [ordered]@{
+    schemaVersion = 1
+    product = "CAMS Student Client"
+    clientVersion = $version
+    serverVersion = $version
+    installerFileName = $clientInstallerName
+    installerSize = $clientSize
+    installerSha256 = $clientHash
+}
+$deploymentManifest | ConvertTo-Json -Depth 4 |
+    Set-Content -LiteralPath (Join-Path $deploymentAssets "deployment-manifest.json") -Encoding UTF8
+
+$stagedNames = @(Get-ChildItem -LiteralPath $deploymentAssets -File | ForEach-Object { $_.Name } | Sort-Object)
+$expectedStagedNames = @($clientInstallerName, $clientChecksumName, "deployment-manifest.json") | Sort-Object
+if ((Compare-Object $stagedNames $expectedStagedNames).Count -ne 0) {
+    throw "DeploymentAssets must contain exactly the installer, checksum, and deployment manifest."
+}
+
+Write-Host "[7/9] Building the server installer after Deployment Hub staging..." -ForegroundColor Cyan
+Invoke-Native $iscc @("/DMyAppVersion=$version", "/o$serverDist", (Join-Path $root "server-installer.iss")) "Server installer build failed"
+
+Write-Host "[8/9] Generating server checksum and release manifest..." -ForegroundColor Cyan
+$serverInstallerName = "CAMS-Server-Setup.exe"
+$serverChecksumName = "$serverInstallerName.sha256"
+$serverInstaller = Join-Path $serverDist $serverInstallerName
+$serverChecksum = Join-Path $serverDist $serverChecksumName
+if (-not (Test-Path -LiteralPath $serverInstaller -PathType Leaf)) {
+    throw "Server installer was not produced: $serverInstaller"
+}
+$serverHash = Write-Checksum $serverInstaller $serverChecksum
+$serverSize = (Get-Item -LiteralPath $serverInstaller).Length
+
+$releaseManifest = [ordered]@{
+    schemaVersion = 1
+    product = "CAMS"
+    version = $version
+    artifacts = @(
+        [ordered]@{
+            fileName = $serverInstallerName
+            checksumFileName = $serverChecksumName
+            size = $serverSize
+            sha256 = $serverHash
+        },
+        [ordered]@{
+            fileName = $clientInstallerName
+            checksumFileName = $clientChecksumName
+            size = $clientSize
+            sha256 = $clientHash
+        }
+    )
+}
+$releaseManifest | ConvertTo-Json -Depth 5 |
+    Set-Content -LiteralPath (Join-Path $serverDist "release-manifest.json") -Encoding UTF8
+
+Write-Host "[9/9] Validating installers and release metadata..." -ForegroundColor Cyan
+& (Join-Path $root "test-installer.ps1") -Root $root
+if ($LASTEXITCODE -ne 0) {
+    throw "Installer validation failed (exit code $LASTEXITCODE)."
+}
+
 Write-Host ""
-Write-Host "========================================" -ForegroundColor Green
-Write-Host " BUILD COMPLETE - CAMS v$version" -ForegroundColor Green
-Write-Host "========================================" -ForegroundColor Green
-Write-Host ""
-Write-Host "  $serverDist\" -ForegroundColor Cyan
-Get-ChildItem $serverDist | ForEach-Object { Write-Host "    $($_.Name)  ($('{0:N0}' -f ($_.Length / 1MB)) MB)" -ForegroundColor White }
-Write-Host ""
-Write-Host "  $clientDist\" -ForegroundColor Cyan
-Get-ChildItem $clientDist | ForEach-Object { Write-Host "    $($_.Name)  ($('{0:N0}' -f ($_.Length / 1MB)) MB)" -ForegroundColor White }
-Write-Host ""
-Write-Host "  -> Distribute server installer to the teacher PC."
-Write-Host "  -> Distribute client installer to each student PC."
-Write-Host ""
+Write-Host "BUILD COMPLETE - CAMS v$version" -ForegroundColor Green
+Write-Host "  Server release: $serverDist" -ForegroundColor Cyan
+Write-Host "  Client release: $clientDist" -ForegroundColor Cyan

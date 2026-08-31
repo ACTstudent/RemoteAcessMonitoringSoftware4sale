@@ -31,9 +31,14 @@ public static class DatabaseInitializer
 
         RemoveDuplicateMembershipLinks(db);
         EnsureTelemetryTables(db);
+        EnsureAccountSecurityColumns(db);
         EnsureMonitoringAlertColumns(db);
+        EnsureRemoteCommandColumns(db);
         EnsureBrowserMonitoringTable(db);
         EnsureCategoryTables(db);
+        EnsureTeacherRestrictionScope(db);
+        EnsureSessionAndWorkstationIntegrity(db);
+        EnsureAnalyticsIndexes(db);
 
         var hasDuplicateStudentNumbers = db.Students
             .AsNoTracking()
@@ -53,6 +58,8 @@ public static class DatabaseInitializer
         {
             TryCreateIndex(db, "CREATE UNIQUE INDEX IF NOT EXISTS IX_Students_Username ON Students (Username);");
         }
+
+        ValidateLegacySchema(db);
     }
 
     private static bool IsLegacySqliteDatabase(ApplicationDbContext db)
@@ -143,6 +150,137 @@ public static class DatabaseInitializer
     {
         TryCreateIndex(db, "CREATE TABLE IF NOT EXISTS ApplicationCategories (ApplicationCategoryId INTEGER NOT NULL CONSTRAINT PK_ApplicationCategories PRIMARY KEY AUTOINCREMENT, Name TEXT NOT NULL, Pattern TEXT NOT NULL, Description TEXT NOT NULL, Mode TEXT NOT NULL, IsActive INTEGER NOT NULL, CreatedAt TEXT NOT NULL);");
         TryCreateIndex(db, "CREATE TABLE IF NOT EXISTS WebsiteCategories (WebsiteCategoryId INTEGER NOT NULL CONSTRAINT PK_WebsiteCategories PRIMARY KEY AUTOINCREMENT, Name TEXT NOT NULL, DomainPattern TEXT NOT NULL, Description TEXT NOT NULL, Mode TEXT NOT NULL, IsActive INTEGER NOT NULL, CreatedAt TEXT NOT NULL);");
+    }
+
+    private static void EnsureAccountSecurityColumns(ApplicationDbContext db)
+    {
+        EnsureColumn(db, "Admins", "FailedLoginAttempts", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumn(db, "Admins", "IsActive", "INTEGER NOT NULL DEFAULT 1");
+        EnsureColumn(db, "Admins", "LockoutEndUtc", "TEXT NULL");
+        EnsureColumn(db, "Teachers", "FailedLoginAttempts", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumn(db, "Teachers", "LockoutEndUtc", "TEXT NULL");
+        EnsureColumn(db, "Students", "FailedLoginAttempts", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumn(db, "Students", "LockoutEndUtc", "TEXT NULL");
+    }
+
+    private static void EnsureRemoteCommandColumns(ApplicationDbContext db)
+    {
+        EnsureColumn(db, "RemoteCommandLogs", "PcName", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(db, "RemoteCommandLogs", "StudentId", "TEXT NOT NULL DEFAULT ''");
+        TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_RemoteCommandLogs_TeacherId_StudentId_Timestamp ON RemoteCommandLogs (TeacherId, StudentId, Timestamp);");
+        TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_MonitoringAlerts_StudentId_DedupeKey_CreatedAt ON MonitoringAlerts (StudentId, DedupeKey, CreatedAt);");
+    }
+
+    private static void EnsureTeacherRestrictionScope(ApplicationDbContext db)
+    {
+        EnsureColumn(db, "RestrictionRules", "TeacherId", "INTEGER NULL");
+        TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_RestrictionRules_TeacherId ON RestrictionRules (TeacherId);");
+    }
+
+    private static void EnsureSessionAndWorkstationIntegrity(ApplicationDbContext db)
+    {
+        EnsureColumn(db, "LabSessions", "AccumulatedPauseSeconds", "INTEGER NOT NULL DEFAULT 0");
+
+        db.Database.ExecuteSqlRaw("""
+            UPDATE LabSessions
+            SET IsActive = 0,
+                Status = 'Ended',
+                EndTime = COALESCE(EndTime, CURRENT_TIMESTAMP)
+            WHERE IsActive = 1
+              AND Id NOT IN (
+                  SELECT MAX(Id) FROM LabSessions WHERE IsActive = 1 GROUP BY StudentId
+              );
+
+            UPDATE LabSessions
+            SET IsActive = 0,
+                Status = 'Ended',
+                EndTime = COALESCE(EndTime, CURRENT_TIMESTAMP)
+            WHERE IsActive = 1
+              AND ComputerId IS NOT NULL
+              AND Id NOT IN (
+                  SELECT MAX(Id) FROM LabSessions
+                  WHERE IsActive = 1 AND ComputerId IS NOT NULL
+                  GROUP BY ComputerId
+              );
+
+            UPDATE Computers
+            SET AssignedTo = NULL,
+                Status = CASE WHEN Status = 'Assigned' THEN 'Available' ELSE Status END
+            WHERE AssignedTo IS NOT NULL
+              AND ComputerId NOT IN (
+                  SELECT MIN(ComputerId) FROM Computers
+                  WHERE AssignedTo IS NOT NULL
+                  GROUP BY AssignedTo
+              );
+
+            UPDATE Computers AS duplicate
+            SET LaboratoryStation = duplicate.LaboratoryStation || '-' || duplicate.ComputerId
+            WHERE EXISTS (
+                SELECT 1 FROM Computers AS original
+                WHERE original.ComputerId < duplicate.ComputerId
+                  AND LOWER(original.LaboratoryStation) = LOWER(duplicate.LaboratoryStation)
+            );
+            """);
+
+        db.Database.ExecuteSqlRaw("DROP INDEX IF EXISTS IX_LabSessions_ComputerId;");
+        db.Database.ExecuteSqlRaw("CREATE UNIQUE INDEX IF NOT EXISTS IX_LabSessions_ComputerId ON LabSessions (ComputerId) WHERE IsActive = 1 AND ComputerId IS NOT NULL;");
+        db.Database.ExecuteSqlRaw("CREATE UNIQUE INDEX IF NOT EXISTS IX_LabSessions_StudentId ON LabSessions (StudentId) WHERE IsActive = 1;");
+        db.Database.ExecuteSqlRaw("CREATE UNIQUE INDEX IF NOT EXISTS IX_Computers_AssignedTo ON Computers (AssignedTo) WHERE AssignedTo IS NOT NULL;");
+        db.Database.ExecuteSqlRaw("CREATE UNIQUE INDEX IF NOT EXISTS IX_Computers_LaboratoryStation ON Computers (LaboratoryStation COLLATE NOCASE);");
+    }
+
+    private static void EnsureAnalyticsIndexes(ApplicationDbContext db)
+    {
+        TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_LabSessions_StudentId_StartTime ON LabSessions (StudentId, StartTime);");
+        TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_IdleIntervals_StudentId_StartedAt ON IdleIntervals (StudentId, StartedAt);");
+        TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_ActivityEvents_StudentId_Timestamp ON ActivityEvents (StudentId, Timestamp);");
+    }
+
+    private static void ValidateLegacySchema(ApplicationDbContext db)
+    {
+        var requiredColumns = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Admins"] = ["FailedLoginAttempts", "IsActive", "LockoutEndUtc"],
+            ["Teachers"] = ["FailedLoginAttempts", "LockoutEndUtc"],
+            ["Students"] = ["FailedLoginAttempts", "LockoutEndUtc"],
+            ["LabSessions"] = ["AccumulatedPauseSeconds"],
+            ["RemoteCommandLogs"] = ["PcName", "StudentId"],
+            ["MonitoringAlerts"] = ["DedupeKey", "GroupKey", "OccurrenceCount"],
+            ["RestrictionRules"] = ["TeacherId"]
+        };
+
+        foreach (var (table, columns) in requiredColumns)
+        {
+            var actual = ReadSchemaNames(db, $"PRAGMA table_info(\"{table}\");", 1);
+            var missing = columns.Where(column => !actual.Contains(column)).ToArray();
+            if (missing.Length > 0)
+                throw new InvalidOperationException($"Legacy CAMS database upgrade is incomplete. {table} is missing: {string.Join(", ", missing)}.");
+        }
+
+        var requiredIndexes = new[]
+        {
+            "IX_LabSessions_ComputerId",
+            "IX_LabSessions_StudentId",
+            "IX_Computers_AssignedTo",
+            "IX_Computers_LaboratoryStation"
+        };
+        var indexes = ReadSchemaNames(db, "SELECT name FROM sqlite_master WHERE type = 'index';", 0);
+        var missingIndexes = requiredIndexes.Where(index => !indexes.Contains(index)).ToArray();
+        if (missingIndexes.Length > 0)
+            throw new InvalidOperationException($"Legacy CAMS database upgrade is incomplete. Missing indexes: {string.Join(", ", missingIndexes)}.");
+    }
+
+    private static HashSet<string> ReadSchemaNames(ApplicationDbContext db, string sql, int ordinal)
+    {
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        using var command = db.Database.GetDbConnection().CreateCommand();
+        command.CommandText = sql;
+        if (command.Connection!.State != ConnectionState.Open)
+            command.Connection.Open();
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+            names.Add(reader.GetString(ordinal));
+        return names;
     }
 
     private static void EnsureMonitoringAlertColumns(ApplicationDbContext db)

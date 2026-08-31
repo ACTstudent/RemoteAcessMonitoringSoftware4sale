@@ -96,6 +96,29 @@ namespace Server.Data
             modelBuilder.Entity<LabSession>()
                 .HasIndex(session => new { session.StudentId, session.StartTime });
 
+            modelBuilder.Entity<LabSession>()
+                .HasIndex(session => session.StudentId)
+                .IsUnique()
+                .HasFilter("\"IsActive\" = 1");
+
+            modelBuilder.Entity<LabSession>()
+                .HasIndex(session => session.ComputerId)
+                .IsUnique()
+                .HasFilter("\"IsActive\" = 1 AND \"ComputerId\" IS NOT NULL");
+
+            modelBuilder.Entity<Computer>()
+                .Property(computer => computer.LaboratoryStation)
+                .UseCollation("NOCASE");
+
+            modelBuilder.Entity<Computer>()
+                .HasIndex(computer => computer.LaboratoryStation)
+                .IsUnique();
+
+            modelBuilder.Entity<Computer>()
+                .HasIndex(computer => computer.AssignedTo)
+                .IsUnique()
+                .HasFilter("\"AssignedTo\" IS NOT NULL");
+
             modelBuilder.Entity<RemoteCommandLog>()
                 .HasIndex(log => new { log.TeacherId, log.StudentId, log.Timestamp });
 

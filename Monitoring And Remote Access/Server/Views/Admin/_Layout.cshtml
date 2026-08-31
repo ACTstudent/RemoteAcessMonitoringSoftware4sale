@@ -63,7 +63,12 @@
 
                 <a href="@Url.Action("LanConfig", "Admin")" class="nav-item-custom @(currentAction == "LanConfig" ? "active" : "")">
                     <i class="bi bi-router-fill"></i>
-                    <span>LAN Configuration</span>
+                    <span>LAN Status</span>
+                </a>
+
+                <a href="@Url.Action("Index", "AdminDeployment")" class="nav-item-custom @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminDeployment" ? "active" : "")">
+                    <i class="bi bi-box-seam-fill"></i>
+                    <span>Deployment Hub</span>
                 </a>
 
                 <a href="@Url.Action("Index", "AdminDatabase")" class="nav-item-custom @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminDatabase" ? "active" : "")">

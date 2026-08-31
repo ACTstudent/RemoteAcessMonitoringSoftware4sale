@@ -1,179 +1,113 @@
-# CAMS — Computer Account Management System
+# CAMS Computer Account Management System
 
-A LAN-based classroom management, real-time screen monitoring, and computer laboratory control system built for **Pardo Elementary School (Cebu City)**.
+CAMS is a local-first classroom monitoring and computer laboratory management system for Windows networks. It combines an ASP.NET Core server, authenticated browser portals, a Windows student client, SignalR monitoring and control, and a local SQLite database. CAMS is designed for supervised classroom use on a trusted private LAN; it does not require a CAMS cloud service.
 
 [![Build Status](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/actions/workflows/ci-full.yml/badge.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/actions/workflows/ci-full.yml)
-[![Release](https://img.shields.io/badge/Release-v2.8.0-emerald.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale)
+[![Release](https://img.shields.io/badge/Release-v2.8.0-emerald.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest)
 [![.NET](https://img.shields.io/badge/.NET-8.0-blueviolet)](https://dotnet.microsoft.com/download/dotnet/8.0)
-[![UI: Dark Emerald](https://img.shields.io/badge/UI-Dark%20Emerald-0B3C26)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
----
+## Implemented Scope
 
-## 🌟 Overview
+- Live authenticated screen monitoring with a client capture-loop target of 50 ms. This is not a promised frame rate; effective throughput depends on workstation load, capture time, SignalR backpressure, and LAN conditions.
+- Timed student lab sessions with persisted running, paused, resumed, ended, and expiration state.
+- Teacher-scoped monitoring, session actions, warnings, screen broadcast, remote input, restrictions, records, alerts, and exports.
+- Workstation lock, release of CAMS lock state, logout, restart, shutdown, and remote input commands. Releasing CAMS state cannot unlock the Windows secure desktop; Windows credentials are still required after `LockWorkStation`.
+- Application and normalized-domain policies. Blocked applications can be terminated; website violations display CAMS-owned topmost dialogs and are recorded, but CAMS does not close the browser.
+- Account, class, roster, workstation, session-rule, global-policy, report, audit, database-maintenance, LAN-status, and Deployment Hub administration.
+- Durable bounded client telemetry for temporary disconnections, browser status history without credentials or page content, grouped alert lifecycle, and command auditing.
 
-**CAMS** (Classroom Automated Monitoring System) is a LAN-based computer laboratory management and real-time screen streaming application built with **ASP.NET Core**, **SignalR**, and **WinForms (.NET 8)**. It replaces manual logbooks with account tracking, configurable timed lab sessions, real-time screen monitoring, and centralized workstation control.
+## Fixed Roles And Scope
 
-Featuring an official **Dark Emerald (`#0B3C26` / `#18181b` / `#10B981`) Design System** aligned with modern Figma specifications and exact `pro` project styling, CAMS provides dedicated, high-contrast, responsive portals for **Administrators**, **Teachers**, and **Students**.
+CAMS has three fixed application roles: `Admin`, `Teacher`, and `Student`. Authorization is implemented by role claims and server-side object-scope checks. The Roles and Permissions page displays seeded role metadata; CAMS does not provide configurable RBAC or runtime permission assignment.
 
----
+| Role | Current scope |
+| --- | --- |
+| Admin | Global account, class, roster, workstation, policy, session-rule, lab-wide session, reporting, lockout, database, LAN-status, and deployment controls. |
+| Teacher | Assigned classes, accessible students and workstations, owned sessions, teacher-owned restrictions, monitoring, alerts, and records. Teachers may edit accessible student identity/password fields and workstation name/status. Removing a student removes that teacher's roster/adviser association and preserves the account. Teachers cannot reassign a class to another teacher. |
+| Student | Browser portal access to session information, alerts, and account settings. The WinForms CLIENT login is stricter: it supplies the machine name and succeeds only when the student is assigned to that workstation. |
 
-## 📦 Installer Downloads (v2.8.0 Release Assets)
+## Architecture And Network
 
-Pre-built installer setup executables published as versioned GitHub release assets:
-
-| Package | Direct Download Link | Repository File Path | Target / Description | File Size |
-| :--- | :--- | :--- | :--- | :--- |
-| **CAMS Server Setup** | [📥 **Download CAMS-Server-Setup.exe**](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.8.0/CAMS-Server-Setup.exe) | [Release v2.8.0](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/tag/v2.8.0) | Teacher / Lab Control PC Installer | ~15 MB |
-| **CAMS Student Client** | [📥 **Download CAMS-Client-Setup.exe**](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.8.0/CAMS-Client-Setup.exe) | [Release v2.8.0](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/tag/v2.8.0) | Student Workstation Agent Installer | ~64 MB |
-
----
-
-## ✨ Key Features & Primary Logic Systems
-
-### 🔑 Primary Multi-Role Login Authentication (`pro` Aligned)
-- **Role Routing**: Single entry point (`/Account/Login`) supporting **Admin**, **Teacher**, and **Student** login credentials.
-- **Session Management**: Automatically stores `Username`, `Role`, `AdminId`/`TeacherId`/`StudentId`, and `DisplayName` sessions for seamless authorization and auditing.
-- **Account setup**: The testing release seeds `admin1` / `admin123` and `student1` / `student123`; these credentials are not suitable for production. Replace the values in `appsettings.json` or set protected `Cams__InitialAdminPassword` and `Cams__SeededStudentPassword` values before production deployment. Teacher seeding remains optional through `Cams__SeededTeacherPassword`.
-
-### 🎨 Dark Emerald UI Design System (Figma & `pro` Aligned)
-- **Theme Palette**: Deep forest green (`#0B3C26`), slate dark (`#18181b`), emerald accents (`#10B981`), and soft slate backgrounds (`#F8FAFC`).
-- **Typography & Assets**: `Plus Jakarta Sans` & `Inter` Google Fonts with official Pardo Elementary School branding assets.
-- **Components & Overrides**: Metric summary counters (`.metric-card`, `.metric-card-emerald`), class section cards (`.class-card`), search filter controls (`.filter-control`), rounded modals (`rounded-4`), and explicit button overrides (`.btn-primary`, `.btn-success`, `.btn-dark`).
-
-### 🖥 Real-Time Screen Monitoring & Workstation Control
-- **Live Monitoring Grid**: Authenticated HTTPS SignalR screen streaming across connected lab workstations, approximately 12 FPS by default.
-- **Workstation Control**: Remote workstation lock/unlock, force user logout, shutdown, and reboot triggers.
-- **Teacher Broadcast**: One-click screen broadcasting from the teacher's PC to assigned student monitors.
-- **Infraction Alerting**: Automatic application tracking, idle state detection, and warning popup overlays.
-
-### 📂 Integrated Class & Computer Profile Management (`pro` Relationships)
-- **`Class` Section Model**: Section Name, Academic Year (`2026-2027`), Status (`Active`/`Archived`), assigned `Teacher` (Adviser/Instructor), and direct `Students` roster collection.
-- **`Student` Record Model**: `FirstName`, `LastName`, `FullName`, `Username`, `PasswordHash`, `Status`, `GradeSection`, Foreign Keys to `Class` and `Teacher` (Adviser).
-- **`Teacher` Record Model**: `FirstName`, `LastName`, `Email`, `ContactNumber`, `Status`, navigation collections for advised `Students` and assigned `Classes`.
-- **Complete CRUD Operations**: Single/Bulk student registration, class section creation/editing, instructor assignment, student unenrollment, and section archiving in Admin (`/Admin/Classes`) and Teacher (`/Teacher/Classes`) portals.
-
-### ⏱ Timed Lab Sessions & Security Policies
-- **Lab Sessions**: Configurable timed laboratory sessions with real-time countdown timers and attendance logs.
-- **Security Policies**: Administrator-global and active-session teacher application/domain blocklists and allowlists, enforced from normalized process names and domains.
-
-### 📊 Lab Analytics, Alerts & Database Maintenance
-- **Scoped Account & Workstation Management**: Teacher-scoped student/computer CRUD and roster management with per-object authorization checks, plus admin/teacher self-service password changes and account unlock/activation controls.
-- **Lab Utilization & Unified Timeline**: Teacher dashboards for per-station occupancy and active/idle durations, plus a unified activity timeline across sessions, applications, websites, alerts, and remote commands.
-- **Alert Lifecycle**: Grouped restriction alerts with occurrence counts, acknowledge/dismiss/reopen transitions, filtering, and CSV export.
-- **Browser Monitoring History**: Managed-browser status history (domain/status only — never credentials, paths, queries, or page content) with teacher filtering and CSV export.
-- **Durable Telemetry**: A bounded offline telemetry queue on each student PC with batched acknowledgment, configurable retention cleanup, and immediate policy-refresh broadcasts after rule changes.
-- **Database Maintenance**: Admin-controlled online SQLite backups, integrity validation, and restart-safe staged restore.
-
-### 🛡️ Clean Installation & Crash Prevention Features
-- **Clean Installation (`cleaninstall`)**: Installers automatically close running processes and clean out old binary files, cached DLLs, static assets, and `wwwroot` folders before extracting new builds.
-- **Launch Crash Prevention**: `AppContext.BaseDirectory` working directory enforcement prevents launch failures when executing `Server.exe` from Desktop icons or custom shortcuts.
-- **Safe SQLite Database Initialization**: Safe startup handlers prevent database lock crashes on launch.
-- **Secure LAN Certificate Setup**: The server creates a local CA and a certificate containing the current machine name and LAN addresses. The public root certificate can be trusted by each student client without sharing the private key.
-
----
-
-## 🏗 Architecture
-
-```text
-┌──────────────────────────┐                        ┌──────────────────────┐
-│       CAMS Server        │    UDP broadcast       │     CAMS Client      │
-│    (Teacher / Lab PC)    │ ─────────────────────► │    (Student PC)      │
-│                          │                        │                      │
-│   ASP.NET Core MVC       │ ◄───────────────────── │   WinForms agent     │
-│   Dark Emerald UI System │ HTTPS SignalR :5000   │   Screen capture     │
-│   SignalR WebSocket Hub  │ UDP discovery :5001   │   Input simulation   │
-│   EF Core + SQLite       │                        │   Infraction guard   │
-└──────────────────────────┘                        └──────────────────────┘
+```mermaid
+flowchart LR
+    B[Admin, Teacher, or Student browser] -->|HTTPS TCP 5000| S[CAMS Server]
+    C[Windows Student Client] -->|HTTPS SignalR TCP 5000| S
+    S -->|UDP broadcast to port 5001| C
+    S --> D[(Local SQLite CAMS.db)]
 ```
 
-- **Server**: Hosts the web portals (`/Admin`, `/Teacher`, `/Student`, `/Account/Login`), the `RemoteMonitoringHub` SignalR hub, and EF Core + SQLite.
-- **Client**: Discovers the server via UDP broadcast, connects over a SignalR WebSocket, streams screen frames, reports active processes/idle states, and executes remote commands.
-- **Shared**: DTO contracts and hub event signatures shared between Server and Client.
+- The server hosts `/Account/Login`, the role portals, `/Admin/Deployment`, `/api/client/*`, and `/remoteMonitoringHub`.
+- The student client receives discovery advertisements on UDP `5001`; the server sends them and does not need an inbound UDP `5001` rule.
+- The server needs inbound TCP `5000` on the Windows Private profile. A student firewall policy may need to allow inbound UDP `5001` for `Client.exe`.
+- Discovery is optional. The exact manual endpoint is `https://<server-ip>:5000/remoteMonitoringHub`.
+- LAN Status is detected, read-only diagnostic information. CAMS does not configure DHCP, DNS, gateways, adapters, or runtime binding from that page.
 
----
+## Downloads And Deployment Surfaces
 
-## ⚙️ Technology Stack
+The checked-in [public portal source](portal/) is intended for GitHub Pages, while [GitHub Releases](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest) hosts public release artifacts. The expected Pages address is `https://actstudent.github.io/RemoteAcessMonitoringSoftware4sale/`; verify that the Pages workflow has completed before advertising it because the site is not available until Pages is enabled and deployed. Neither public surface provides a deployment's private trust material.
 
-| Component | Technology |
-| :--- | :--- |
-| **Server Web App** | ASP.NET Core MVC (.NET 8), Razor Views, SignalR WebSockets |
-| **UI Design System**| Dark Emerald CSS System (`#0B3C26` / `#10B981`), `Plus Jakarta Sans`, Bootstrap 5 |
-| **Client Agent** | WinForms (.NET 8), self-contained desktop process |
-| **Database** | Local SQLite (`CAMS.db`) via EF Core migrations |
-| **Discovery** | UDP Broadcast |
-| **Tests & Packaging** | xUnit in CI, Inno Setup 6 |
+The authenticated local `https://<server-ip>:5000/Admin/Deployment` page is the CAMS Deployment Hub. It displays detected certificate-compatible endpoints, running server and packaged client versions, installer size and SHA-256, certificate details and SHA-256, warnings, and the number of currently connected clients. It can download the validated client installer, deployment manifest, local public root certificate, or a complete offline workstation bundle.
 
----
+Release assets:
 
-## 🚀 Quick Start & Login Credentials
+- [CAMS Server Setup](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Setup.exe)
+- [CAMS Server SHA-256](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Setup.exe.sha256)
+- [CAMS Student Client Setup](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe)
+- [CAMS Student Client SHA-256](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe.sha256)
+- `release-manifest.json` from the same release, when published by the current release workflow
 
-### 1. Server Setup (Teacher / Lab PC)
-1. Set the protected `Cams__InitialAdminPassword` environment variable before the first launch.
-2. Download and run [`CAMS-Server-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.8.0/CAMS-Server-Setup.exe).
-3. The installer performs a clean installation to `%LOCALAPPDATA%\CAMS Server`, refreshes the HTTPS TCP port `5000` and UDP discovery port `5001` firewall rules, and launches the web portal.
-4. On first start, copy the public `%LOCALAPPDATA%\CAMS Server\CAMS-Server-Root.cer` file to each student PC. Never copy the `.pfx` files from the `certificates` folder.
+Both installers are Windows x64 self-contained deployments; target PCs do not need a separate .NET runtime. See [DEPLOYMENT.md](DEPLOYMENT.md) for the complete trust bootstrap, offline bundle, version, firewall, and validation procedure.
 
-### 2. Student Client Setup (Student PCs)
-1. Download and run [`CAMS-Client-Setup.exe`](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/download/v2.8.0/CAMS-Client-Setup.exe) on each workstation.
-2. Enter `https://<server-ip>:5000/remoteMonitoringHub` when prompted and select the copied `CAMS-Server-Root.cer` file. The installer adds only the public root certificate to the current Windows user trust store.
-3. The client auto-discovers the CAMS server on the local network over UDP when the network allows device-to-device traffic. If discovery is blocked or the address changes, retry discovery or use the saved HTTPS address.
+## First Start
 
-### Cellphone Hotspot Notes
-- On the teacher PC, run `ipconfig` and use the IPv4 address of the Wi-Fi hotspot adapter, not `localhost`.
-- Keep the server and student PCs connected to the same phone hotspot.
-- Some phone hotspots enable client isolation and block UDP broadcast or device-to-device traffic. Disable that setting if available, or use the manual HTTPS server address in the client installer.
-- The server certificate and discovery address are refreshed when the server starts. Restart CAMS Server after switching Wi-Fi networks or when the hotspot assigns a different IP. The root certificate remains stable, so clients do not need a new trust installation after a network change.
+There are no default passwords. The server installer asks for the first Admin username and a password of at least 12 characters, then passes that secret only to the initial server process; it is not saved in `appsettings.json`. Existing accounts are never overwritten. Manual deployments can instead set protected `Cams__InitialAdminPassword` and optional `Cams__InitialAdminUsername` environment variables before first start.
 
----
+Optional development/demo seed accounts are created only when their corresponding protected `Cams__SeededTeacherPassword` or `Cams__SeededStudentPassword` values are explicitly configured. Do not package secrets in `appsettings.json`.
 
-## 🛠 Building From Source
+In local CA mode, first start creates a stable local root CA and a server certificate for the current machine name and detected LAN addresses. Trust only the public `CAMS-Server-Root.cer`; never copy or distribute either `.pfx` file. Restart CAMS after changing networks so the server certificate and discovery endpoint reflect the new address, then confirm the endpoint in Deployment Hub and update saved client URLs if the address changed.
 
-Prerequisites:
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- [Inno Setup 6](https://jrsoftware.org/isdl.php) (for compiling installer executables)
+## Build From Source
 
-Execute the full build, unit test, and packaging pipeline from PowerShell:
+Prerequisites are the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) and [Inno Setup 6](https://jrsoftware.org/isdl.php).
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File build-everything.ps1
+.\build-everything.ps1
 ```
 
-The script will:
-1. Run the xUnit test suite (`dotnet test`).
-2. Build `RemoteMonitoring.sln` in Release mode.
-3. Publish server and client binaries.
-4. Compile setup executables into `server-dist\CAMS-Server-Setup.exe` and `client-dist\CAMS-Client-Setup.exe`.
-5. Generate SHA-256 checksum files beside both installers for release verification.
+The canonical script tests and builds the solution, publishes self-contained client and server binaries, packages both installers, stages the exact client installer/checksum/deployment manifest inside the server package, creates release hashes and `release-manifest.json`, and runs installer validation. `version.json`, assembly/installer versions, deployment manifest versions, and a release tag such as `v2.8.0` must match.
 
----
+## Release And GitHub Pages Flow
 
-## 📁 Repository Structure
+- A push to `main` that changes `portal/**` (or a manual dispatch) is configured to deploy the static public portal through `.github/workflows/pages.yml`; confirm the workflow and expected Pages URL after repository Pages is enabled.
+- A `vMAJOR.MINOR.PATCH` tag, or manual release dispatch with that tag, runs `.github/workflows/release.yml` on Windows.
+- The release workflow rejects a tag that does not match `version.json`, runs the canonical build and validation, and publishes both installers, both checksum files, and `release-manifest.json` to GitHub Releases.
+- The public site links to public release assets. Deployment-specific `CAMS-Server-Root.cer` files and offline bundles remain available only from each authenticated local Deployment Hub.
 
-```text
-CAMS/
-├── CAMS-Guide.md              # Comprehensive user & developer guide
-├── DEPLOYMENT.md              # Network deployment & silent install guide
-├── build-everything.ps1       # Automated build, test & packaging script
-├── test-installer.ps1         # Installer validation script
-├── server-installer.iss       # Inno Setup configuration (server) with Clean Install
-├── client-installer.iss       # Inno Setup configuration (client) with Clean Install
-└── Monitoring And Remote Access/
-    ├── RemoteMonitoring.sln   # Main solution file
-    ├── Shared/                # DTOs & SignalR event contracts
-    ├── Server/                # ASP.NET Core MVC + Dark Emerald UI + SignalR hub + EF Core
-    │   ├── wwwroot/css/       # site.css (Dark Emerald & pro Design System)
-    │   ├── wwwroot/images/    # pardo_logo.png (School Logo)
-    │   ├── Views/Admin/       # Admin Portal Views & Layout
-    │   ├── Views/Teacher/     # Teacher Portal Views, Live Grid, Class Management & Layouts
-    │   ├── Views/Student/     # Student Portal Views & Layout
-    │   └── Views/Account/     # Glassmorphic Login View
-    ├── Client/                # WinForms student agent (.NET 8)
-    └── Server.Tests/          # xUnit test suite
-```
+## Windows And LAN Validation Checklist
 
----
+Validate on the actual classroom hardware and network before rollout:
 
-## 📄 License
+- Confirm every machine is Windows x64 and uses the intended Windows user account; the interactive client install, settings, and certificate trust are per user.
+- Mark the classroom network Private. Confirm inbound TCP `5000` reaches the server and, if discovery is required, clients receive UDP `5001`.
+- Confirm the Deployment Hub endpoint is certificate-compatible and the installer SHA-256/version match its manifest.
+- Test first trust without bypassing TLS warnings, then test browser login and strict assigned-workstation client login separately.
+- Confirm the client appears in Deployment Hub's connected-client count and the teacher's scoped monitoring grid.
+- Test screen updates, warning dialogs, pause/resume/end, application/domain policy, reconnect, and one approved remote command. Treat the 50 ms capture interval as a target, not guaranteed FPS.
+- Test lock and CAMS unlock-state behavior with the Windows secure desktop limitation understood.
+- Disconnect/reconnect the LAN, then restart the server after an address change and verify certificate coverage, the new endpoint, client URL updates, and reconnection.
+- Test any hotspot, VLAN, guest Wi-Fi, endpoint security, firewall, shutdown/restart privilege, and remote-input policy in that environment; CAMS cannot guarantee network or OS policy behavior it does not control.
 
-Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
+## Documentation
+
+- [CAMS Guide](CAMS-Guide.md)
+- [Deployment Guide](DEPLOYMENT.md)
+- [Entity Relationship Diagram](DIAGRAMS/ERD.md)
+- [System Flowchart](DIAGRAMS/Flowchart.md)
+- [Menu Structure](DIAGRAMS/Menu-Structure-Diagram.md)
+- [SignalR Message Flow](DIAGRAMS/SignalR-Message-Flow.md)
+- [Use Cases](DIAGRAMS/Use-Case-Diagram.md)
+
+## License
+
+Distributed under the [MIT License](LICENSE).

@@ -62,6 +62,7 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IClassManagementService, ClassManagementService>();
 builder.Services.AddSingleton<IMonitoringService, MonitoringService>();
+builder.Services.AddSingleton<IDeploymentService, DeploymentService>();
 builder.Services.AddSingleton<SessionManagerService>();
 builder.Services.AddHostedService<ServerDiscoveryService>();
 
@@ -149,7 +150,14 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     DatabaseInitializer.Initialize(db);
-    AccountSeeder.SeedConfiguredAccounts(db, app.Configuration);
+    try
+    {
+        AccountSeeder.SeedConfiguredAccounts(db, app.Configuration);
+    }
+    finally
+    {
+        Environment.SetEnvironmentVariable("Cams__InitialAdminPassword", null, EnvironmentVariableTarget.Process);
+    }
 }
 
 app.UseHttpsRedirection();

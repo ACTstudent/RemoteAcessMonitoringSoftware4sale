@@ -11,6 +11,7 @@ public static class HubMethodNames
     public const string RestartStudent = "RestartStudent";
     public const string SendWarningPopup = "SendWarningPopup";
     public const string BroadcastScreen = "BroadcastScreen";
+    public const string StopBroadcast = "StopBroadcast";
     public const string SendNotification = "SendNotification";
     public const string GlobalStartSession = "GlobalStartSession";
     public const string GlobalPauseSession = "GlobalPauseSession";

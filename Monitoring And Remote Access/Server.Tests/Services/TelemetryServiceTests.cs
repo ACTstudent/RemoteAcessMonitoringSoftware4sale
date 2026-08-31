@@ -69,6 +69,21 @@ public class TelemetryServiceTests
     }
 
     [Fact]
+    public async Task RecordDisconnected_ClosesOpenIdleInterval()
+    {
+        await using var db = CreateContext();
+        var service = new TelemetryService(db);
+        var started = DateTime.UtcNow.AddMinutes(-2);
+        var disconnected = DateTime.UtcNow.AddMinutes(-1);
+        await service.RecordIdleStatusAsync("connection-1", "student-1", "PC-01", true, started);
+
+        await service.RecordDisconnectedAsync("connection-1", "student-1", "PC-01", timestamp: disconnected);
+
+        Assert.Equal(disconnected, (await db.IdleIntervals.SingleAsync()).EndedAt);
+        Assert.Contains(await db.ActivityEvents.ToListAsync(), activity => activity.EventType == "Disconnected");
+    }
+
+    [Fact]
     public async Task RecordIdleStatus_DuplicateIdleReportDoesNotOpenAnotherInterval()
     {
         await using var db = CreateContext();

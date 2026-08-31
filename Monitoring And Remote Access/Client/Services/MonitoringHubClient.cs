@@ -36,6 +36,7 @@ public class MonitoringHubClient : IMonitoringHubClient
     public event Action? Unlocked;
     public event Action? ForceLogoutRequested;
     public event Action<BroadcastMessage>? BroadcastReceived;
+    public event Action? BroadcastStopped;
     public event Action<NotificationMessage>? NotificationReceived;
     public event Action<GlobalSessionMessage>? GlobalSessionStateReceived;
     public event Action? SessionEnded;
@@ -91,7 +92,7 @@ public class MonitoringHubClient : IMonitoringHubClient
 
         var connection = new HubConnectionBuilder()
             .WithUrl(serverUrl, options => options.Cookies = _cookies)
-            .WithAutomaticReconnect()
+            .WithAutomaticReconnect(new PersistentRetryPolicy())
             .Build();
 
         connection.Reconnected += _connectionId => HandleReconnectedAsync();
@@ -105,6 +106,7 @@ public class MonitoringHubClient : IMonitoringHubClient
         connection.On(HubEventNames.ForceLogout, () => ForceLogoutRequested?.Invoke());
         connection.On<BroadcastMessage>(HubEventNames.BroadcastScreen,
             message => BroadcastReceived?.Invoke(message));
+        connection.On(HubEventNames.BroadcastStopped, () => BroadcastStopped?.Invoke());
         connection.On<NotificationMessage>(HubEventNames.SendNotification,
             message => NotificationReceived?.Invoke(message));
         connection.On<GlobalSessionMessage>(HubEventNames.GlobalSessionState,
@@ -174,8 +176,7 @@ public class MonitoringHubClient : IMonitoringHubClient
 
     public async Task ReportInfractionAsync(InfractionMessage infraction)
     {
-        EnsureConnected();
-        await _connection!.InvokeAsync(HubMethodNames.ReportInfraction, infraction);
+        await QueueTelemetryAsync(TelemetryBatchItem.From(infraction));
     }
 
     public async Task LogoutAsync(CancellationToken cancellationToken = default)
@@ -403,5 +404,16 @@ public class MonitoringHubClient : IMonitoringHubClient
         {
             _policyRefreshLock.Release();
         }
+    }
+
+    private sealed class PersistentRetryPolicy : IRetryPolicy
+    {
+        public TimeSpan? NextRetryDelay(RetryContext retryContext) => retryContext.PreviousRetryCount switch
+        {
+            0 => TimeSpan.Zero,
+            1 => TimeSpan.FromSeconds(2),
+            2 => TimeSpan.FromSeconds(5),
+            _ => TimeSpan.FromSeconds(15)
+        };
     }
 }

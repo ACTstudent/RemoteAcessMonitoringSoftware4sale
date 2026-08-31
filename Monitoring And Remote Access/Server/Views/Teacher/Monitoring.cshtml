@@ -93,12 +93,8 @@
 </div>
 
 @section Scripts {
-    <script src="~/lib/signalr/signalr.min.js"></script>
     <script>
-        const hub = new signalR.HubConnectionBuilder()
-            .withUrl("/remoteMonitoringHub")
-            .withAutomaticReconnect()
-            .build();
+        const hub = window.teacherHubConnection;
 
         const activeUnits = new Map();
         let selectedConnectionId = null;
@@ -261,16 +257,27 @@
             if (remoteSupportActive) remoteCanvas.focus();
         }
 
+        async function stopRemoteSupport() {
+            if (!remoteSupportActive || !selectedConnectionId) return;
+            const targetConnectionId = selectedConnectionId;
+            remoteSupportActive = false;
+            document.getElementById("liveViewImage").classList.remove("d-none");
+            remoteCanvas.classList.add("d-none");
+            document.getElementById("remoteSupportButton").textContent = "Start Remote Support";
+            if (hub.state === signalR.HubConnectionState.Connected) {
+                try { await hub.invoke("StopRemoteControl", targetConnectionId); }
+                catch (error) { showError(`Remote support could not stop: ${error.message || error}`); }
+            }
+        }
+
         function sendRemoteInput(eventType, event) {
             if (!remoteSupportActive || !selectedConnectionId) return;
             if (eventType === "mousemove" && Date.now() - lastMouseEventAt < 35) return;
             lastMouseEventAt = Date.now();
             const rect = remoteCanvas.getBoundingClientRect();
-            const scaleX = remoteCanvas.width / Math.max(rect.width, 1);
-            const scaleY = remoteCanvas.height / Math.max(rect.height, 1);
             sendWorkstationInput(eventType, {
-                x: Math.max(0, Math.round((event.clientX - rect.left) * scaleX)),
-                y: Math.max(0, Math.round((event.clientY - rect.top) * scaleY)),
+                x: Math.max(0, Math.min(10000, Math.round((event.clientX - rect.left) / Math.max(rect.width, 1) * 10000))),
+                y: Math.max(0, Math.min(10000, Math.round((event.clientY - rect.top) / Math.max(rect.height, 1) * 10000))),
                 keyCode: event.button ?? 0,
                 isShift: Boolean(event.shiftKey)
             });
@@ -369,12 +376,15 @@
             }
         }
 
-        function stopBroadcast() {
+        async function stopBroadcast() {
             if (broadcastTimer) clearInterval(broadcastTimer);
             broadcastTimer = null;
             broadcastStream?.getTracks().forEach(track => track.stop());
             broadcastStream = null;
             document.getElementById("broadcastButton").innerHTML = '<i class="bi bi-broadcast me-1"></i> Broadcast Screen';
+            if (hub.state === signalR.HubConnectionState.Connected) {
+                try { await hub.invoke("StopBroadcast"); } catch { }
+            }
         }
 
         async function bulkCommand(method, label) {
@@ -437,8 +447,13 @@
         hub.on("WebsiteActivityReceived", website => updateActivity(valueOf(website, "connectionId", "ConnectionId"), `Web: ${valueOf(website, "domain", "Domain")}`, false));
         hub.on("BrowserMonitoringStatusReceived", updateBrowserStatus);
         hub.on("IdleStatusReceived", idle => updateActivity(valueOf(idle, "connectionId", "ConnectionId"), null, Boolean(valueOf(idle, "isIdle", "IsIdle"))));
-        hub.on("InfractionDetected", infraction => showError(`Restriction alert: ${valueOf(infraction, "target", "Target") || "restricted activity detected"}`));
-        hub.on("MonitoringAlertReceived", alert => showError(`${valueOf(alert, "title", "Title")}: ${valueOf(alert, "message", "Message")}`));
+        hub.on("InfractionDetected", infraction => {
+            showError(`Restriction alert: ${valueOf(infraction, "target", "Target") || "restricted activity detected"}`);
+            const connectionId = valueOf(infraction, "connectionId", "ConnectionId");
+            const card = document.getElementById(`unit-card-${connectionId}`)?.querySelector(".workstation-card");
+            card?.classList.add("border", "border-danger", "border-3");
+            if (card) setTimeout(() => card.classList.remove("border", "border-danger", "border-3"), 8000);
+        });
         hub.on("StudentConnected", student => createWorkstationCard(valueOf(student, "connectionId", "ConnectionId"), valueOf(student, "studentId", "StudentId"), valueOf(student, "pcName", "PcName")));
         hub.on("StudentDisconnected", connectionId => removeWorkstationCard(connectionId));
         hub.on("GlobalSessionState", state => {
@@ -455,7 +470,8 @@
             const query = this.value.toLowerCase();
             document.querySelectorAll(".unit-col").forEach(column => column.style.display = column.textContent.toLowerCase().includes(query) ? "" : "none");
         });
+        document.getElementById("liveViewModal")?.addEventListener("hide.bs.modal", stopRemoteSupport);
 
-        hub.start().then(loadLiveState).catch(error => showError(`Monitoring connection failed: ${error.message || error}`));
+        window.teacherHubStarted.then(loadLiveState).catch(error => showError(`Monitoring connection failed: ${error.message || error}`));
     </script>
 }

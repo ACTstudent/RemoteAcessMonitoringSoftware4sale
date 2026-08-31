@@ -157,13 +157,16 @@ namespace Server.Controllers
         {
             if (!CheckAccess()) return Denied();
             ViewBag.SessionRules = await _context.SessionRules.Where(s => s.IsActive).ToListAsync();
-            ViewBag.Computers = await _context.Computers.Where(c => c.Status == "Available").ToListAsync();
             ViewBag.GlobalSession = _sessionManager.Snapshot();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
-            ViewBag.Students = teacherId.HasValue
-                ? await _classManagement.GetStudentsForTeacherAsync(teacherId.Value)
-                : Array.Empty<Student>();
+            var students = await _classManagement.GetStudentsForTeacherAsync(teacherId.Value);
+            ViewBag.Students = students;
+            var assignedStudentIds = students.Select(student => student.Id.ToString()).ToList();
+            ViewBag.Computers = await _context.Computers
+                .Where(c => c.Status == "Available" ||
+                    (c.Status == "Assigned" && c.AssignedTo != null && assignedStudentIds.Contains(c.AssignedTo)))
+                .ToListAsync();
             var sessions = await _context.LabSessions
                 .Include(s => s.Student)
                 .Include(s => s.Teacher)
@@ -215,7 +218,10 @@ namespace Server.Controllers
             if (computerId.HasValue)
             {
                 computer = await _context.Computers.FirstOrDefaultAsync(c => c.ComputerId == computerId.Value);
-                if (computer is null || !string.Equals(computer.Status, "Available", StringComparison.OrdinalIgnoreCase) ||
+                var assignedToStudent = computer?.AssignedTo == studentId.ToString();
+                if (computer is null ||
+                    (!string.Equals(computer.Status, "Available", StringComparison.OrdinalIgnoreCase) && !assignedToStudent) ||
+                    (!string.IsNullOrWhiteSpace(computer.AssignedTo) && !assignedToStudent) ||
                     await _context.LabSessions.AnyAsync(s => s.ComputerId == computerId.Value && s.IsActive && s.Status != "Ended"))
                 {
                     TempData["ErrorMessage"] = "The selected workstation is not available.";
@@ -229,7 +235,7 @@ namespace Server.Controllers
                 TeacherId = teacherId,
                 ComputerId = computerId,
                 SessionRuleId = rule?.SessionRuleId,
-                PCName = computer?.LaboratoryStation ?? student.Username,
+                PCName = computer?.LaboratoryStation ?? string.Empty,
                 MaxDurationMinutes = rule?.MaxDurationMinutes,
                  StartTime = DateTime.UtcNow,
                 Status = "Running",
@@ -273,7 +279,7 @@ namespace Server.Controllers
                 {
                     if (session.PauseTime.HasValue)
                     {
-                         session.StartTime = session.StartTime.Add(DateTime.UtcNow - session.PauseTime.Value);
+                        session.AccumulatedPauseSeconds += Math.Max(0, (int)(DateTime.UtcNow - session.PauseTime.Value).TotalSeconds);
                         session.PauseTime = null;
                     }
                     session.Status = "Running";
@@ -315,7 +321,8 @@ namespace Server.Controllers
                 .ToListAsync();
             foreach (var session in paused)
             {
-                if (session.PauseTime.HasValue) session.StartTime = session.StartTime.Add(now - session.PauseTime.Value);
+                if (session.PauseTime.HasValue)
+                    session.AccumulatedPauseSeconds += Math.Max(0, (int)(now - session.PauseTime.Value).TotalSeconds);
                 session.PauseTime = null;
                 session.Status = "Running";
             }
@@ -489,87 +496,6 @@ namespace Server.Controllers
                 ? await _context.RestrictionRules.FirstOrDefaultAsync(r => r.RestrictionRuleId == id && r.TeacherId == teacherId.Value)
                 : null;
             if (rule != null) { _context.RestrictionRules.Remove(rule); await _context.SaveChangesAsync(); await AuditAsync("DeleteRestriction", $"Removed restriction {id}"); }
-            return RedirectToAction(nameof(Restrictions));
-        }
-
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateBlacklist([Bind("TargetType,Value,Reason,IsActive")] BlacklistItem item)
-        {
-            if (!CheckAccess()) return Denied();
-            if (!ValidBlacklistType(item.TargetType) || string.IsNullOrWhiteSpace(item.Value)) { TempData["ErrorMessage"] = "Choose a valid target type and provide a value."; return RedirectToAction(nameof(Restrictions)); }
-            item.TargetType = item.TargetType.Trim(); item.Value = item.Value.Trim(); item.Reason = item.Reason?.Trim() ?? ""; item.CreatedAt = DateTime.Now;
-            _context.BlacklistItems.Add(item); await _context.SaveChangesAsync(); await AuditAsync("CreateBlacklist", $"Added blacklist {item.TargetType}: {item.Value}");
-            return RedirectToAction(nameof(Restrictions));
-        }
-
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateBlacklist([Bind("BlacklistItemId,TargetType,Value,Reason,IsActive")] BlacklistItem input)
-        {
-            if (!CheckAccess()) return Denied();
-            var item = await _context.BlacklistItems.FindAsync(input.BlacklistItemId);
-            if (item == null || !ValidBlacklistType(input.TargetType) || string.IsNullOrWhiteSpace(input.Value)) return RedirectToAction(nameof(Restrictions));
-            item.TargetType = input.TargetType.Trim(); item.Value = input.Value.Trim(); item.Reason = input.Reason?.Trim() ?? ""; item.IsActive = input.IsActive;
-            await _context.SaveChangesAsync(); await AuditAsync("UpdateBlacklist", $"Updated blacklist {item.BlacklistItemId}"); return RedirectToAction(nameof(Restrictions));
-        }
-
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteBlacklist(int id)
-        {
-            if (!CheckAccess()) return Denied();
-            var item = await _context.BlacklistItems.FindAsync(id);
-            if (item != null) { _context.BlacklistItems.Remove(item); await _context.SaveChangesAsync(); await AuditAsync("DeleteBlacklist", $"Removed blacklist {id}"); }
-            return RedirectToAction(nameof(Restrictions));
-        }
-
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateApplicationCategory([Bind("Name,Pattern,Description,Mode,IsActive")] ApplicationCategory category)
-            => await SaveApplicationCategory(category, null);
-
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateApplicationCategory([Bind("ApplicationCategoryId,Name,Pattern,Description,Mode,IsActive")] ApplicationCategory input)
-            => await SaveApplicationCategory(input, input.ApplicationCategoryId);
-
-        private async Task<IActionResult> SaveApplicationCategory(ApplicationCategory input, int? id)
-        {
-            if (!CheckAccess()) return Denied();
-            var category = id.HasValue ? await _context.ApplicationCategories.FindAsync(id.Value) : new ApplicationCategory();
-            if (category == null || string.IsNullOrWhiteSpace(input.Name) || string.IsNullOrWhiteSpace(input.Pattern) || !ValidMode(input.Mode)) return RedirectToAction(nameof(Restrictions));
-            category.Name = input.Name.Trim(); category.Pattern = input.Pattern.Trim(); category.Description = input.Description?.Trim() ?? ""; category.Mode = input.Mode; category.IsActive = input.IsActive;
-            if (!id.HasValue) _context.ApplicationCategories.Add(category);
-            await _context.SaveChangesAsync(); await AuditAsync(id.HasValue ? "UpdateApplicationCategory" : "CreateApplicationCategory", $"Policy category {category.Name}"); return RedirectToAction(nameof(Restrictions));
-        }
-
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteApplicationCategory(int id)
-        {
-            if (!CheckAccess()) return Denied(); var category = await _context.ApplicationCategories.FindAsync(id);
-            if (category != null) { _context.ApplicationCategories.Remove(category); await _context.SaveChangesAsync(); await AuditAsync("DeleteApplicationCategory", $"Removed category {id}"); }
-            return RedirectToAction(nameof(Restrictions));
-        }
-
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateWebsiteCategory([Bind("Name,DomainPattern,Description,Mode,IsActive")] WebsiteCategory category)
-            => await SaveWebsiteCategory(category, null);
-
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateWebsiteCategory([Bind("WebsiteCategoryId,Name,DomainPattern,Description,Mode,IsActive")] WebsiteCategory input)
-            => await SaveWebsiteCategory(input, input.WebsiteCategoryId);
-
-        private async Task<IActionResult> SaveWebsiteCategory(WebsiteCategory input, int? id)
-        {
-            if (!CheckAccess()) return Denied();
-            var category = id.HasValue ? await _context.WebsiteCategories.FindAsync(id.Value) : new WebsiteCategory();
-            if (category == null || string.IsNullOrWhiteSpace(input.Name) || string.IsNullOrWhiteSpace(input.DomainPattern) || !ValidMode(input.Mode)) return RedirectToAction(nameof(Restrictions));
-            category.Name = input.Name.Trim(); category.DomainPattern = input.DomainPattern.Trim(); category.Description = input.Description?.Trim() ?? ""; category.Mode = input.Mode; category.IsActive = input.IsActive;
-            if (!id.HasValue) _context.WebsiteCategories.Add(category);
-            await _context.SaveChangesAsync(); await AuditAsync(id.HasValue ? "UpdateWebsiteCategory" : "CreateWebsiteCategory", $"Policy category {category.Name}"); return RedirectToAction(nameof(Restrictions));
-        }
-
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteWebsiteCategory(int id)
-        {
-            if (!CheckAccess()) return Denied(); var category = await _context.WebsiteCategories.FindAsync(id);
-            if (category != null) { _context.WebsiteCategories.Remove(category); await _context.SaveChangesAsync(); await AuditAsync("DeleteWebsiteCategory", $"Removed category {id}"); }
             return RedirectToAction(nameof(Restrictions));
         }
 
@@ -814,6 +740,21 @@ namespace Server.Controllers
             ViewBag.Severity = severity; ViewBag.StudentId = studentId; ViewBag.Station = station;
             ViewBag.Status = selectedStatus; ViewBag.Paging = alerts;
             return View(alerts.Items);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> OpenAlertCount()
+        {
+            if (!CheckAccess()) return Unauthorized();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Unauthorized();
+            var studentNumbers = AccessibleStudents(teacherId.Value).Select(student => student.StudentNumber);
+            var count = await _context.MonitoringAlerts.AsNoTracking()
+                .Where(alert => !alert.IsAcknowledged && alert.DismissedAt == null && studentNumbers.Contains(alert.StudentId))
+                .Select(alert => alert.GroupKey)
+                .Distinct()
+                .CountAsync();
+            return Json(new { count });
         }
 
         [HttpGet]

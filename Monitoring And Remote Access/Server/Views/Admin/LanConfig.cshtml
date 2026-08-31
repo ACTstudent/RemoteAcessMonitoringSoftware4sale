@@ -1,71 +1,36 @@
-@model Server.Models.LanConfiguration
 @{
-    ViewData["Title"] = "LAN Configuration";
+    ViewData["Title"] = "LAN Status";
     Layout = "_Layout";
 }
 
-<!-- Header Row -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div class="d-flex align-items-center gap-3">
-        <div class="icon-box-primary">
-            <i class="bi bi-router-fill fs-3"></i>
-        </div>
+        <div class="icon-box-primary"><i class="bi bi-router-fill fs-3"></i></div>
         <div>
-            <h2 class="fw-extrabold mb-0 text-dark" style="letter-spacing: -0.5px;">LAN Network Configuration</h2>
-            <p class="text-muted mb-0 small">UDP auto-discovery ports, server IP binding, and laboratory network settings</p>
+            <h2 class="fw-extrabold mb-0 text-dark">LAN Operational Status</h2>
+            <p class="text-muted mb-0 small">Detected, read-only server information for deployment diagnostics</p>
         </div>
     </div>
-    <span class="badge bg-success rounded-pill px-3 py-2 fs-6">
-        <i class="bi bi-wifi me-1"></i> UDP Broadcast Enabled
-    </span>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <span class="badge bg-success rounded-pill px-3 py-2"><i class="bi bi-broadcast me-1"></i>Discovery service enabled</span>
+        <a class="btn btn-success btn-sm rounded-pill px-3" href="@Url.Action("Index", "AdminDeployment")"><i class="bi bi-box-arrow-up-right me-1"></i>Deployment Hub</a>
+    </div>
 </div>
 
-<!-- LAN Settings Form Card -->
-<div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
-    <h5 class="fw-bold mb-4 text-dark">
-        <i class="bi bi-hdd-network me-2 text-emerald-700"></i> Server & Subnet Parameters
-    </h5>
-    <form method="post" action="/Admin/SaveLanConfig" class="row g-3">
-        @Html.AntiForgeryToken()
-        <div class="col-md-4">
-            <label class="form-label fw-semibold text-muted small">Server IP Address</label>
-            <input name="ServerAddress" class="form-control filter-control" value="@Model.ServerAddress" placeholder="e.g. 192.168.1.100" />
-        </div>
-        <div class="col-md-4">
-            <label class="form-label fw-semibold text-muted small">Server Port</label>
-            <input name="ServerPort" type="number" class="form-control filter-control" value="@Model.ServerPort" placeholder="5000" />
-        </div>
-        <div class="col-md-4">
-            <label class="form-label fw-semibold text-muted small">Default Gateway</label>
-            <input name="Gateway" class="form-control filter-control" value="@Model.Gateway" placeholder="e.g. 192.168.1.1" />
-        </div>
+<div class="alert alert-info border-0 rounded-4 shadow-sm">
+    CAMS does not configure DHCP, DNS, gateways, network adapters, or runtime server binding from this page. Configure those through the operating system and deployment settings.
+</div>
 
-        <div class="col-md-4">
-            <label class="form-label fw-semibold text-muted small">DHCP Range Start</label>
-            <input name="DhcpRangeStart" class="form-control filter-control" value="@Model.DhcpRangeStart" placeholder="192.168.1.10" />
-        </div>
-        <div class="col-md-4">
-            <label class="form-label fw-semibold text-muted small">DHCP Range End</label>
-            <input name="DhcpRangeEnd" class="form-control filter-control" value="@Model.DhcpRangeEnd" placeholder="192.168.1.200" />
-        </div>
-        <div class="col-md-4">
-            <label class="form-label fw-semibold text-muted small">DNS Server</label>
-            <input name="DnsServer" class="form-control filter-control" value="@Model.DnsServer" placeholder="8.8.8.8" />
-        </div>
-
-        <div class="col-12 mt-3">
-            <div class="form-check">
-                <input type="checkbox" name="IsActive" value="true" class="form-check-input" id="chkActive" checked="@Model.IsActive" />
-                <label class="form-check-label fw-semibold text-dark small" for="chkActive">
-                    Enable UDP Auto-Discovery & Active Network Binding
-                </label>
-            </div>
-        </div>
-
-        <div class="col-12 mt-4">
-            <button class="btn btn-emerald rounded-pill px-4 py-2.5 text-white fw-bold shadow-sm">
-                <i class="bi bi-save me-1"></i> Save Network Configuration
-            </button>
-        </div>
-    </form>
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <h5 class="fw-bold mb-4"><i class="bi bi-activity me-2 text-emerald-700"></i>Detected Request Path</h5>
+    <dl class="row mb-0">
+        <dt class="col-sm-4 text-muted">Current server endpoint</dt>
+        <dd class="col-sm-8 font-monospace">@ViewBag.DetectedEndpoint</dd>
+        <dt class="col-sm-4 text-muted">SignalR endpoint</dt>
+        <dd class="col-sm-8 font-monospace">@ViewBag.RemoteMonitoringEndpoint</dd>
+        <dt class="col-sm-4 text-muted">Client discovery</dt>
+        <dd class="col-sm-8">The hosted discovery service advertises active IPv4 LAN interfaces on UDP port 5001.</dd>
+        <dt class="col-sm-4 text-muted">Scope</dt>
+        <dd class="col-sm-8 mb-0">Status only. No network settings are changed here.</dd>
+    </dl>
 </div>

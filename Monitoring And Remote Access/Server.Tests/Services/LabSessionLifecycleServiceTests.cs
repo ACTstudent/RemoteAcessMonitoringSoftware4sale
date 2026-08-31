@@ -12,6 +12,22 @@ namespace Server.Tests.Services;
 public class LabSessionLifecycleServiceTests
 {
     [Fact]
+    public void GetElapsedSeconds_SubtractsCompletedAndCurrentPauseTime()
+    {
+        var started = DateTime.UtcNow.AddMinutes(-10);
+        var session = new LabSession
+        {
+            StartTime = started,
+            Status = "Paused",
+            PauseTime = started.AddMinutes(8),
+            AccumulatedPauseSeconds = 120
+        };
+
+        Assert.InRange(LabSessionLifecycleService.GetElapsedSeconds(session, DateTime.UtcNow), 359, 361);
+        Assert.Equal(started, session.StartTime);
+    }
+
+    [Fact]
     public async Task EndExpiredSessions_EndsSessionAndReleasesComputer()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
@@ -27,11 +43,12 @@ public class LabSessionLifecycleServiceTests
         hub.SetupGet(h => h.Clients).Returns(clients.Object);
 
         var service = new LabSessionLifecycleService(db, hub.Object);
+        Assert.True(LabSessionLifecycleService.GetElapsedSeconds(await db.LabSessions.SingleAsync(), DateTime.UtcNow) > 500);
         Assert.Equal(1, await service.EndExpiredSessionsAsync());
         Assert.Equal("Ended", (await db.LabSessions.SingleAsync()).Status);
         Assert.False((await db.LabSessions.SingleAsync()).IsActive);
-        Assert.Equal("Available", (await db.Computers.SingleAsync()).Status);
-        Assert.Null((await db.Computers.SingleAsync()).AssignedTo);
+        Assert.Equal("Assigned", (await db.Computers.SingleAsync()).Status);
+        Assert.Equal("1", (await db.Computers.SingleAsync()).AssignedTo);
     }
 
     [Fact]

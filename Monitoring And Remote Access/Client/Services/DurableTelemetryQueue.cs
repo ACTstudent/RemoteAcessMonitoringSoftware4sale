@@ -328,6 +328,24 @@ public sealed class DurableTelemetryQueue
             return true;
         }
 
+        if (item.Infraction is { } infraction)
+        {
+            if (string.IsNullOrWhiteSpace(infraction.TargetType) || infraction.TargetType.Length > 50 ||
+                string.IsNullOrWhiteSpace(infraction.Target) || infraction.Target.Length > 500 ||
+                infraction.TargetType.Any(char.IsControl) || infraction.Target.Any(char.IsControl))
+                return false;
+            var timestamp = NormalizeTimestamp(infraction.Timestamp);
+            if (!IsRecent(timestamp)) return false;
+            normalized = TelemetryBatchItem.From(new InfractionMessage(
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                infraction.Target.Trim(),
+                infraction.TargetType.Trim(),
+                timestamp));
+            return true;
+        }
+
         return false;
     }
 

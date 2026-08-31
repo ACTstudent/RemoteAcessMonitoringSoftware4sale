@@ -30,6 +30,8 @@ namespace Server.Models
 
         public DateTime? PauseTime { get; set; }
 
+        public int AccumulatedPauseSeconds { get; set; }
+
         public DateTime? EndTime { get; set; }
 
         public bool IsActive { get; set; } = true;
