@@ -279,18 +279,21 @@ public sealed class RemoteMonitoringHub : Hub
                 return;
             }
 
-            var student = _monitoringService.RegisterStudent(Context.ConnectionId, studentNumber, pcName);
-            await UpdateComputerProfileAsync(accountId, studentNumber, pcName);
             GlobalSessionMessage sessionState;
-            using (var scope = _scopeFactory.CreateScope())
+            try
             {
+                using var scope = _scopeFactory.CreateScope();
                 var lifecycle = scope.ServiceProvider.GetRequiredService<LabSessionLifecycleService>();
-                var session = await lifecycle.EnsureStudentSessionAsync(
-                    accountId,
-                    pcName,
+                var session = await lifecycle.EnsureStudentSessionAsync(accountId, pcName,
                     Context.GetHttpContext()?.Connection.RemoteIpAddress?.ToString() ?? string.Empty);
                 sessionState = LabSessionLifecycleService.CreateState(session);
             }
+            catch (InvalidOperationException)
+            {
+                Context.Abort();
+                return;
+            }
+            var student = _monitoringService.RegisterStudent(Context.ConnectionId, studentNumber, pcName);
             await TryRecordTelemetryAsync(() => _telemetryService.RecordActivityEventAsync(Context.ConnectionId, student.StudentId, student.PcName, "Connected"));
             await Groups.AddToGroupAsync(Context.ConnectionId, HubEventNames.StudentsGroup);
             await (await AuthorizedViewersAsync(student))
@@ -322,25 +325,6 @@ public sealed class RemoteMonitoringHub : Hub
         }
 
         await base.OnConnectedAsync();
-    }
-
-    private async Task UpdateComputerProfileAsync(int accountId, string studentNumber, string pcName)
-    {
-        try
-        {
-            using var scope = _scopeFactory.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var computer = await db.Computers.FirstOrDefaultAsync(c =>
-                c.LaboratoryStation == pcName && c.AssignedTo == accountId.ToString());
-            if (computer == null) return;
-            computer.Status = "In Use";
-
-            await db.SaveChangesAsync();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[CAMS] Error auto-registering computer profile for {studentNumber}: {ex.Message}");
-        }
     }
 
     public async Task SendScreenFrame(ScreenFrameMessage frame)

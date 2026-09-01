@@ -131,6 +131,7 @@ builder.Services.AddScoped<ITelemetryService, TelemetryService>();
 builder.Services.Configure<TelemetryRetentionOptions>(builder.Configuration.GetSection("TelemetryRetention"));
 builder.Services.AddHostedService<TelemetryRetentionCleanupService>();
 builder.Services.AddScoped<IDatabaseMaintenanceService, DatabaseMaintenanceService>();
+builder.Services.AddScoped<IWorkstationRegistrationService, WorkstationRegistrationService>();
 builder.Services.AddScoped<LabSessionLifecycleService>();
 builder.Services.AddHostedService<ExpiredLabSessionCleanupService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();

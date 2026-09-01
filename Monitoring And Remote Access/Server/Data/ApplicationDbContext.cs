@@ -141,6 +141,9 @@ namespace Server.Data
                 .HasForeignKey(c => c.TeacherId)
                 .OnDelete(DeleteBehavior.SetNull);
 
+            modelBuilder.Entity<Class>()
+                .HasIndex(c => new { c.ClassName, c.AcademicYear });
+
             modelBuilder.Entity<Student>()
                 .HasOne(s => s.Class)
                 .WithMany(c => c.Students)

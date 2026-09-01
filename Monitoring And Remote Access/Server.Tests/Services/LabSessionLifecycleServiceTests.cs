@@ -67,4 +67,29 @@ public class LabSessionLifecycleServiceTests
         Assert.Equal(1, await service.EndExpiredSessionsAsync());
         Assert.Equal(0, await service.EndExpiredSessionsAsync());
     }
+
+    [Fact]
+    public async Task EnsureStudentSession_CreatesProfileAndConnectsClassTeacher()
+    {
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
+        await using var db = new ApplicationDbContext(options);
+        var teacher = new Teacher { TeacherId = 8, Username = "teacher-8", PasswordHash = "hash", Status = "Active" };
+        var classroom = new Class { ClassName = "Grade 6 Test", AcademicYear = "2026-2027", Teacher = teacher };
+        var student = new Student { StudentNumber = "STU-1", Username = "student-1", PasswordHash = "hash", Status = "Active", Class = classroom, Adviser = teacher };
+        db.AddRange(teacher, classroom, student);
+        await db.SaveChangesAsync();
+        var clients = new Mock<IHubClients>();
+        clients.Setup(c => c.User(It.IsAny<string>())).Returns(Mock.Of<IClientProxy>());
+        var hub = new Mock<IHubContext<RemoteMonitoringHub>>();
+        hub.SetupGet(h => h.Clients).Returns(clients.Object);
+
+        var session = await new LabSessionLifecycleService(db, hub.Object)
+            .EnsureStudentSessionAsync(student.Id, "LAB2-PC26", "127.0.0.1");
+
+        Assert.Equal(teacher.TeacherId, session.TeacherId);
+        Assert.Equal("Running", session.Status);
+        Assert.True(session.IsActive);
+        Assert.Equal("LAB2-PC26", session.Computer!.LaboratoryStation);
+        Assert.Equal(student.Id.ToString(), session.Computer.AssignedTo);
+    }
 }

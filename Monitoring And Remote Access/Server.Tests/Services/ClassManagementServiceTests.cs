@@ -42,6 +42,21 @@ public class ClassManagementServiceTests
     }
 
     [Fact]
+    public async Task AdminCanCreateClassWithoutTeacher()
+    {
+        using var db = GetDbContext();
+        var result = await new ClassManagementService(db).CreateClassAsync(
+            new ClassInput("Grade 6 Test", "A", "Computer", "Grade 6", "Monday", null, null),
+            actorTeacherId: null,
+            isAdmin: true);
+
+        var classroom = await db.Classes.SingleAsync();
+        Assert.True(result.Success);
+        Assert.Null(classroom.TeacherId);
+        Assert.Equal("2026-2027", classroom.AcademicYear);
+    }
+
+    [Fact]
     public async Task TeacherCannotMutateAnotherTeachersClass()
     {
         using var db = GetDbContext();
@@ -188,5 +203,38 @@ public class ClassManagementServiceTests
         Assert.Empty(preserved.GradeSection);
         Assert.Empty(await db.ClassStudents.ToListAsync());
         Assert.Null(await db.Classes.FindAsync(cls.ClassId));
+    }
+
+    [Fact]
+    public async Task UpdateAndArchiveSynchronizeStudentTeacherVisibility()
+    {
+        using var db = GetDbContext();
+        var first = new Teacher { Username = "first-teacher", PasswordHash = "hash", Status = "Active" };
+        var second = new Teacher { Username = "second-teacher", PasswordHash = "hash", Status = "Active" };
+        db.Teachers.AddRange(first, second);
+        await db.SaveChangesAsync();
+        var classroom = new Class { ClassName = "Old Name", TeacherId = first.TeacherId };
+        db.Classes.Add(classroom);
+        await db.SaveChangesAsync();
+        var student = new Student { StudentNumber = "SYNC-1", Username = "sync-1", PasswordHash = "hash", ClassId = classroom.ClassId, AdviserId = first.TeacherId, GradeSection = classroom.ClassName };
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+        var service = new ClassManagementService(db);
+
+        var update = await service.UpdateClassAsync(classroom.ClassId,
+            new ClassInput("New Name", "A", "Computer", "Grade 6", "Monday", "2026-2027", second.TeacherId), null, true);
+        Assert.True(update.Success);
+        Assert.Equal("New Name", student.GradeSection);
+        Assert.Equal(second.TeacherId, student.AdviserId);
+
+        Assert.True((await service.SetArchiveStateAsync(classroom.ClassId, true)).Success);
+        Assert.Null(student.AdviserId);
+        Assert.True((await service.UpdateClassAsync(classroom.ClassId,
+            new ClassInput("Archived Name", "A", "Computer", "Grade 6", "Tuesday", "2026-2027", first.TeacherId), null, true)).Success);
+        Assert.Null(student.AdviserId);
+        Assert.True((await service.AssignTeacherAsync(classroom.ClassId, second.TeacherId)).Success);
+        Assert.Null(student.AdviserId);
+        Assert.True((await service.SetArchiveStateAsync(classroom.ClassId, false)).Success);
+        Assert.Equal(second.TeacherId, student.AdviserId);
     }
 }

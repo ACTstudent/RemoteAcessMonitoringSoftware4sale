@@ -1165,7 +1165,7 @@ namespace Server.Controllers
                 return RedirectToAction("Classes");
             }
 
-            await AuditAsync("CreateClass", $"Created class '{result.Name}'");
+            await AuditAsync("ClassCreated", $"Created class '{result.Name}'");
             TempData["Message"] = $"Class '{result.Name}' created successfully!";
             return RedirectToAction("Classes");
         }
@@ -1186,7 +1186,7 @@ namespace Server.Controllers
                 return RedirectToAction("Classes");
             }
 
-            await AuditAsync("UpdateClass", $"Updated class '{result.Name}'");
+            await AuditAsync("ClassUpdated", $"Updated class '{result.Name}'");
             TempData["Message"] = $"Class '{result.Name}' updated successfully!";
             return RedirectToAction("Classes");
         }
@@ -1222,15 +1222,16 @@ namespace Server.Controllers
                 return RedirectToAction("Classes");
             }
 
-            var result = await _classManagement.SetArchiveStateAsync(id, !existing.IsArchived);
+            var archived = !existing.IsArchived;
+            var result = await _classManagement.SetArchiveStateAsync(id, archived);
             if (!result.Success)
             {
                 TempData["ErrorMessage"] = result.Error;
             }
             else
             {
-                var state = existing.IsArchived ? "restored" : "archived";
-                await AuditAsync("ArchiveClass", $"{state} class '{result.Name}'");
+                var state = archived ? "archived" : "restored";
+                await AuditAsync(archived ? "ClassArchived" : "ClassRestored", $"{state} class '{result.Name}'");
                 TempData["Message"] = $"Class '{result.Name}' {state} successfully.";
             }
             return RedirectToAction("Classes");
@@ -1247,7 +1248,7 @@ namespace Server.Controllers
             }
             else
             {
-                await AuditAsync("DeleteClass", $"Deleted class '{result.Name}'");
+                await AuditAsync("ClassDeleted", $"Deleted class '{result.Name}'");
                 TempData["Message"] = $"Class '{result.Name}' deleted successfully.";
             }
             return RedirectToAction("Classes");

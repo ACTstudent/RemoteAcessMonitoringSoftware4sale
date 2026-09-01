@@ -18,8 +18,20 @@ public static class DatabaseInitializer
             EnsureCurrentSchema(db);
             BaselineLegacySqliteDatabase(db);
         }
+        else if (db.Database.IsSqlite() && TableExists(db, "Classes"))
+        {
+            // Databases with migration history can still predate the current class model.
+            EnsureClassSchema(db);
+            ValidateClassSchema(db);
+        }
 
         db.Database.Migrate();
+        if (db.Database.IsSqlite() && TableExists(db, "Classes"))
+        {
+            EnsureClassSchema(db);
+            db.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_Classes_ClassName_AcademicYear ON Classes (ClassName, AcademicYear);");
+            ValidateClassSchema(db);
+        }
     }
 
     public static void EnsureCurrentSchema(ApplicationDbContext db)
@@ -37,6 +49,7 @@ public static class DatabaseInitializer
         EnsureBrowserMonitoringTable(db);
         EnsureCategoryTables(db);
         EnsureTeacherRestrictionScope(db);
+        EnsureClassSchema(db);
         EnsureSessionAndWorkstationIntegrity(db);
         EnsureAnalyticsIndexes(db);
 
@@ -50,6 +63,7 @@ public static class DatabaseInitializer
             .Any(group => group.Count() > 1);
 
         TryCreateIndex(db, "CREATE UNIQUE INDEX IF NOT EXISTS IX_ClassStudents_ClassId_StudentId ON ClassStudents (ClassId, StudentId);");
+        TryCreateIndex(db, "CREATE INDEX IF NOT EXISTS IX_Classes_ClassName_AcademicYear ON Classes (ClassName, AcademicYear);");
         if (!hasDuplicateStudentNumbers)
         {
             TryCreateIndex(db, "CREATE UNIQUE INDEX IF NOT EXISTS IX_Students_StudentNumber ON Students (StudentNumber);");
@@ -60,6 +74,27 @@ public static class DatabaseInitializer
         }
 
         ValidateLegacySchema(db);
+    }
+
+    public static void EnsureClassSchema(ApplicationDbContext db)
+    {
+        if (!db.Database.IsSqlite() || !TableExists(db, "Classes"))
+        {
+            return;
+        }
+
+        EnsureColumn(db, "Classes", "Section", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(db, "Classes", "Subject", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(db, "Classes", "GradeLevel", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(db, "Classes", "Schedule", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(db, "Classes", "AcademicYear", "TEXT NOT NULL DEFAULT '2026-2027'");
+        EnsureColumn(db, "Classes", "Status", "TEXT NOT NULL DEFAULT 'Active'");
+        EnsureColumn(db, "Classes", "IsArchived", "INTEGER NOT NULL DEFAULT 0");
+        // SQLite cannot add CURRENT_TIMESTAMP as an ALTER TABLE default. Use a legal
+        // constant first, then backfill existing rows with the actual upgrade time.
+        EnsureColumn(db, "Classes", "CreatedAt", "TEXT NOT NULL DEFAULT '0001-01-01 00:00:00'");
+        EnsureColumn(db, "Classes", "TeacherId", "INTEGER NULL");
+        db.Database.ExecuteSqlRaw("UPDATE Classes SET CreatedAt = CURRENT_TIMESTAMP WHERE CreatedAt IS NULL OR CreatedAt = '0001-01-01 00:00:00';");
     }
 
     private static bool IsLegacySqliteDatabase(ApplicationDbContext db)
@@ -80,6 +115,19 @@ public static class DatabaseInitializer
 
         command.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = '__EFMigrationsHistory'";
         return Convert.ToInt32(command.ExecuteScalar()) == 0;
+    }
+
+    private static bool TableExists(ApplicationDbContext db, string table)
+    {
+        using var command = db.Database.GetDbConnection().CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = $table";
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = "$table";
+        parameter.Value = table;
+        command.Parameters.Add(parameter);
+        if (command.Connection!.State != ConnectionState.Open)
+            command.Connection.Open();
+        return Convert.ToInt32(command.ExecuteScalar()) > 0;
     }
 
     private static void BaselineLegacySqliteDatabase(ApplicationDbContext db)
@@ -246,7 +294,8 @@ public static class DatabaseInitializer
             ["LabSessions"] = ["AccumulatedPauseSeconds"],
             ["RemoteCommandLogs"] = ["PcName", "StudentId"],
             ["MonitoringAlerts"] = ["DedupeKey", "GroupKey", "OccurrenceCount"],
-            ["RestrictionRules"] = ["TeacherId"]
+            ["RestrictionRules"] = ["TeacherId"],
+            ["Classes"] = ["ClassId", "ClassName", "Section", "Subject", "GradeLevel", "Schedule", "AcademicYear", "Status", "IsArchived", "CreatedAt", "TeacherId"]
         };
 
         foreach (var (table, columns) in requiredColumns)
@@ -268,6 +317,15 @@ public static class DatabaseInitializer
         var missingIndexes = requiredIndexes.Where(index => !indexes.Contains(index)).ToArray();
         if (missingIndexes.Length > 0)
             throw new InvalidOperationException($"Legacy CAMS database upgrade is incomplete. Missing indexes: {string.Join(", ", missingIndexes)}.");
+    }
+
+    private static void ValidateClassSchema(ApplicationDbContext db)
+    {
+        var required = new[] { "ClassId", "ClassName", "Section", "Subject", "GradeLevel", "Schedule", "AcademicYear", "Status", "IsArchived", "CreatedAt", "TeacherId" };
+        var actual = ReadSchemaNames(db, "PRAGMA table_info(\"Classes\");", 1);
+        var missing = required.Where(column => !actual.Contains(column)).ToArray();
+        if (missing.Length > 0)
+            throw new InvalidOperationException($"CAMS cannot start because the Classes schema is incomplete. Missing: {string.Join(", ", missing)}.");
     }
 
     private static HashSet<string> ReadSchemaNames(ApplicationDbContext db, string sql, int ordinal)

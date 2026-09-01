@@ -260,8 +260,17 @@ public sealed class ClassManagementService : IClassManagementService
             TeacherId = teacherId
         };
 
-        _context.Classes.Add(entity);
-        await _context.SaveChangesAsync();
+        try
+        {
+            _context.Classes.Add(entity);
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[CAMS] Class create failed: {ex.Message}");
+            return ClassOperationResult.Fail("The class could not be created. Check the details and try again.");
+        }
+        Console.WriteLine($"[CAMS] Class created: {entity.ClassId} {entity.ClassName}");
         return ClassOperationResult.Ok(entity.ClassName);
     }
 
@@ -308,11 +317,20 @@ public sealed class ClassManagementService : IClassManagementService
             if (student.ClassId == classId)
             {
                 student.GradeSection = entity.ClassName;
-                student.AdviserId = teacherId;
+                student.AdviserId = entity.IsArchived ? null : teacherId;
             }
         }
 
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[CAMS] Class update failed for {classId}: {ex.Message}");
+            return ClassOperationResult.Fail("The class could not be updated. Check the details and try again.");
+        }
+        Console.WriteLine($"[CAMS] Class updated: {entity.ClassId} {entity.ClassName}");
         return ClassOperationResult.Ok(entity.ClassName);
     }
 
@@ -340,7 +358,7 @@ public sealed class ClassManagementService : IClassManagementService
             if (student.ClassId == classId)
             {
                 student.GradeSection = entity.ClassName;
-                student.AdviserId = teacher.TeacherId;
+                student.AdviserId = entity.IsArchived ? null : teacher.TeacherId;
             }
         }
 
@@ -363,7 +381,18 @@ public sealed class ClassManagementService : IClassManagementService
 
         entity.IsArchived = archived;
         entity.Status = archived ? "Archived" : "Active";
-        await _context.SaveChangesAsync();
+        var members = await GetMembersForMutationAsync(classId);
+        foreach (var student in members.Where(student => student.ClassId == classId))
+            student.AdviserId = archived ? null : entity.TeacherId;
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[CAMS] Class archive change failed for {classId}: {ex.Message}");
+            return ClassOperationResult.Fail("The class archive status could not be changed. Please try again.");
+        }
         return ClassOperationResult.Ok(entity.ClassName);
     }
 
@@ -393,7 +422,16 @@ public sealed class ClassManagementService : IClassManagementService
             .ToListAsync();
         _context.ClassStudents.RemoveRange(links);
         _context.Classes.Remove(entity);
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[CAMS] Class delete failed for {classId}: {ex.Message}");
+            return ClassOperationResult.Fail("The class could not be deleted. Student accounts were not removed.");
+        }
+        Console.WriteLine($"[CAMS] Class deleted: {classId} {entity.ClassName}");
         return ClassOperationResult.Ok(entity.ClassName);
     }
 

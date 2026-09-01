@@ -10,11 +10,13 @@ public class AuthenticationService : IAuthenticationService
     private const int MaxFailedLoginAttempts = 5;
     private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(15);
     private readonly ApplicationDbContext _context;
+    private readonly IWorkstationRegistrationService _workstations;
     private readonly PasswordHasher<object> _hasher = new();
 
-    public AuthenticationService(ApplicationDbContext context)
+    public AuthenticationService(ApplicationDbContext context, IWorkstationRegistrationService? workstations = null)
     {
         _context = context;
+        _workstations = workstations ?? new WorkstationRegistrationService(context);
     }
 
     private bool VerifyPassword(string storedHash, string providedPassword)
@@ -53,67 +55,23 @@ public class AuthenticationService : IAuthenticationService
         if (student != null && IsUsable(student.Status, student.LockoutEndUtc) && VerifyPassword(student.PasswordHash, password))
         {
             ClearFailures(student);
-            var assignedPc = string.IsNullOrWhiteSpace(pcName)
-                ? null
-                : await _context.Computers.FirstOrDefaultAsync(c => c.AssignedTo == student.Id.ToString());
-            var requestedPc = string.IsNullOrWhiteSpace(pcName)
-                ? null
-                : await _context.Computers.FirstOrDefaultAsync(c => c.LaboratoryStation == pcName);
-            if (!string.IsNullOrWhiteSpace(pcName) &&
-                (assignedPc is null || requestedPc is null || assignedPc.ComputerId != requestedPc.ComputerId))
+            if (!string.IsNullOrWhiteSpace(pcName))
             {
-                await AuditAsync("Student", student.Id, "LoginDenied",
-                    $"Student {username} attempted from unassigned station: {pcName}", ipAddress);
-                return new LoginResult(AccountRole.Invalid, null, null);
-            }
-            var existingSession = string.IsNullOrWhiteSpace(pcName)
-                ? null
-                : await _context.LabSessions.FirstOrDefaultAsync(s => s.StudentId == student.Id && s.IsActive && s.Status != "Ended");
-            if (existingSession is not null)
-            {
-                if (!string.IsNullOrWhiteSpace(existingSession.PCName) &&
-                    !string.Equals(existingSession.PCName, pcName, StringComparison.OrdinalIgnoreCase))
+                try
+                {
+                    await _workstations.EnsureStudentSessionAsync(student.Id, pcName, ipAddress);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    await AuditAsync("Student", student.Id, "LoginDenied", ex.Message, ipAddress);
                     return new LoginResult(AccountRole.Invalid, null, null);
-                existingSession.PCName = pcName;
-                existingSession.IPAddress = ipAddress;
-                existingSession.ComputerId ??= assignedPc?.ComputerId;
-                if (assignedPc is not null) assignedPc.Status = "In Use";
-                await _context.SaveChangesAsync();
-                return new LoginResult(AccountRole.Student, student.Id, student.FullName, student.Username, student.StudentNumber);
+                }
             }
             if (!string.IsNullOrEmpty(student.Status) && !string.Equals(student.Status, "Active", StringComparison.OrdinalIgnoreCase))
             {
                 await AuditAsync("Student", student.Id, "LoginDenied",
                     $"Student {username} attempted login while account status is {student.Status}", ipAddress);
                 return new LoginResult(AccountRole.Invalid, null, null);
-            }
-
-            if (!string.IsNullOrWhiteSpace(pcName))
-            {
-                var classTeacherId = student.ClassId.HasValue
-                    ? await _context.Classes.Where(c => c.ClassId == student.ClassId.Value)
-                        .Select(c => c.TeacherId).FirstOrDefaultAsync()
-                    : null;
-                var rule = await _context.SessionRules.FirstOrDefaultAsync(r => r.IsActive && r.IsDefault);
-                var computer = assignedPc;
-                _context.LabSessions.Add(new LabSession
-                {
-                    StudentId = student.Id,
-                    TeacherId = student.AdviserId ?? classTeacherId,
-                    ComputerId = computer?.ComputerId,
-                    SessionRuleId = rule?.SessionRuleId,
-                    PCName = pcName,
-                    IPAddress = ipAddress,
-                    StartTime = DateTime.UtcNow,
-                    Status = "Running",
-                    IsActive = true,
-                    MaxDurationMinutes = rule?.MaxDurationMinutes
-                });
-                if (computer is not null)
-                {
-                    computer.Status = "In Use";
-                }
-                await _context.SaveChangesAsync();
             }
 
             await AuditAsync("Student", student.Id, "LoginSuccess", $"Student {username} logged in from {pcName} ({ipAddress})", ipAddress);
@@ -194,12 +152,15 @@ public class AuthenticationService : IAuthenticationService
             return;
         }
 
-        var activeSessions = _context.LabSessions.Where(s => s.StudentId == studentId.Value && s.IsActive);
+        var activeSessions = _context.LabSessions.Include(s => s.Computer)
+            .Where(s => s.StudentId == studentId.Value && s.IsActive);
         foreach (var session in activeSessions)
         {
             session.IsActive = false;
             session.Status = "Ended";
             session.EndTime = DateTime.Now;
+            if (session.Computer is not null)
+                session.Computer.Status = string.IsNullOrWhiteSpace(session.Computer.AssignedTo) ? "Available" : "Assigned";
         }
 
         await _context.SaveChangesAsync();

@@ -154,7 +154,7 @@ public class AuthenticationServiceTests
     }
 
     [Fact]
-    public async Task LoginAsync_StudentAssignedToWrongStation_ReturnsInvalid()
+    public async Task LoginAsync_StudentChangesStation_MovesAssignmentWhenSafe()
     {
         var context = CreateContext();
         var hasher = new PasswordHasher<object>();
@@ -176,7 +176,9 @@ public class AuthenticationServiceTests
 
         var service = new AuthenticationService(context);
         var result = await service.LoginAsync("bound_student", "pass", "LAB-PC-99", "192.168.1.5");
-        Assert.Equal(AccountRole.Invalid, result.Role);
+        Assert.Equal(AccountRole.Student, result.Role);
+        Assert.Null((await context.Computers.SingleAsync(c => c.LaboratoryStation == "LAB-PC-12")).AssignedTo);
+        Assert.Equal("5", (await context.Computers.SingleAsync(c => c.LaboratoryStation == "LAB-PC-99")).AssignedTo);
     }
 
     [Fact]
@@ -306,7 +308,7 @@ public class AuthenticationServiceTests
     }
 
     [Fact]
-    public async Task LoginAsync_CannotTakeAnotherStudentsWorkstation()
+    public async Task LoginAsync_StaleAssignmentWithoutActiveSession_CanBeReassigned()
     {
         var context = CreateContext();
         var hasher = new PasswordHasher<object>();
@@ -328,9 +330,32 @@ public class AuthenticationServiceTests
         var result = await new AuthenticationService(context)
             .LoginAsync("student_twenty", "pass", "PC-TAKEN", "127.0.0.1");
 
-        Assert.Equal(AccountRole.Invalid, result.Role);
-        Assert.Equal("21", (await context.Computers.SingleAsync()).AssignedTo);
-        Assert.Empty(await context.LabSessions.ToListAsync());
+        Assert.Equal(AccountRole.Student, result.Role);
+        Assert.Equal("20", (await context.Computers.SingleAsync()).AssignedTo);
+        Assert.Single(await context.LabSessions.ToListAsync());
+    }
+
+    [Fact]
+    public async Task LoginAsync_FirstUseAutomaticallyCreatesWorkstationAndSession()
+    {
+        var context = CreateContext();
+        var hasher = new PasswordHasher<object>();
+        context.Students.Add(new Student
+        {
+            Id = 25,
+            StudentNumber = "STU025",
+            Username = "first_use_student",
+            PasswordHash = hasher.HashPassword(new object(), "pass"),
+            Status = "Active"
+        });
+        await context.SaveChangesAsync();
+
+        var result = await new AuthenticationService(context)
+            .LoginAsync("first_use_student", "pass", "LAB2-PC26", "127.0.0.1");
+
+        Assert.Equal(AccountRole.Student, result.Role);
+        Assert.Equal("25", (await context.Computers.SingleAsync()).AssignedTo);
+        Assert.Equal("Running", (await context.LabSessions.SingleAsync()).Status);
     }
 
     [Fact]
