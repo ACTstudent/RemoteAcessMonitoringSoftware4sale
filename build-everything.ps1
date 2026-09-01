@@ -141,7 +141,7 @@ if (-not (Test-Path -LiteralPath $publishedSettingsPath -PathType Leaf)) {
     throw "Published server is missing appsettings.json."
 }
 $publishedSettings = Get-Content -LiteralPath $publishedSettingsPath -Raw | ConvertFrom-Json
-foreach ($property in @("CertificatePassword", "InitialAdminPassword", "SeededTeacherPassword", "SeededStudentPassword")) {
+foreach ($property in @("CertificatePassword", "InitialAdminPassword")) {
     if (-not [string]::IsNullOrEmpty([string]$publishedSettings.Cams.$property)) {
         throw "Refusing to package a non-empty Cams:$property appsettings secret."
     }

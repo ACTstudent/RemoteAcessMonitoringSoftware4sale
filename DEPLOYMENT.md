@@ -15,13 +15,13 @@ Do not obtain `CAMS-Server-Root.cer` from a public website. It is unique to a lo
 ## 1. Prepare The Server
 
 1. Choose a Windows x64 control PC and connect it to the final trusted, non-guest classroom network.
-2. Enter the first Admin username and a password of at least 12 characters. The following optional pages can create an initial Teacher and Student with passwords of at least 8 characters. Secrets are passed only to the initial server process and are not written to `appsettings.json`. Existing accounts are never overwritten.
+2. Enter the Admin username and a password of at least 12 characters. On a fresh database this creates the account. On an existing database, entering a password resets the matching Administrator, activates it, and clears lockout state. Leave the password blank during an upgrade to keep existing credentials unchanged.
 3. Download `CAMS-Server-Setup.exe` and its `.sha256` from the same GitHub release. Also download `release-manifest.json` when that release was produced by the current release workflow; older releases may not contain it.
 4. Compare `Get-FileHash .\CAMS-Server-Setup.exe -Algorithm SHA256` with the checksum file and, when present, the server artifact entry in the release manifest.
 5. Run the installer. It installs under the installing user's `%LOCALAPPDATA%\CAMS Server`, refreshes only the inbound Private-profile TCP `5000` rule, and can configure current-user startup. CAMS is not installed as a Windows Service.
 6. Start CAMS. It creates/migrates local `CAMS.db`; in local CA mode it also creates the certificate files described below.
 
-There are no default passwords. Interactive server setup collects the initial Admin credentials. Silent first-time setup requires `/AdminUsername=... /AdminPassword=...`; the password must contain at least 12 characters. The initial Admin is created only when that username does not already exist, and existing accounts are never overwritten. Optional teacher/student seed accounts require explicit protected configuration and are intended for controlled setup, not as defaults.
+There are no default passwords. Interactive server setup collects only Administrator credentials. Silent first-time setup requires `/AdminUsername=... /AdminPassword=...`; the password must contain at least 12 characters. Setup verifies database initialization before completing. Teacher and Student accounts are created after login from the Admin portal.
 
 ## 2. Bootstrap HTTPS Trust
 

@@ -40,7 +40,12 @@ public class AuthenticationService : IAuthenticationService
         }
 
         // 1. ADMIN LOGIN
-        var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Username == username);
+        var loginIdentifier = username.Trim();
+        var normalizedLogin = loginIdentifier.ToLowerInvariant();
+        var admin = IsAscii(loginIdentifier)
+            ? await _context.Admins.FirstOrDefaultAsync(a => a.Username.ToLower() == normalizedLogin)
+            : (await _context.Admins.ToListAsync()).FirstOrDefault(a =>
+                string.Equals(a.Username, loginIdentifier, StringComparison.OrdinalIgnoreCase));
         if (admin != null && admin.IsActive && !IsLocked(admin.LockoutEndUtc) && VerifyPassword(admin.PasswordHash, password))
         {
             ClearFailures(admin);
@@ -50,8 +55,12 @@ public class AuthenticationService : IAuthenticationService
         if (admin != null && admin.IsActive && !IsLocked(admin.LockoutEndUtc)) RecordFailure(admin);
 
         // 2. STUDENT LOGIN (Student takes priority if username exists in both Student & Teacher)
-        var student = await _context.Students
-            .FirstOrDefaultAsync(s => s.Username == username || s.StudentNumber == username);
+        var student = IsAscii(loginIdentifier)
+            ? await _context.Students.FirstOrDefaultAsync(s =>
+                s.Username.ToLower() == normalizedLogin || s.StudentNumber.ToLower() == normalizedLogin)
+            : (await _context.Students.ToListAsync()).FirstOrDefault(s =>
+                string.Equals(s.Username, loginIdentifier, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(s.StudentNumber, loginIdentifier, StringComparison.OrdinalIgnoreCase));
         if (student != null && IsUsable(student.Status, student.LockoutEndUtc) && VerifyPassword(student.PasswordHash, password))
         {
             ClearFailures(student);
@@ -80,7 +89,10 @@ public class AuthenticationService : IAuthenticationService
         if (student != null && IsUsable(student.Status, student.LockoutEndUtc)) RecordFailure(student);
 
         // 3. TEACHER LOGIN
-        var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.Username == username);
+        var teacher = IsAscii(loginIdentifier)
+            ? await _context.Teachers.FirstOrDefaultAsync(t => t.Username.ToLower() == normalizedLogin)
+            : (await _context.Teachers.ToListAsync()).FirstOrDefault(t =>
+                string.Equals(t.Username, loginIdentifier, StringComparison.OrdinalIgnoreCase));
         if (teacher != null && IsUsable(teacher.Status, teacher.LockoutEndUtc) && VerifyPassword(teacher.PasswordHash, password))
         {
             ClearFailures(teacher);
@@ -105,6 +117,7 @@ public class AuthenticationService : IAuthenticationService
     }
 
     private static bool IsLocked(DateTime? lockoutEndUtc) => lockoutEndUtc.HasValue && lockoutEndUtc > DateTime.UtcNow;
+    private static bool IsAscii(string value) => value.All(character => character <= 0x7f);
     private static bool IsUsable(string status, DateTime? lockoutEndUtc) =>
         (string.IsNullOrWhiteSpace(status) || string.Equals(status, "Active", StringComparison.OrdinalIgnoreCase)) && !IsLocked(lockoutEndUtc);
     private static void ClearFailures(Admin account) => (account.FailedLoginAttempts, account.LockoutEndUtc) = (0, null);

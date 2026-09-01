@@ -5,6 +5,7 @@ using Server.Data;
 using Server.Services;
 
 Directory.SetCurrentDirectory(AppContext.BaseDirectory);
+var initializeOnly = args.Any(argument => string.Equals(argument, "--initialize-only", StringComparison.OrdinalIgnoreCase));
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
@@ -158,9 +159,12 @@ using (var scope = app.Services.CreateScope())
     finally
     {
         Environment.SetEnvironmentVariable("Cams__InitialAdminPassword", null, EnvironmentVariableTarget.Process);
-        Environment.SetEnvironmentVariable("Cams__SeededTeacherPassword", null, EnvironmentVariableTarget.Process);
-        Environment.SetEnvironmentVariable("Cams__SeededStudentPassword", null, EnvironmentVariableTarget.Process);
     }
+}
+
+if (initializeOnly)
+{
+    return;
 }
 
 app.UseHttpsRedirection();

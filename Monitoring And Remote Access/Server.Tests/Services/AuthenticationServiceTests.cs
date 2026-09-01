@@ -278,6 +278,25 @@ public class AuthenticationServiceTests
     }
 
     [Fact]
+    public async Task LoginAsync_AdminUsername_IsCaseInsensitive()
+    {
+        var context = CreateContext();
+        var hasher = new PasswordHasher<object>();
+        context.Admins.Add(new Admin
+        {
+            Username = "ÉcoleAdmin",
+            PasswordHash = hasher.HashPassword(new object(), "adminpass"),
+            FullName = "School Administrator"
+        });
+        await context.SaveChangesAsync();
+
+        var result = await new AuthenticationService(context)
+            .LoginAsync("éCOLEaDMIN", "adminpass", "", "127.0.0.1");
+
+        Assert.Equal(AccountRole.Admin, result.Role);
+    }
+
+    [Fact]
     public async Task LoginAsync_StudentPriorityOverTeacher_ReturnsStudent()
     {
         var context = CreateContext();

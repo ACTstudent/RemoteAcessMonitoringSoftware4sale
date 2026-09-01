@@ -9,40 +9,28 @@ namespace Server.Tests.Services;
 public class AccountSeederTests
 {
     [Fact]
-    public void SeedConfiguredAccounts_CreatesConfiguredAccountsWithHashedPasswords()
+    public void SeedConfiguredAccounts_CreatesConfiguredAdminWithHashedPassword()
     {
         using var context = CreateContext();
         var configuration = CreateConfiguration(new Dictionary<string, string?>
         {
-            ["Cams:InitialAdminPassword"] = "admin-secret",
-            ["Cams:SeededTeacherPassword"] = "teacher-secret",
-            ["Cams:SeededStudentPassword"] = "student-secret",
-            ["Cams:SeededStudentNumber"] = "S-001"
+            ["Cams:InitialAdminPassword"] = "admin-secret"
         });
 
         AccountSeeder.SeedConfiguredAccounts(context, configuration);
 
         var hasher = new PasswordHasher<object>();
         var admin = Assert.Single(context.Admins);
-        var teacher = Assert.Single(context.Teachers);
-        var student = Assert.Single(context.Students);
 
         Assert.Equal("admin", admin.Username);
-        Assert.Equal("teacher", teacher.Username);
-        Assert.Equal("student", student.Username);
-        Assert.Equal("S-001", student.StudentNumber);
         Assert.Equal(PasswordVerificationResult.Success,
             hasher.VerifyHashedPassword(new object(), admin.PasswordHash, "admin-secret"));
-        Assert.Equal(PasswordVerificationResult.Success,
-            hasher.VerifyHashedPassword(new object(), teacher.PasswordHash, "teacher-secret"));
-        Assert.Equal(PasswordVerificationResult.Success,
-            hasher.VerifyHashedPassword(new object(), student.PasswordHash, "student-secret"));
 
         AccountSeeder.SeedConfiguredAccounts(context, configuration);
 
         Assert.Single(context.Admins);
-        Assert.Single(context.Teachers);
-        Assert.Single(context.Students);
+        Assert.Empty(context.Teachers);
+        Assert.Empty(context.Students);
     }
 
     [Fact]
@@ -89,36 +77,57 @@ public class AccountSeederTests
         Assert.Empty(db.Admins);
     }
 
-    [Theory]
-    [InlineData("Cams:SeededTeacherPassword", "short", "at least 8 characters")]
-    [InlineData("Cams:SeededStudentPassword", "short", "at least 8 characters")]
-    public void SeedConfiguredAccounts_RejectsWeakClassroomPasswords(string key, string password, string expected)
-    {
-        using var db = CreateContext();
-        var error = Assert.Throws<InvalidOperationException>(() =>
-            AccountSeeder.SeedConfiguredAccounts(db, CreateConfiguration(new Dictionary<string, string?> { [key] = password })));
-
-        Assert.Contains(expected, error.Message);
-        Assert.Empty(db.Teachers);
-        Assert.Empty(db.Students);
-    }
-
     [Fact]
-    public void SeedConfiguredAccounts_RejectsCrossRoleIdentifierCollision()
+    public void SeedConfiguredAccounts_RejectsAdminIdentifierUsedByTeacher()
     {
         using var db = CreateContext();
+        db.Teachers.Add(new Server.Models.Teacher
+        {
+            Username = "admin",
+            PasswordHash = "hash",
+            Status = "Active"
+        });
+        db.SaveChanges();
         var configuration = CreateConfiguration(new Dictionary<string, string?>
         {
-            ["Cams:InitialAdminPassword"] = "admin-secret",
-            ["Cams:SeededTeacherUsername"] = "admin",
-            ["Cams:SeededTeacherPassword"] = "teacher-secret"
+            ["Cams:InitialAdminPassword"] = "admin-secret"
         });
 
         var error = Assert.Throws<InvalidOperationException>(() => AccountSeeder.SeedConfiguredAccounts(db, configuration));
 
         Assert.Contains("already used", error.Message);
         Assert.Empty(db.Admins);
-        Assert.Empty(db.Teachers);
+        Assert.Single(db.Teachers);
+    }
+
+    [Fact]
+    public void SeedConfiguredAccounts_RecoversExistingAdministrator()
+    {
+        using var db = CreateContext();
+        var hasher = new PasswordHasher<object>();
+        var admin = new Server.Models.Admin
+        {
+            Username = "Admin",
+            FullName = "Existing Administrator",
+            PasswordHash = hasher.HashPassword(new object(), "old-admin-password"),
+            IsActive = false,
+            FailedLoginAttempts = 4,
+            LockoutEndUtc = DateTime.UtcNow.AddHours(1)
+        };
+        db.Admins.Add(admin);
+        db.SaveChanges();
+
+        AccountSeeder.SeedConfiguredAccounts(db, CreateConfiguration(new Dictionary<string, string?>
+        {
+            ["Cams:InitialAdminUsername"] = "admin",
+            ["Cams:InitialAdminPassword"] = "new-admin-password"
+        }));
+
+        Assert.True(admin.IsActive);
+        Assert.Equal(0, admin.FailedLoginAttempts);
+        Assert.Null(admin.LockoutEndUtc);
+        Assert.Equal(PasswordVerificationResult.Success,
+            hasher.VerifyHashedPassword(new object(), admin.PasswordHash, "new-admin-password"));
     }
 
     private static ApplicationDbContext CreateContext()

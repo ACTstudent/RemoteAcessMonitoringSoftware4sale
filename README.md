@@ -61,9 +61,7 @@ Both installers are Windows x64 self-contained deployments; target PCs do not ne
 
 ## First Start
 
-There are no default passwords. The server installer asks for the first Admin credentials and can optionally create initial Teacher and Student accounts. It passes those secrets only to the initial server process; they are not saved in `appsettings.json`. Existing accounts are never overwritten. Manual deployments can use the corresponding protected `Cams__InitialAdminPassword`, `Cams__SeededTeacherPassword`, and `Cams__SeededStudentPassword` environment variables before first start.
-
-Optional development/demo seed accounts are created only when their corresponding protected `Cams__SeededTeacherPassword` or `Cams__SeededStudentPassword` values are explicitly configured. Do not package secrets in `appsettings.json`.
+There are no default passwords. The server installer asks only for Administrator credentials and passes the password to a synchronous initialization process without saving it in `appsettings.json`. On a fresh database it creates the Administrator; on an existing database it resets the matching Administrator password, activates the account, and clears lockout state. Create Teacher and Student accounts from the authenticated Admin portal.
 
 In local CA mode, first start creates a stable local root CA and a server certificate for the current machine name and detected LAN addresses. Trust only the public `CAMS-Server-Root.cer`; never copy or distribute either `.pfx` file. Restart CAMS after changing networks so the server certificate and discovery endpoint reflect the new address, then confirm the endpoint in Deployment Hub and update saved client URLs if the address changed.
 
