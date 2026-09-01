@@ -158,6 +158,8 @@ using (var scope = app.Services.CreateScope())
     finally
     {
         Environment.SetEnvironmentVariable("Cams__InitialAdminPassword", null, EnvironmentVariableTarget.Process);
+        Environment.SetEnvironmentVariable("Cams__SeededTeacherPassword", null, EnvironmentVariableTarget.Process);
+        Environment.SetEnvironmentVariable("Cams__SeededStudentPassword", null, EnvironmentVariableTarget.Process);
     }
 }
 

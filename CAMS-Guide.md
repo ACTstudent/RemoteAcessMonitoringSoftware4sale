@@ -56,7 +56,7 @@ Open `https://<server>:5000/Account/Login`. Admin, Teacher, and Student credenti
 
 The WinForms client submits the student username or student number, password, and Windows machine name over HTTPS. Login succeeds only when the active student is mapped to the `Computer.LaboratoryStation` matching that machine name. It creates or resumes the student's active `LabSession` and then opens authenticated SignalR.
 
-There are no default passwords. Interactive server setup securely passes the first Admin credentials to the initial server process without writing the password to configuration. Manual setup uses `Cams__InitialAdminPassword` before initial startup. Accounts store password hashes, not plain passwords.
+There are no default passwords. Interactive server setup securely passes the first Admin credentials and optional initial Teacher and Student credentials to the initial server process without writing passwords to configuration. Accounts store password hashes, not plain passwords.
 
 ## Administrator
 

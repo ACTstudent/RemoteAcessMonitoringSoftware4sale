@@ -61,7 +61,7 @@ Both installers are Windows x64 self-contained deployments; target PCs do not ne
 
 ## First Start
 
-There are no default passwords. The server installer asks for the first Admin username and a password of at least 12 characters, then passes that secret only to the initial server process; it is not saved in `appsettings.json`. Existing accounts are never overwritten. Manual deployments can instead set protected `Cams__InitialAdminPassword` and optional `Cams__InitialAdminUsername` environment variables before first start.
+There are no default passwords. The server installer asks for the first Admin credentials and can optionally create initial Teacher and Student accounts. It passes those secrets only to the initial server process; they are not saved in `appsettings.json`. Existing accounts are never overwritten. Manual deployments can use the corresponding protected `Cams__InitialAdminPassword`, `Cams__SeededTeacherPassword`, and `Cams__SeededStudentPassword` environment variables before first start.
 
 Optional development/demo seed accounts are created only when their corresponding protected `Cams__SeededTeacherPassword` or `Cams__SeededStudentPassword` values are explicitly configured. Do not package secrets in `appsettings.json`.
 

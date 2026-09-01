@@ -89,6 +89,38 @@ public class AccountSeederTests
         Assert.Empty(db.Admins);
     }
 
+    [Theory]
+    [InlineData("Cams:SeededTeacherPassword", "short", "at least 8 characters")]
+    [InlineData("Cams:SeededStudentPassword", "short", "at least 8 characters")]
+    public void SeedConfiguredAccounts_RejectsWeakClassroomPasswords(string key, string password, string expected)
+    {
+        using var db = CreateContext();
+        var error = Assert.Throws<InvalidOperationException>(() =>
+            AccountSeeder.SeedConfiguredAccounts(db, CreateConfiguration(new Dictionary<string, string?> { [key] = password })));
+
+        Assert.Contains(expected, error.Message);
+        Assert.Empty(db.Teachers);
+        Assert.Empty(db.Students);
+    }
+
+    [Fact]
+    public void SeedConfiguredAccounts_RejectsCrossRoleIdentifierCollision()
+    {
+        using var db = CreateContext();
+        var configuration = CreateConfiguration(new Dictionary<string, string?>
+        {
+            ["Cams:InitialAdminPassword"] = "admin-secret",
+            ["Cams:SeededTeacherUsername"] = "admin",
+            ["Cams:SeededTeacherPassword"] = "teacher-secret"
+        });
+
+        var error = Assert.Throws<InvalidOperationException>(() => AccountSeeder.SeedConfiguredAccounts(db, configuration));
+
+        Assert.Contains("already used", error.Message);
+        Assert.Empty(db.Admins);
+        Assert.Empty(db.Teachers);
+    }
+
     private static ApplicationDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()

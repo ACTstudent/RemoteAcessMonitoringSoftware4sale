@@ -15,7 +15,7 @@ Do not obtain `CAMS-Server-Root.cer` from a public website. It is unique to a lo
 ## 1. Prepare The Server
 
 1. Choose a Windows x64 control PC and connect it to the final trusted, non-guest classroom network.
-2. Enter the first Admin username and a password of at least 12 characters on the installer page. The secret is passed only to the initial server process and is not written to `appsettings.json`. For a manual folder deployment, set protected `Cams__InitialAdminPassword` and optional `Cams__InitialAdminUsername` environment variables before first start.
+2. Enter the first Admin username and a password of at least 12 characters. The following optional pages can create an initial Teacher and Student with passwords of at least 8 characters. Secrets are passed only to the initial server process and are not written to `appsettings.json`. Existing accounts are never overwritten.
 3. Download `CAMS-Server-Setup.exe` and its `.sha256` from the same GitHub release. Also download `release-manifest.json` when that release was produced by the current release workflow; older releases may not contain it.
 4. Compare `Get-FileHash .\CAMS-Server-Setup.exe -Algorithm SHA256` with the checksum file and, when present, the server artifact entry in the release manifest.
 5. Run the installer. It installs under the installing user's `%LOCALAPPDATA%\CAMS Server`, refreshes only the inbound Private-profile TCP `5000` rule, and can configure current-user startup. CAMS is not installed as a Windows Service.
