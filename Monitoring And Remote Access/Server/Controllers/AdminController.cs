@@ -223,6 +223,105 @@ namespace Server.Controllers
             return AccountManagementRedirect(accountRole);
         }
 
+        // ---------- Administrator account management ----------
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateAdmin([Bind("Username,PasswordHash,FullName")] Admin admin)
+        {
+            if (!CheckAccess()) return Denied();
+
+            if (string.IsNullOrWhiteSpace(admin.Username))
+            {
+                TempData["ErrorMessage"] = "Username is required.";
+                return RedirectToAction(nameof(Settings));
+            }
+            if (string.IsNullOrWhiteSpace(admin.PasswordHash))
+            {
+                TempData["ErrorMessage"] = "A password is required for a new administrator.";
+                return RedirectToAction(nameof(Settings));
+            }
+
+            admin.Username = admin.Username.Trim();
+            if (await LoginIdentifierInUseAsync(admin.Username))
+            {
+                TempData["ErrorMessage"] = $"The username '{admin.Username}' is already in use.";
+                return RedirectToAction(nameof(Settings));
+            }
+
+            admin.FullName = string.IsNullOrWhiteSpace(admin.FullName) ? "System Administrator" : admin.FullName.Trim();
+            admin.PasswordHash = _hasher.HashPassword(new object(), admin.PasswordHash.Trim());
+            admin.IsActive = true;
+            admin.FailedLoginAttempts = 0;
+            admin.LockoutEndUtc = null;
+
+            _context.Admins.Add(admin);
+            await _context.SaveChangesAsync();
+            await AuditAsync("CreateAdmin", $"Created administrator {admin.Username}");
+            TempData["Message"] = $"Administrator '{admin.Username}' created successfully.";
+            return RedirectToAction(nameof(Settings));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateAdmin([Bind("Id,Username,FullName")] Admin admin, string? newPassword)
+        {
+            if (!CheckAccess()) return Denied();
+            var existing = await _context.Admins.FindAsync(admin.Id);
+            if (existing == null) return RedirectToAction(nameof(Settings));
+
+            var requestedUsername = string.IsNullOrWhiteSpace(admin.Username) ? existing.Username : admin.Username.Trim();
+            if (await LoginIdentifierInUseAsync(requestedUsername, AccountRole.Admin, existing.Id))
+            {
+                TempData["ErrorMessage"] = $"The username '{requestedUsername}' is already in use.";
+                return RedirectToAction(nameof(Settings));
+            }
+
+            existing.Username = requestedUsername;
+            if (!string.IsNullOrWhiteSpace(admin.FullName))
+            {
+                existing.FullName = admin.FullName.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(newPassword))
+            {
+                existing.PasswordHash = _hasher.HashPassword(new object(), newPassword.Trim());
+            }
+
+            await _context.SaveChangesAsync();
+            await AuditAsync("UpdateAdmin", $"Updated administrator {existing.Username}");
+            TempData["Message"] = $"Administrator '{existing.Username}' updated successfully.";
+            return RedirectToAction(nameof(Settings));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAdmin(int id)
+        {
+            if (!CheckAccess()) return Denied();
+
+            var currentAdminId = HttpContext.Session.GetInt32("AdminId");
+            if (currentAdminId == id)
+            {
+                TempData["ErrorMessage"] = "You cannot delete the administrator account you are signed in as.";
+                return RedirectToAction(nameof(Settings));
+            }
+
+            var admin = await _context.Admins.FindAsync(id);
+            if (admin == null)
+            {
+                return RedirectToAction(nameof(Settings));
+            }
+
+            if (admin.IsActive && await _context.Admins.CountAsync(a => a.IsActive) <= 1)
+            {
+                TempData["ErrorMessage"] = "The last active administrator cannot be deleted.";
+                return RedirectToAction(nameof(Settings));
+            }
+
+            _context.Admins.Remove(admin);
+            await _context.SaveChangesAsync();
+            await AuditAsync("DeleteAdmin", $"Deleted administrator {admin.Username}");
+            TempData["Message"] = $"Administrator '{admin.Username}' deleted successfully.";
+            return RedirectToAction(nameof(Settings));
+        }
+
         // ---------- Dashboard ----------
         public async Task<IActionResult> Index()
         {

@@ -709,9 +709,9 @@ public sealed class ClassManagementService : IClassManagementService
         }
 
         var teacherId = isAdmin ? input.TeacherId : actorTeacherId ?? currentTeacherId;
-        if (!teacherId.HasValue || await GetActiveTeacherAsync(teacherId.Value) == null)
+        if (teacherId.HasValue && await GetActiveTeacherAsync(teacherId.Value) == null)
         {
-            return ClassOperationResult.Fail("Assign an active teacher to every class before saving it.");
+            return ClassOperationResult.Fail("The selected teacher is inactive. Choose an active teacher or leave it unassigned.");
         }
 
         return ClassOperationResult.Ok();

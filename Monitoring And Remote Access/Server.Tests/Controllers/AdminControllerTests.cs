@@ -81,6 +81,33 @@ public class AdminControllerTests
     }
 
     [Fact]
+    public async Task Admins_CRUD_WorksFlawlessly()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        await db.Admins.AddAsync(new Admin { Username = "root", FullName = "Root Admin", PasswordHash = "hash", IsActive = true });
+        await db.SaveChangesAsync();
+
+        // 1. Create admin
+        var createResult = await controller.CreateAdmin(new Admin { Username = "admin2", FullName = "Second Administrator", PasswordHash = "pass123456" });
+        Assert.IsType<RedirectToActionResult>(createResult);
+        var created = await db.Admins.FirstOrDefaultAsync(a => a.Username == "admin2");
+        Assert.NotNull(created);
+        Assert.True(created.IsActive);
+
+        // 2. Update admin
+        var updateResult = await controller.UpdateAdmin(new Admin { Id = created.Id, Username = "admin2", FullName = "Second Admin Updated" }, newPassword: null);
+        Assert.IsType<RedirectToActionResult>(updateResult);
+        var updated = await db.Admins.FindAsync(created.Id);
+        Assert.Equal("Second Admin Updated", updated!.FullName);
+
+        // 3. Delete admin (a non-current account)
+        var deleteResult = await controller.DeleteAdmin(created.Id);
+        Assert.IsType<RedirectToActionResult>(deleteResult);
+        Assert.Null(await db.Admins.FindAsync(created.Id));
+    }
+
+    [Fact]
     public async Task GlobalSessionActions_PersistTransitionsAndAuditThem()
     {
         using var db = GetDbContext();
