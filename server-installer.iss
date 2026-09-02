@@ -4,7 +4,7 @@
 
 #define MyAppName "CAMS Server"
 #ifndef MyAppVersion
-  #define MyAppVersion "2.9.4"
+  #define MyAppVersion "2.9.5"
 #endif
 #define MyAppExeName "Server.exe"
 #define MyAppPublisher "CAMS"
