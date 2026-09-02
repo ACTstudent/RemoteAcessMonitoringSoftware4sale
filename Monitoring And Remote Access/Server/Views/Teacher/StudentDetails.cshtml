@@ -6,7 +6,7 @@
 }
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div><h2 class="fw-extrabold mb-1">@Model.Student.FullName</h2><p class="text-muted mb-0">@Model.Student.StudentNumber · @Model.Student.GradeSection</p></div>
-    <div class="d-flex gap-2"><a class="btn btn-outline-secondary rounded-pill" href="@Url.Action("Students")">Back to roster</a><a class="btn btn-emerald rounded-pill" href="@Url.Action("ExportStudentAnalyticsCsv", new { id = Model.Student.Id, from = Model.From, to = Model.To })">Export CSV</a></div>
+    <div class="d-flex gap-2"><a class="btn btn-outline-secondary rounded-pill" href="@Url.Action("Students")">Back to student profiles</a><a class="btn btn-emerald rounded-pill" href="@Url.Action("ExportStudentAnalyticsCsv", new { id = Model.Student.Id, from = Model.From, to = Model.To })">Export CSV</a></div>
 </div>
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-3"><div class="metric-card"><div class="metric-title">Active</div><div class="metric-value">@Math.Round(d.ActiveMinutes, 1) min</div></div></div>

@@ -1,6 +1,6 @@
 @model IEnumerable<Server.Models.Student>
 @{
-    ViewData["Title"] = "Student Roster";
+    ViewData["Title"] = "Student Profiles";
     Layout = "_TeacherLayout";
 
     var totalStudents = Model.Count();
@@ -13,7 +13,7 @@
             <i class="bi bi-people-fill fs-3"></i>
         </div>
         <div>
-            <h2 class="fw-extrabold mb-0 text-dark" style="letter-spacing: -0.5px;">Student Roster</h2>
+            <h2 class="fw-extrabold mb-0 text-dark" style="letter-spacing: -0.5px;">Student Profiles</h2>
             <p class="text-muted mb-0 small">Manage assigned classroom students & credentials</p>
         </div>
     </div>
@@ -22,7 +22,7 @@
             <i class="bi bi-key me-1"></i> Account Settings
         </a>
         <a asp-controller="Teacher" asp-action="Classes" class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold shadow-sm text-white">
-            <i class="bi bi-folder-plus me-1"></i> Add from Class Roster
+            <i class="bi bi-folder-plus me-1"></i> Add from Class
         </a>
     </div>
 </div>
@@ -44,7 +44,7 @@
         <div class="metric-card d-flex justify-content-between align-items-center">
             <div>
                 <div class="metric-title">Laboratory Status</div>
-                <div class="metric-value text-dark fs-4">Active Roster</div>
+                <div class="metric-value text-dark fs-4">Active Profiles</div>
             </div>
             <div class="metric-icon-box">
                 <i class="bi bi-journal-check fs-3"></i>
@@ -56,7 +56,7 @@
 <!-- Student Table Card -->
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
     <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <h5 class="fw-bold mb-0 text-dark">Enrolled Student Roster</h5>
+        <h5 class="fw-bold mb-0 text-dark">Enrolled Student Profiles</h5>
         <form method="get" action="/Teacher/Students" class="d-flex gap-2" role="search">
             <input type="search" name="search" value="@ViewBag.Search" class="form-control filter-control" placeholder="Search name, ID, or username" aria-label="Search students" />
             <button type="submit" class="btn btn-outline-emerald rounded-pill px-3"><i class="bi bi-search"></i> Search</button>
@@ -98,7 +98,7 @@
                                 <a class="btn btn-sm btn-outline-primary rounded-pill px-3" asp-action="StudentDetails" asp-route-id="@s.Id">
                                     <i class="bi bi-graph-up me-1"></i> Analytics
                                 </a>
-                                <form method="post" action="/Teacher/DeleteStudent" style="margin: 0;" onsubmit="return confirm('Remove @s.FullName from student roster?');">
+                                <form method="post" action="/Teacher/DeleteStudent" style="margin: 0;" onsubmit="return confirm('Remove @s.FullName from your student profiles?');">
                                     <input type="hidden" name="studentId" value="@s.Id" />
                                     @Html.AntiForgeryToken()
                                     <button class="btn btn-sm btn-outline-danger rounded-pill px-3">
