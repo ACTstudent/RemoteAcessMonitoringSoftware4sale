@@ -34,7 +34,8 @@ public class TeacherControllerTests
         return new ApplicationDbContext(options);
     }
 
-    private TeacherController CreateController(ApplicationDbContext context, bool isTeacher = true)
+    private TeacherController CreateController(ApplicationDbContext context, bool isTeacher = true,
+        IMonitoringService? monitoring = null)
     {
         var hubMock = new Mock<IHubContext<RemoteMonitoringHub>>();
         var clientsMock = new Mock<IHubClients>();
@@ -47,7 +48,12 @@ public class TeacherControllerTests
         var sessionManager = new SessionManagerService(hubMock.Object);
         var lifecycle = new LabSessionLifecycleService(context, hubMock.Object);
         var controller = new TeacherController(context, sessionManager, lifecycle);
+        controller.Url = Mock.Of<IUrlHelper>();
         var httpContext = new DefaultHttpContext();
+        var requestServices = new Mock<IServiceProvider>();
+        requestServices.Setup(provider => provider.GetService(typeof(IMonitoringService)))
+            .Returns(monitoring ?? new MonitoringService());
+        httpContext.RequestServices = requestServices.Object;
         httpContext.Session = new FakeSession();
         if (isTeacher)
         {
@@ -111,6 +117,47 @@ public class TeacherControllerTests
         var controller = CreateController(db);
         var result = controller.GlobalSessionState();
         Assert.IsType<JsonResult>(result);
+    }
+
+    [Fact]
+    public void LiveState_ReturnsAllConnectedStudentAgents()
+    {
+        using var db = GetDbContext();
+        var monitoring = new MonitoringService();
+        monitoring.RegisterStudent("own-connection", "OWN", "PC-01");
+        monitoring.RegisterStudent("foreign-connection", "FOREIGN", "PC-02");
+        monitoring.ReportActiveApp(new Shared.Contracts.ActiveAppMessage(
+            "foreign-connection", "FOREIGN", "PC-02", "browser", DateTime.UtcNow));
+
+        var result = Assert.IsType<JsonResult>(CreateController(db, monitoring: monitoring).LiveState());
+        var students = Assert.IsAssignableFrom<IEnumerable<Shared.Contracts.StudentConnectionMessage>>(
+            result.Value!.GetType().GetProperty("Students")!.GetValue(result.Value));
+        var apps = Assert.IsAssignableFrom<IEnumerable<Shared.Contracts.ActiveAppMessage>>(
+            result.Value.GetType().GetProperty("Apps")!.GetValue(result.Value));
+
+        Assert.Equal(2, students.Count());
+        Assert.Contains(students, student => student.StudentId == "FOREIGN");
+        Assert.Contains(apps, app => app.StudentId == "FOREIGN");
+    }
+
+    [Fact]
+    public async Task GlobalSessionActions_AffectSessionsOwnedByAllTeachers()
+    {
+        using var db = GetDbContext();
+        db.LabSessions.AddRange(
+            new LabSession { TeacherId = 1, StartTime = DateTime.UtcNow, Status = "Running", IsActive = true },
+            new LabSession { TeacherId = 2, StartTime = DateTime.UtcNow, Status = "Running", IsActive = true });
+        await db.SaveChangesAsync();
+        var controller = CreateController(db);
+
+        await controller.GlobalPauseSession();
+        Assert.All(await db.LabSessions.ToListAsync(), session => Assert.Equal("Paused", session.Status));
+
+        await controller.GlobalStartSession();
+        Assert.All(await db.LabSessions.ToListAsync(), session => Assert.Equal("Running", session.Status));
+
+        await controller.GlobalEndSession();
+        Assert.All(await db.LabSessions.ToListAsync(), session => Assert.False(session.IsActive));
     }
 
     [Fact]
@@ -349,7 +396,7 @@ public class TeacherControllerTests
     }
 
     [Fact]
-    public async Task SendNotification_AddsNotification()
+    public async Task SendNotification_AddsNotificationForAllStudents()
     {
         using var db = GetDbContext();
         var controller = CreateController(db);
@@ -357,15 +404,16 @@ public class TeacherControllerTests
         db.Classes.Add(cls);
         await db.SaveChangesAsync();
         var student = new Student { StudentNumber = "STU-1", Username = "student-1", FullName = "Student One", ClassId = cls.ClassId };
-        db.Students.Add(student);
+        var foreignStudent = new Student { StudentNumber = "STU-2", Username = "student-2", FullName = "Student Two", AdviserId = 2 };
+        db.Students.AddRange(student, foreignStudent);
         await db.SaveChangesAsync();
 
         var result = await controller.SendNotification("Warning", "Time Up", "Please save your work.");
         Assert.IsType<JsonResult>(result);
 
-        var notification = await db.Notifications.FirstOrDefaultAsync(n => n.Title == "Time Up");
-        Assert.NotNull(notification);
-        Assert.Equal(student.Id, notification.StudentId);
+        var notifications = await db.Notifications.Where(n => n.Title == "Time Up").ToListAsync();
+        Assert.Equal(2, notifications.Count);
+        Assert.Contains(notifications, notification => notification.StudentId == foreignStudent.Id);
     }
 
     [Fact]

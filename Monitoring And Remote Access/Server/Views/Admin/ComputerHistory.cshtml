@@ -4,7 +4,7 @@
     var computer = (Server.Models.Computer)ViewBag.Computer;
 }
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <div><a asp-action="Computers" class="btn btn-outline-secondary btn-sm rounded-pill mb-2">Back to computers</a><h2 class="fw-bold mb-0">@computer.LaboratoryStation status history</h2></div>
+    <div><a asp-action="Computers" class="btn btn-outline-secondary btn-sm rounded-pill mb-2">Back to global computers</a><h2 class="fw-bold mb-0">@computer.LaboratoryStation status history</h2><p class="text-muted small mb-0">Global history retained across teachers, students, and sessions.</p></div>
 </div>
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden"><div class="table-responsive"><table class="table custom-table mb-0"><thead><tr><th>Changed at</th><th>Status</th><th>Changed by</th><th>User ID</th></tr></thead><tbody>
 @foreach (var item in Model) { <tr><td>@item.ChangedAt.ToString("yyyy-MM-dd HH:mm")</td><td>@item.Status</td><td>@item.ChangedByType</td><td>@(item.ChangedById?.ToString() ?? "System")</td></tr> }

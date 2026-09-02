@@ -2,10 +2,16 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Routing;
+using System.Security.Claims;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using Server.Controllers;
+using Server.Authorization;
 using Server.Data;
 using Server.Hubs;
 using Server.Models;
@@ -35,7 +41,7 @@ public class AdminControllerTests
         return new ApplicationDbContext(options);
     }
 
-    private AdminController CreateController(ApplicationDbContext context, bool isAdmin = true)
+    private AdminController CreateController(ApplicationDbContext context, bool isAdmin = true, int? teacherId = null)
     {
         var hub = new Mock<IHubContext<RemoteMonitoringHub>>();
         var clients = new Mock<IHubClients>();
@@ -50,6 +56,13 @@ public class AdminControllerTests
         {
             httpContext.Session.SetString("Role", "Admin");
             httpContext.Session.SetInt32("AdminId", 1);
+            httpContext.User = Principal("Admin", 1);
+        }
+        else if (teacherId.HasValue)
+        {
+            httpContext.Session.SetString("Role", "Teacher");
+            httpContext.Session.SetInt32("TeacherId", teacherId.Value);
+            httpContext.User = Principal("Teacher", teacherId.Value);
         }
 
         controller.ControllerContext = new ControllerContext
@@ -58,6 +71,95 @@ public class AdminControllerTests
         };
         controller.TempData = new TempDataDictionary(httpContext, Mock.Of<ITempDataProvider>());
         return controller;
+    }
+
+    private static ClaimsPrincipal Principal(string role, int id) => new(new ClaimsIdentity(new[]
+    {
+        new Claim(ClaimTypes.Role, role),
+        new Claim(ClaimTypes.NameIdentifier, id.ToString())
+    }, "test"));
+
+    private static AuthorizationFilterContext FilterContext(ClaimsPrincipal principal, string actionName)
+    {
+        var httpContext = new DefaultHttpContext { User = principal };
+        var action = new ControllerActionDescriptor
+        {
+            MethodInfo = typeof(AdminController).GetMethod(actionName)!
+        };
+        var actionContext = new ActionContext(httpContext, new RouteData(), action, new ModelStateDictionary());
+        return new AuthorizationFilterContext(actionContext, new List<IFilterMetadata>());
+    }
+
+    [Fact]
+    public async Task AuthorizationFilter_DefaultDeniesTeachersAndVerifiesActiveAccount()
+    {
+        using var db = GetDbContext();
+        db.Teachers.AddRange(
+            new Teacher { TeacherId = 10, FirstName = "Active", LastName = "Teacher", Username = "active", PasswordHash = "hash", Status = "" },
+            new Teacher { TeacherId = 11, FirstName = "Inactive", LastName = "Teacher", Username = "inactive", PasswordHash = "hash", Status = "Inactive" });
+        await db.SaveChangesAsync();
+        var filter = new AdminControllerAuthorizationFilter(db);
+
+        var activeShared = FilterContext(Principal("Teacher", 10), nameof(AdminController.Teachers));
+        await filter.OnAuthorizationAsync(activeShared);
+        Assert.Null(activeShared.Result);
+
+        var activeAdminOnly = FilterContext(Principal("Teacher", 10), nameof(AdminController.Settings));
+        await filter.OnAuthorizationAsync(activeAdminOnly);
+        Assert.IsType<ForbidResult>(activeAdminOnly.Result);
+
+        var inactiveShared = FilterContext(Principal("Teacher", 11), nameof(AdminController.Teachers));
+        await filter.OnAuthorizationAsync(inactiveShared);
+        Assert.IsType<ForbidResult>(inactiveShared.Result);
+
+        var adminOnly = FilterContext(Principal("Admin", 1), nameof(AdminController.Settings));
+        await filter.OnAuthorizationAsync(adminOnly);
+        Assert.Null(adminOnly.Result);
+    }
+
+    [Fact]
+    public async Task ActiveTeacherFilter_RejectsInactiveTeacher()
+    {
+        using var db = GetDbContext();
+        db.Teachers.AddRange(
+            new Teacher { TeacherId = 12, FirstName = "Active", LastName = "Teacher", Username = "active-12", PasswordHash = "hash", Status = "Active" },
+            new Teacher { TeacherId = 13, FirstName = "Inactive", LastName = "Teacher", Username = "inactive-13", PasswordHash = "hash", Status = "Inactive" });
+        await db.SaveChangesAsync();
+        var filter = new ActiveTeacherAuthorizationFilter(db);
+
+        var active = FilterContext(Principal("Teacher", 12), nameof(AdminController.Index));
+        await filter.OnAuthorizationAsync(active);
+        Assert.Null(active.Result);
+
+        var inactive = FilterContext(Principal("Teacher", 13), nameof(AdminController.Index));
+        await filter.OnAuthorizationAsync(inactive);
+        Assert.IsType<ForbidResult>(inactive.Result);
+    }
+
+    [Theory]
+    [InlineData(nameof(AdminController.Index))]
+    [InlineData(nameof(AdminController.DeleteTeacher))]
+    [InlineData(nameof(AdminController.AssignStudentToClass))]
+    [InlineData(nameof(AdminController.BulkPreviewCsv))]
+    [InlineData(nameof(AdminController.ComputerHistory))]
+    [InlineData(nameof(AdminController.UpdateWebsiteCategory))]
+    [InlineData(nameof(AdminController.SessionRules))]
+    public void SharedActions_AreExplicitlyMarked(string actionName)
+    {
+        Assert.NotNull(typeof(AdminController).GetMethod(actionName)!.GetCustomAttribute<TeacherSharedActionAttribute>());
+    }
+
+    [Theory]
+    [InlineData(nameof(AdminController.Settings))]
+    [InlineData(nameof(AdminController.Roles))]
+    [InlineData(nameof(AdminController.LanConfig))]
+    [InlineData(nameof(AdminController.Reports))]
+    [InlineData(nameof(AdminController.ExportReportsCsv))]
+    [InlineData(nameof(AdminController.AuditLogs))]
+    [InlineData(nameof(AdminController.SystemLogs))]
+    public void AdminOnlyActions_AreNotTeacherMarked(string actionName)
+    {
+        Assert.Null(typeof(AdminController).GetMethod(actionName)!.GetCustomAttribute<TeacherSharedActionAttribute>());
     }
 
     [Fact]
@@ -134,6 +236,8 @@ public class AdminControllerTests
     {
         using var db = GetDbContext();
         var controller = CreateController(db);
+        db.Teachers.Add(new Teacher { FirstName = "Other", LastName = "Teacher", Username = "other-teacher", PasswordHash = "hash", Status = "Active" });
+        await db.SaveChangesAsync();
 
         // 1. Create Teacher
         var createResult = await controller.CreateTeacher(new Teacher
@@ -435,6 +539,30 @@ public class AdminControllerTests
     }
 
     [Fact]
+    public async Task TeacherCreatedRestriction_IsForcedGlobalAndOwnerless()
+    {
+        using var db = GetDbContext();
+        var actor = new Teacher { TeacherId = 60, FirstName = "Policy", LastName = "Teacher", Username = "policy-teacher", PasswordHash = "hash", Status = "Active" };
+        db.Teachers.Add(actor);
+        await db.SaveChangesAsync();
+        var controller = CreateController(db, isAdmin: false, teacherId: actor.TeacherId);
+
+        await controller.CreateRestriction(new RestrictionRule
+        {
+            RuleType = "Website",
+            Target = "example.test",
+            Mode = "Block",
+            IsGlobal = false,
+            TeacherId = actor.TeacherId,
+            IsActive = true
+        });
+
+        var rule = await db.RestrictionRules.SingleAsync();
+        Assert.True(rule.IsGlobal);
+        Assert.Null(rule.TeacherId);
+    }
+
+    [Fact]
     public async Task Blacklists_CRUD_WorksFlawlessly()
     {
         using var db = GetDbContext();
@@ -643,8 +771,9 @@ public class AdminControllerTests
         var currentAdmin = new Admin { Id = 1, Username = "current", FullName = "Current", PasswordHash = "hash", IsActive = true };
         var otherAdmin = new Admin { Id = 2, Username = "other", FullName = "Other", PasswordHash = "hash", IsActive = false };
         var teacher = new Teacher { TeacherId = 3, FirstName = "A", LastName = "Teacher", Username = "teacher", PasswordHash = "hash", Status = "Active" };
+        var otherTeacher = new Teacher { TeacherId = 5, FirstName = "Other", LastName = "Teacher", Username = "other-teacher", PasswordHash = "hash", Status = "Active" };
         var student = new Student { Id = 4, StudentNumber = "S-STATE", FullName = "A Student", Username = "student", PasswordHash = "hash", Status = "Active" };
-        db.AddRange(currentAdmin, otherAdmin, teacher, student);
+        db.AddRange(currentAdmin, otherAdmin, teacher, otherTeacher, student);
         await db.SaveChangesAsync();
 
         await controller.SetAccountActive(AccountRole.Admin, otherAdmin.Id, true);
@@ -672,6 +801,80 @@ public class AdminControllerTests
 
         Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal("Active", teacher.Status);
+    }
+
+    [Fact]
+    public async Task TeacherActor_CannotManageSelfOrTargetAdminThroughGenericActions()
+    {
+        using var db = GetDbContext();
+        var actor = new Teacher
+        {
+            TeacherId = 20,
+            FirstName = "Actor",
+            LastName = "Teacher",
+            Username = "actor",
+            PasswordHash = "hash",
+            Status = "Active",
+            FailedLoginAttempts = 3,
+            LockoutEndUtc = DateTime.UtcNow.AddMinutes(10)
+        };
+        var peer = new Teacher { TeacherId = 21, FirstName = "Peer", LastName = "Teacher", Username = "peer", PasswordHash = "hash", Status = "Active" };
+        var admin = new Admin { Id = 30, Username = "admin-target", FullName = "Admin", PasswordHash = "hash", IsActive = true };
+        db.AddRange(actor, peer, admin);
+        await db.SaveChangesAsync();
+        var controller = CreateController(db, isAdmin: false, teacherId: actor.TeacherId);
+
+        await controller.UpdateTeacher(new Teacher { TeacherId = actor.TeacherId, Username = "changed", Status = "Inactive" }, "new-password");
+        await controller.UnlockAccount(AccountRole.Teacher, actor.TeacherId);
+        await controller.SetAccountActive(AccountRole.Teacher, actor.TeacherId, false);
+        await controller.DeleteTeacher(actor.TeacherId);
+
+        Assert.Equal("actor", actor.Username);
+        Assert.Equal("Active", actor.Status);
+        Assert.Equal(3, actor.FailedLoginAttempts);
+        Assert.NotNull(actor.LockoutEndUtc);
+        Assert.IsType<ForbidResult>(await controller.UnlockAccount(AccountRole.Admin, admin.Id));
+        Assert.IsType<ForbidResult>(await controller.SetAccountActive(AccountRole.Admin, admin.Id, false));
+        Assert.True(admin.IsActive);
+    }
+
+    [Fact]
+    public async Task LastActiveTeacher_CannotBeDeactivatedOrDeleted()
+    {
+        using var db = GetDbContext();
+        var teacher = new Teacher { TeacherId = 40, FirstName = "Last", LastName = "Teacher", Username = "last", PasswordHash = "hash", Status = "" };
+        db.Teachers.Add(teacher);
+        await db.SaveChangesAsync();
+        var controller = CreateController(db, isAdmin: false, teacherId: teacher.TeacherId);
+
+        await controller.SetAccountActive(AccountRole.Teacher, teacher.TeacherId, false);
+        Assert.Equal("", teacher.Status);
+
+        await controller.UpdateTeacher(new Teacher { TeacherId = teacher.TeacherId, Username = teacher.Username, Status = "Inactive" }, null);
+        Assert.Equal("", teacher.Status);
+
+        await controller.DeleteTeacher(teacher.TeacherId);
+        Assert.Equal("", teacher.Status);
+    }
+
+    [Fact]
+    public async Task TeacherActor_AuditAndComputerHistoryUseTeacherIdentity()
+    {
+        using var db = GetDbContext();
+        var actor = new Teacher { TeacherId = 50, FirstName = "Audit", LastName = "Teacher", Username = "audit-teacher", PasswordHash = "hash", Status = "Active" };
+        var computer = new Computer { LaboratoryStation = "PC-AUDIT", Status = "Available" };
+        db.AddRange(actor, computer);
+        await db.SaveChangesAsync();
+        var controller = CreateController(db, isAdmin: false, teacherId: actor.TeacherId);
+
+        await controller.UpdateComputer(new Computer { ComputerId = computer.ComputerId, LaboratoryStation = computer.LaboratoryStation, Status = "Maintenance" });
+
+        var audit = await db.AuditLogs.SingleAsync(log => log.Action == "UpdateComputer");
+        Assert.Equal("Teacher", audit.UserType);
+        Assert.Equal(actor.TeacherId, audit.UserId);
+        var history = await db.ComputerStatusHistories.SingleAsync();
+        Assert.Equal("Teacher", history.ChangedByType);
+        Assert.Equal(actor.TeacherId, history.ChangedById);
     }
 
     [Fact]

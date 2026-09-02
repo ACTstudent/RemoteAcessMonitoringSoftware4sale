@@ -191,6 +191,19 @@ public sealed class LabSessionLifecycleService
         return sessions.Count;
     }
 
+    public async Task<int> CloseRemoteSessionsForRuleAsync(int sessionRuleId, CancellationToken cancellationToken = default)
+    {
+        var sessions = await _db.LabSessions.AsNoTracking()
+            .Where(session => session.IsActive && session.SessionRuleId == sessionRuleId)
+            .ToListAsync(cancellationToken);
+        var remoteSessions = await CloseRemoteSessionsAsync(sessions, cancellationToken);
+        if (remoteSessions.Count == 0) return 0;
+
+        await _db.SaveChangesAsync(cancellationToken);
+        await NotifyRemoteSessionsClosedAsync(remoteSessions, cancellationToken);
+        return remoteSessions.Count;
+    }
+
     private async Task<List<Server.Models.RemoteControlSession>> CloseRemoteSessionsAsync(
         IEnumerable<Server.Models.LabSession> sessions,
         CancellationToken cancellationToken)

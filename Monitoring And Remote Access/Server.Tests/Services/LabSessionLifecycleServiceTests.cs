@@ -92,4 +92,35 @@ public class LabSessionLifecycleServiceTests
         Assert.Equal("LAB2-PC26", session.Computer!.LaboratoryStation);
         Assert.Equal(student.Id.ToString(), session.Computer.AssignedTo);
     }
+
+    [Fact]
+    public async Task CloseRemoteSessionsForRule_EndsAndNotifiesMatchingSupportSessions()
+    {
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
+        await using var db = new ApplicationDbContext(options);
+        var student = new Student { StudentNumber = "STU-REMOTE", Username = "student-remote", PasswordHash = "hash", Status = "Active" };
+        var rule = new SessionRule { Name = "Remote rule", MaxDurationMinutes = 60, AllowRemoteControl = true, IsActive = true };
+        db.AddRange(student, rule);
+        await db.SaveChangesAsync();
+        db.LabSessions.Add(new LabSession { StudentId = student.Id, SessionRuleId = rule.SessionRuleId, StartTime = DateTime.UtcNow, Status = "Running", IsActive = true, PCName = "PC-REMOTE" });
+        db.RemoteControlSessions.Add(new RemoteControlSession { TeacherId = 1, StudentId = student.StudentNumber, PcName = "PC-REMOTE", ConnectionId = "remote-connection", IsActive = true });
+        await db.SaveChangesAsync();
+        var client = new Mock<ISingleClientProxy>();
+        var clients = new Mock<IHubClients>();
+        clients.Setup(value => value.Client("remote-connection")).Returns(client.Object);
+        var hub = new Mock<IHubContext<RemoteMonitoringHub>>();
+        hub.SetupGet(value => value.Clients).Returns(clients.Object);
+
+        var closed = await new LabSessionLifecycleService(db, hub.Object)
+            .CloseRemoteSessionsForRuleAsync(rule.SessionRuleId);
+
+        Assert.Equal(1, closed);
+        Assert.False((await db.RemoteControlSessions.SingleAsync()).IsActive);
+        client.Verify(proxy => proxy.SendCoreAsync(HubEventNames.RemoteControlState,
+            It.Is<object?[]>(arguments => HasInactiveRemoteControlState(arguments)),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    private static bool HasInactiveRemoteControlState(object?[] arguments) =>
+        arguments.Length == 1 && arguments[0] is RemoteControlStateMessage { IsActive: false };
 }

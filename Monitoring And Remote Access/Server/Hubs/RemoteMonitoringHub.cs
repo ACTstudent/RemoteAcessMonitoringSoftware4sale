@@ -42,16 +42,23 @@ public sealed class RemoteMonitoringHub : Hub
     private bool IsStudentClientAgent => IsStudent &&
         string.Equals(Context.User.FindFirst(AuthPrincipalFactory.ClientAgentClaim)?.Value, bool.TrueString, StringComparison.OrdinalIgnoreCase);
 
-    private void RequireTeacher()
+    private async Task RequireTeacherAsync()
     {
         if (!IsTeacher)
             throw new HubException("Only teachers can perform this action.");
-    }
 
-    private void RequireAdmin()
-    {
-        if (!Context.User.IsInRole("Admin"))
-            throw new HubException("Only administrators can control the lab-wide session.");
+        if (Context.User.IsInRole("Admin"))
+            return;
+
+        if (!int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
+            throw new HubException("The teacher identity is invalid.");
+
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var active = await context.Teachers.AsNoTracking().AnyAsync(teacher =>
+            teacher.TeacherId == teacherId && (teacher.Status == "Active" || string.IsNullOrEmpty(teacher.Status)));
+        if (!active)
+            throw new HubException("The teacher account is inactive.");
     }
 
     private StudentConnectionMessage RequireStudent()
@@ -66,9 +73,9 @@ public sealed class RemoteMonitoringHub : Hub
         return student;
     }
 
-    private StudentConnectionMessage RequireTarget(string targetConnectionId)
+    private async Task<StudentConnectionMessage> RequireTargetAsync(string targetConnectionId)
     {
-        RequireTeacher();
+        await RequireTeacherAsync();
 
         if (string.IsNullOrWhiteSpace(targetConnectionId))
             throw new HubException("A target workstation is required.");
@@ -80,76 +87,16 @@ public sealed class RemoteMonitoringHub : Hub
         return target;
     }
 
-    private async Task<StudentConnectionMessage> RequireAuthorizedTargetAsync(string targetConnectionId)
-    {
-        var target = RequireTarget(targetConnectionId);
-        if (Context.User.IsInRole("Admin"))
-            return target;
-
-        if (!int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
-            throw new HubException("The teacher identity is invalid.");
-
-        using var scope = _scopeFactory.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var authorized = await context.Students
-            .AsNoTracking()
-            .AnyAsync(s => s.StudentNumber == target.StudentId &&
-                (s.AdviserId == teacherId || context.Classes.Any(c => c.TeacherId == teacherId && !c.IsArchived &&
-                    (c.Status == "Active" || string.IsNullOrEmpty(c.Status)) &&
-                    (c.ClassId == s.ClassId || context.ClassStudents.Any(cs => cs.ClassId == c.ClassId && cs.StudentId == s.Id)))));
-        if (!authorized)
-            throw new HubException("You are not authorized to control this workstation.");
-
-        return target;
-    }
-
-    private async Task<string[]> ResolveViewerGroupsAsync(string studentNumber)
-    {
-        using var scope = _scopeFactory.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var student = await context.Students.AsNoTracking()
-            .Where(s => s.StudentNumber == studentNumber)
-            .Select(s => new { s.Id, s.AdviserId, s.ClassId })
-            .FirstOrDefaultAsync();
-        var teacherIds = new HashSet<int>();
-        if (student?.AdviserId is int adviserId) teacherIds.Add(adviserId);
-        if (student is not null)
-        {
-            var classTeachers = await context.Classes.AsNoTracking()
-                .Where(c => c.TeacherId.HasValue && !c.IsArchived &&
-                    (c.Status == "Active" || string.IsNullOrEmpty(c.Status)) &&
-                    (c.ClassId == student.ClassId ||
-                     context.ClassStudents.Any(cs => cs.ClassId == c.ClassId && cs.StudentId == student.Id)))
-                .Select(c => c.TeacherId!.Value)
-                .ToListAsync();
-            teacherIds.UnionWith(classTeachers);
-        }
-        return teacherIds.Select(HubEventNames.TeacherGroup)
-            .Append(HubEventNames.AdminsGroup)
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
-    }
-
     private async Task<List<(int Id, string StudentNumber)>> AccessibleStudentRowsAsync()
     {
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var query = context.Students.AsNoTracking().AsQueryable();
-        if (!Context.User.IsInRole("Admin"))
-        {
-            if (!int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
-                throw new HubException("The teacher identity is invalid.");
-            query = query.Where(s => s.AdviserId == teacherId ||
-                context.Classes.Any(c => c.TeacherId == teacherId && !c.IsArchived &&
-                    (c.Status == "Active" || string.IsNullOrEmpty(c.Status)) &&
-                    (c.ClassId == s.ClassId || context.ClassStudents.Any(cs => cs.ClassId == c.ClassId && cs.StudentId == s.Id))));
-        }
-        var rows = await query.Select(s => new { s.Id, s.StudentNumber }).ToListAsync();
+        var rows = await context.Students.AsNoTracking()
+            .Select(s => new { s.Id, s.StudentNumber }).ToListAsync();
         return rows.Select(row => (row.Id, row.StudentNumber)).ToList();
     }
 
-    private async Task<IClientProxy> AuthorizedViewersAsync(StudentConnectionMessage student) =>
-        Clients.Groups(await ResolveViewerGroupsAsync(student.StudentId));
+    private IClientProxy TeacherViewers => Clients.Group(HubEventNames.TeachersGroup);
 
     private async Task AuditCommandAsync(string action, StudentConnectionMessage target, int? remoteSessionId = null)
     {
@@ -208,19 +155,17 @@ public sealed class RemoteMonitoringHub : Hub
 
     private async Task<(StudentConnectionMessage Target, RemoteControlSession Session)> RequireActiveRemoteSessionAsync(string targetConnectionId)
     {
-        var target = await RequireAuthorizedTargetAsync(targetConnectionId);
+        var target = await RequireTargetAsync(targetConnectionId);
         if (!int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
             throw new HubException("The teacher identity is invalid.");
 
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var isAdmin = Context.User.IsInRole("Admin");
         var labSession = await context.LabSessions
             .Include(s => s.SessionRule)
             .Include(s => s.Student)
             .FirstOrDefaultAsync(s => s.IsActive &&
                 (s.Status == "Running" || s.Status == "Paused") &&
-                (isAdmin || s.TeacherId == teacherId) &&
                 s.Student != null && s.Student.StudentNumber == target.StudentId);
         if (labSession is null)
             throw new HubException("The workstation has no active lab session.");
@@ -234,7 +179,7 @@ public sealed class RemoteMonitoringHub : Hub
             labSession.Status = "Ended";
             labSession.EndTime = DateTime.UtcNow;
             var expired = await context.RemoteControlSessions
-                .Where(s => s.IsActive && s.TeacherId == teacherId && s.ConnectionId == target.ConnectionId)
+                .Where(s => s.IsActive && s.ConnectionId == target.ConnectionId)
                 .ToListAsync();
             foreach (var remote in expired)
             {
@@ -249,12 +194,10 @@ public sealed class RemoteMonitoringHub : Hub
         }
 
         var sessionKey = RemoteSessionKey(Context.ConnectionId, target.ConnectionId);
-        var sessionId = RemoteSessions.TryGetValue(sessionKey, out var mappedId) ? mappedId : 0;
-        var session = sessionId > 0
-            ? await context.RemoteControlSessions.FirstOrDefaultAsync(s => s.RemoteControlSessionId == sessionId &&
-                s.IsActive && s.TeacherId == teacherId && s.ConnectionId == target.ConnectionId)
-            : await context.RemoteControlSessions.FirstOrDefaultAsync(s => s.IsActive &&
-                s.TeacherId == teacherId && s.ConnectionId == target.ConnectionId);
+        if (!RemoteSessions.TryGetValue(sessionKey, out var sessionId))
+            throw new HubException("Start an authorized remote-support session first.");
+        var session = await context.RemoteControlSessions.FirstOrDefaultAsync(s => s.RemoteControlSessionId == sessionId &&
+            s.IsActive && s.TeacherId == teacherId && s.ConnectionId == target.ConnectionId);
         if (session is null)
             throw new HubException("Start an authorized remote-support session first.");
         RemoteSessions[sessionKey] = session.RemoteControlSessionId;
@@ -296,8 +239,7 @@ public sealed class RemoteMonitoringHub : Hub
             var student = _monitoringService.RegisterStudent(Context.ConnectionId, studentNumber, pcName);
             await TryRecordTelemetryAsync(() => _telemetryService.RecordActivityEventAsync(Context.ConnectionId, student.StudentId, student.PcName, "Connected"));
             await Groups.AddToGroupAsync(Context.ConnectionId, HubEventNames.StudentsGroup);
-            await (await AuthorizedViewersAsync(student))
-                .SendAsync(HubEventNames.StudentConnected, student);
+            await TeacherViewers.SendAsync(HubEventNames.StudentConnected, student);
             await Clients.Client(Context.ConnectionId)
                 .SendAsync(HubEventNames.GlobalSessionState, sessionState);
         }
@@ -305,6 +247,15 @@ public sealed class RemoteMonitoringHub : Hub
         {
             if (IsTeacher)
             {
+                try
+                {
+                    await RequireTeacherAsync();
+                }
+                catch (HubException)
+                {
+                    Context.Abort();
+                    return;
+                }
                 await Groups.AddToGroupAsync(Context.ConnectionId, HubEventNames.TeachersGroup);
                 if (Context.User.IsInRole("Admin"))
                     await Groups.AddToGroupAsync(Context.ConnectionId, HubEventNames.AdminsGroup);
@@ -340,13 +291,12 @@ public sealed class RemoteMonitoringHub : Hub
             frame.FrameBase64,
             DateTime.UtcNow);
 
-        await (await AuthorizedViewersAsync(student))
-            .SendAsync(HubEventNames.ReceiveScreenFrame, Context.ConnectionId, canonicalFrame);
+        await TeacherViewers.SendAsync(HubEventNames.ReceiveScreenFrame, Context.ConnectionId, canonicalFrame);
     }
 
     public async Task SendWarningPopup(string targetConnectionId, NotificationMessage warning)
     {
-        RequireTeacher();
+        await RequireTeacherAsync();
         if (warning is null || string.IsNullOrWhiteSpace(warning.Title) || string.IsNullOrWhiteSpace(warning.Message) ||
             warning.Title.Length > 120 || warning.Message.Length > 1000)
             throw new HubException("The warning message is invalid.");
@@ -361,7 +311,7 @@ public sealed class RemoteMonitoringHub : Hub
         var allowedNumbers = accessible.Select(row => row.StudentNumber).ToHashSet(StringComparer.Ordinal);
         var targets = string.IsNullOrWhiteSpace(targetConnectionId)
             ? _monitoringService.ActiveStudents.Where(student => allowedNumbers.Contains(student.StudentId)).ToList()
-            : new List<StudentConnectionMessage> { await RequireAuthorizedTargetAsync(targetConnectionId) };
+            : new List<StudentConnectionMessage> { await RequireTargetAsync(targetConnectionId) };
         if (!string.IsNullOrWhiteSpace(targetConnectionId))
             accessible = accessible.Where(row => row.StudentNumber == targets[0].StudentId).ToList();
 
@@ -384,21 +334,21 @@ public sealed class RemoteMonitoringHub : Hub
 
     public async Task LockStudent(string targetConnectionId)
     {
-        var target = await RequireAuthorizedTargetAsync(targetConnectionId);
+        var target = await RequireTargetAsync(targetConnectionId);
         await AuditCommandAsync("LockStudent", target);
         await Clients.Client(target.ConnectionId).SendAsync(HubEventNames.LockStudent);
     }
 
     public async Task UnlockStudent(string targetConnectionId)
     {
-        var target = await RequireAuthorizedTargetAsync(targetConnectionId);
+        var target = await RequireTargetAsync(targetConnectionId);
         await AuditCommandAsync("UnlockStudent", target);
         await Clients.Client(target.ConnectionId).SendAsync(HubEventNames.UnlockStudent);
     }
 
     public async Task ForceLogout(string targetConnectionId)
     {
-        var target = await RequireAuthorizedTargetAsync(targetConnectionId);
+        var target = await RequireTargetAsync(targetConnectionId);
         await AuditCommandAsync("ForceLogout", target);
         using (var scope = _scopeFactory.CreateScope())
         {
@@ -415,26 +365,26 @@ public sealed class RemoteMonitoringHub : Hub
         }
         await Clients.Client(target.ConnectionId).SendAsync(HubEventNames.ForceLogout);
         _monitoringService.UnregisterStudent(target.ConnectionId);
-        await (await AuthorizedViewersAsync(target))
-            .SendAsync(HubEventNames.StudentDisconnected, target.ConnectionId);
+        await TeacherViewers.SendAsync(HubEventNames.StudentDisconnected, target.ConnectionId);
     }
 
     public async Task ShutdownStudent(string targetConnectionId)
     {
-        var target = await RequireAuthorizedTargetAsync(targetConnectionId);
+        var target = await RequireTargetAsync(targetConnectionId);
         await AuditCommandAsync("ShutdownStudent", target);
         await Clients.Client(target.ConnectionId).SendAsync(HubEventNames.ShutdownStudent);
     }
 
     public async Task RestartStudent(string targetConnectionId)
     {
-        var target = await RequireAuthorizedTargetAsync(targetConnectionId);
+        var target = await RequireTargetAsync(targetConnectionId);
         await AuditCommandAsync("RestartStudent", target);
         await Clients.Client(target.ConnectionId).SendAsync(HubEventNames.RestartStudent);
     }
 
     public async Task BulkLockStudents(List<string> targetConnectionIds)
     {
+        await RequireTeacherAsync();
         if (targetConnectionIds is null || targetConnectionIds.Count > 100)
             throw new HubException("The bulk command contains too many workstations.");
         foreach (var target in targetConnectionIds.Distinct(StringComparer.Ordinal))
@@ -443,6 +393,7 @@ public sealed class RemoteMonitoringHub : Hub
 
     public async Task BulkForceLogoutStudents(List<string> targetConnectionIds)
     {
+        await RequireTeacherAsync();
         if (targetConnectionIds is null || targetConnectionIds.Count > 100)
             throw new HubException("The bulk command contains too many workstations.");
         foreach (var target in targetConnectionIds.Distinct(StringComparer.Ordinal).ToList())
@@ -463,17 +414,15 @@ public sealed class RemoteMonitoringHub : Hub
 
     public async Task<RemoteCommandResult> StartRemoteControl(string targetConnectionId)
     {
-        var target = await RequireAuthorizedTargetAsync(targetConnectionId);
+        var target = await RequireTargetAsync(targetConnectionId);
         if (!int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
             throw new HubException("The teacher identity is invalid.");
 
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var isAdmin = Context.User.IsInRole("Admin");
         var labSession = await context.LabSessions.Include(s => s.SessionRule).Include(s => s.Student)
             .FirstOrDefaultAsync(s => s.IsActive &&
                 (s.Status == "Running" || s.Status == "Paused") && s.Student != null &&
-                (isAdmin || s.TeacherId == teacherId) &&
                 s.Student.StudentNumber == target.StudentId);
         if (labSession is null)
             throw new HubException("The workstation has no active lab session.");
@@ -485,7 +434,7 @@ public sealed class RemoteMonitoringHub : Hub
             labSession.IsActive = false;
             labSession.Status = "Ended";
             labSession.EndTime = DateTime.UtcNow;
-            foreach (var old in await context.RemoteControlSessions.Where(s => s.IsActive && s.TeacherId == teacherId &&
+            foreach (var old in await context.RemoteControlSessions.Where(s => s.IsActive &&
                 s.ConnectionId == target.ConnectionId).ToListAsync())
             {
                 old.IsActive = false;
@@ -515,18 +464,11 @@ public sealed class RemoteMonitoringHub : Hub
 
     public async Task<RemoteCommandResult> StopRemoteControl(string targetConnectionId)
     {
-        var target = await RequireAuthorizedTargetAsync(targetConnectionId);
+        var target = await RequireTargetAsync(targetConnectionId);
         if (!int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
             throw new HubException("The teacher identity is invalid.");
         if (!RemoteSessions.TryRemove(RemoteSessionKey(Context.ConnectionId, target.ConnectionId), out var sessionId))
-        {
-            using var lookupScope = _scopeFactory.CreateScope();
-            var lookup = lookupScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var existing = await lookup.RemoteControlSessions.FirstOrDefaultAsync(s => s.IsActive &&
-                s.TeacherId == teacherId && s.ConnectionId == target.ConnectionId);
-            if (existing is null) return new RemoteCommandResult(false, "No active remote-support session.", null);
-            sessionId = existing.RemoteControlSessionId;
-        }
+            return new RemoteCommandResult(false, "No active remote-support session.", null);
 
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -546,7 +488,7 @@ public sealed class RemoteMonitoringHub : Hub
 
     public async Task BroadcastScreen(string frameBase64)
     {
-        RequireTeacher();
+        await RequireTeacherAsync();
         RequireFrame(frameBase64);
         var accessible = await AccessibleStudentRowsAsync();
         var numbers = accessible.Select(row => row.StudentNumber).ToHashSet(StringComparer.Ordinal);
@@ -557,7 +499,7 @@ public sealed class RemoteMonitoringHub : Hub
 
     public async Task StopBroadcast()
     {
-        RequireTeacher();
+        await RequireTeacherAsync();
         var accessible = await AccessibleStudentRowsAsync();
         var numbers = accessible.Select(row => row.StudentNumber).ToHashSet(StringComparer.Ordinal);
         foreach (var student in _monitoringService.ActiveStudents.Where(student => numbers.Contains(student.StudentId)))
@@ -566,7 +508,7 @@ public sealed class RemoteMonitoringHub : Hub
 
     public async Task SendNotification(NotificationMessage notification)
     {
-        RequireTeacher();
+        await RequireTeacherAsync();
         if (notification is null || notification.Title.Length > 120 || notification.Message.Length > 2000)
             throw new HubException("The notification is invalid.");
 
@@ -598,21 +540,21 @@ public sealed class RemoteMonitoringHub : Hub
 
     public async Task GlobalStartSession()
     {
-        RequireAdmin();
+        await RequireTeacherAsync();
         using var scope = _scopeFactory.CreateScope();
         await scope.ServiceProvider.GetRequiredService<LabSessionLifecycleService>().ResumeAllSessionsAsync();
     }
 
     public async Task GlobalPauseSession()
     {
-        RequireAdmin();
+        await RequireTeacherAsync();
         using var scope = _scopeFactory.CreateScope();
         await scope.ServiceProvider.GetRequiredService<LabSessionLifecycleService>().PauseAllSessionsAsync();
     }
 
     public async Task GlobalEndSession()
     {
-        RequireAdmin();
+        await RequireTeacherAsync();
         using var scope = _scopeFactory.CreateScope();
         await scope.ServiceProvider.GetRequiredService<LabSessionLifecycleService>().EndAllSessionsAsync();
     }
@@ -734,8 +676,7 @@ public sealed class RemoteMonitoringHub : Hub
             await context.SaveChangesAsync();
             if (!suppressNotification)
             {
-                await (await AuthorizedViewersAsync(student))
-                    .SendAsync(HubEventNames.MonitoringAlertReceived, alert);
+                await TeacherViewers.SendAsync(HubEventNames.MonitoringAlertReceived, alert);
             }
         }
         catch
@@ -743,8 +684,7 @@ public sealed class RemoteMonitoringHub : Hub
             // Audit persistence must never break the real-time alert.
         }
 
-        await (await AuthorizedViewersAsync(student))
-            .SendAsync(HubEventNames.InfractionDetected, canonicalInfraction);
+        await TeacherViewers.SendAsync(HubEventNames.InfractionDetected, canonicalInfraction);
     }
 
     private InfractionMessage CanonicalizeInfraction(
@@ -928,8 +868,7 @@ public sealed class RemoteMonitoringHub : Hub
         _monitoringService.ReportIdleStatus(status);
         var student = _monitoringService.FindStudent(status.ConnectionId);
         if (student is null) return;
-        await (await AuthorizedViewersAsync(student))
-            .SendAsync(HubEventNames.IdleStatusReceived, status);
+        await TeacherViewers.SendAsync(HubEventNames.IdleStatusReceived, status);
     }
 
     private async Task PublishActiveAppAsync(ActiveAppMessage app)
@@ -937,16 +876,14 @@ public sealed class RemoteMonitoringHub : Hub
         _monitoringService.ReportActiveApp(app);
         var student = _monitoringService.FindStudent(app.ConnectionId);
         if (student is null) return;
-        await (await AuthorizedViewersAsync(student))
-            .SendAsync(HubEventNames.ActiveAppReceived, app);
+        await TeacherViewers.SendAsync(HubEventNames.ActiveAppReceived, app);
     }
 
     private async Task PublishWebsiteActivityAsync(WebsiteActivityMessage website)
     {
         var student = _monitoringService.FindStudent(website.ConnectionId);
         if (student is null) return;
-        await (await AuthorizedViewersAsync(student))
-            .SendAsync(HubEventNames.WebsiteActivityReceived, website);
+        await TeacherViewers.SendAsync(HubEventNames.WebsiteActivityReceived, website);
     }
 
     private async Task PublishBrowserMonitoringStatusAsync(BrowserMonitoringStatusMessage status)
@@ -954,8 +891,7 @@ public sealed class RemoteMonitoringHub : Hub
         _monitoringService.ReportBrowserMonitoringStatus(status);
         var student = _monitoringService.FindStudent(status.ConnectionId);
         if (student is null) return;
-        await (await AuthorizedViewersAsync(student))
-            .SendAsync(HubEventNames.BrowserMonitoringStatusReceived, status);
+        await TeacherViewers.SendAsync(HubEventNames.BrowserMonitoringStatusReceived, status);
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
@@ -1006,8 +942,7 @@ public sealed class RemoteMonitoringHub : Hub
         {
             await TryRecordTelemetryAsync(() => _telemetryService.RecordDisconnectedAsync(
                 Context.ConnectionId, student.StudentId, student.PcName, exception?.Message));
-            await (await AuthorizedViewersAsync(student))
-                .SendAsync(HubEventNames.StudentDisconnected, student.ConnectionId);
+            await TeacherViewers.SendAsync(HubEventNames.StudentDisconnected, student.ConnectionId);
         }
 
         await base.OnDisconnectedAsync(exception);

@@ -2,7 +2,11 @@
 @{
     Layout = null;
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
-    var adminName = ViewContext.HttpContext.Session.GetString("AdminName") ?? "System Administrator";
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var isTeacher = User.IsInRole("Teacher");
+    var displayName = isTeacher
+        ? ViewContext.HttpContext.Session.GetString("TeacherName") ?? "Teacher"
+        : ViewContext.HttpContext.Session.GetString("AdminName") ?? "System Administrator";
     var successMessage = TempData["Message"]?.ToString();
     var errorMessage = TempData["ErrorMessage"]?.ToString();
 }
@@ -11,7 +15,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - CAMS Admin | Pardo Elementary School</title>
+    <title>@ViewData["Title"] - CAMS @(isTeacher ? "Global Management" : "Admin") | Pardo Elementary School</title>
     <link href="~/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
     <link href="~/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
@@ -19,68 +23,57 @@
 <body>
     <div class="app-wrapper">
         <!-- Dark Emerald Sidebar -->
-        <aside class="app-sidebar" id="appSidebar" aria-label="Administrator navigation">
+        <aside class="app-sidebar" id="appSidebar" aria-label="@(isTeacher ? "Teacher global management navigation" : "Administrator navigation")">
             <div class="sidebar-header">
                 <img src="~/images/pardo_logo.png" alt="Pardo Elementary School" class="school-logo-img" />
-                <div class="sidebar-brand-text">CAMS Admin</div>
+                <div class="sidebar-brand-text">@(isTeacher ? "CAMS Global" : "CAMS Admin")</div>
                 <div class="sidebar-brand-sub">Pardo Elementary School</div>
             </div>
 
             <nav class="sidebar-nav">
-                <a href="@Url.Action("Index", "Admin")" class="nav-item-custom @(currentAction == "Index" ? "active" : "")">
+                @if (isTeacher)
+                {
+                    <a href="@Url.Action("Dashboard", "Teacher")" class="nav-item-custom">
+                        <i class="bi bi-arrow-left-circle-fill"></i>
+                        <span>My Teacher Portal</span>
+                    </a>
+                    <div class="sidebar-label">Global Operations</div>
+                }
+
+                <a href="@Url.Action("Index", "Admin")" class="nav-item-custom @(currentController == "Admin" && currentAction == "Index" ? "active" : "")">
                     <i class="bi bi-grid-fill"></i>
-                    <span>Dashboard</span>
+                    <span>Global Dashboard & Sessions</span>
                 </a>
 
-                <div class="sidebar-label">User Management</div>
+                <div class="sidebar-label">Global People & Rosters</div>
 
                 <a href="@Url.Action("Teachers", "Admin")" class="nav-item-custom @(currentAction == "Teachers" ? "active" : "")">
                     <i class="bi bi-person-badge-fill"></i>
-                    <span>Teacher Management</span>
+                    <span>Teachers</span>
                 </a>
 
                 <a href="@Url.Action("Students", "Admin")" class="nav-item-custom @(currentAction == "Students" ? "active" : "")">
                     <i class="bi bi-mortarboard-fill"></i>
-                    <span>Student Management</span>
+                    <span>Students</span>
                 </a>
 
                 <a href="@Url.Action("Classes", "Admin")" class="nav-item-custom @(currentAction is "Classes" or "ClassDetails" ? "active" : "")">
                     <i class="bi bi-folder-fill"></i>
-                    <span>Class Management</span>
+                    <span>Classes, Rosters & Import</span>
                 </a>
 
-                <a href="@Url.Action("Roles", "Admin")" class="nav-item-custom @(currentAction == "Roles" ? "active" : "")">
-                    <i class="bi bi-key-fill"></i>
-                    <span>Roles & Permissions</span>
-                </a>
+                <div class="sidebar-label">Global Computers</div>
 
-                <div class="sidebar-label">Lab & Infrastructure</div>
-
-                <a href="@Url.Action("Computers", "Admin")" class="nav-item-custom @(currentAction == "Computers" ? "active" : "")">
+                <a href="@Url.Action("Computers", "Admin")" class="nav-item-custom @(currentAction is "Computers" or "ComputerHistory" ? "active" : "")">
                     <i class="bi bi-pc-display"></i>
-                    <span>Computer Profiles</span>
+                    <span>Computers, History & Mapping</span>
                 </a>
 
-                <a href="@Url.Action("LanConfig", "Admin")" class="nav-item-custom @(currentAction == "LanConfig" ? "active" : "")">
-                    <i class="bi bi-router-fill"></i>
-                    <span>LAN Status</span>
-                </a>
-
-                <a href="@Url.Action("Index", "AdminDeployment")" class="nav-item-custom @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminDeployment" ? "active" : "")">
-                    <i class="bi bi-box-seam-fill"></i>
-                    <span>Deployment Hub</span>
-                </a>
-
-                <a href="@Url.Action("Index", "AdminDatabase")" class="nav-item-custom @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminDatabase" ? "active" : "")">
-                    <i class="bi bi-database-gear"></i>
-                    <span>Database Maintenance</span>
-                </a>
-
-                <div class="sidebar-label">Policy & Security</div>
+                <div class="sidebar-label">Global Restrictions</div>
 
                 <a href="@Url.Action("Restrictions", "Admin")" class="nav-item-custom @(currentAction == "Restrictions" ? "active" : "")">
                     <i class="bi bi-slash-circle-fill"></i>
-                    <span>Restriction Rules</span>
+                    <span>Rules & Categories</span>
                 </a>
 
                 <a href="@Url.Action("Blacklists", "Admin")" class="nav-item-custom @(currentAction == "Blacklists" ? "active" : "")">
@@ -88,32 +81,28 @@
                     <span>Blacklist Directory</span>
                 </a>
 
+                <a href="@Url.Action("Whitelists", "Admin")" class="nav-item-custom @(currentAction == "Whitelists" ? "active" : "")">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Whitelist Directory</span>
+                </a>
+
                 <a href="@Url.Action("SessionRules", "Admin")" class="nav-item-custom @(currentAction == "SessionRules" ? "active" : "")">
                     <i class="bi bi-hourglass-split"></i>
                     <span>Session Rules</span>
                 </a>
 
-                <div class="sidebar-label">Analytics & Logs</div>
-
-                <a href="@Url.Action("Reports", "Admin")" class="nav-item-custom @(currentAction == "Reports" ? "active" : "")">
-                    <i class="bi bi-bar-chart-line-fill"></i>
-                    <span>System Reports</span>
-                </a>
-
-                <a href="@Url.Action("AuditLogs", "Admin")" class="nav-item-custom @(currentAction == "AuditLogs" ? "active" : "")">
-                    <i class="bi bi-journal-text"></i>
-                    <span>Audit Trail</span>
-                </a>
-
-                <a href="@Url.Action("SystemLogs", "Admin")" class="nav-item-custom @(currentAction == "SystemLogs" ? "active" : "")">
-                    <i class="bi bi-bug-fill"></i>
-                    <span>System Logs</span>
-                </a>
-
-                <a href="@Url.Action("Settings", "Admin")" class="nav-item-custom @(currentAction == "Settings" ? "active" : "")">
-                    <i class="bi bi-person-gear"></i>
-                    <span>Account & Lockouts</span>
-                </a>
+                @if (!isTeacher)
+                {
+                    <div class="sidebar-label">Administrator Only</div>
+                    <a href="@Url.Action("Settings", "Admin")" class="nav-item-custom @(currentAction == "Settings" ? "active" : "")"><i class="bi bi-person-gear"></i><span>Admin Accounts & Lockouts</span></a>
+                    <a href="@Url.Action("Roles", "Admin")" class="nav-item-custom @(currentAction == "Roles" ? "active" : "")"><i class="bi bi-key-fill"></i><span>Roles & Permissions</span></a>
+                    <a href="@Url.Action("LanConfig", "Admin")" class="nav-item-custom @(currentAction == "LanConfig" ? "active" : "")"><i class="bi bi-router-fill"></i><span>LAN Status</span></a>
+                    <a href="@Url.Action("Index", "AdminDeployment")" class="nav-item-custom @(currentController == "AdminDeployment" ? "active" : "")"><i class="bi bi-box-seam-fill"></i><span>Deployment Hub</span></a>
+                    <a href="@Url.Action("Index", "AdminDatabase")" class="nav-item-custom @(currentController == "AdminDatabase" ? "active" : "")"><i class="bi bi-database-gear"></i><span>Database Maintenance</span></a>
+                    <a href="@Url.Action("Reports", "Admin")" class="nav-item-custom @(currentAction == "Reports" ? "active" : "")"><i class="bi bi-bar-chart-line-fill"></i><span>System Reports</span></a>
+                    <a href="@Url.Action("AuditLogs", "Admin")" class="nav-item-custom @(currentAction == "AuditLogs" ? "active" : "")"><i class="bi bi-journal-text"></i><span>Audit Trail</span></a>
+                    <a href="@Url.Action("SystemLogs", "Admin")" class="nav-item-custom @(currentAction == "SystemLogs" ? "active" : "")"><i class="bi bi-bug-fill"></i><span>System Logs</span></a>
+                }
             </nav>
         </aside>
         <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
@@ -132,8 +121,8 @@
                             <i class="bi bi-shield-check"></i>
                         </div>
                         <div class="d-flex flex-column text-end">
-                            <span class="fw-bold fs-6">@adminName</span>
-                            <span class="badge bg-success small" style="font-size: 0.7rem;">Administrator</span>
+                            <span class="fw-bold fs-6">@displayName</span>
+                            <span class="badge bg-success small" style="font-size: 0.7rem;">@(isTeacher ? "Teacher · Global Operations" : "Administrator")</span>
                         </div>
                     </div>
                     <a href="@Url.Action("Logout", "Account")" class="btn btn-outline-danger btn-sm rounded-pill px-3 ms-2" title="Logout">
@@ -144,6 +133,10 @@
 
             <!-- Body Content -->
             <main role="main" class="content-padding">
+                <div class="alert @(isTeacher ? "alert-warning" : "alert-info") shadow-sm" role="status">
+                    <i class="bi bi-globe2 me-2"></i><strong>Global scope:</strong>
+                    Changes on this page can affect accounts, classes, computers, policies, or sessions across the school@(isTeacher ? ". Use My Teacher Portal for your personal classes and monitoring." : ".").
+                </div>
                 @if (!string.IsNullOrWhiteSpace(successMessage))
                 {
                     <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert"><i class="bi bi-check-circle me-2"></i>@successMessage<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Dismiss"></button></div>

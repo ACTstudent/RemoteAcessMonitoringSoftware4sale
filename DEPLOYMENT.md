@@ -12,6 +12,10 @@ This guide deploys CAMS Computer Account Management System for supervised classr
 
 Do not obtain `CAMS-Server-Root.cer` from a public website. It is unique to a local CAMS server.
 
+## Operator Scope
+
+Every active Teacher has global operational access to Teacher and Student management, classes and roster imports, computers and mappings, global policies and session rules, all lab sessions, all connected Student monitoring, and remote workstation commands. Treat every Teacher credential as a privileged lab-wide credential. Teachers cannot manage Administrator accounts, role metadata, database maintenance, deployment assets, LAN status, reports, audit logs, or system logs. Deactivate a Teacher promptly when access is no longer required; CAMS revalidates active status for management and SignalR operations.
+
 ## 1. Prepare The Server
 
 1. Choose a Windows x64 control PC and connect it to the final trusted, non-guest classroom network.

@@ -2,13 +2,16 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using Server.Authorization;
 using Server.Data;
 using Server.Models;
 using Server.Services;
 
 namespace Server.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Teacher")]
+    [ServiceFilter(typeof(AdminControllerAuthorizationFilter))]
     [AutoValidateAntiforgeryToken]
     public class AdminController : Controller
     {
@@ -30,7 +33,23 @@ namespace Server.Controllers
             _sessionLifecycle = sessionLifecycle;
         }
 
-        private bool CheckAccess() => HttpContext.IsAdmin();
+        private bool CheckAccess() => HttpContext.IsAdmin() || HttpContext.IsTeacher();
+
+        private bool IsTeacherActor => User.IsInRole("Teacher") || HttpContext.IsTeacher();
+
+        private int? ActorTeacherId
+        {
+            get
+            {
+                if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var teacherId)) return teacherId;
+                return HttpContext.Session.GetInt32("TeacherId");
+            }
+        }
+
+        private bool IsTeacherSelf(int teacherId) => IsTeacherActor && ActorTeacherId == teacherId;
+
+        private Task<int> ActiveTeacherCountAsync() => _context.Teachers.CountAsync(teacher =>
+            teacher.Status == "Active" || teacher.Status == null || teacher.Status == string.Empty);
 
         private static bool ValidMode(string? mode) => mode is "Block" or "Allow";
         private static bool ValidRuleType(string? type) => type is "Application" or "Website" or "BlockApplication" or "BlockWebsite";
@@ -73,10 +92,11 @@ namespace Server.Controllers
 
         private async Task AuditAsync(string action, string details)
         {
+            var teacherActor = IsTeacherActor;
             _context.AuditLogs.Add(new AuditLog
             {
-                UserType = "Admin",
-                UserId = HttpContext.Session.GetInt32("AdminId"),
+                UserType = teacherActor ? "Teacher" : "Admin",
+                UserId = teacherActor ? ActorTeacherId : HttpContext.Session.GetInt32("AdminId"),
                 Action = action,
                 Details = details,
                 IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
@@ -123,9 +143,16 @@ namespace Server.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [TeacherSharedAction]
         public async Task<IActionResult> UnlockAccount(AccountRole accountRole, int id)
         {
             if (!CheckAccess()) return Denied();
+            if (IsTeacherActor && accountRole == AccountRole.Admin) return Forbid();
+            if (accountRole == AccountRole.Teacher && IsTeacherSelf(id))
+            {
+                TempData["ErrorMessage"] = "You cannot unlock your own Teacher account from global Teacher management.";
+                return RedirectToAction(nameof(Teachers));
+            }
 
             string accountName;
             switch (accountRole)
@@ -168,9 +195,16 @@ namespace Server.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [TeacherSharedAction]
         public async Task<IActionResult> SetAccountActive(AccountRole accountRole, int id, bool isActive)
         {
             if (!CheckAccess()) return Denied();
+            if (IsTeacherActor && accountRole == AccountRole.Admin) return Forbid();
+            if (!isActive && accountRole == AccountRole.Teacher && IsTeacherSelf(id))
+            {
+                TempData["ErrorMessage"] = "You cannot deactivate your own Teacher account from global Teacher management.";
+                return RedirectToAction(nameof(Teachers));
+            }
 
             string accountName;
             switch (accountRole)
@@ -196,6 +230,13 @@ namespace Server.Controllers
                     if (!isActive && await _context.Classes.AnyAsync(cls => cls.TeacherId == id && !cls.IsArchived))
                     {
                         TempData["ErrorMessage"] = "Reassign or archive this teacher's active classes before deactivating the account.";
+                        return RedirectToAction(nameof(Teachers));
+                    }
+
+                    var accountIsActive = account.Status == "Active" || string.IsNullOrEmpty(account.Status);
+                    if (IsTeacherActor && !isActive && accountIsActive && await ActiveTeacherCountAsync() <= 1)
+                    {
+                        TempData["ErrorMessage"] = "The last active Teacher cannot be deactivated.";
                         return RedirectToAction(nameof(Teachers));
                     }
 
@@ -323,6 +364,7 @@ namespace Server.Controllers
         }
 
         // ---------- Dashboard ----------
+        [TeacherSharedAction]
         public async Task<IActionResult> Index()
         {
             if (!CheckAccess()) return Denied();
@@ -337,6 +379,7 @@ namespace Server.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [TeacherSharedAction]
         public async Task<IActionResult> PauseAllSessions()
         {
             if (!CheckAccess()) return Denied();
@@ -347,6 +390,7 @@ namespace Server.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [TeacherSharedAction]
         public async Task<IActionResult> ResumeAllSessions()
         {
             if (!CheckAccess()) return Denied();
@@ -357,6 +401,7 @@ namespace Server.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [TeacherSharedAction]
         public async Task<IActionResult> EndAllSessions()
         {
             if (!CheckAccess()) return Denied();
@@ -367,6 +412,7 @@ namespace Server.Controllers
         }
 
         // ---------- Teacher accounts ----------
+        [TeacherSharedAction]
         public async Task<IActionResult> Teachers()
         {
             if (!CheckAccess()) return Denied();
@@ -374,6 +420,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> CreateTeacher([Bind("FirstName,LastName,Email,Username,PasswordHash,ContactNumber,Status")] Teacher teacher)
         {
             if (!CheckAccess()) return Denied();
@@ -409,9 +456,15 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> UpdateTeacher([Bind("TeacherId,FirstName,LastName,Email,Username,ContactNumber,Status")] Teacher teacher, string? newPassword)
         {
             if (!CheckAccess()) return Denied();
+            if (IsTeacherSelf(teacher.TeacherId))
+            {
+                TempData["ErrorMessage"] = "You cannot edit your own Teacher account from global Teacher management.";
+                return RedirectToAction(nameof(Teachers));
+            }
             var existing = await _context.Teachers.FindAsync(teacher.TeacherId);
             if (existing == null) return RedirectToAction("Teachers");
 
@@ -428,6 +481,13 @@ namespace Server.Controllers
             {
                 TempData["ErrorMessage"] = "Reassign or archive this teacher's active classes before deactivating the account.";
                 return RedirectToAction("Teachers");
+            }
+            var existingIsActive = existing.Status == "Active" || string.IsNullOrEmpty(existing.Status);
+            if (IsTeacherActor && string.Equals(requestedStatus, "Inactive", StringComparison.OrdinalIgnoreCase) &&
+                existingIsActive && await ActiveTeacherCountAsync() <= 1)
+            {
+                TempData["ErrorMessage"] = "The last active Teacher cannot be deactivated.";
+                return RedirectToAction(nameof(Teachers));
             }
 
             existing.FirstName = string.IsNullOrWhiteSpace(teacher.FirstName) ? existing.FirstName : teacher.FirstName.Trim();
@@ -449,9 +509,15 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> DeleteTeacher(int id)
         {
             if (!CheckAccess()) return Denied();
+            if (IsTeacherSelf(id))
+            {
+                TempData["ErrorMessage"] = "You cannot delete your own Teacher account from global Teacher management.";
+                return RedirectToAction(nameof(Teachers));
+            }
             var teacher = await _context.Teachers.FindAsync(id);
             if (teacher != null)
             {
@@ -460,6 +526,13 @@ namespace Server.Controllers
                 {
                     TempData["ErrorMessage"] = "Reassign or archive this teacher's active classes before deleting the account.";
                     return RedirectToAction("Teachers");
+                }
+
+                var teacherIsActive = teacher.Status == "Active" || string.IsNullOrEmpty(teacher.Status);
+                if (IsTeacherActor && teacherIsActive && await ActiveTeacherCountAsync() <= 1)
+                {
+                    TempData["ErrorMessage"] = "The last active Teacher cannot be deleted.";
+                    return RedirectToAction(nameof(Teachers));
                 }
 
                 teacher.Status = "Inactive";
@@ -471,6 +544,7 @@ namespace Server.Controllers
         }
 
         // ---------- Student accounts ----------
+        [TeacherSharedAction]
         public async Task<IActionResult> Students()
         {
             if (!CheckAccess()) return Denied();
@@ -489,6 +563,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> CreateStudent([Bind("StudentNumber,FirstName,LastName,FullName,Username,PasswordHash,Status,GradeSection,ClassId,AdviserId")] Student student)
         {
             if (!CheckAccess()) return Denied();
@@ -552,6 +627,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> UpdateStudent([Bind("Id,StudentNumber,FirstName,LastName,FullName,Username,Status,GradeSection,ClassId,AdviserId")] Student student, string? newPassword)
         {
             if (!CheckAccess()) return Denied();
@@ -600,6 +676,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> DeleteStudent(int id)
         {
             if (!CheckAccess()) return Denied();
@@ -665,6 +742,7 @@ namespace Server.Controllers
         }
 
         // ---------- Restriction rules ----------
+        [TeacherSharedAction]
         public async Task<IActionResult> Restrictions()
         {
             if (!CheckAccess()) return Denied();
@@ -678,6 +756,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> CreateRestriction(RestrictionRule rule)
         {
             if (!CheckAccess()) return Denied();
@@ -689,7 +768,12 @@ namespace Server.Controllers
             rule.RuleType = NormalizeRuleType(rule.RuleType);
             rule.Target = rule.Target.Trim();
             rule.Description = rule.Description?.Trim() ?? "";
-             rule.CreatedAt = DateTime.UtcNow;
+            if (IsTeacherActor)
+            {
+                rule.IsGlobal = true;
+                rule.TeacherId = null;
+            }
+            rule.CreatedAt = DateTime.UtcNow;
             _context.RestrictionRules.Add(rule);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateRestriction", $"Added restriction on {rule.Target}");
@@ -698,6 +782,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> UpdateRestriction(RestrictionRule input)
         {
             if (!CheckAccess()) return Denied();
@@ -709,7 +794,8 @@ namespace Server.Controllers
             rule.Target = input.Target.Trim();
             rule.Description = input.Description?.Trim() ?? "";
             rule.Mode = input.Mode;
-            rule.IsGlobal = input.IsGlobal;
+            rule.IsGlobal = IsTeacherActor || input.IsGlobal;
+            if (IsTeacherActor) rule.TeacherId = null;
             rule.IsActive = input.IsActive;
             await _context.SaveChangesAsync();
             await AuditAsync("UpdateRestriction", $"Updated restriction {rule.RestrictionRuleId}");
@@ -717,6 +803,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> DeleteRestriction(int id)
         {
             if (!CheckAccess()) return Denied();
@@ -732,12 +819,14 @@ namespace Server.Controllers
         }
 
         // ---------- Blacklists ----------
+        [TeacherSharedAction]
         public async Task<IActionResult> Blacklists()
         {
             if (!CheckAccess()) return Denied();
             return View(await _context.BlacklistItems.OrderByDescending(b => b.CreatedAt).ToListAsync());
         }
 
+        [TeacherSharedAction]
         public async Task<IActionResult> Whitelists()
         {
             if (!CheckAccess()) return Denied();
@@ -745,6 +834,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> CreateWhitelist([Bind("RuleType,Target,Description,IsGlobal,IsActive")] RestrictionRule rule)
         {
             rule.Mode = "Allow";
@@ -752,6 +842,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> UpdateWhitelist([Bind("RestrictionRuleId,RuleType,Target,Description,IsGlobal,IsActive")] RestrictionRule rule)
         {
             rule.Mode = "Allow";
@@ -759,6 +850,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> CreateBlacklist([Bind("TargetType,Value,Reason,IsActive")] BlacklistItem item)
         {
             if (!CheckAccess()) return Denied();
@@ -770,7 +862,7 @@ namespace Server.Controllers
             item.TargetType = item.TargetType.Trim();
             item.Value = item.Value.Trim();
             item.Reason = item.Reason?.Trim() ?? "";
-             item.CreatedAt = DateTime.UtcNow;
+            item.CreatedAt = DateTime.UtcNow;
             _context.BlacklistItems.Add(item);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateBlacklist", $"Blacklisted {item.TargetType}: {item.Value}");
@@ -779,6 +871,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> UpdateBlacklist([Bind("BlacklistItemId,TargetType,Value,Reason,IsActive")] BlacklistItem input)
         {
             if (!CheckAccess()) return Denied();
@@ -796,6 +889,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> DeleteBlacklist(int id)
         {
             if (!CheckAccess()) return Denied();
@@ -811,10 +905,12 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> CreateApplicationCategory(ApplicationCategory category)
             => await SaveApplicationCategory(category, null);
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> UpdateApplicationCategory(ApplicationCategory input)
             => await SaveApplicationCategory(input, input.ApplicationCategoryId);
 
@@ -836,6 +932,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> DeleteApplicationCategory(int id)
         {
             if (!CheckAccess()) return Denied();
@@ -850,10 +947,12 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> CreateWebsiteCategory(WebsiteCategory category)
             => await SaveWebsiteCategory(category, null);
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> UpdateWebsiteCategory(WebsiteCategory input)
             => await SaveWebsiteCategory(input, input.WebsiteCategoryId);
 
@@ -875,6 +974,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> DeleteWebsiteCategory(int id)
         {
             if (!CheckAccess()) return Denied();
@@ -889,6 +989,7 @@ namespace Server.Controllers
         }
 
         // ---------- Session rules ----------
+        [TeacherSharedAction]
         public async Task<IActionResult> SessionRules()
         {
             if (!CheckAccess()) return Denied();
@@ -896,6 +997,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> CreateSessionRule([Bind("Name,MaxDurationMinutes,AllowPause,AllowRemoteControl,IsDefault,IsActive")] SessionRule rule)
         {
             if (!CheckAccess()) return Denied();
@@ -918,6 +1020,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> UpdateSessionRule([Bind("SessionRuleId,Name,MaxDurationMinutes,AllowPause,AllowRemoteControl,IsDefault,IsActive")] SessionRule input)
         {
             if (!CheckAccess()) return Denied();
@@ -925,22 +1028,29 @@ namespace Server.Controllers
             if (rule == null || string.IsNullOrWhiteSpace(input.Name) || input.MaxDurationMinutes < 1) return RedirectToAction(nameof(SessionRules));
             if (input.IsDefault)
                 await _context.SessionRules.Where(r => r.SessionRuleId != rule.SessionRuleId && r.IsDefault).ExecuteUpdateAsync(s => s.SetProperty(r => r.IsDefault, false));
+            var closesRemoteControl = rule.AllowRemoteControl && (!input.AllowRemoteControl || !input.IsActive);
             rule.Name = input.Name.Trim(); rule.MaxDurationMinutes = input.MaxDurationMinutes; rule.AllowPause = input.AllowPause;
             rule.AllowRemoteControl = input.AllowRemoteControl; rule.IsDefault = input.IsDefault; rule.IsActive = input.IsActive;
+            if (closesRemoteControl)
+                await _sessionLifecycle.CloseRemoteSessionsForRuleAsync(rule.SessionRuleId);
             await _context.SaveChangesAsync();
             await AuditAsync("UpdateSessionRule", $"Updated session rule {rule.Name}");
             return RedirectToAction(nameof(SessionRules));
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> DeleteSessionRule(int id)
         {
             if (!CheckAccess()) return Denied();
             var rule = await _context.SessionRules.FindAsync(id);
             if (rule != null)
             {
+                var closesRemoteControl = rule.AllowRemoteControl && rule.IsActive;
                 rule.IsActive = false;
                 rule.IsDefault = false;
+                if (closesRemoteControl)
+                    await _sessionLifecycle.CloseRemoteSessionsForRuleAsync(rule.SessionRuleId);
                 await _context.SaveChangesAsync();
                 await AuditAsync("DeactivateSessionRule", $"Deactivated session rule {rule.Name}; historical sessions retained");
                 TempData["Message"] = "Session rule deactivated. Historical sessions were retained.";
@@ -958,12 +1068,14 @@ namespace Server.Controllers
         }
 
         // ---------- Computers ----------
+        [TeacherSharedAction]
         public async Task<IActionResult> Computers()
         {
             if (!CheckAccess()) return Denied();
             return View(await _context.Computers.OrderBy(c => c.LaboratoryStation).ToListAsync());
         }
 
+        [TeacherSharedAction]
         public async Task<IActionResult> ComputerHistory(int id)
         {
             if (!CheckAccess()) return Denied();
@@ -974,6 +1086,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> CreateComputer(Computer computer)
         {
             if (!CheckAccess()) return Denied();
@@ -997,6 +1110,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> UpdateComputer(Computer computer)
         {
             if (!CheckAccess()) return Denied();
@@ -1014,7 +1128,13 @@ namespace Server.Controllers
                 existing.Status = string.IsNullOrWhiteSpace(computer.Status) ? existing.Status : computer.Status.Trim();
                 existing.AssignedTo = computer.AssignedTo;
                 if (!string.Equals(previousStatus, existing.Status, StringComparison.OrdinalIgnoreCase))
-                    _context.ComputerStatusHistories.Add(new ComputerStatusHistory { ComputerId = existing.ComputerId, Status = existing.Status, ChangedByType = "Admin", ChangedById = HttpContext.Session.GetInt32("AdminId") });
+                    _context.ComputerStatusHistories.Add(new ComputerStatusHistory
+                    {
+                        ComputerId = existing.ComputerId,
+                        Status = existing.Status,
+                        ChangedByType = IsTeacherActor ? "Teacher" : "Admin",
+                        ChangedById = IsTeacherActor ? ActorTeacherId : HttpContext.Session.GetInt32("AdminId")
+                    });
                 await _context.SaveChangesAsync();
                 await AuditAsync("UpdateComputer", $"Updated computer {existing.LaboratoryStation}");
                 TempData["Message"] = $"Workstation '{existing.LaboratoryStation}' updated successfully!";
@@ -1023,6 +1143,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> DeleteComputer(int id)
         {
             if (!CheckAccess()) return Denied();
@@ -1045,6 +1166,7 @@ namespace Server.Controllers
 
         // ---------- Workstation-to-Student mapping ----------
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> AssignComputer(int studentId, int? computerId)
         {
             if (!CheckAccess()) return Denied();
@@ -1093,6 +1215,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> AssignStudentToClass(int studentId, int? classId, bool moveStudent = false)
         {
             if (!CheckAccess()) return Denied();
@@ -1137,6 +1260,7 @@ namespace Server.Controllers
         }
 
         // ---------- Class Management ----------
+        [TeacherSharedAction]
         public async Task<IActionResult> Classes()
         {
             if (!CheckAccess()) return Denied();
@@ -1151,6 +1275,7 @@ namespace Server.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [TeacherSharedAction]
         public async Task<IActionResult> CreateClass(Class cls)
         {
             if (!CheckAccess()) return Denied();
@@ -1171,6 +1296,7 @@ namespace Server.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [TeacherSharedAction]
         public async Task<IActionResult> UpdateClass(Class cls)
         {
             if (!CheckAccess()) return Denied();
@@ -1192,6 +1318,7 @@ namespace Server.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [TeacherSharedAction]
         public async Task<IActionResult> AssignTeacher(int classId, int? teacherId)
         {
             if (!CheckAccess()) return Denied();
@@ -1212,6 +1339,7 @@ namespace Server.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [TeacherSharedAction]
         public async Task<IActionResult> ArchiveClass(int id)
         {
             if (!CheckAccess()) return Denied();
@@ -1238,6 +1366,7 @@ namespace Server.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [TeacherSharedAction]
         public async Task<IActionResult> DeleteClass(int classId)
         {
             if (!CheckAccess()) return Denied();
@@ -1254,6 +1383,7 @@ namespace Server.Controllers
             return RedirectToAction("Classes");
         }
 
+        [TeacherSharedAction]
         public async Task<IActionResult> ClassDetails(int id)
         {
             if (!CheckAccess()) return Denied();
@@ -1278,6 +1408,7 @@ namespace Server.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [TeacherSharedAction]
         public async Task<IActionResult> AddStudentToClass(int classId, string firstName, string lastName, string? username, string? password)
         {
             if (!CheckAccess()) return Denied();
@@ -1296,6 +1427,7 @@ namespace Server.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [TeacherSharedAction]
         public async Task<IActionResult> BulkAddStudents(int classId, List<string>? bulkFirstNames, List<string>? bulkLastNames, List<string>? bulkUserNames, List<string>? bulkPasswords)
         {
             if (!CheckAccess()) return Denied();
@@ -1330,6 +1462,7 @@ namespace Server.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [TeacherSharedAction]
         public async Task<IActionResult> BulkPreviewCsv(int classId, IFormFile? file)
         {
             if (!CheckAccess()) return Denied();
@@ -1351,6 +1484,7 @@ namespace Server.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [TeacherSharedAction]
         public async Task<IActionResult> EnrollStudent(int classId, int studentId, bool moveStudent = false)
         {
             if (!CheckAccess()) return Denied();
@@ -1368,6 +1502,7 @@ namespace Server.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [TeacherSharedAction]
         public async Task<IActionResult> RemoveStudent(int classId, int studentId)
         {
             if (!CheckAccess()) return Denied();

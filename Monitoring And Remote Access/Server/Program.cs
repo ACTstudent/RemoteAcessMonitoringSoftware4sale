@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
+using Server.Authorization;
 using Server.Data;
 using Server.Services;
 
@@ -61,6 +62,8 @@ builder.Services.AddAuthorization(options =>
 
 // Application services
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<AdminControllerAuthorizationFilter>();
+builder.Services.AddScoped<ActiveTeacherAuthorizationFilter>();
 builder.Services.AddScoped<IClassManagementService, ClassManagementService>();
 builder.Services.AddSingleton<IMonitoringService, MonitoringService>();
 builder.Services.AddSingleton<IDeploymentService, DeploymentService>();

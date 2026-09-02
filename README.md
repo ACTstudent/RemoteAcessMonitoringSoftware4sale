@@ -24,7 +24,7 @@ CAMS has three fixed application roles: `Admin`, `Teacher`, and `Student`. Autho
 | Role | Current scope |
 | --- | --- |
 | Admin | Global account, class, roster, workstation, policy, session-rule, lab-wide session, reporting, lockout, database, LAN-status, and deployment controls. |
-| Teacher | Assigned classes, accessible students and workstations, owned sessions, teacher-owned restrictions, monitoring, alerts, and records. Teachers may edit accessible student identity/password fields and workstation name/status. Removing a student removes that teacher's roster/adviser association and preserves the account. Teachers cannot reassign a class to another teacher. |
+| Teacher | Global operational access to Teacher and Student accounts, classes, rosters/imports, workstation mappings/history, restrictions/categories, session rules, all lab sessions, all connected Student monitoring, and remote commands. Teachers can manage peer Teacher accounts but cannot edit, unlock, deactivate, or archive themselves; peer deactivation also requires active classes to be reassigned or archived. Administrator accounts, role metadata, reports/logs, database maintenance, LAN status, and Deployment Hub remain Admin-only. |
 | Student | Browser portal access to session information, alerts, and account settings. The WinForms CLIENT login is stricter: it supplies the machine name and succeeds only when the student is assigned to that workstation. |
 
 ## Architecture And Network

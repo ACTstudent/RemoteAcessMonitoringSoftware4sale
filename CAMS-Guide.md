@@ -43,7 +43,7 @@ Roles are fixed as `Admin`, `Teacher`, and `Student`. They are not configurable 
 | Role | Scope |
 | --- | --- |
 | Admin | Global users, classes, rosters, computers/mappings, policies, session rules, lab-wide session controls, reports, logs, lockouts, database maintenance, LAN status, and Deployment Hub. |
-| Teacher | Assigned classes and rosters, accessible students and computers, owned sessions and restrictions, scoped monitoring, alerts, records, and exports. |
+| Teacher | Global operational management of Teacher/Student accounts, classes, rosters/imports, computers/mappings/history, policies, session rules, lab sessions, monitoring, and Student-workstation remote commands. Admin accounts, role metadata, reports/logs, database maintenance, LAN status, and Deployment Hub remain Admin-only. |
 | Student | Web session/alert/account pages, or an assigned-workstation session through the Windows client. |
 
 ## Login Semantics
@@ -87,24 +87,23 @@ LAN Status displays the detected request and SignalR paths only. Deployment Hub 
 
 ### Scope rules
 
-A teacher can act only on assigned active classes, students reachable through those class/adviser/roster relationships, computers assigned to those students or used by the teacher's active sessions, and sessions owned by that teacher. Hub commands repeat authorization checks at the target object; hiding an item in the UI is not the security boundary.
+Every active Teacher is a global CAMS operator. The server revalidates Teacher status for management requests and SignalR commands; deactivating a Teacher blocks later operations from an existing authenticated session. Shared `/Admin/...` management actions use an explicit allow-list, so unlisted Administrator pages remain forbidden even when a link is hidden.
 
 ### Student and roster semantics
 
-- A teacher creates a student from one of the teacher's class rosters so the account is assigned immediately.
-- A teacher may edit identity fields and set a new password only for an accessible student.
-- Removing a student from the teacher's Students page removes accessible class membership/adviser association and preserves the student account.
-- Removing a student from one class removes that class enrollment; it is not global account deletion.
-- A teacher may create and edit a class assigned to self, archive/restore or delete it when allowed, but cannot assign/reassign another teacher.
-- Existing-student enrollment is limited to students already accessible to that teacher; moving between classes is explicit.
-- A teacher may rename or change status of an accessible workstation, but Admin owns global creation, archival, and student-to-workstation mapping.
+- Create, edit, activate/deactivate, unlock, and soft-archive Student accounts globally.
+- Create, edit, activate/deactivate, unlock, and soft-archive peer Teacher accounts. A Teacher cannot change their own account from global management, and active classes must be reassigned or archived before their Teacher is deactivated.
+- Create, edit, assign/reassign, archive, restore, or delete classes when data-integrity rules permit it.
+- Manage any class roster, explicitly move existing Students, and import Students individually, in bulk, or by CSV.
+- Create, rename, assign, unassign, change status, archive, and inspect history for workstations globally.
+- Account and archive operations retain historical records where stated by the UI.
 
 ### Sessions and monitoring
 
-1. Start a session for an accessible student and available assigned computer, optionally using an active session rule.
-2. Use teacher bulk controls only for that teacher's sessions. Pause is allowed only when the session rule permits it.
-3. Monitor authorized live cards showing screen frames, connectivity, active application, and idle state.
-4. Use allowed actions: lock, release CAMS lock state, force logout, restart, shutdown, warning, broadcast, or remote input.
+1. Start a session for a student and available assigned computer, optionally using an active session rule.
+2. Resume, pause, or end sessions across all Teachers. Pause still applies only where the session rule permits it.
+3. Monitor every connected Student client, including screen frames, connectivity, active application, browser status, and idle state.
+4. Globally use lock, release CAMS lock state, force logout, restart, shutdown, warning, notification, broadcast, and remote support/input commands.
 5. End the session to persist its end state, notify the connected client, release the workstation, and log out the client.
 
 The capture loop targets a 50 ms delay with one frame in flight. This is not a 20 FPS guarantee; capture and network conditions determine observed updates.
@@ -115,7 +114,7 @@ The capture loop targets a 50 ms delay with one frame in flight. This is not a 2
 
 ### Restrictions, warnings, and alerts
 
-Active global rules and teacher-owned rules for the student's active session are sent to the client and refreshed after policy changes.
+Teachers can create and edit global block/allow rules, blacklists, whitelists, application/website categories, and session rules. Rules changed through the global Teacher management surface are stored as global and are refreshed on clients after policy changes.
 
 - Application block violations may terminate the matching process and report an infraction.
 - Website policy uses a privacy-normalized domain from supported collection paths. CAMS does not collect browser credentials, cookies, page content, full paths, queries, or fragments.

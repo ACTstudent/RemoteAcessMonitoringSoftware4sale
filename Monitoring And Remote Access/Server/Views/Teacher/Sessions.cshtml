@@ -20,9 +20,9 @@
         </div>
     </div>
     <div class="d-flex flex-wrap gap-2 justify-content-end">
-        <form asp-action="GlobalStartSession" method="post">@Html.AntiForgeryToken()<button class="btn btn-success rounded-pill px-3"><i class="bi bi-play-fill"></i> Resume My Sessions</button></form>
-        <form asp-action="GlobalPauseSession" method="post">@Html.AntiForgeryToken()<button class="btn btn-warning rounded-pill px-3"><i class="bi bi-pause-fill"></i> Pause My Sessions</button></form>
-        <form asp-action="GlobalEndSession" method="post">@Html.AntiForgeryToken()<button class="btn btn-danger rounded-pill px-3"><i class="bi bi-stop-fill"></i> End My Sessions</button></form>
+        <form asp-action="GlobalStartSession" method="post">@Html.AntiForgeryToken()<button class="btn btn-success rounded-pill px-3" onclick="return confirm('Resume every paused session across CAMS?');"><i class="bi bi-play-fill"></i> Resume All Sessions</button></form>
+        <form asp-action="GlobalPauseSession" method="post">@Html.AntiForgeryToken()<button class="btn btn-warning rounded-pill px-3" onclick="return confirm('Pause every lab session whose rule permits pausing?');"><i class="bi bi-pause-fill"></i> Pause All Sessions</button></form>
+        <form asp-action="GlobalEndSession" method="post">@Html.AntiForgeryToken()<button class="btn btn-danger rounded-pill px-3" onclick="return confirm('End every active lab session? Ended sessions cannot be resumed.');"><i class="bi bi-stop-fill"></i> End All Sessions</button></form>
         <button class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#startSessionModal">
             <i class="bi bi-play-circle me-1"></i> Start New Session
         </button>

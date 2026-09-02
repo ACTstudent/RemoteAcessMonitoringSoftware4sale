@@ -13,17 +13,20 @@ namespace Server.Tests.Hubs;
 public sealed class RemoteMonitoringHubSecurityTests
 {
     [Fact]
-    public async Task LockStudent_RejectsTeacherWhoDoesNotOwnTarget()
+    public async Task LockStudent_AllowsActiveTeacherWhoDoesNotOwnTarget()
     {
         await using var provider = CreateProvider();
         await SeedStudentAsync(provider, "student-1", classTeacherId: 2);
         var monitoring = new MonitoringService();
         monitoring.RegisterStudent("student-connection", "student-1", "PC-01");
-        var hub = CreateHub(provider, monitoring, "teacher-connection", "Teacher", "1");
+        var clients = new Mock<IHubCallerClients>();
+        var target = new Mock<ISingleClientProxy>();
+        clients.Setup(c => c.Client("student-connection")).Returns(target.Object);
+        var hub = CreateHub(provider, monitoring, "teacher-connection", "Teacher", "1", clients);
 
-        var error = await Assert.ThrowsAsync<HubException>(() => hub.LockStudent("student-connection"));
+        await hub.LockStudent("student-connection");
 
-        Assert.Equal("You are not authorized to control this workstation.", error.Message);
+        target.Verify(p => p.SendCoreAsync(HubEventNames.LockStudent, It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -214,14 +217,17 @@ public sealed class RemoteMonitoringHubSecurityTests
     }
 
     [Fact]
-    public async Task GlobalSessionControl_RejectsTeacher()
+    public async Task GlobalSessionControl_AllowsActiveTeacher()
     {
         await using var provider = CreateProvider();
+        var student = await SeedStudentAsync(provider, "student-global", classTeacherId: 2);
+        await SeedLabSessionAsync(provider, student.Id, allowRemoteControl: false);
         var hub = CreateHub(provider, new MonitoringService(), "teacher-connection", "Teacher", "1");
 
-        var error = await Assert.ThrowsAsync<HubException>(() => hub.GlobalEndSession());
+        await hub.GlobalEndSession();
 
-        Assert.Equal("Only administrators can control the lab-wide session.", error.Message);
+        await using var scope = provider.CreateAsyncScope();
+        Assert.False((await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().LabSessions.SingleAsync()).IsActive);
     }
 
     [Fact]
@@ -362,7 +368,7 @@ public sealed class RemoteMonitoringHubSecurityTests
     }
 
     [Fact]
-    public async Task StartRemoteControl_RejectsSessionOwnedByAnotherTeacher()
+    public async Task StartRemoteControl_AllowsSessionOwnedByAnotherTeacher()
     {
         await using var provider = CreateProvider();
         var student = await SeedStudentAsync(provider, "student-1", classTeacherId: 1);
@@ -377,9 +383,77 @@ public sealed class RemoteMonitoringHubSecurityTests
         monitoring.RegisterStudent("student-connection", "student-1", "PC-01");
         var hub = CreateHub(provider, monitoring, "teacher-connection", "Teacher", "1");
 
-        var error = await Assert.ThrowsAsync<HubException>(() => hub.StartRemoteControl("student-connection"));
+        var result = await hub.StartRemoteControl("student-connection");
 
-        Assert.Equal("The workstation has no active lab session.", error.Message);
+        Assert.True(result.Succeeded);
+        await using var verificationScope = provider.CreateAsyncScope();
+        Assert.Equal(1, (await verificationScope.ServiceProvider.GetRequiredService<ApplicationDbContext>()
+            .RemoteControlSessions.SingleAsync()).TeacherId);
+    }
+
+    [Fact]
+    public async Task LockStudent_RejectsTeacherDeactivatedAfterConnectionWasEstablished()
+    {
+        await using var provider = CreateProvider();
+        await SeedStudentAsync(provider, "student-inactive", classTeacherId: 2);
+        await using (var scope = provider.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            (await db.Teachers.SingleAsync(teacher => teacher.TeacherId == 1)).Status = "Inactive";
+            await db.SaveChangesAsync();
+        }
+        var monitoring = new MonitoringService();
+        monitoring.RegisterStudent("student-inactive-connection", "student-inactive", "PC-09");
+        var hub = CreateHub(provider, monitoring, "existing-teacher-connection", "Teacher", "1");
+
+        var error = await Assert.ThrowsAsync<HubException>(() => hub.LockStudent("student-inactive-connection"));
+
+        Assert.Equal("The teacher account is inactive.", error.Message);
+    }
+
+    [Fact]
+    public async Task SendRemoteInput_RequiresRemoteSupportStartedByThisConnection()
+    {
+        await using var provider = CreateProvider();
+        var student = await SeedStudentAsync(provider, "student-bound", classTeacherId: 2);
+        await SeedLabSessionAsync(provider, student.Id, allowRemoteControl: true);
+        await using (var scope = provider.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.RemoteControlSessions.Add(new Server.Models.RemoteControlSession
+            {
+                TeacherId = 1,
+                StudentId = "student-bound",
+                PcName = "PC-01",
+                ConnectionId = "student-bound-connection"
+            });
+            await db.SaveChangesAsync();
+        }
+        var monitoring = new MonitoringService();
+        monitoring.RegisterStudent("student-bound-connection", "student-bound", "PC-01");
+        var hub = CreateHub(provider, monitoring, $"unbound-{Guid.NewGuid()}", "Teacher", "1");
+
+        var error = await Assert.ThrowsAsync<HubException>(() => hub.SendRemoteInput("student-bound-connection",
+            new RemoteInputMessage("mousedown", 1, 1, 0, false)));
+
+        Assert.Equal("Start an authorized remote-support session first.", error.Message);
+    }
+
+    [Fact]
+    public async Task SendScreenFrame_PublishesToGlobalTeacherViewerGroup()
+    {
+        await using var provider = CreateProvider();
+        var monitoring = new MonitoringService();
+        monitoring.RegisterStudent("student-frame-connection", "student-frame", "PC-03");
+        var clients = new Mock<IHubCallerClients>();
+        var teachers = new Mock<IClientProxy>();
+        clients.Setup(c => c.Group(HubEventNames.TeachersGroup)).Returns(teachers.Object);
+        var hub = CreateHub(provider, monitoring, "student-frame-connection", "Student", "10", clients, clientAgent: true);
+
+        await hub.SendScreenFrame(new ScreenFrameMessage("spoofed", "spoofed", "frame", DateTime.UtcNow));
+
+        teachers.Verify(proxy => proxy.SendCoreAsync(HubEventNames.ReceiveScreenFrame,
+            It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -437,9 +511,11 @@ public sealed class RemoteMonitoringHubSecurityTests
         var proxy = new Mock<ISingleClientProxy>();
         var groupProxy = new Mock<IClientProxy>();
         if (ownsClients)
+        {
             clients.Setup(c => c.Client(It.IsAny<string>())).Returns(proxy.Object);
-        clients.Setup(c => c.Group(It.IsAny<string>())).Returns(groupProxy.Object);
-        clients.Setup(c => c.Groups(It.IsAny<IReadOnlyList<string>>())).Returns(groupProxy.Object);
+            clients.Setup(c => c.Group(It.IsAny<string>())).Returns(groupProxy.Object);
+            clients.Setup(c => c.Groups(It.IsAny<IReadOnlyList<string>>())).Returns(groupProxy.Object);
+        }
         var hub = new RemoteMonitoringHub(monitoring, telemetryService ?? Mock.Of<ITelemetryService>(),
             new SessionManagerService(Mock.Of<IHubContext<RemoteMonitoringHub>>()),
             provider.GetRequiredService<IServiceScopeFactory>())
@@ -463,7 +539,20 @@ public sealed class RemoteMonitoringHubSecurityTests
         hubContext.SetupGet(value => value.Clients).Returns(clients.Object);
         services.AddSingleton(hubContext.Object);
         services.AddScoped<LabSessionLifecycleService>();
-        return services.BuildServiceProvider();
+        var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        db.Teachers.Add(new Server.Models.Teacher
+        {
+            TeacherId = 1,
+            FirstName = "Active",
+            LastName = "Teacher",
+            Username = "teacher-1",
+            PasswordHash = "hash",
+            Status = "Active"
+        });
+        db.SaveChanges();
+        return provider;
     }
 
     private static async Task<Server.Models.Student> SeedStudentAsync(IServiceProvider provider, string number, int classTeacherId)
