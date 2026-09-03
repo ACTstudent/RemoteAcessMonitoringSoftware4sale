@@ -132,6 +132,46 @@ public class ClassManagementServiceTests
     }
 
     [Fact]
+    public async Task BulkCreateStudents_CreatesUnassignedProfiles()
+    {
+        using var db = GetDbContext();
+        var service = new ClassManagementService(db);
+
+        var result = await service.BulkCreateStudentsAsync(new[]
+        {
+            new NewStudentInput(null, "Ana", "Reyes", null, "ana.reyes", "secret1"),
+            new NewStudentInput(null, "Ben", "Cruz", null, null, "secret2")
+        });
+
+        var students = await db.Students.OrderBy(student => student.FirstName).ToListAsync();
+        Assert.True(result.Success);
+        Assert.Equal(2, result.Count);
+        Assert.All(students, student =>
+        {
+            Assert.Null(student.ClassId);
+            Assert.Null(student.AdviserId);
+            Assert.Empty(student.GradeSection);
+        });
+        Assert.Empty(await db.ClassStudents.ToListAsync());
+    }
+
+    [Fact]
+    public async Task BulkCreateStudents_IsAtomicWhenOneProfileIsInvalid()
+    {
+        using var db = GetDbContext();
+        var service = new ClassManagementService(db);
+
+        var result = await service.BulkCreateStudentsAsync(new[]
+        {
+            new NewStudentInput(null, "Valid", "Student", null, "valid.student", "secret1"),
+            new NewStudentInput(null, "Missing", "", null, "invalid.student", "secret2")
+        });
+
+        Assert.False(result.Success);
+        Assert.Empty(await db.Students.ToListAsync());
+    }
+
+    [Fact]
     public void CsvParserSupportsQuotedValuesAndHeader()
     {
         using var db = GetDbContext();

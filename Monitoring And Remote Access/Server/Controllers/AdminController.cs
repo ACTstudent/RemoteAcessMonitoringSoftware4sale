@@ -1428,6 +1428,41 @@ namespace Server.Controllers
 
         [HttpPost, ValidateAntiForgeryToken]
         [TeacherSharedAction]
+        public async Task<IActionResult> BulkCreateStudents(List<string>? bulkFirstNames, List<string>? bulkLastNames, List<string>? bulkUserNames, List<string>? bulkPasswords)
+        {
+            if (!CheckAccess()) return Denied();
+            var rowCount = new[]
+            {
+                bulkFirstNames?.Count ?? 0,
+                bulkLastNames?.Count ?? 0,
+                bulkUserNames?.Count ?? 0,
+                bulkPasswords?.Count ?? 0
+            }.Max();
+
+            var rows = Enumerable.Range(0, rowCount)
+                .Select(i => new NewStudentInput(
+                    null,
+                    i < (bulkFirstNames?.Count ?? 0) ? bulkFirstNames![i] : null,
+                    i < (bulkLastNames?.Count ?? 0) ? bulkLastNames![i] : null,
+                    null,
+                    i < (bulkUserNames?.Count ?? 0) ? bulkUserNames![i] : null,
+                    i < (bulkPasswords?.Count ?? 0) ? bulkPasswords![i] : null))
+                .ToList();
+
+            var result = await _classManagement.BulkCreateStudentsAsync(rows);
+            if (!result.Success)
+            {
+                TempData["ErrorMessage"] = result.Error;
+                return RedirectToAction("Students");
+            }
+
+            await AuditAsync("BulkCreateStudents", $"Bulk created {result.Count} unassigned student profiles");
+            TempData["Message"] = $"Successfully created {result.Count} student profile(s).";
+            return RedirectToAction("Students");
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        [TeacherSharedAction]
         public async Task<IActionResult> BulkAddStudents(int classId, List<string>? bulkFirstNames, List<string>? bulkLastNames, List<string>? bulkUserNames, List<string>? bulkPasswords)
         {
             if (!CheckAccess()) return Denied();

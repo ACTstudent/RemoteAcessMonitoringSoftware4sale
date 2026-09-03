@@ -140,6 +140,7 @@ public class AdminControllerTests
     [InlineData(nameof(AdminController.Index))]
     [InlineData(nameof(AdminController.DeleteTeacher))]
     [InlineData(nameof(AdminController.AssignStudentToClass))]
+    [InlineData(nameof(AdminController.BulkCreateStudents))]
     [InlineData(nameof(AdminController.BulkPreviewCsv))]
     [InlineData(nameof(AdminController.ComputerHistory))]
     [InlineData(nameof(AdminController.UpdateWebsiteCategory))]
@@ -443,6 +444,26 @@ public class AdminControllerTests
         var result = await controller.CreateClass(new Class { ClassName = "" });
         var redirect = Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal("Classes", redirect.ActionName);
+    }
+
+    [Fact]
+    public async Task BulkCreateStudents_CreatesProfilesWithoutClassAssignment()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db, isAdmin: false, teacherId: 7);
+
+        var result = await controller.BulkCreateStudents(
+            new List<string> { "Ana", "Ben" },
+            new List<string> { "Reyes", "Cruz" },
+            new List<string> { "ana.reyes", "" },
+            new List<string> { "secret1", "secret2" });
+
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Students", redirect.ActionName);
+        var students = await db.Students.ToListAsync();
+        Assert.Equal(2, students.Count);
+        Assert.All(students, student => Assert.Null(student.ClassId));
+        Assert.Empty(await db.ClassStudents.ToListAsync());
     }
 
     [Fact]

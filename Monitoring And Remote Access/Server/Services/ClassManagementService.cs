@@ -65,6 +65,7 @@ public interface IClassManagementService
     Task<ClassOperationResult> DeleteClassAsync(int classId, int? teacherId = null);
     Task<ClassOperationResult> EnrollExistingStudentAsync(int classId, int studentId, bool moveStudent, int? teacherId = null);
     Task<ClassOperationResult> CreateStudentInClassAsync(int classId, NewStudentInput input, int? teacherId = null);
+    Task<ClassOperationResult> BulkCreateStudentsAsync(IReadOnlyList<NewStudentInput> inputs);
     Task<ClassOperationResult> BulkCreateStudentsInClassAsync(int classId, IReadOnlyList<NewStudentInput> inputs, int? teacherId = null);
     Task<BulkStudentPreview> PreviewBulkStudentsAsync(int classId, IReadOnlyList<NewStudentInput> inputs, int? teacherId = null);
     Task<BulkStudentImport> ValidateBulkStudentsAsync(int classId, IReadOnlyList<BulkStudentRow> rows, int? teacherId = null);
@@ -622,6 +623,58 @@ public sealed class ClassManagementService : IClassManagementService
         });
     }
 
+    public Task<ClassOperationResult> BulkCreateStudentsAsync(IReadOnlyList<NewStudentInput> inputs)
+    {
+        return InTransactionAsync(async () =>
+        {
+            var rows = inputs
+                .Where(input => input != null &&
+                                (!string.IsNullOrWhiteSpace(input.FirstName) ||
+                                 !string.IsNullOrWhiteSpace(input.LastName) ||
+                                 !string.IsNullOrWhiteSpace(input.FullName) ||
+                                 !string.IsNullOrWhiteSpace(input.Username) ||
+                                 !string.IsNullOrWhiteSpace(input.Password)))
+                .ToList();
+            if (rows.Count == 0)
+            {
+                return ClassOperationResult.Fail("Add at least one student profile before saving.");
+            }
+
+            var students = new List<Student>();
+            var usernames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var studentNumbers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var row in rows)
+            {
+                var validation = await ValidateStudentInputAsync(row);
+                if (!validation.Success)
+                {
+                    return validation;
+                }
+
+                var requestedUsername = NormalizeOptional(row.Username);
+                if (requestedUsername != null && usernames.Contains(requestedUsername))
+                {
+                    return ClassOperationResult.Fail($"The username '{requestedUsername}' is repeated in the bulk profiles.");
+                }
+
+                var requestedStudentNumber = NormalizeOptional(row.StudentNumber);
+                if (requestedStudentNumber != null && studentNumbers.Contains(requestedStudentNumber))
+                {
+                    return ClassOperationResult.Fail($"The student number '{requestedStudentNumber}' is repeated in the bulk profiles.");
+                }
+
+                var student = await BuildStudentAsync(row, null, usernames, studentNumbers);
+                students.Add(student);
+                usernames.Add(student.Username);
+                studentNumbers.Add(student.StudentNumber);
+            }
+
+            _context.Students.AddRange(students);
+            await _context.SaveChangesAsync();
+            return ClassOperationResult.Ok(count: students.Count);
+        });
+    }
+
     public BulkStudentPreview ParseBulkStudentsCsv(string csv)
     {
         var rows = new List<BulkStudentRow>();
@@ -833,7 +886,7 @@ public sealed class ClassManagementService : IClassManagementService
 
     private async Task<Student> BuildStudentAsync(
         NewStudentInput input,
-        Class entity,
+        Class? entity,
         HashSet<string>? reservedUsernames = null,
         HashSet<string>? reservedStudentNumbers = null)
     {
@@ -850,9 +903,9 @@ public sealed class ClassManagementService : IClassManagementService
             Username = username,
             PasswordHash = _hasher.HashPassword(new object(), input.Password!.Trim()),
             Status = "Active",
-            GradeSection = entity.ClassName,
-            ClassId = entity.ClassId,
-            AdviserId = entity.TeacherId
+            GradeSection = entity?.ClassName ?? string.Empty,
+            ClassId = entity?.ClassId,
+            AdviserId = entity?.TeacherId
         };
     }
 
