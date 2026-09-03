@@ -1,19 +1,19 @@
 ﻿{
     "schemaVersion":  1,
     "product":  "CAMS",
-    "version":  "2.8.0",
+    "version":  "2.9.6",
     "artifacts":  [
                       {
                           "fileName":  "CAMS-Server-Setup.exe",
                           "checksumFileName":  "CAMS-Server-Setup.exe.sha256",
-                          "size":  104303140,
-                          "sha256":  "15E7B00677CA22F4B2BB643163F52B4ED5D6EB9D8DDA76D21F63358A6102D602"
+                          "size":  104389707,
+                          "sha256":  "C114ED1AF0FC86F502CBE0DDF64287BF33EE9FB3464CCD81C957B21B427C060F"
                       },
                       {
                           "fileName":  "CAMS-Client-Setup.exe",
                           "checksumFileName":  "CAMS-Client-Setup.exe.sha256",
-                          "size":  67107730,
-                          "sha256":  "A6A254E569DCC08DF3C2892B20673694FD7FC82AB16324CD4001D485A5C3EA47"
+                          "size":  67108775,
+                          "sha256":  "D47D9F9FEC55C0DCC767541896BF136072F8840316E39FC040ACDE0478593376"
                       }
                   ]
 }
