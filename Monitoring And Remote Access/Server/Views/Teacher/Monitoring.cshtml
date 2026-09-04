@@ -303,7 +303,11 @@
 
         async function sendWorkstationCommand(method, dangerous = false) {
             if (!selectedConnectionId) return;
-            if (dangerous && !confirm(`Confirm ${method.replace("Student", "").toLowerCase()} for this workstation?`)) return;
+            if (dangerous) {
+                const command = method.replace("Student", "").toLowerCase();
+                const confirmed = await window.camsConfirm({ title: "Confirm workstation command", message: `Run ${command} on this workstation?`, confirmLabel: "Run command" });
+                if (!confirmed) return;
+            }
             try {
                 const result = await hub.invoke(method, selectedConnectionId);
                 showCommandResult(result);
@@ -391,7 +395,9 @@
             const targets = [...document.querySelectorAll(".unit-col")]
                 .filter(column => column.style.display !== "none")
                 .map(column => column.id.replace("unit-card-", ""));
-            if (!targets.length || !confirm(`Confirm ${label} for ${targets.length} visible workstations?`)) return;
+            if (!targets.length) return;
+            const confirmed = await window.camsConfirm({ title: "Confirm bulk command", message: `Run ${label} for ${targets.length} visible workstations?`, confirmLabel: "Run command" });
+            if (!confirmed) return;
             try {
                 await hub.invoke(method, targets);
             } catch (error) {

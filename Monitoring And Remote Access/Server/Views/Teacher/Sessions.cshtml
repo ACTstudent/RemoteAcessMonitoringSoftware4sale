@@ -20,9 +20,9 @@
         </div>
     </div>
     <div class="d-flex flex-wrap gap-2 justify-content-end">
-        <form asp-action="GlobalStartSession" method="post">@Html.AntiForgeryToken()<button class="btn btn-success rounded-pill px-3" onclick="return confirm('Resume every paused session across CAMS?');"><i class="bi bi-play-fill"></i> Resume All Sessions</button></form>
-        <form asp-action="GlobalPauseSession" method="post">@Html.AntiForgeryToken()<button class="btn btn-warning rounded-pill px-3" onclick="return confirm('Pause every lab session whose rule permits pausing?');"><i class="bi bi-pause-fill"></i> Pause All Sessions</button></form>
-        <form asp-action="GlobalEndSession" method="post">@Html.AntiForgeryToken()<button class="btn btn-danger rounded-pill px-3" onclick="return confirm('End every active lab session? Ended sessions cannot be resumed.');"><i class="bi bi-stop-fill"></i> End All Sessions</button></form>
+        <form asp-action="GlobalStartSession" method="post" data-confirm="Resume every paused session across CAMS?" data-confirm-title="Resume all sessions" data-confirm-label="Resume" data-confirm-variant="success">@Html.AntiForgeryToken()<button class="btn btn-success rounded-pill px-3"><i class="bi bi-play-fill"></i> Resume All Sessions</button></form>
+        <form asp-action="GlobalPauseSession" method="post" data-confirm="Pause every lab session whose rule permits pausing?" data-confirm-title="Pause all sessions" data-confirm-label="Pause" data-confirm-variant="warning">@Html.AntiForgeryToken()<button class="btn btn-warning rounded-pill px-3"><i class="bi bi-pause-fill"></i> Pause All Sessions</button></form>
+        <form asp-action="GlobalEndSession" method="post" data-confirm="End every active lab session? Ended sessions cannot be resumed." data-confirm-title="End all sessions" data-confirm-label="End sessions">@Html.AntiForgeryToken()<button class="btn btn-danger rounded-pill px-3"><i class="bi bi-stop-fill"></i> End All Sessions</button></form>
         <button class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#startSessionModal">
             <i class="bi bi-play-circle me-1"></i> Start New Session
         </button>
@@ -128,7 +128,7 @@
                                             @(s.Status == "Paused" ? "Resume" : "Pause")
                                         </button>
                                     </form>
-                                    <form method="post" action="/Teacher/EndSession" style="margin:0;">
+                                    <form method="post" action="/Teacher/EndSession" style="margin:0;" data-confirm="End this student session? It cannot be resumed." data-confirm-title="End session" data-confirm-label="End session">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@s.Id" />
                                         <button class="btn btn-sm btn-outline-danger rounded-pill px-3">End</button>

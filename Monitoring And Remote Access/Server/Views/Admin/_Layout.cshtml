@@ -20,7 +20,7 @@
     <link href="~/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
 </head>
-<body>
+<body class="app-shell">
     <div class="app-wrapper">
         <!-- Dark Emerald Sidebar -->
         <aside class="app-sidebar" id="appSidebar" aria-label="@(isTeacher ? "Teacher global management navigation" : "Administrator navigation")">
@@ -150,7 +150,10 @@
         </div>
     </div>
 
+    <partial name="~/Views/Shared/_ConfirmModal.cshtml" />
+
     <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
         (() => {
             const sidebar = document.getElementById('appSidebar');

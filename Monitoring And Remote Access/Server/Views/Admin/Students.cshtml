@@ -159,7 +159,7 @@
                                         <button class="btn btn-sm btn-outline-warning rounded-pill px-3"><i class="bi bi-unlock me-1"></i>Unlock</button>
                                     </form>
                                 }
-                                <form method="post" action="/Admin/SetAccountActive" style="margin:0;" onsubmit="return confirm('@(isActive ? "Deactivate" : "Activate") this student account across CAMS?');">
+                                <form method="post" action="/Admin/SetAccountActive" style="margin:0;" data-confirm="@(isActive ? "Deactivate" : "Activate") this student account across CAMS?" data-confirm-title="@(isActive ? "Deactivate" : "Activate") student" data-confirm-label="@(isActive ? "Deactivate" : "Activate")" data-confirm-variant="@(isActive ? "danger" : "success")">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="accountRole" value="Student" />
                                     <input type="hidden" name="id" value="@s.Id" />
@@ -171,7 +171,7 @@
                                 <button type="button" class="btn btn-sm btn-outline-emerald rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editStudentModal-@s.Id">
                                     <i class="bi bi-pencil me-1"></i> Edit
                                 </button>
-                                <form method="post" action="/Admin/DeleteStudent" style="margin: 0;" onsubmit="return confirm('Deactivate this student across CAMS while retaining historical records?');">
+                                <form method="post" action="/Admin/DeleteStudent" style="margin: 0;" data-confirm="Deactivate this student across CAMS while retaining historical records?" data-confirm-title="Deactivate student" data-confirm-label="Deactivate">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@s.Id" />
                                     <button class="btn btn-sm btn-outline-danger rounded-pill px-3">
@@ -328,21 +328,19 @@
     });
 
     document.querySelectorAll(".student-class-form").forEach(function (form) {
-        form.addEventListener("submit", function (event) {
+        form.addEventListener("submit", async function (event) {
             const select = form.querySelector("select[name='classId']");
             const currentClass = select?.dataset.currentClass || "";
             const currentClassId = select?.dataset.currentClassId || "";
             const selectedClassId = select?.value || "";
             const selectedClass = select?.selectedOptions[0]?.textContent?.trim() || "";
             const moveField = form.querySelector("input[name='moveStudent']");
-            moveField.value = "false";
-            if (currentClass && currentClassId && selectedClassId && selectedClassId !== currentClassId) {
-                if (!confirm(`Move this student from ${currentClass} to ${selectedClass}?`)) {
-                    event.preventDefault();
-                    return;
-                }
-                moveField.value = "true";
-            }
+            if (!currentClass || !currentClassId || !selectedClassId || selectedClassId === currentClassId || moveField.value === "true") return;
+            event.preventDefault();
+            const confirmed = await window.camsConfirm({ title: "Move student", message: `Move this student from ${currentClass} to ${selectedClass}?`, confirmLabel: "Move student", variant: "warning" });
+            if (!confirmed) return;
+            moveField.value = "true";
+            form.requestSubmit();
         });
     });
 </script>

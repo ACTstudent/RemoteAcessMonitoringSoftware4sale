@@ -1,10 +1,100 @@
 @model IReadOnlyList<Server.Models.RestrictionRule>
-@{ ViewData["Title"] = "Whitelists"; Layout = "_Layout"; }
-<h2 class="fw-bold mb-3">Global Application and Website Whitelist</h2>
-<p class="text-muted">These school-wide allow rules take precedence over matching categories and blacklist entries.</p>
-<div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
-<form method="post" action="/Admin/CreateWhitelist" class="row g-2 align-items-end">@Html.AntiForgeryToken()<div class="col-md-2"><label>Type</label><select name="RuleType" class="form-select"><option>Application</option><option>Website</option></select></div><div class="col-md-4"><label>Target</label><input name="Target" required maxlength="200" class="form-control" /></div><div class="col-md-4"><label>Description</label><input name="Description" maxlength="500" class="form-control" /></div><div class="col-md-1"><label><input type="checkbox" name="IsActive" value="true" checked /> Active</label><input type="hidden" name="IsGlobal" value="true" /></div><div class="col-md-1"><button class="btn btn-success">Add</button></div></form></div>
-<div class="card border-0 shadow-sm rounded-4 overflow-hidden"><table class="table custom-table mb-0"><thead><tr><th>Type</th><th>Target</th><th>Description</th><th>Active</th><th></th></tr></thead><tbody>
-@foreach (var rule in Model) { <tr><td>@rule.RuleType</td><td><code>@rule.Target</code></td><td>@rule.Description</td><td>@(rule.IsActive ? "Enabled" : "Disabled")</td><td><button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#edit-@rule.RestrictionRuleId">Edit</button><form method="post" action="/Admin/DeleteRestriction" class="d-inline" onsubmit="return confirm('Delete this global whitelist rule? This can affect every student workstation.');">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@rule.RestrictionRuleId" /><button class="btn btn-sm btn-outline-danger">Delete</button></form></td></tr><div class="modal fade" id="edit-@rule.RestrictionRuleId"><div class="modal-dialog"><div class="modal-content"><form method="post" action="/Admin/UpdateWhitelist">@Html.AntiForgeryToken()<input type="hidden" name="RestrictionRuleId" value="@rule.RestrictionRuleId" /><input type="hidden" name="IsGlobal" value="true" /><div class="modal-body"><label>Type</label><select name="RuleType" class="form-select"><option selected="@(rule.RuleType == "Application")">Application</option><option selected="@(rule.RuleType == "Website")">Website</option></select><label>Target</label><input name="Target" value="@rule.Target" required maxlength="200" class="form-control" /><label>Description</label><input name="Description" value="@rule.Description" maxlength="500" class="form-control" /><label><input type="checkbox" name="IsActive" value="true" @(rule.IsActive ? "checked" : "") /> Active</label></div><div class="modal-footer"><button class="btn btn-success">Save Global Rule</button></div></form></div></div></div> }
-@if (!Model.Any()) { <tr><td colspan="5" class="text-center text-muted py-4">No whitelist rules configured.</td></tr> }
-</tbody></table></div>
+@{
+    ViewData["Title"] = "Whitelists";
+    Layout = "_Layout";
+}
+
+<div class="page-header">
+    <div class="page-header-main">
+        <div class="icon-box-primary"><i class="bi bi-check-circle-fill fs-3"></i></div>
+        <div>
+            <h2>Whitelist Directory</h2>
+            <p>School-wide allow rules take precedence over matching categories and blacklist entries.</p>
+        </div>
+    </div>
+    <button type="button" class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#createWhitelistModal">
+        <i class="bi bi-plus-circle-fill me-1"></i>Add whitelist rule
+    </button>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-dark">Allowed applications and websites</h5>
+        <span class="badge bg-light text-dark font-monospace fs-6">@Model.Count Rules</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table custom-table mb-0">
+            <thead><tr><th>Type</th><th>Target</th><th>Description</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+                @foreach (var rule in Model)
+                {
+                    <tr>
+                        <td><span class="badge bg-success-subtle text-success-emphasis rounded-pill px-3">@rule.RuleType</span></td>
+                        <td><code>@rule.Target</code></td>
+                        <td>@(string.IsNullOrWhiteSpace(rule.Description) ? "No description" : rule.Description)</td>
+                        <td><span class="badge @(rule.IsActive ? "bg-success" : "bg-secondary") rounded-pill">@(rule.IsActive ? "Enabled" : "Disabled")</span></td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editWhitelist-@rule.RestrictionRuleId">Edit</button>
+                                <form method="post" action="/Admin/DeleteRestriction" data-confirm="Delete this global whitelist rule? This can affect every student workstation." data-confirm-title="Delete whitelist rule" data-confirm-label="Delete">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@rule.RestrictionRuleId" />
+                                    <button class="btn btn-sm btn-outline-danger rounded-pill px-3">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="5" class="text-center empty-state"><i class="bi bi-check-circle d-block fs-2 mb-2"></i>No whitelist rules configured.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="createWhitelistModal" tabindex="-1" aria-labelledby="createWhitelistModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header modal-header-themed">
+                <h5 class="modal-title" id="createWhitelistModalLabel"><i class="bi bi-check-circle-fill me-2"></i>Add whitelist rule</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="/Admin/CreateWhitelist">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="IsGlobal" value="true" />
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">Type</label><select name="RuleType" class="form-select"><option>Application</option><option>Website</option></select></div>
+                    <div class="mb-3"><label class="form-label">Target</label><input name="Target" required maxlength="200" class="form-control" placeholder="e.g. learning.example.org or app.exe" /></div>
+                    <div class="mb-3"><label class="form-label">Description</label><textarea name="Description" maxlength="500" class="form-control" rows="3" placeholder="Why this target is allowed"></textarea></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="IsActive" value="true" id="createWhitelistActive" checked /><label class="form-check-label" for="createWhitelistActive">Rule is active</label></div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-emerald rounded-pill px-4">Add rule</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@foreach (var rule in Model)
+{
+    <div class="modal fade" id="editWhitelist-@rule.RestrictionRuleId" tabindex="-1" aria-labelledby="editWhitelistLabel-@rule.RestrictionRuleId" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header modal-header-themed"><h5 class="modal-title" id="editWhitelistLabel-@rule.RestrictionRuleId"><i class="bi bi-pencil-square me-2"></i>Edit whitelist rule</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button></div>
+                <form method="post" action="/Admin/UpdateWhitelist">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="RestrictionRuleId" value="@rule.RestrictionRuleId" />
+                    <input type="hidden" name="IsGlobal" value="true" />
+                    <div class="modal-body">
+                        <div class="mb-3"><label class="form-label">Type</label><select name="RuleType" class="form-select"><option selected="@(rule.RuleType == "Application" ? "selected" : null)">Application</option><option selected="@(rule.RuleType == "Website" ? "selected" : null)">Website</option></select></div>
+                        <div class="mb-3"><label class="form-label">Target</label><input name="Target" value="@rule.Target" required maxlength="200" class="form-control" /></div>
+                        <div class="mb-3"><label class="form-label">Description</label><textarea name="Description" maxlength="500" class="form-control" rows="3">@rule.Description</textarea></div>
+                        <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="IsActive" value="true" id="editWhitelistActive-@rule.RestrictionRuleId" @(rule.IsActive ? "checked" : "") /><label class="form-check-label" for="editWhitelistActive-@rule.RestrictionRuleId">Rule is active</label></div>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-emerald rounded-pill px-4">Save changes</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+}

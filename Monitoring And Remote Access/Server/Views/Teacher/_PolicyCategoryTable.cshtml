@@ -17,7 +17,7 @@
         var pattern = app?.Pattern ?? web?.DomainPattern ?? "";
         var mode = app?.Mode ?? web?.Mode ?? "Block";
         var active = app?.IsActive ?? web?.IsActive ?? false;
-        <tr><td><strong>@name</strong><br /><code>@pattern</code></td><td>@mode</td><td>@(active ? "Enabled" : "Disabled")</td><td class="text-end"><button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#edit-@Model.Item2-@id">Edit</button> <form class="d-inline" method="post" action="/Teacher/@deleteAction" onsubmit="return confirm('Delete this category?');">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@id" /><button class="btn btn-sm btn-outline-danger">Delete</button></form></td></tr>
+        <tr><td><strong>@name</strong><br /><code>@pattern</code></td><td>@mode</td><td>@(active ? "Enabled" : "Disabled")</td><td class="text-end"><button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#edit-@Model.Item2-@id">Edit</button> <form class="d-inline" method="post" action="/Teacher/@deleteAction" data-confirm="Delete this category?" data-confirm-title="Delete category" data-confirm-label="Delete">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@id" /><button class="btn btn-sm btn-outline-danger">Delete</button></form></td></tr>
     }
     @if (!Model.Item1.Any()) { <tr><td colspan="4" class="text-muted text-center">No categories configured.</td></tr> }
     </tbody></table></div>

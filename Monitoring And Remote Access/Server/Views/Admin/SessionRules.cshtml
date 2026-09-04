@@ -64,7 +64,7 @@
                         </td>
                         <td class="text-end">
                             <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editSessionRule-@r.SessionRuleId">Edit</button>
-                            <form method="post" action="/Admin/DeleteSessionRule" style="margin:0;" onsubmit="return confirm('Deactivate this rule while retaining historical sessions?');">
+                            <form method="post" action="/Admin/DeleteSessionRule" style="margin:0;" data-confirm="Deactivate this rule while retaining historical sessions?" data-confirm-title="Deactivate session rule" data-confirm-label="Deactivate">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@r.SessionRuleId" />
                                 <button class="btn btn-sm btn-outline-danger rounded-pill px-3">

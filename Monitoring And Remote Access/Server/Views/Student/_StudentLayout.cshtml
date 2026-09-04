@@ -15,40 +15,15 @@
     <link href="~/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
 </head>
-<body>
-    <!-- Sticky Overlay Toolbar -->
-    <div class="bg-white border-bottom py-2 shadow-sm sticky-top">
-        <div class="container-fluid d-flex align-items-center justify-content-between px-4 flex-wrap gap-2">
-            <div class="d-flex align-items-center gap-3">
-                <button class="btn-toggle-sidebar d-lg-none" id="sidebarToggle" type="button" aria-label="Toggle Navigation" aria-controls="appSidebar" aria-expanded="false"><i class="bi bi-list"></i></button>
-                <img src="~/images/pardo_logo.png" alt="Pardo Elementary School" style="height: 38px;" />
-                <span class="fw-bold fs-5 text-dark" style="letter-spacing: -0.5px;">CAMS Student</span>
-                <span class="badge bg-success rounded-pill px-3 py-2" id="toolbarUnit">
-                    <i class="bi bi-pc-display me-1"></i> @assignedUnit
-                </span>
-                <span class="badge bg-secondary rounded-pill px-3 py-2" id="toolbarSession">No Session</span>
-            </div>
-            <div class="d-flex align-items-center gap-4">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="user-avatar-circle" style="width: 34px; height: 34px; font-size: 0.9rem;">
-                        <i class="bi bi-mortarboard-fill"></i>
-                    </div>
-                    <span class="fw-semibold text-dark fs-6">@studentName</span>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-clock-history text-muted"></i>
-                    <span class="session-timer fs-4" id="toolbarTimer">--:--</span>
-                </div>
-                <a href="@Url.Action("Logout", "Account")" class="btn btn-outline-danger btn-sm rounded-pill px-3" title="Logout">
-                    <i class="bi bi-box-arrow-right"></i>
-                </a>
-            </div>
-        </div>
-    </div>
-
+<body class="app-shell">
     <div class="app-wrapper">
         <!-- Sidebar Navigation -->
-        <aside class="app-sidebar" id="appSidebar" style="min-height: calc(100vh - 60px);">
+        <aside class="app-sidebar" id="appSidebar" aria-label="Student navigation">
+            <div class="sidebar-header">
+                <img src="~/images/pardo_logo.png" alt="Pardo Elementary School" class="school-logo-img" />
+                <div class="sidebar-brand-text">CAMS Student</div>
+                <div class="sidebar-brand-sub">Pardo Elementary School</div>
+            </div>
             <nav class="sidebar-nav pt-4">
                 <a href="@Url.Action("Index", "Student")" class="nav-item-custom @(currentAction == "Index" ? "active" : "")">
                     <i class="bi bi-info-circle-fill"></i>
@@ -68,11 +43,28 @@
 
         <!-- Main Content Area -->
         <div class="app-main">
+            <header class="app-header student-toolbar">
+                <div class="d-flex align-items-center gap-3 student-toolbar-primary">
+                    <button class="btn-toggle-sidebar d-lg-none" id="sidebarToggle" type="button" aria-label="Toggle Navigation" aria-controls="appSidebar" aria-expanded="false"><i class="bi bi-list"></i></button>
+                    <span class="badge bg-success rounded-pill px-3 py-2" id="toolbarUnit"><i class="bi bi-pc-display me-1"></i> @assignedUnit</span>
+                    <span class="badge bg-secondary rounded-pill px-3 py-2" id="toolbarSession">No Session</span>
+                </div>
+                <div class="d-flex align-items-center gap-3 student-toolbar-meta">
+                    <div class="d-flex align-items-center gap-2 student-identity">
+                        <div class="user-avatar-circle" style="width: 34px; height: 34px; font-size: 0.9rem;"><i class="bi bi-mortarboard-fill"></i></div>
+                        <span class="fw-semibold text-dark fs-6">@studentName</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2"><i class="bi bi-clock-history text-muted"></i><span class="session-timer fs-4" id="toolbarTimer">--:--</span></div>
+                    <a href="@Url.Action("Logout", "Account")" class="btn btn-outline-danger btn-sm rounded-pill px-3" title="Logout"><i class="bi bi-box-arrow-right"></i><span class="visually-hidden">Logout</span></a>
+                </div>
+            </header>
             <main role="main" class="content-padding">
                 @RenderBody()
             </main>
         </div>
     </div>
+
+    <partial name="~/Views/Shared/_ConfirmModal.cshtml" />
 
     <!-- Warning / Notification Popup Modal -->
     <div class="modal fade" id="alertModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
@@ -92,6 +84,7 @@
 
     <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/signalr/signalr.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
         const conn = new signalR.HubConnectionBuilder().withUrl("/remoteMonitoringHub").withAutomaticReconnect().build();
         const sidebar = document.getElementById("appSidebar");
@@ -133,8 +126,11 @@
         });
         conn.on("SessionEnded", () => {
             sStatus = "Ended"; sElapsed = 0; render();
-            alert("The laboratory session has been ended by the teacher. You will be logged out.");
-            location.href = "/Account/Logout";
+            document.getElementById("alertModalHeader").style.backgroundColor = "#dc2626";
+            document.getElementById("alertModalTitle").textContent = "Session ended";
+            document.getElementById("alertModalBody").textContent = "The laboratory session has been ended by the teacher. You will now be logged out.";
+            alertModalEl.addEventListener("hidden.bs.modal", () => { location.href = "/Account/Logout"; }, { once: true });
+            bootstrap.Modal.getOrCreateInstance(alertModalEl).show();
         });
         conn.on("SendWarningPopup", (w) => {
             document.getElementById("alertModalHeader").style.backgroundColor = "#dc2626";

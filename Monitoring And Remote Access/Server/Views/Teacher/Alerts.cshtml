@@ -143,7 +143,7 @@
             document.getElementById('bulk-alert-form')?.addEventListener('submit', event => {
                 if (!selectors.some(box => box.checked)) {
                     event.preventDefault();
-                    window.alert('Select at least one alert group.');
+                    window.camsConfirm({ title: 'Select alerts', message: 'Select at least one alert group before using a bulk action.', confirmLabel: 'OK', variant: 'primary' });
                 }
             });
         })();

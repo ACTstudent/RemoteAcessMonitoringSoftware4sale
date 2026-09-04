@@ -60,7 +60,7 @@
                             }
                         </td>
                         <td class="text-end">
-                            <form method="post" action="/Admin/DeleteRole" style="margin:0;" onsubmit="return confirm('Delete this role?');">
+                            <form method="post" action="/Admin/DeleteRole" style="margin:0;" data-confirm="Delete this role?" data-confirm-title="Delete role" data-confirm-label="Delete">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@r.RoleId" />
                                 <button class="btn btn-sm btn-outline-danger rounded-pill px-3">

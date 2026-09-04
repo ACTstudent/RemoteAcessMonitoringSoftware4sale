@@ -32,7 +32,7 @@
                     @if (owned)
                     {
                         <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editRule-@rule.RestrictionRuleId">Edit</button>
-                        <form class="d-inline" method="post" asp-action="DeleteRestriction" onsubmit="return confirm('Delete this rule?');">
+                        <form class="d-inline" method="post" asp-action="DeleteRestriction" data-confirm="Delete this restriction rule?" data-confirm-title="Delete rule" data-confirm-label="Delete">
                             @Html.AntiForgeryToken()<input type="hidden" name="id" value="@rule.RestrictionRuleId" /><button class="btn btn-sm btn-outline-danger">Delete</button>
                         </form>
                     }
