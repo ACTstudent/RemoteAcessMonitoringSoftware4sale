@@ -25,7 +25,7 @@ function Invoke-Native {
 function Reset-BuildDirectory {
     param([Parameter(Mandatory = $true)][string]$Name)
 
-    $allowed = @("client-publish", "client-dist", "server-publish", "server-dist")
+    $allowed = @("client-publish", "client-dist", "server-publish", "server-dist", "test-results")
     if ($allowed -notcontains $Name) {
         throw "Refusing to clean unexpected build directory '$Name'."
     }
@@ -101,8 +101,17 @@ $clientProject = Join-Path $root "Monitoring And Remote Access\Client\Client.csp
 $serverProject = Join-Path $root "Monitoring And Remote Access\Server\Server.csproj"
 
 Write-Host "[2/9] Running server and client tests..." -ForegroundColor Cyan
-Invoke-Native "dotnet" (@("test", $serverTestProject, "-c", "Release", "--verbosity", "minimal") + $versionArguments) "Server tests failed"
-Invoke-Native "dotnet" (@("test", $clientTestProject, "-c", "Release", "--verbosity", "minimal") + $versionArguments) "Client tests failed"
+# Results are written as TRX so a failing release build leaves behind which test
+# failed and why, rather than only a red step in the log. CI uploads this folder.
+$testResults = Reset-BuildDirectory "test-results"
+Invoke-Native "dotnet" (@(
+    "test", $serverTestProject, "-c", "Release", "--verbosity", "minimal",
+    "--logger", "trx;LogFileName=server-tests.trx", "--results-directory", $testResults
+) + $versionArguments) "Server tests failed"
+Invoke-Native "dotnet" (@(
+    "test", $clientTestProject, "-c", "Release", "--verbosity", "minimal",
+    "--logger", "trx;LogFileName=client-tests.trx", "--results-directory", $testResults
+) + $versionArguments) "Client tests failed"
 
 Write-Host "[3/9] Building the solution..." -ForegroundColor Cyan
 Invoke-Native "dotnet" (@("build", $solution, "-c", "Release", "-v", "minimal") + $versionArguments) "Solution build failed"
