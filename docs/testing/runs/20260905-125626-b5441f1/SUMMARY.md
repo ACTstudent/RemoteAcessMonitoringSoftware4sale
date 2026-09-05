@@ -1,5 +1,23 @@
 # CAMS test run — 20260905-125626-b5441f1
 
+> **Later reading, added 2026-09-05.** This report is kept as it was written at
+> `b5441f1`. Two things in it have since changed, and the record of that is in
+> [ADDENDUM-install-and-DEF-001.md](ADDENDUM-install-and-DEF-001.md):
+>
+> - **DEF-001, the defect described below as affecting every page, is fixed and
+>   closed.** The interface fonts are now self-hosted and load offline.
+> - The install case has since been executed on the development machine.
+>
+> The BLOCKED live cases below are still blocked; they need hardware this run
+> did not have. The outcome recorded below has deliberately not been edited —
+> the addendum is the correction, this is the original.
+>
+> **Raw evidence for this run is gone.** The path named in the table below was a
+> session-scoped scratch directory, not retained storage. The committed CSVs and
+> notes in this folder are what survives. Later runs should record a reproducible
+> command and fixture, or a retention-backed artifact link, instead of a
+> temporary path.
+
 | Field | Value |
 | --- | --- |
 | Started (UTC) | 2026-09-05T12:56:26Z |

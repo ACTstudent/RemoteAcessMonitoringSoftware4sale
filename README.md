@@ -98,15 +98,17 @@ Validate on the actual classroom hardware and network before rollout:
 
 ## Documentation
 
-- [Whole-codebase testing plan](docs/testing/TEST-PLAN.md)
-- [Professional finish and cleanup plan](docs/improvements/PROFESSIONALIZATION-PLAN.md)
-- [CAMS Guide](CAMS-Guide.md)
-- [Deployment Guide](DEPLOYMENT.md)
-- [Entity Relationship Diagram](DIAGRAMS/ERD.md)
-- [System Flowchart](DIAGRAMS/Flowchart.md)
-- [Menu Structure](DIAGRAMS/Menu-Structure-Diagram.md)
-- [SignalR Message Flow](DIAGRAMS/SignalR-Message-Flow.md)
-- [Use Cases](DIAGRAMS/Use-Case-Diagram.md)
+**[The documentation index](docs/README.md) lists everything**, grouped by what
+you came for: using CAMS, deploying and troubleshooting it, its architecture,
+running the tests, and the improvement ledger. It also states what is
+deliberately not documented yet and why.
+
+The ones reached for most often:
+
+- [CAMS Guide](CAMS-Guide.md) — the product and its three roles
+- [Deployment Guide](DEPLOYMENT.md) — trust bootstrap, offline bundle, validation
+- [Running the tests](docs/README.md#running-the-tests) — one command for all 378
+- [Improvement progress](docs/improvements/PROGRESS.md) — what is done, what is blocked
 
 ## License
 
