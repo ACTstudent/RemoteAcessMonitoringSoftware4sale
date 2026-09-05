@@ -6,6 +6,32 @@ names the work item it belongs to in [PROGRESS.md](PROGRESS.md).
 
 ---
 
+## D-009 — The workflow change waits for a scope rather than being dropped
+
+**Item:** OPS-06. **Date:** 2026-09-05.
+
+GitHub refuses a push touching `.github/workflows/` from a token without the
+`workflow` scope, and the token authorising this machine holds
+`gist, read:org, repo`. The commit sat mid-history and blocked every later push.
+
+**Decision:** move it to a local branch, `ci-test-results`, so main stays
+pushable and the change stays intact and reviewable.
+
+**Rejected:** dropping the change, which loses a real improvement over a
+credential detail; and reverting it in a follow-up commit, which does not help —
+GitHub inspects the commits being pushed, so a revert touches a workflow file
+too and is refused just the same.
+
+**To land it:** grant the scope, then merge the branch. Granting scope is the
+repository owner's decision, not one to make on their behalf.
+
+```
+gh auth refresh -h github.com -s workflow
+git merge ci-test-results && git push origin main
+```
+
+---
+
 ## D-008 — Alert filter state lives in the URL, not the session
 
 **Item:** FLOW-02. **Date:** 2026-09-05.

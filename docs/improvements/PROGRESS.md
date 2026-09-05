@@ -24,18 +24,23 @@ Owner for every item below: implementation agent, unless a person is named.
 | P0 | Baseline capture and reconciliation | VERIFIED | `acc8761`, `e477560` |
 | CODE-02 | Move layout database queries into a view component | VERIFIED | `45b07d9` |
 | CODE-04 | Extract page JavaScript from Razor into local files | IN PROGRESS | `265fd4e` |
-| CODE-08 | Remove the global nullable suppression | VERIFIED | `fb590c7` |
+| CODE-08 | Remove the global nullable suppression | VERIFIED | `fb590c7`, `3b06603` |
 | CODE-09 | Session lifecycle duration and expiry correctness | VERIFIED | pre-plan, see below |
+| OPS-01 | `.editorconfig` and line-ending rules | VERIFIED | `35cd09e` |
+| OPS-04 | Make the test entry point obvious | VERIFIED | `37e91b5` |
+| OPS-06 | Upload test results and failure logs in CI | BLOCKED | branch `ci-test-results` |
+| OPS-08 | One documentation index | VERIFIED | `ab6fe95` |
 | OPS-09 | Delete proven-unused code after reference checks | IN PROGRESS | `6fcf499` |
+| UX-03 | Standardize table density, row actions and pagination | IN PROGRESS | `8d1328c` |
 | UX-01 | Consolidate design tokens | IN PROGRESS | pre-plan, see below |
 | UX-02 | Shared shell with role-aware navigation | IN PROGRESS | `76b782e` |
 | UX-04 | Standardize loading/empty/error/success states | IN PROGRESS | `c00cc27`, `90fc671` |
 | UX-05 | Branding, favicon, titles, copy, offline assets | IN PROGRESS | `b9c0e63` |
-| UX-03, UX-06 | Page/table patterns; accessibility pass | NOT STARTED | — |
+| UX-06 | Accessibility pass | NOT STARTED | — |
 | FLOW-02 | Keep list filters, page and return location across actions | VERIFIED (alerts) | `395abe9` |
 | FLOW-01, 03, 04, 05, 06 | Setup checklist, connection state, command feedback, interruption, collector states | NOT STARTED | — |
 | CODE-01, 03, 05, 06, 07 | Controller/client/constant/CSS/diagnostics work | NOT STARTED | — |
-| OPS-01…08 | Repository and delivery cleanup | NOT STARTED | — |
+| OPS-02, 03, 05, 07 | Generated-file inventory, version input, prerequisite checks, evidence retention | NOT STARTED | — |
 | LIVE-01, LIVE-02 | Test suites and decision-branch coverage | IN PROGRESS | see below |
 | LIVE-03…06 | Operator journeys, two-client LAN, install rehearsal, capacity | BLOCKED | needs environment |
 
@@ -161,7 +166,88 @@ in fact a bug.
 - **Test results:** covered by the server suite (320/320), including pause, resume and end.
 - **Status:** VERIFIED.
 
+### OPS-01 — Formatting and line-ending rules
+
+- **Observed problem:** line endings had no stated rule. The convention lived only in
+  one machine's `core.autocrlf`, so every commit written by a tool that emits LF
+  produced a renormalization warning and nothing recorded what was intended.
+- **Change:** `.gitattributes` is the binding rule; `.editorconfig` describes the style
+  already in use (four spaces, Allman, UTF-8). Windows batch, PowerShell and Inno Setup
+  scripts check out CRLF. Tracked installers and fonts are marked binary, because a
+  line-ending conversion applied to a release artifact would corrupt it.
+- **Evidence:** every text file in the repository was already stored with LF — 247 of
+  them, no exceptions — so `text=auto` records the existing state. `git status` after
+  adding the file showed only the new files themselves: **zero renormalization**.
+- **Deliberately not done:** no file was reformatted. The plan asks that mass formatting
+  stay separate, and a whitespace diff is exactly where a behavioral change hides.
+- **Status:** VERIFIED.
+
+### OPS-04 — Make the test entry point obvious
+
+- **Observed problem:** `dotnet test` on `RemoteMonitoring.sln` ran nothing and said so
+  quietly. The solution held Server, Client and Shared and neither test project, so a
+  fresh checkout produced a green, empty result and the 378 existing tests were
+  reachable only by naming their `.csproj` files.
+- **Change:** `Server.Tests`, `Client.Tests` and the `CamsDbCleaner` tool are in the
+  solution. The canonical build writes TRX into `test-results/`, added to
+  `build-everything.ps1`'s directory allowlist rather than loosening that guard.
+- **Evidence after:** `dotnet test "Monitoring And Remote Access/RemoteMonitoring.sln"`
+  runs **378/378** (server 345, client 33). TRX written. `build-everything.ps1` parses.
+- **Not run:** the packaging steps, because they rebuild the tracked installers.
+- **Status:** VERIFIED.
+
+### OPS-08 — One documentation index
+
+- **Observed problem:** seventeen documents existed; the README linked nine and omitted
+  the test cases, the agent handoff, the source inventory, every run report and all three
+  improvement ledgers. Separately, the 20260905 run summary described a defect as
+  affecting every page and never mentioned the addendum that closed it, so the first
+  thing a reader met was out of date.
+- **Change:** `docs/README.md` is the index, grouped as the plan asks — using CAMS,
+  deploying and troubleshooting, architecture, running the tests, improvement ledger —
+  and ends with what is deliberately undocumented, so those gaps read as known rather
+  than missed. The run summary now opens with a dated notice pointing at its addendum,
+  with the original outcome left exactly as written.
+- **Evidence after:** all **32 links and anchors resolve**, checked programmatically.
+- **Status:** VERIFIED.
+
 ## In-progress items
+
+### UX-03 — Table and pagination patterns
+
+- **Observed problem:** `RemoteHistory` accepted a page number and its query returned a
+  paged result of 100 per page, but the view rendered no controls at all. **A command
+  audit longer than one page was unreachable through the interface** — the data was
+  there and there was no way to ask for it. The alerts list had a working pager written
+  inline, so there was one implementation and one omission rather than a shared pattern.
+- **User outcome:** every paged list has page controls in the same place behaving the
+  same way, and paging never resets the filter that produced the list.
+- **Source files:** `Server/Models/PagerViewModel.cs` (new),
+  `Server/Views/Shared/_Pager.cshtml` (new), `Server/Views/Teacher/Alerts.cshtml`,
+  `Server/Views/Teacher/RemoteHistory.cshtml`.
+- **Accessibility:** an unavailable direction renders as a `span`, not a link carrying
+  Bootstrap's `.disabled` class. That class stops a mouse and not the keyboard, so the
+  old markup gave a keyboard user a focus stop leading to `page=0`.
+- **Evidence after:** headless browser, 9/9 — the history pager reports "150 commands,
+  Page 1 of 2", page 2 is reachable and shows rows, paging keeps `?command=`, alerts
+  still page with severity, station and `pageSize` intact, a single page of results
+  renders no pager, and the disabled direction is not focusable.
+- **Test results:** 378/378 through the solution.
+- **Remaining:** the rest of UX-03 — page headers, one primary action per task area,
+  table density, row actions, and search/filter/reset placement — is not done. Only the
+  pagination half of the item is.
+- **Status:** IN PROGRESS.
+
+### Observation not yet acted on
+
+`RemoteHistory` shows all teachers' remote-support sessions in its upper table
+(`RemoteControlSessions`, no teacher filter) while the command audit below it is scoped
+to the signed-in teacher (`RemoteCommandLogs.TeacherId == teacherId`). Under the global
+access decision ([D-001](DECISIONS.md)) neither is wrong, but the page presents two
+different scopes under one heading that says "Your remote-support sessions". Changing
+either scope is a product decision, not a refactor, so it is recorded here rather than
+made.
+
 
 ### CODE-04 — Extract page JavaScript from Razor into local files
 
@@ -214,6 +300,32 @@ Recorded for accuracy. None of these meet the plan's acceptance criteria yet.
 - **Status:** IN PROGRESS.
 
 ## Blocked items
+
+### OPS-06 — Upload test results and failure logs in CI
+
+**Written, verified locally, and not pushed.** The change lives on the local branch
+`ci-test-results` (commit `9e9e641`).
+
+- **Observed problem:** a failing CI run left a red step and nothing else, so the first
+  move after any failure was to reproduce it locally.
+- **Change:** both workflows write TRX and upload it with `if: always()`, which is the
+  case that matters. The split is preserved and now stated: `test.yml` is the fast
+  baseline on ubuntu and runs the server tests only, because `Client.Tests` targets
+  `net8.0-windows` and cannot build there; `ci-full.yml` is the slow Windows build that
+  packages and validates the installers and covers both suites.
+- **Blocked on:** the GitHub token authorising pushes from this machine holds
+  `gist, read:org, repo` and not `workflow`, so GitHub refuses any push that touches
+  `.github/workflows/`. This is an authorisation limit, not a problem with the change.
+- **To land it:** grant the scope, then merge the branch.
+
+  ```
+  gh auth refresh -h github.com -s workflow
+  git merge ci-test-results && git push origin main
+  ```
+
+- **Status:** BLOCKED.
+
+### Environment-blocked items
 
 | ID | Item | Blocked on |
 | --- | --- | --- |
