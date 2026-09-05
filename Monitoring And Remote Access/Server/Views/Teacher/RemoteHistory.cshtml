@@ -3,6 +3,8 @@
     ViewData["Title"] = "Remote-Control History";
     Layout = "_TeacherLayout";
     var sessions = (IEnumerable<Server.Models.RemoteControlSession>)(ViewBag.RemoteSessions ?? Array.Empty<Server.Models.RemoteControlSession>());
+    // The filter travels with the page links so paging does not reset it.
+    var historyFilter = new { from = ViewBag.From, to = ViewBag.To, command = ViewBag.Command, studentId = ViewBag.StudentId };
 }
 <div class="d-flex align-items-center gap-3 mb-4">
     <div class="icon-box-primary"><i class="bi bi-terminal-fill fs-3"></i></div>
@@ -25,3 +27,4 @@
     @if (!Model.Items.Any()) { <tr><td colspan="4" class="text-center py-4 text-muted">No remote commands recorded.</td></tr> }
     </tbody></table></div>
 </div>
+@await Html.PartialAsync("_Pager", Server.Models.PagerViewModel.For(Model, "commands", "RemoteHistory", historyFilter))

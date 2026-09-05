@@ -143,17 +143,7 @@
     </div>
 </div>
 
-@if (paging.PageCount > 1)
-{
-    <nav class="d-flex justify-content-between align-items-center mt-3" aria-label="Alert pages">
-        <span class="small text-muted">@paging.TotalCount grouped alerts</span>
-        <div class="d-flex align-items-center gap-2">
-            <a class="btn btn-sm btn-outline-secondary @(paging.Page == 1 ? "disabled" : "")" href="@Url.Action("Alerts", filter.ToRouteValues(paging.Page - 1))">Previous</a>
-            <span class="small">Page @paging.Page of @paging.PageCount</span>
-            <a class="btn btn-sm btn-outline-secondary @(paging.Page == paging.PageCount ? "disabled" : "")" href="@Url.Action("Alerts", filter.ToRouteValues(paging.Page + 1))">Next</a>
-        </div>
-    </nav>
-}
+@await Html.PartialAsync("_Pager", PagerViewModel.For(paging, "grouped alerts", "Alerts", filter.ToRouteValues()))
 
 @section Scripts {
     <script>
