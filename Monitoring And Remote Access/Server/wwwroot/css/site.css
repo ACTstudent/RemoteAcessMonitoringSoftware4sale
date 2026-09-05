@@ -1187,3 +1187,22 @@ body {
 .cams-toast-body .cams-toast-text {
     font-weight: 600;
 }
+
+/* ---------------------------------------------------------------------------
+   Sidebar collapse
+
+   The .show class only ever applied below 992px, so the menu button did
+   nothing on a desktop screen. On wide viewports the button now slides the
+   sidebar out of the layout and back again.
+   --------------------------------------------------------------------------- */
+@media (min-width: 992px) {
+    body.sidebar-collapsed .app-sidebar {
+        margin-left: calc(var(--sidebar-width) * -1);
+        box-shadow: none;
+    }
+
+    /* Nothing inside should be reachable by keyboard while it is hidden. */
+    body.sidebar-collapsed .app-sidebar * {
+        visibility: hidden;
+    }
+}

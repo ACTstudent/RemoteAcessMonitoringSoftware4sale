@@ -290,3 +290,111 @@ window.CamsToast = (function () {
 
     return { show: show };
 })();
+
+// Sidebar menu button. Below 992px it opens the sidebar as an overlay drawer;
+// at wider sizes it collapses the sidebar out of the layout and back. The
+// desktop choice is remembered, because every navigation is a full page load
+// and the sidebar would otherwise reappear on each click.
+(function () {
+    var STORAGE_KEY = 'cams.sidebar.collapsed';
+    var DESKTOP_QUERY = '(min-width: 992px)';
+
+    function init() {
+        var sidebar = document.getElementById('appSidebar');
+        var toggle = document.getElementById('sidebarToggle');
+        var backdrop = document.getElementById('sidebarBackdrop');
+        if (!sidebar || !toggle) {
+            return;
+        }
+
+        var desktop = window.matchMedia(DESKTOP_QUERY);
+        var isDesktop = function () { return desktop.matches; };
+
+        function readStored() {
+            try {
+                return window.localStorage.getItem(STORAGE_KEY) === 'true';
+            } catch (error) {
+                return false; // storage can be unavailable; default to visible
+            }
+        }
+
+        function store(collapsed) {
+            try {
+                window.localStorage.setItem(STORAGE_KEY, String(collapsed));
+            } catch (error) {
+                // Not being able to remember the choice is not worth failing over.
+            }
+        }
+
+        function setDrawerOpen(open) {
+            sidebar.classList.toggle('show', open);
+            if (backdrop) {
+                backdrop.classList.toggle('show', open);
+            }
+            document.body.classList.toggle('sidebar-open', open);
+            toggle.setAttribute('aria-expanded', String(open));
+        }
+
+        function setCollapsed(collapsed, remember) {
+            document.body.classList.toggle('sidebar-collapsed', collapsed);
+            toggle.setAttribute('aria-expanded', String(!collapsed));
+            if (remember !== false) {
+                store(collapsed);
+            }
+        }
+
+        if (isDesktop()) {
+            setCollapsed(readStored(), false);
+        }
+
+        toggle.addEventListener('click', function () {
+            if (isDesktop()) {
+                setCollapsed(!document.body.classList.contains('sidebar-collapsed'));
+            } else {
+                setDrawerOpen(!sidebar.classList.contains('show'));
+            }
+        });
+
+        if (backdrop) {
+            backdrop.addEventListener('click', function () { setDrawerOpen(false); });
+        }
+
+        // Following a link closes the drawer, but must not collapse the desktop
+        // sidebar, or it would vanish on every navigation.
+        sidebar.querySelectorAll('a').forEach(function (link) {
+            link.addEventListener('click', function () {
+                if (!isDesktop()) {
+                    setDrawerOpen(false);
+                }
+            });
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && !isDesktop()) {
+                setDrawerOpen(false);
+            }
+        });
+
+        var onBreakpointChange = function (event) {
+            if (event.matches) {
+                setDrawerOpen(false);
+                setCollapsed(readStored(), false);
+            } else {
+                document.body.classList.remove('sidebar-collapsed');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+        };
+
+        if (typeof desktop.addEventListener === 'function') {
+            desktop.addEventListener('change', onBreakpointChange);
+        } else if (typeof desktop.addListener === 'function') {
+            desktop.addListener(onBreakpointChange);
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();

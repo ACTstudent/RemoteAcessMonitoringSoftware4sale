@@ -168,24 +168,6 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
         (() => {
-            const sidebar = document.getElementById('appSidebar');
-            const toggle = document.getElementById('sidebarToggle');
-            const backdrop = document.getElementById('sidebarBackdrop');
-            const setOpen = (open) => {
-                sidebar?.classList.toggle('show', open);
-                backdrop?.classList.toggle('show', open);
-                document.body.classList.toggle('sidebar-open', open);
-                toggle?.setAttribute('aria-expanded', String(open));
-            };
-            toggle?.addEventListener('click', () => setOpen(!sidebar?.classList.contains('show')));
-            backdrop?.addEventListener('click', () => setOpen(false));
-            sidebar?.querySelectorAll('a').forEach(link => link.addEventListener('click', () => setOpen(false)));
-            document.addEventListener('keydown', event => { if (event.key === 'Escape') setOpen(false); });
-            window.addEventListener('resize', () => { if (window.innerWidth > 991) setOpen(false); });
-        })();
-    </script>
-    <script>
-        (() => {
             const badge = document.getElementById("monitoringAlertBadge");
             const connection = new signalR.HubConnectionBuilder()
                 .withUrl("/remoteMonitoringHub")
