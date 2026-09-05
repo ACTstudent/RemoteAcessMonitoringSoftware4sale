@@ -191,7 +191,10 @@ namespace Server.Controllers
 
             var rule = sessionRuleId.HasValue
                 ? await _context.SessionRules.FirstOrDefaultAsync(r => r.SessionRuleId == sessionRuleId.Value && r.IsActive)
-                : await _context.SessionRules.FirstOrDefaultAsync(r => r.IsDefault);
+                // Must match the automatic session path, which only ever picks an
+                // active default rule. Without IsActive a deactivated rule could
+                // still be attached to a new session.
+                : await _context.SessionRules.FirstOrDefaultAsync(r => r.IsActive && r.IsDefault);
             if (sessionRuleId.HasValue && rule is null)
             {
                 TempData["ErrorMessage"] = "The selected session rule is unavailable.";
@@ -417,7 +420,7 @@ namespace Server.Controllers
             rule.RuleType = rule.RuleType.Trim(); rule.Target = rule.Target.Trim(); rule.Description = rule.Description?.Trim() ?? "";
             rule.TeacherId = HttpContext.Session.GetInt32("TeacherId");
             rule.IsGlobal = false;
-            rule.CreatedAt = DateTime.Now;
+            rule.CreatedAt = DateTime.UtcNow;
             _context.RestrictionRules.Add(rule);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateRestriction", $"Added {rule.Mode} restriction on {rule.Target}");

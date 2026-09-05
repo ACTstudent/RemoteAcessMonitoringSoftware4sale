@@ -1011,7 +1011,7 @@ namespace Server.Controllers
                 var defaults = _context.SessionRules.Where(s => s.IsDefault);
                 foreach (var d in defaults) d.IsDefault = false;
             }
-            rule.CreatedAt = DateTime.Now;
+            rule.CreatedAt = DateTime.UtcNow;
             _context.SessionRules.Add(rule);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateSessionRule", $"Created session rule {rule.Name}");

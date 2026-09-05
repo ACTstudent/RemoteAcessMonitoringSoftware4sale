@@ -412,6 +412,35 @@ public class AuthenticationServiceTests
         Assert.All(sessions, s => Assert.NotNull(s.EndTime));
     }
 
+    // EndTime used to be written with DateTime.Now while StartTime is always UTC,
+    // so on a machine east of UTC every session closed by logout reported a
+    // duration inflated by the machine's offset.
+    [Fact]
+    public async Task LogoutAsync_WritesEndTimeInUtcSoDurationsStayAccurate()
+    {
+        var context = CreateContext();
+        var startedUtc = DateTime.UtcNow.AddMinutes(-10);
+        context.LabSessions.Add(new LabSession
+        {
+            Id = 1,
+            StudentId = 10,
+            PCName = "PC1",
+            IPAddress = "127.0.0.1",
+            Status = "Running",
+            IsActive = true,
+            StartTime = startedUtc
+        });
+        await context.SaveChangesAsync();
+
+        await new AuthenticationService(context).LogoutAsync(10);
+
+        var session = await context.LabSessions.SingleAsync(s => s.Id == 1);
+        var duration = session.EndTime!.Value - session.StartTime;
+
+        // Ten minutes, not ten minutes plus the machine's UTC offset.
+        Assert.InRange(duration.TotalMinutes, 9.5, 10.5);
+    }
+
     [Fact]
     public async Task LogoutAsync_NullStudentId_DoesNothing()
     {

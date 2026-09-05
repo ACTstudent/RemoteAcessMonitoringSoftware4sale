@@ -171,7 +171,10 @@ public class AuthenticationService : IAuthenticationService
         {
             session.IsActive = false;
             session.Status = "Ended";
-            session.EndTime = DateTime.Now;
+            // StartTime and every other EndTime write use UTC. Writing local time
+            // here inflated (EndTime - StartTime) by the machine's UTC offset, so
+            // reported session durations were wrong for sessions closed by logout.
+            session.EndTime = DateTime.UtcNow;
             if (session.Computer is not null)
                 session.Computer.Status = string.IsNullOrWhiteSpace(session.Computer.AssignedTo) ? "Available" : "Assigned";
         }
