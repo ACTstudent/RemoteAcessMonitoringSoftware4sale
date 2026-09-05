@@ -65,15 +65,28 @@ public sealed class LabSessionLifecycleService
     public static GlobalSessionMessage CreateState(Server.Models.LabSession session)
     {
         var elapsed = GetElapsedSeconds(session, DateTime.UtcNow);
-        return new GlobalSessionMessage(session.Status, elapsed, session.StartTime.ToUniversalTime());
+        return new GlobalSessionMessage(session.Status, elapsed, ToUtc(session.StartTime));
     }
+
+    /// <summary>
+    /// Session timestamps are always written as UTC, but SQLite returns them with
+    /// <see cref="DateTimeKind.Unspecified"/>. Calling ToUniversalTime() on those
+    /// would treat them as local and shift them by the machine's offset, so a
+    /// brand new session reads as hours old and expires immediately.
+    /// </summary>
+    private static DateTime ToUtc(DateTime value) => value.Kind switch
+    {
+        DateTimeKind.Local => value.ToUniversalTime(),
+        DateTimeKind.Unspecified => DateTime.SpecifyKind(value, DateTimeKind.Utc),
+        _ => value
+    };
 
     public static int GetElapsedSeconds(Server.Models.LabSession session, DateTime now)
     {
         var effectiveNow = session.Status == "Paused" && session.PauseTime.HasValue
-            ? session.PauseTime.Value.ToUniversalTime()
-            : now.ToUniversalTime();
-        return Math.Max(0, (int)(effectiveNow - session.StartTime.ToUniversalTime()).TotalSeconds - session.AccumulatedPauseSeconds);
+            ? ToUtc(session.PauseTime.Value)
+            : ToUtc(now);
+        return Math.Max(0, (int)(effectiveNow - ToUtc(session.StartTime)).TotalSeconds - session.AccumulatedPauseSeconds);
     }
 
     public async Task<Server.Models.LabSession> EnsureStudentSessionAsync(

@@ -123,4 +123,47 @@ public class LabSessionLifecycleServiceTests
 
     private static bool HasInactiveRemoteControlState(object?[] arguments) =>
         arguments.Length == 1 && arguments[0] is RemoteControlStateMessage { IsActive: false };
+
+    // SQLite hands back DateTimes with Kind=Unspecified. Treating those as local
+    // time shifted a session's start by the machine's UTC offset, so a session
+    // seconds old measured as hours old and expired immediately. In-memory tests
+    // never caught it because they preserve Kind=Utc.
+    [Theory]
+    [InlineData(DateTimeKind.Utc)]
+    [InlineData(DateTimeKind.Unspecified)]
+    [InlineData(DateTimeKind.Local)]
+    public void GetElapsedSeconds_TreatsStoredTimestampsAsUtcRegardlessOfKind(DateTimeKind kind)
+    {
+        var startedUtc = DateTime.UtcNow.AddMinutes(-5);
+        var start = kind switch
+        {
+            DateTimeKind.Local => startedUtc.ToLocalTime(),
+            DateTimeKind.Unspecified => DateTime.SpecifyKind(startedUtc, DateTimeKind.Unspecified),
+            _ => startedUtc
+        };
+
+        var session = new LabSession { StartTime = start, Status = "Running", PCName = "PC-1" };
+        var elapsed = LabSessionLifecycleService.GetElapsedSeconds(session, DateTime.UtcNow);
+
+        // Five minutes, whatever the machine's offset happens to be.
+        Assert.InRange(elapsed, 295, 305);
+    }
+
+    [Fact]
+    public void GetElapsedSeconds_FreshSessionIsNotTreatedAsExpired()
+    {
+        var session = new LabSession
+        {
+            // As read back from SQLite: correct UTC value, but Kind is lost.
+            StartTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+            Status = "Running",
+            PCName = "PC-1",
+            MaxDurationMinutes = 60
+        };
+
+        var elapsed = LabSessionLifecycleService.GetElapsedSeconds(session, DateTime.UtcNow);
+
+        Assert.InRange(elapsed, 0, 5);
+        Assert.False(elapsed >= session.MaxDurationMinutes!.Value * 60);
+    }
 }
