@@ -1,21 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-    --sidebar-bg: #0B3C26;
-    --sidebar-active-bg: #14532d;
+    --sidebar-bg: #16401F;
+    --sidebar-active-bg: #1D5C2E;
     --sidebar-hover-bg: rgba(255, 255, 255, 0.08);
     --sidebar-width: 260px;
-    --primary-color: #0B3C26;
-    --primary-hover: #14532d;
-    --accent-emerald: #10b981;
-    --accent-emerald-hover: #059669;
-    --primary-dark: #18181b;
-    --body-bg: #f8fafc;
+    --primary-color: #16401F;
+    --primary-hover: #1D5C2E;
+    --accent-emerald: #17803A;
+    --accent-emerald-hover: #136B31;
+    --primary-dark: #1C1917;
+    --body-bg: #FAF8F3;
     --card-bg: #ffffff;
-    --card-border: #e4e4e7;
+    --card-border: #E7E2D9;
     --card-border-radius: 16px;
-    --text-main: #18181b;
-    --text-muted: #71717a;
+    --text-main: #1C1917;
+    --text-muted: #6F6861;
     --font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
@@ -93,7 +93,7 @@ body {
 
 .sidebar-brand-sub {
     font-size: 0.72rem;
-    color: #a7f3d0;
+    color: #BBF3C6;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -122,7 +122,7 @@ body {
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #6ee7b7;
+    color: #86E3A0;
     margin: 1.25rem 0 0.5rem 0.75rem;
     font-weight: 700;
 }
@@ -195,7 +195,7 @@ body {
 }
 
 .btn-toggle-sidebar:hover {
-    background-color: #f1f5f9;
+    background-color: #F3EFE8;
 }
 
 .user-profile-badge {
@@ -217,7 +217,7 @@ body {
     justify-content: center;
     font-size: 1.1rem;
     font-weight: 700;
-    box-shadow: 0 2px 6px rgba(11, 60, 38, 0.2);
+    box-shadow: 0 2px 6px rgba(22, 64, 31, 0.2);
 }
 
 /* Page Content Padding */
@@ -294,12 +294,12 @@ body {
 }
 
 .modal-footer {
-    border-color: #f1f5f9;
+    border-color: #F3EFE8;
     padding: 1rem 1.4rem 1.25rem;
 }
 
 .modal .form-label {
-    color: #3f3f46;
+    color: #44403C;
     font-size: 0.82rem;
     font-weight: 700;
     margin-bottom: 0.4rem;
@@ -307,7 +307,7 @@ body {
 
 .modal .form-control,
 .modal .form-select {
-    border-color: #d4d4d8;
+    border-color: #DAD4C9;
     border-radius: 11px;
     min-height: 44px;
 }
@@ -315,13 +315,13 @@ body {
 .modal .form-control:focus,
 .modal .form-select:focus {
     border-color: var(--accent-emerald);
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.14);
+    box-shadow: 0 0 0 3px rgba(23, 128, 58, 0.14);
 }
 
 .modal-section {
     padding: 1rem;
-    background: #f8fafc;
-    border: 1px solid #e4e4e7;
+    background: #FAF8F3;
+    border: 1px solid #E7E2D9;
     border-radius: 14px;
 }
 
@@ -422,7 +422,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 10px rgba(11, 60, 38, 0.2);
+    box-shadow: 0 4px 10px rgba(22, 64, 31, 0.2);
 }
 
 /* Search and Filters */
@@ -438,7 +438,7 @@ body {
 .filter-control:focus {
     background-color: #ffffff;
     border-color: var(--sidebar-bg);
-    box-shadow: 0 0 0 3px rgba(11, 60, 38, 0.15);
+    box-shadow: 0 0 0 3px rgba(22, 64, 31, 0.15);
 }
 
 .search-input-wrapper {
@@ -585,7 +585,7 @@ body {
 }
 
 .custom-table thead th {
-    background-color: #f8fafc;
+    background-color: #FAF8F3;
     color: var(--text-muted);
     font-size: 0.8rem;
     font-weight: 700;
@@ -598,7 +598,7 @@ body {
 .custom-table tbody td {
     padding: 1rem 1.25rem;
     vertical-align: middle;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid #F3EFE8;
 }
 
 .custom-table tbody tr:last-child td {
@@ -606,7 +606,7 @@ body {
 }
 
 .custom-table tbody tr:hover td {
-    background-color: #f8fafc;
+    background-color: #FAF8F3;
 }
 
 /* Workstation Card Container */
@@ -766,7 +766,7 @@ body {
     display: flex;
     gap: 0.25rem;
     padding: 0.3rem;
-    background: #f1f5f4;
+    background: #F1EDE5;
     border: 1px solid var(--card-border);
     border-radius: 999px;
     flex-wrap: nowrap;
@@ -792,13 +792,13 @@ body {
 
 .segmented-tabs .nav-link:hover {
     color: var(--sidebar-bg);
-    background: rgba(16, 185, 129, 0.12);
+    background: rgba(23, 128, 58, 0.12);
 }
 
 .segmented-tabs .nav-link.active {
     color: #ffffff;
     background: var(--accent-emerald);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.28);
+    box-shadow: 0 4px 12px rgba(23, 128, 58, 0.28);
 }
 
 .segmented-tabs .nav-link:focus-visible {
@@ -812,7 +812,7 @@ body {
     overflow-y: auto;
     border-color: var(--card-border) !important;
     border-radius: 14px !important;
-    background: #fbfcfc;
+    background: #FCFAF6;
 }
 
 .bulk-select-item {
@@ -821,7 +821,7 @@ body {
 }
 
 .bulk-select-item:hover {
-    background: rgba(16, 185, 129, 0.10);
+    background: rgba(23, 128, 58, 0.10);
 }
 
 .bulk-select-item .form-check-input:checked {
@@ -835,11 +835,11 @@ body {
    so those elements rendered unstyled. They are part of the shared system now.
    --------------------------------------------------------------------------- */
 .text-emerald-700 {
-    color: #047857;
+    color: #15803D;
 }
 
 .text-emerald-200 {
-    color: #a7f3d0;
+    color: #BBF3C6;
 }
 
 .stat {
@@ -877,7 +877,7 @@ body {
     border-radius: var(--card-border-radius);
     color: #fff;
     background: linear-gradient(135deg, var(--sidebar-bg), var(--sidebar-active-bg));
-    box-shadow: 0 12px 28px rgba(11, 60, 38, 0.22);
+    box-shadow: 0 12px 28px rgba(22, 64, 31, 0.22);
 }
 
 .student-hero h2 {
@@ -888,7 +888,7 @@ body {
 
 .student-hero p {
     margin: 0.25rem 0 0;
-    color: #a7f3d0;
+    color: #BBF3C6;
     font-size: 0.9rem;
 }
 
@@ -909,7 +909,7 @@ body {
     align-items: center;
     gap: 0.75rem;
     padding: 0.7rem 0;
-    border-bottom: 1px solid #f1f5f4;
+    border-bottom: 1px solid #F1EDE5;
 }
 
 .info-row:last-child {
@@ -933,8 +933,8 @@ body {
 }
 
 .notice-card.is-read {
-    border-left-color: #d4d4d8;
-    background: #fbfcfc;
+    border-left-color: #DAD4C9;
+    background: #FCFAF6;
 }
 
 .notice-card .notice-title {
@@ -943,7 +943,7 @@ body {
 }
 
 .notice-card .notice-message {
-    color: #3f3f46;
+    color: #44403C;
     margin: 0.4rem 0 0;
     font-size: 0.93rem;
 }
@@ -973,5 +973,5 @@ body {
 
 .password-field .password-toggle:hover {
     color: var(--sidebar-bg);
-    background: rgba(16, 185, 129, 0.12);
+    background: rgba(23, 128, 58, 0.12);
 }

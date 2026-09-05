@@ -52,23 +52,23 @@ namespace Client
 
         // CAMS palette, mirroring the design tokens used by the web portal so the
         // agent and the browser experience read as one product.
-        private static readonly Color BrandDark = Color.FromArgb(11, 60, 38);      // --sidebar-bg
-        private static readonly Color BrandDarker = Color.FromArgb(9, 48, 31);
-        private static readonly Color BrandEmerald = Color.FromArgb(16, 185, 129); // --accent-emerald
-        private static readonly Color BrandMint = Color.FromArgb(167, 243, 208);
-        private static readonly Color SurfaceBody = Color.FromArgb(248, 250, 252); // --body-bg
+        private static readonly Color BrandDark = Color.FromArgb(22, 64, 31);      // --sidebar-bg
+        private static readonly Color BrandDarker = Color.FromArgb(17, 50, 24);
+        private static readonly Color BrandEmerald = Color.FromArgb(23, 128, 58);  // --accent-emerald
+        private static readonly Color BrandMint = Color.FromArgb(187, 243, 198);
+        private static readonly Color SurfaceBody = Color.FromArgb(250, 248, 243); // --body-bg
         private static readonly Color SurfaceCard = Color.White;
-        private static readonly Color BorderSubtle = Color.FromArgb(228, 228, 231);// --card-border
-        private static readonly Color TextMain = Color.FromArgb(24, 24, 27);       // --text-main
-        private static readonly Color TextMuted = Color.FromArgb(113, 113, 122);   // --text-muted
-        private static readonly Color StatusOk = Color.FromArgb(4, 120, 87);       // readable emerald on white
+        private static readonly Color BorderSubtle = Color.FromArgb(231, 226, 217);// --card-border
+        private static readonly Color TextMain = Color.FromArgb(28, 25, 23);       // --text-main
+        private static readonly Color TextMuted = Color.FromArgb(111, 104, 97);    // --text-muted
+        private static readonly Color StatusOk = Color.FromArgb(21, 128, 61);      // readable green on white
         private static readonly Color StatusWarn = Color.FromArgb(180, 83, 9);
         private static readonly Color StatusDanger = Color.FromArgb(185, 28, 28);
 
         // Variants for text sitting on the dark brand bar, where the on-white
         // status colours above would not meet a readable contrast.
         private static readonly Color OnDarkStrong = Color.White;
-        private static readonly Color OnDarkMuted = Color.FromArgb(134, 173, 154);
+        private static readonly Color OnDarkMuted = Color.FromArgb(150, 178, 152);
         private static readonly Color OnDarkWarn = Color.FromArgb(252, 211, 77);
         private static readonly Color OnDarkDanger = Color.FromArgb(252, 165, 165);
 
@@ -193,7 +193,7 @@ namespace Client
             btnLogin.Width = fieldWidth;
             btnLogin.Margin = new Padding(0, 6, 0, 14);
             btnLogin.FlatAppearance.BorderSize = 0;
-            btnLogin.FlatAppearance.MouseOverBackColor = Color.FromArgb(5, 150, 105);
+            btnLogin.FlatAppearance.MouseOverBackColor = Color.FromArgb(23, 128, 58);
             btnLogin.Click += BtnLogin_Click;
 
             lblStatus = new Label
