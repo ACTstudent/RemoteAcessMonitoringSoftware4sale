@@ -208,19 +208,17 @@
                     <div class="table-responsive">
                         <table class="table table-sm align-middle mb-0">
                             <thead><tr><th>First</th><th>Last</th><th>Username <span class="text-muted">(optional)</span></th><th>Password</th></tr></thead>
-                            <tbody>
-                                @for (var i = 0; i < 5; i++)
-                                {
-                                    <tr>
-                                        <td><input name="bulkFirstNames" class="form-control form-control-sm filter-control" /></td>
-                                        <td><input name="bulkLastNames" class="form-control form-control-sm filter-control" /></td>
-                                        <td><input name="bulkUserNames" class="form-control form-control-sm filter-control" /></td>
-                                        <td><input name="bulkPasswords" type="password" minlength="6" class="form-control form-control-sm filter-control" /></td>
-                                    </tr>
-                                }
+                            <tbody id="adminStudentBulkRows">
+                                <tr>
+                                    <td><input name="bulkFirstNames" class="form-control form-control-sm filter-control" /></td>
+                                    <td><input name="bulkLastNames" class="form-control form-control-sm filter-control" /></td>
+                                    <td><input name="bulkUserNames" class="form-control form-control-sm filter-control" /></td>
+                                    <td><input name="bulkPasswords" type="password" minlength="6" class="form-control form-control-sm filter-control" /></td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
+                    <button type="button" class="btn btn-outline-emerald rounded-pill px-4 mt-3" data-bulk-add="#adminStudentBulkRows"><i class="bi bi-plus-lg me-1"></i>Add more rows</button>
                 </div>
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>

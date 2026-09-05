@@ -6,12 +6,14 @@
     var roster = Model.ClassStudents.Where(cs => cs.Student != null).OrderBy(cs => cs.Student!.LastName).ThenBy(cs => cs.Student!.FirstName).ToList();
     var students = ViewBag.AllStudents as IEnumerable<Student> ?? Enumerable.Empty<Student>();
     var teachers = ViewBag.AvailableTeachers as IEnumerable<Teacher> ?? Enumerable.Empty<Teacher>();
+    var availableStudents = students.Where(s => !roster.Any(r => r.StudentId == s.Id)).ToList();
     var activeTeacher = Model.Teacher != null && (Model.Teacher.Status == "Active" || string.IsNullOrEmpty(Model.Teacher.Status));
 }
 
 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
     <div>
         <a asp-controller="Admin" asp-action="Classes" class="btn btn-outline-emerald btn-sm rounded-pill mb-3 px-3"><i class="bi bi-arrow-left me-1"></i>Back to classes</a>
+        <p class="section-kicker text-uppercase text-muted small fw-bold mb-1">Class Details</p>
         <h2 class="fw-extrabold mb-1 text-dark">@Model.ClassName</h2>
         <p class="text-muted mb-0 small">@Model.Section · @Model.GradeLevel · @Model.Subject</p>
     </div>
@@ -51,9 +53,36 @@
 @if (!Model.IsArchived)
 {
 <div class="row g-3">
-    <div class="col-lg-4"><div class="action-card"><div><i class="bi bi-person-plus-fill fs-3"></i><h5 class="fw-bold mt-2 mb-1">Create student</h5><p class="text-muted small mb-0">Create an account and enroll it immediately.</p></div><button class="btn btn-emerald rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#createStudentForClassModal">Create</button></div></div>
-    <div class="col-lg-4"><div class="action-card"><div><i class="bi bi-person-check-fill fs-3"></i><h5 class="fw-bold mt-2 mb-1">Enroll student</h5><p class="text-muted small mb-0">Choose an existing registered student.</p></div><button class="btn btn-outline-emerald rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#enrollStudentModal">Enroll</button></div></div>
-    <div class="col-lg-4"><div class="action-card"><div><i class="bi bi-people-fill fs-3"></i><h5 class="fw-bold mt-2 mb-1">Import students</h5><p class="text-muted small mb-0">Use quick rows or preview a CSV file.</p></div><button class="btn btn-outline-emerald rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#importStudentsModal">Import</button></div></div>
+    <div class="col-lg-4">
+        <div class="action-card">
+            <div>
+                <i class="bi bi-person-plus-fill fs-3"></i>
+                <h5 class="fw-bold mt-2 mb-1">Create students</h5>
+                <p class="text-muted small mb-0">Add one account, or several at once.</p>
+            </div>
+            <button class="btn btn-emerald rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#createStudentForClassModal">Create</button>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="action-card">
+            <div>
+                <i class="bi bi-person-check-fill fs-3"></i>
+                <h5 class="fw-bold mt-2 mb-1">Enroll students</h5>
+                <p class="text-muted small mb-0">Enroll one existing student, or many.</p>
+            </div>
+            <button class="btn btn-outline-emerald rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#enrollStudentModal">Enroll</button>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="action-card">
+            <div>
+                <i class="bi bi-filetype-csv fs-3"></i>
+                <h5 class="fw-bold mt-2 mb-1">Import from CSV</h5>
+                <p class="text-muted small mb-0">Upload a roster file to add students.</p>
+            </div>
+            <button class="btn btn-outline-emerald rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#importStudentsModal">Import</button>
+        </div>
+    </div>
 </div>
 }
 
@@ -61,11 +90,189 @@
 
 @if (!Model.IsArchived)
 {
-<div class="modal fade" id="createStudentForClassModal" tabindex="-1" aria-labelledby="createStudentForClassModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content"><div class="modal-header modal-header-themed"><h5 class="modal-title" id="createStudentForClassModalLabel"><i class="bi bi-person-plus-fill me-2"></i>Create and enroll student</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button></div><form method="post" asp-controller="Admin" asp-action="AddStudentToClass">@Html.AntiForgeryToken()<input type="hidden" name="classId" value="@Model.ClassId" /><div class="modal-body"><p class="text-muted small">The new account will be added to @Model.ClassName immediately.</p><div class="row g-3"><div class="col-md-6"><label class="form-label">First name</label><input name="firstName" class="form-control" required /></div><div class="col-md-6"><label class="form-label">Last name</label><input name="lastName" class="form-control" required /></div><div class="col-md-6"><label class="form-label">Username <span class="text-muted">(optional)</span></label><input name="username" class="form-control" /></div><div class="col-md-6"><label class="form-label">Password</label><input name="password" type="password" minlength="6" class="form-control" required /></div></div></div><div class="modal-footer"><button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-emerald rounded-pill px-4">Create and enroll</button></div></form></div></div></div>
+<div class="modal fade" id="createStudentForClassModal" tabindex="-1" aria-labelledby="createStudentForClassModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header modal-header-themed">
+                <h5 class="modal-title" id="createStudentForClassModalLabel"><i class="bi bi-person-plus-fill me-2"></i>Create students</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav segmented-tabs mb-4" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#createSinglePane" type="button" role="tab">One student</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#createBulkPane" type="button" role="tab">Bulk students</button>
+                    </li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="createSinglePane" role="tabpanel">
+                        <form method="post" asp-controller="Admin" asp-action="AddStudentToClass">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="classId" value="@Model.ClassId" />
+                            <p class="text-muted small">The new account joins @Model.ClassName immediately.</p>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">First name</label>
+                                    <input name="firstName" class="form-control" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Last name</label>
+                                    <input name="lastName" class="form-control" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Username <span class="text-muted">(optional)</span></label>
+                                    <input name="username" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Password</label>
+                                    <input name="password" type="password" minlength="6" class="form-control" required />
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end gap-2 mt-4">
+                                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-emerald rounded-pill px-4">Create and enroll</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="createBulkPane" role="tabpanel">
+                        <form method="post" asp-controller="Admin" asp-action="BulkAddStudents">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="classId" value="@Model.ClassId" />
+                            <p class="text-muted small">Every filled row needs a first name, last name, and a password of at least six characters.</p>
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead><tr><th>First</th><th>Last</th><th>Username</th><th>Password</th></tr></thead>
+                                    <tbody id="adminClassBulkRows">
+                                        <tr>
+                                            <td><input name="bulkFirstNames" class="form-control form-control-sm" /></td>
+                                            <td><input name="bulkLastNames" class="form-control form-control-sm" /></td>
+                                            <td><input name="bulkUserNames" class="form-control form-control-sm" /></td>
+                                            <td><input name="bulkPasswords" type="password" minlength="6" class="form-control form-control-sm" /></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button type="button" class="btn btn-outline-emerald rounded-pill px-4 mt-3" data-bulk-add="#adminClassBulkRows"><i class="bi bi-plus-lg me-1"></i>Add more rows</button>
+                            <div class="d-flex justify-content-end gap-2 mt-4">
+                                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-emerald rounded-pill px-4">Add filled rows</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-<div class="modal fade" id="enrollStudentModal" tabindex="-1" aria-labelledby="enrollStudentModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header modal-header-themed"><h5 class="modal-title" id="enrollStudentModalLabel"><i class="bi bi-person-check-fill me-2"></i>Enroll existing student</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button></div><form method="post" asp-controller="Admin" asp-action="EnrollStudent" id="existingStudentForm">@Html.AntiForgeryToken()<input type="hidden" name="classId" value="@Model.ClassId" /><input type="hidden" name="moveStudent" id="moveStudent" value="false" /><div class="modal-body"><p class="text-muted small">Moving a student from another class requires confirmation.</p><label class="form-label">Registered student</label><select name="studentId" id="existingStudentSelect" class="form-select" required><option value="">Select a student</option>@foreach (var student in students.Where(s => !roster.Any(r => r.StudentId == s.Id))){<option value="@student.Id" data-current-class="@(student.ClassId.HasValue ? student.Class?.ClassName : "")">@student.StudentNumber - @student.FullName (&#64;@student.Username)@(student.ClassId.HasValue ? $" · Currently: {student.Class?.ClassName}" : "")</option>}</select></div><div class="modal-footer"><button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-emerald rounded-pill px-4">Enroll student</button></div></form></div></div></div>
+<div class="modal fade" id="enrollStudentModal" tabindex="-1" aria-labelledby="enrollStudentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header modal-header-themed">
+                <h5 class="modal-title" id="enrollStudentModalLabel"><i class="bi bi-person-check-fill me-2"></i>Enroll students</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav segmented-tabs mb-4" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#enrollSinglePane" type="button" role="tab">One student</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#enrollBulkPane" type="button" role="tab">Bulk enroll</button>
+                    </li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="enrollSinglePane" role="tabpanel">
+                        <form method="post" asp-controller="Admin" asp-action="EnrollStudent" id="existingStudentForm">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="classId" value="@Model.ClassId" />
+                            <input type="hidden" name="moveStudent" id="moveStudent" value="false" />
+                            <p class="text-muted small">Moving a student from another class requires confirmation.</p>
+                            <label class="form-label">Registered student</label>
+                            <select name="studentId" id="existingStudentSelect" class="form-select" required>
+                                <option value="">Select a student</option>
+                                @foreach (var student in availableStudents)
+                                {
+                                    <option value="@student.Id" data-current-class="@(student.ClassId.HasValue ? student.Class?.ClassName : "")">@student.StudentNumber - @student.FullName (&#64;@student.Username)</option>
+                                }
+                            </select>
+                            <div class="d-flex justify-content-end gap-2 mt-4">
+                                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-emerald rounded-pill px-4">Enroll student</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="enrollBulkPane" role="tabpanel">
+                        @if (!availableStudents.Any())
+                        {
+                            <p class="text-muted text-center py-4 mb-0">Every registered student is already enrolled in this class.</p>
+                        }
+                        else
+                        {
+                            <form method="post" asp-controller="Admin" asp-action="EnrollStudents">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="classId" value="@Model.ClassId" />
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                    <label class="form-label mb-0">Select students to enroll</label>
+                                    <button type="button" class="btn btn-sm btn-outline-emerald rounded-pill px-3" data-check-all="#enrollBulkList">Select all</button>
+                                </div>
+                                <input type="search" class="form-control mb-3" placeholder="Search by name, ID, or username" data-filter-list="#enrollBulkList" />
+                                <div id="enrollBulkList" class="border rounded-3 p-2 bulk-select-list">
+                                    @foreach (var student in availableStudents)
+                                    {
+                                        <label class="d-flex align-items-center gap-2 py-2 px-2 rounded-3 bulk-select-item">
+                                            <input class="form-check-input m-0 flex-shrink-0" type="checkbox" name="studentIds" value="@student.Id" />
+                                            <span class="fw-semibold text-dark">@student.FullName</span>
+                                            <span class="text-muted small font-monospace">@student.StudentNumber</span>
+                                            @if (student.ClassId.HasValue)
+                                            {
+                                                <span class="badge bg-light text-dark ms-auto">@student.Class?.ClassName</span>
+                                            }
+                                        </label>
+                                    }
+                                </div>
+                                <div class="form-check mt-3">
+                                    <input class="form-check-input" type="checkbox" name="moveStudent" value="true" id="bulkMoveStudent" />
+                                    <label class="form-check-label small" for="bulkMoveStudent">Move students who already belong to another class</label>
+                                </div>
+                                <div class="d-flex justify-content-end gap-2 mt-4">
+                                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-emerald rounded-pill px-4">Enroll selected</button>
+                                </div>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-<div class="modal fade" id="importStudentsModal" tabindex="-1" aria-labelledby="importStudentsModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable"><div class="modal-content"><div class="modal-header modal-header-themed"><h5 class="modal-title" id="importStudentsModalLabel"><i class="bi bi-people-fill me-2"></i>Import students</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><div class="modal-section mb-3"><h6 class="fw-bold">Quick bulk entry</h6><p class="text-muted small">Fill one or more rows. Every filled row needs a six-character password.</p><form method="post" asp-controller="Admin" asp-action="BulkAddStudents">@Html.AntiForgeryToken()<input type="hidden" name="classId" value="@Model.ClassId" /><div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>First</th><th>Last</th><th>Username</th><th>Password</th></tr></thead><tbody>@for (var i = 0; i < 5; i++){<tr><td><input name="bulkFirstNames" class="form-control form-control-sm" /></td><td><input name="bulkLastNames" class="form-control form-control-sm" /></td><td><input name="bulkUserNames" class="form-control form-control-sm" /></td><td><input name="bulkPasswords" type="password" minlength="6" class="form-control form-control-sm" /></td></tr>}</tbody></table></div><button type="submit" class="btn btn-emerald rounded-pill mt-3 px-4">Add filled rows</button></form></div><div class="modal-section"><h6 class="fw-bold">CSV preview</h6><form method="post" enctype="multipart/form-data" asp-controller="Admin" asp-action="BulkPreviewCsv">@Html.AntiForgeryToken()<input type="hidden" name="classId" value="@Model.ClassId" /><input type="file" name="file" accept=".csv,text/csv" class="form-control" required /><div class="form-text">Columns: student number, first name, last name, full name, username, password.</div><button type="submit" class="btn btn-outline-emerald rounded-pill mt-3 px-4">Preview CSV</button></form></div></div><div class="modal-footer"><button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close</button></div></div></div></div>
+<div class="modal fade" id="importStudentsModal" tabindex="-1" aria-labelledby="importStudentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header modal-header-themed">
+                <h5 class="modal-title" id="importStudentsModalLabel"><i class="bi bi-filetype-csv me-2"></i>Import from CSV</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" enctype="multipart/form-data" asp-controller="Admin" asp-action="BulkPreviewCsv">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="classId" value="@Model.ClassId" />
+                <div class="modal-body">
+                    <label class="form-label">Roster file</label>
+                    <input type="file" name="file" accept=".csv,text/csv" class="form-control" required />
+                    <div class="form-text">Columns: student number, first name, last name, full name, username, password.</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-emerald rounded-pill px-4">Preview CSV</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 }
 
 @section Scripts {

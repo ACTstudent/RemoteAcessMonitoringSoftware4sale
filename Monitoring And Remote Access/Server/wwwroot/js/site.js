@@ -72,3 +72,59 @@
         return element.innerHTML;
     }
 })();
+
+// Bulk entry tables start with a single row; "Add more rows" clones it on demand.
+document.addEventListener('click', function (event) {
+    var trigger = event.target.closest('[data-bulk-add]');
+    if (!trigger) {
+        return;
+    }
+    event.preventDefault();
+    var body = document.querySelector(trigger.getAttribute('data-bulk-add'));
+    if (!body || !body.rows.length) {
+        return;
+    }
+    var row = body.rows[0].cloneNode(true);
+    row.querySelectorAll('input').forEach(function (input) {
+        input.value = '';
+    });
+    body.appendChild(row);
+    var focusTarget = row.querySelector('input');
+    if (focusTarget) {
+        focusTarget.focus();
+    }
+});
+
+// Bulk pickers: "Select all" toggle and type-to-filter over a checkbox list.
+document.addEventListener('click', function (event) {
+    var toggle = event.target.closest('[data-check-all]');
+    if (!toggle) {
+        return;
+    }
+    event.preventDefault();
+    var list = document.querySelector(toggle.getAttribute('data-check-all'));
+    if (!list) {
+        return;
+    }
+    var visible = Array.prototype.filter.call(
+        list.querySelectorAll('input[type="checkbox"]'),
+        function (box) { return box.closest('label') && !box.closest('label').hidden; });
+    var selectAll = visible.some(function (box) { return !box.checked; });
+    visible.forEach(function (box) { box.checked = selectAll; });
+    toggle.textContent = selectAll ? 'Clear all' : 'Select all';
+});
+
+document.addEventListener('input', function (event) {
+    var field = event.target.closest('[data-filter-list]');
+    if (!field) {
+        return;
+    }
+    var list = document.querySelector(field.getAttribute('data-filter-list'));
+    if (!list) {
+        return;
+    }
+    var term = field.value.trim().toLowerCase();
+    Array.prototype.forEach.call(list.querySelectorAll('label'), function (row) {
+        row.hidden = term.length > 0 && row.textContent.toLowerCase().indexOf(term) === -1;
+    });
+});

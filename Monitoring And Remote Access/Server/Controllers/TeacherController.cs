@@ -1258,6 +1258,42 @@ namespace Server.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> EnrollStudents(int classId, List<int>? studentIds, bool moveStudent = false)
+        {
+            if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
+
+            var ids = studentIds?.Where(id => id > 0).Distinct().ToList() ?? new List<int>();
+            if (ids.Count == 0)
+            {
+                TempData["ErrorMessage"] = "Select at least one student to enroll.";
+                return RedirectToAction("ClassDetails", new { id = classId });
+            }
+
+            var enrolled = 0;
+            var failures = new List<string>();
+            foreach (var studentId in ids)
+            {
+                if (!await AccessibleStudents(teacherId.Value).AnyAsync(student => student.Id == studentId)) continue;
+                var result = await _classManagement.EnrollExistingStudentAsync(classId, studentId, moveStudent, teacherId.Value);
+                if (result.Success) enrolled++;
+                else failures.Add(result.Error ?? $"Student {studentId} could not be enrolled.");
+            }
+
+            if (enrolled > 0)
+            {
+                await AuditAsync("EnrollStudents", $"Enrolled {enrolled} student(s) in class {classId}");
+                TempData["Message"] = $"Enrolled {enrolled} student(s) successfully.";
+            }
+            if (failures.Count > 0)
+            {
+                TempData["ErrorMessage"] = string.Join(" ", failures.Take(3));
+            }
+            return RedirectToAction("ClassDetails", new { id = classId });
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveStudent(int classId, int studentId)
         {
             if (!CheckAccess()) return Denied();

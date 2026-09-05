@@ -325,8 +325,11 @@ body {
     border-radius: 14px;
 }
 
+/* Height is applied only to grid-column action cards (below) so they match each
+   other. A standalone action card must size to its content: `main` is a flex item
+   with a resolved height, so a bare `height: 100%` would stretch it to fill the
+   whole scroll viewport. */
 .action-card {
-    height: 100%;
     padding: 1.25rem;
     background: #fff;
     border: 1px solid var(--card-border);
@@ -335,6 +338,11 @@ body {
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
+}
+
+/* Equal-height action cards when laid out side by side in a Bootstrap row. */
+[class*="col-"] > .action-card {
+    height: 100%;
 }
 
 .action-card i {
@@ -750,4 +758,73 @@ body {
     .action-card .btn {
         width: 100%;
     }
+}
+
+/* Segmented "one / bulk" switcher used in the class modals. Styled to the
+   emerald system rather than Bootstrap's default blue nav-pills. */
+.segmented-tabs {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.3rem;
+    background: #f1f5f4;
+    border: 1px solid var(--card-border);
+    border-radius: 999px;
+    flex-wrap: nowrap;
+}
+
+.segmented-tabs .nav-item {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.segmented-tabs .nav-link {
+    width: 100%;
+    border: 0;
+    border-radius: 999px;
+    padding: 0.55rem 1rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    background: transparent;
+    white-space: nowrap;
+    transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.segmented-tabs .nav-link:hover {
+    color: var(--sidebar-bg);
+    background: rgba(16, 185, 129, 0.12);
+}
+
+.segmented-tabs .nav-link.active {
+    color: #ffffff;
+    background: var(--accent-emerald);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.28);
+}
+
+.segmented-tabs .nav-link:focus-visible {
+    outline: 2px solid var(--accent-emerald);
+    outline-offset: 2px;
+}
+
+/* Bulk picker list, matched to the card surface treatment. */
+.bulk-select-list {
+    max-height: 18rem;
+    overflow-y: auto;
+    border-color: var(--card-border) !important;
+    border-radius: 14px !important;
+    background: #fbfcfc;
+}
+
+.bulk-select-item {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.bulk-select-item:hover {
+    background: rgba(16, 185, 129, 0.10);
+}
+
+.bulk-select-item .form-check-input:checked {
+    background-color: var(--accent-emerald);
+    border-color: var(--accent-emerald);
 }

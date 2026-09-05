@@ -70,7 +70,7 @@
                     </div>
                 </div>
                 <div class="d-flex flex-wrap gap-2">
-                    <a asp-controller="Admin" asp-action="ClassDetails" asp-route-id="@item.ClassId" class="btn btn-view-class flex-grow-1 py-2 fw-semibold"><i class="bi bi-people me-1"></i> Student Profiles</a>
+                    <a asp-controller="Admin" asp-action="ClassDetails" asp-route-id="@item.ClassId" class="btn btn-view-class flex-grow-1 py-2 fw-semibold"><i class="bi bi-people me-1"></i> Class Details</a>
                     <button type="button" class="btn btn-outline-emerald py-2" data-bs-toggle="modal" data-bs-target="#editClassModal-@item.ClassId" title="Edit class"><i class="bi bi-pencil"></i><span class="visually-hidden">Edit</span></button>
                     <form method="post" asp-controller="Admin" asp-action="ArchiveClass" class="m-0">
                         @Html.AntiForgeryToken()
@@ -112,7 +112,7 @@
                             <td>@item.ClassStudents.Count</td>
                             <td class="text-end">
                                 <div class="d-flex justify-content-end gap-2">
-                                    <a asp-controller="Admin" asp-action="ClassDetails" asp-route-id="@item.ClassId" class="btn btn-sm btn-outline-emerald rounded-pill">Student Profiles</a>
+                                    <a asp-controller="Admin" asp-action="ClassDetails" asp-route-id="@item.ClassId" class="btn btn-sm btn-outline-emerald rounded-pill">Class Details</a>
                                     <button type="button" class="btn btn-sm btn-outline-emerald rounded-pill" data-bs-toggle="modal" data-bs-target="#editClassModal-@item.ClassId">Edit</button>
                                     <form method="post" asp-controller="Admin" asp-action="ArchiveClass" class="m-0">
                                         @Html.AntiForgeryToken()
