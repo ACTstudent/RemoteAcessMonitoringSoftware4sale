@@ -131,10 +131,6 @@
 
             <!-- Body Content -->
             <main role="main" class="content-padding">
-                <div class="alert @(isTeacher ? "alert-warning" : "alert-info") shadow-sm" role="status">
-                    <i class="bi bi-globe2 me-2"></i><strong>Global scope:</strong>
-                    Changes on this page can affect accounts, classes, computers, policies, or sessions across the school@(isTeacher ? ". Use My Teacher Portal for your personal classes and monitoring." : ".").
-                </div>
                 @RenderBody()
             </main>
         </div>
