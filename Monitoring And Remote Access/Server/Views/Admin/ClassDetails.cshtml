@@ -86,7 +86,7 @@
 </div>
 }
 
-<div class="modal fade" id="assignTeacherModal" tabindex="-1" aria-labelledby="assignTeacherModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header modal-header-themed"><h5 class="modal-title" id="assignTeacherModalLabel"><i class="bi bi-person-badge-fill me-2"></i>Assign teacher</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button></div><form method="post" asp-controller="Admin" asp-action="AssignTeacher">@Html.AntiForgeryToken()<input type="hidden" name="classId" value="@Model.ClassId" /><div class="modal-body"><label class="form-label">Active teacher</label><select name="teacherId" class="form-select" required><option value="">Select a teacher</option>@foreach (var teacher in teachers){<option value="@teacher.TeacherId" selected="@(Model.TeacherId == teacher.TeacherId ? "selected" : null)">@teacher.FirstName @teacher.LastName (@teacher.Username)</option>}</select></div><div class="modal-footer"><button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-emerald rounded-pill px-4">Save assignment</button></div></form></div></div></div>
+<div class="modal fade" id="assignTeacherModal" tabindex="-1" aria-labelledby="assignTeacherModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header modal-header-themed"><h5 class="modal-title" id="assignTeacherModalLabel"><i class="bi bi-person-badge-fill me-2"></i>Assign teacher</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button></div><form method="post" asp-controller="Admin" asp-action="AssignTeacher">@Html.AntiForgeryToken()<input type="hidden" name="classId" value="@Model.ClassId" /><div class="modal-body"><label class="form-label" for="classdetails-active-teacher">Active teacher</label><select id="classdetails-active-teacher" name="teacherId" class="form-select" required><option value="">Select a teacher</option>@foreach (var teacher in teachers){<option value="@teacher.TeacherId" selected="@(Model.TeacherId == teacher.TeacherId ? "selected" : null)">@teacher.FirstName @teacher.LastName (@teacher.Username)</option>}</select></div><div class="modal-footer"><button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-emerald rounded-pill px-4">Save assignment</button></div></form></div></div></div>
 
 @if (!Model.IsArchived)
 {
@@ -114,20 +114,20 @@
                             <p class="text-muted small">The new account joins @Model.ClassName immediately.</p>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">First name</label>
-                                    <input name="firstName" class="form-control" required />
+                                    <label class="form-label" for="classdetails-first-name">First name</label>
+                                    <input id="classdetails-first-name" name="firstName" class="form-control" required />
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Last name</label>
-                                    <input name="lastName" class="form-control" required />
+                                    <label class="form-label" for="classdetails-last-name">Last name</label>
+                                    <input id="classdetails-last-name" name="lastName" class="form-control" required />
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Username <span class="text-muted">(optional)</span></label>
-                                    <input name="username" class="form-control" />
+                                    <label class="form-label" for="classdetails-username-optional">Username <span class="text-muted">(optional)</span></label>
+                                    <input id="classdetails-username-optional" name="username" class="form-control" />
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Password</label>
-                                    <input name="password" type="password" minlength="8" class="form-control" required />
+                                    <label class="form-label" for="classdetails-password">Password</label>
+                                    <input id="classdetails-password" name="password" type="password" minlength="8" class="form-control" required />
                                 </div>
                             </div>
                             <div class="d-flex justify-content-end gap-2 mt-4">
@@ -218,7 +218,7 @@
                                     <label class="form-label mb-0">Select students to enroll</label>
                                     <button type="button" class="btn btn-sm btn-outline-emerald rounded-pill px-3" data-check-all="#enrollBulkList">Select all</button>
                                 </div>
-                                <input type="search" class="form-control mb-3" placeholder="Search by name, ID, or username" data-filter-list="#enrollBulkList" />
+                                <input aria-label="Search by name, ID, or username" type="search" class="form-control mb-3" placeholder="Search by name, ID, or username" data-filter-list="#enrollBulkList" />
                                 <div id="enrollBulkList" class="border rounded-3 p-2 bulk-select-list">
                                     @foreach (var student in availableStudents)
                                     {
@@ -261,8 +261,8 @@
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="classId" value="@Model.ClassId" />
                 <div class="modal-body">
-                    <label class="form-label">Roster file</label>
-                    <input type="file" name="file" accept=".csv,text/csv" class="form-control" required />
+                    <label class="form-label" for="classdetails-roster-file">Roster file</label>
+                    <input id="classdetails-roster-file" type="file" name="file" accept=".csv,text/csv" class="form-control" required />
                     <div class="form-text">Columns: student number, first name, last name, full name, username, password.</div>
                 </div>
                 <div class="modal-footer">

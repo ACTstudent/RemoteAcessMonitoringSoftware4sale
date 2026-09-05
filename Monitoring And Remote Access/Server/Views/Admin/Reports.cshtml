@@ -29,20 +29,20 @@
 <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
     <form method="get" action="/Admin/Reports" class="row g-3 align-items-center">
         <div class="col-md-4">
-            <label class="form-label fw-semibold text-muted small mb-1">From Date</label>
-            <input type="date" name="from" class="form-control filter-control" value="@ViewBag.FromDate" />
+            <label class="form-label fw-semibold text-muted small mb-1" for="reports-from-date">From Date</label>
+            <input id="reports-from-date" type="date" name="from" class="form-control filter-control" value="@ViewBag.FromDate" />
         </div>
         <div class="col-md-4">
-            <label class="form-label fw-semibold text-muted small mb-1">To Date</label>
-            <input type="date" name="to" class="form-control filter-control" value="@ViewBag.ToDate" />
+            <label class="form-label fw-semibold text-muted small mb-1" for="reports-to-date">To Date</label>
+            <input id="reports-to-date" type="date" name="to" class="form-control filter-control" value="@ViewBag.ToDate" />
         </div>
         <div class="col-md-4 mt-4">
             <button class="btn btn-emerald w-100 py-2 fw-bold text-white rounded-pill">
                 <i class="bi bi-funnel me-1"></i> Filter Analytics
             </button>
         </div>
-         <div class="col-md-4"><label class="form-label fw-semibold text-muted small mb-1">Class</label><select name="classId" class="form-select"><option value="">All classes</option>@foreach (var cls in (IEnumerable<Server.Models.Class>)(ViewBag.Classes ?? Array.Empty<Server.Models.Class>())) { <option value="@cls.ClassId" selected="@(Context.Request.Query["classId"] == cls.ClassId.ToString() ? "selected" : null)">@cls.ClassName</option> }</select></div>
-         <div class="col-md-4"><label class="form-label fw-semibold text-muted small mb-1">Laboratory station</label><select name="station" class="form-select"><option value="">All stations</option>@foreach (var computer in (IEnumerable<Server.Models.Computer>)(ViewBag.Stations ?? Array.Empty<Server.Models.Computer>())) { <option value="@computer.LaboratoryStation" selected="@(ViewBag.SelectedStation == computer.LaboratoryStation ? "selected" : null)">@computer.LaboratoryStation</option> }</select></div>
+         <div class="col-md-4"><label class="form-label fw-semibold text-muted small mb-1" for="reports-class">Class</label><select id="reports-class" name="classId" class="form-select"><option value="">All classes</option>@foreach (var cls in (IEnumerable<Server.Models.Class>)(ViewBag.Classes ?? Array.Empty<Server.Models.Class>())) { <option value="@cls.ClassId" selected="@(Context.Request.Query["classId"] == cls.ClassId.ToString() ? "selected" : null)">@cls.ClassName</option> }</select></div>
+         <div class="col-md-4"><label class="form-label fw-semibold text-muted small mb-1" for="reports-laboratory-station">Laboratory station</label><select id="reports-laboratory-station" name="station" class="form-select"><option value="">All stations</option>@foreach (var computer in (IEnumerable<Server.Models.Computer>)(ViewBag.Stations ?? Array.Empty<Server.Models.Computer>())) { <option value="@computer.LaboratoryStation" selected="@(ViewBag.SelectedStation == computer.LaboratoryStation ? "selected" : null)">@computer.LaboratoryStation</option> }</select></div>
          <div class="col-md-4 d-flex gap-2 align-items-end"><a class="btn btn-outline-secondary" href="@Url.Action("ExportAttendanceCsv", new { from = ViewBag.FromDate, to = ViewBag.ToDate, classId = Context.Request.Query["classId"] })">Attendance CSV</a><a class="btn btn-outline-secondary" href="@Url.Action("ExportRemoteCommandsCsv", new { from = ViewBag.FromDate, to = ViewBag.ToDate })">Remote CSV</a></div>
     </form>
 </div>

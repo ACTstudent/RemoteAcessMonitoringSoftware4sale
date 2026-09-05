@@ -95,13 +95,13 @@
                 @Html.AntiForgeryToken()
                 <div class="modal-body py-4">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Role Name <span class="text-danger">*</span></label>
-                        <input type="text" name="Name" class="form-control filter-control" required placeholder="e.g. Lab Technician" />
+                        <label class="form-label fw-semibold text-muted small" for="roles-role-name">Role Name <span class="text-danger">*</span></label>
+                        <input id="roles-role-name" type="text" name="Name" class="form-control filter-control" required placeholder="e.g. Lab Technician" />
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Description</label>
-                        <input type="text" name="Description" class="form-control filter-control" placeholder="e.g. Can manage computer profiles and network settings" />
+                        <label class="form-label fw-semibold text-muted small" for="roles-description">Description</label>
+                        <input id="roles-description" type="text" name="Description" class="form-control filter-control" placeholder="e.g. Can manage computer profiles and network settings" />
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">

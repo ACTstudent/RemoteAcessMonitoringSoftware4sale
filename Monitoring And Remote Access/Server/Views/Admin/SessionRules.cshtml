@@ -91,8 +91,8 @@
         <div class="modal-dialog"><div class="modal-content"><form method="post" action="/Admin/UpdateSessionRule">
             @Html.AntiForgeryToken()<input type="hidden" name="SessionRuleId" value="@r.SessionRuleId" />
             <div class="modal-header"><h5>Edit Session Rule</h5></div><div class="modal-body">
-                <input name="Name" value="@r.Name" maxlength="100" required class="form-control mb-2" />
-                <input name="MaxDurationMinutes" type="number" min="1" value="@r.MaxDurationMinutes" required class="form-control mb-2" />
+                <input aria-label="Rule name" name="Name" value="@r.Name" maxlength="100" required class="form-control mb-2" />
+                <input aria-label="Maximum duration in minutes" name="MaxDurationMinutes" type="number" min="1" value="@r.MaxDurationMinutes" required class="form-control mb-2" />
                 <label><input type="checkbox" name="AllowPause" value="true" @(r.AllowPause ? "checked" : "") /> Allow pause</label><br />
                 <label><input type="checkbox" name="AllowRemoteControl" value="true" @(r.AllowRemoteControl ? "checked" : "") /> Allow remote control</label><br />
                 <label><input type="checkbox" name="IsDefault" value="true" @(r.IsDefault ? "checked" : "") /> Default</label><br />
@@ -116,13 +116,13 @@
                 @Html.AntiForgeryToken()
                 <div class="modal-body py-4">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Rule Name <span class="text-danger">*</span></label>
-                        <input type="text" name="Name" class="form-control filter-control" required placeholder="e.g. Standard 45-min Class Rule" />
+                        <label class="form-label fw-semibold text-muted small" for="sessionrules-rule-name">Rule Name <span class="text-danger">*</span></label>
+                        <input id="sessionrules-rule-name" type="text" name="Name" class="form-control filter-control" required placeholder="e.g. Standard 45-min Class Rule" />
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Max Duration (Minutes) <span class="text-danger">*</span></label>
-                        <input type="number" name="MaxDurationMinutes" min="1" class="form-control filter-control" required value="45" />
+                        <label class="form-label fw-semibold text-muted small" for="sessionrules-max-duration-minutes">Max Duration (Minutes) <span class="text-danger">*</span></label>
+                        <input id="sessionrules-max-duration-minutes" type="number" name="MaxDurationMinutes" min="1" class="form-control filter-control" required value="45" />
                     </div>
 
                     <div class="form-check mb-2">

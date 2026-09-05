@@ -179,39 +179,39 @@
                 <div class="modal-body py-4">
                     <div class="row g-2 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold text-muted small">First Name <span class="text-danger">*</span></label>
-                            <input type="text" name="FirstName" class="form-control filter-control" required placeholder="First Name" />
+                            <label class="form-label fw-semibold text-muted small" for="teachers-first-name">First Name <span class="text-danger">*</span></label>
+                            <input id="teachers-first-name" type="text" name="FirstName" class="form-control filter-control" required placeholder="First Name" />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold text-muted small">Last Name <span class="text-danger">*</span></label>
-                            <input type="text" name="LastName" class="form-control filter-control" required placeholder="Last Name" />
+                            <label class="form-label fw-semibold text-muted small" for="teachers-last-name">Last Name <span class="text-danger">*</span></label>
+                            <input id="teachers-last-name" type="text" name="LastName" class="form-control filter-control" required placeholder="Last Name" />
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Username <span class="text-danger">*</span></label>
-                        <input type="text" name="Username" class="form-control filter-control" required placeholder="Username" />
+                        <label class="form-label fw-semibold text-muted small" for="teachers-username">Username <span class="text-danger">*</span></label>
+                        <input id="teachers-username" type="text" name="Username" class="form-control filter-control" required placeholder="Username" />
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Password <span class="text-danger">*</span></label>
-                        <input type="password" name="PasswordHash" class="form-control filter-control" required placeholder="••••••••" />
+                        <label class="form-label fw-semibold text-muted small" for="teachers-password">Password <span class="text-danger">*</span></label>
+                        <input id="teachers-password" type="password" name="PasswordHash" class="form-control filter-control" required placeholder="••••••••" />
                     </div>
 
                     <div class="row g-2 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold text-muted small">Email Address</label>
-                            <input type="email" name="Email" class="form-control filter-control" placeholder="teacher@pardo.edu.ph" />
+                            <label class="form-label fw-semibold text-muted small" for="teachers-email-address">Email Address</label>
+                            <input id="teachers-email-address" type="email" name="Email" class="form-control filter-control" placeholder="teacher@pardo.edu.ph" />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold text-muted small">Contact Number</label>
-                            <input type="text" name="ContactNumber" class="form-control filter-control" placeholder="0917XXXXXXX" />
+                            <label class="form-label fw-semibold text-muted small" for="teachers-contact-number">Contact Number</label>
+                            <input id="teachers-contact-number" type="text" name="ContactNumber" class="form-control filter-control" placeholder="0917XXXXXXX" />
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Account Status</label>
-                        <select name="Status" class="form-select filter-control">
+                        <label class="form-label fw-semibold text-muted small" for="teachers-account-status">Account Status</label>
+                        <select id="teachers-account-status" name="Status" class="form-select filter-control">
                             <option value="Active">Active</option>
                             <option value="Inactive">Inactive</option>
                         </select>
@@ -245,39 +245,39 @@
                     <div class="modal-body py-4">
                         <div class="row g-2 mb-3">
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold text-muted small">First Name</label>
-                                <input type="text" name="FirstName" class="form-control filter-control" value="@t.FirstName" required />
+                                <label class="form-label fw-semibold text-muted small" for="teachers-first-name-@t.TeacherId">First Name</label>
+                                <input id="teachers-first-name-@t.TeacherId" type="text" name="FirstName" class="form-control filter-control" value="@t.FirstName" required />
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold text-muted small">Last Name</label>
-                                <input type="text" name="LastName" class="form-control filter-control" value="@t.LastName" required />
+                                <label class="form-label fw-semibold text-muted small" for="teachers-last-name-@t.TeacherId">Last Name</label>
+                                <input id="teachers-last-name-@t.TeacherId" type="text" name="LastName" class="form-control filter-control" value="@t.LastName" required />
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-muted small">Username</label>
-                            <input type="text" name="Username" class="form-control filter-control" value="@t.Username" required />
+                            <label class="form-label fw-semibold text-muted small" for="teachers-username-@t.TeacherId">Username</label>
+                            <input id="teachers-username-@t.TeacherId" type="text" name="Username" class="form-control filter-control" value="@t.Username" required />
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-muted small">New Password <span class="text-muted font-normal">(Leave blank to keep current)</span></label>
-                            <input type="password" name="newPassword" class="form-control filter-control" placeholder="Optional new password" />
+                            <label class="form-label fw-semibold text-muted small" for="teachers-new-password-leave-blank-to-keep-current-@t.TeacherId">New Password <span class="text-muted font-normal">(Leave blank to keep current)</span></label>
+                            <input id="teachers-new-password-leave-blank-to-keep-current-@t.TeacherId" type="password" name="newPassword" class="form-control filter-control" placeholder="Optional new password" />
                         </div>
 
                         <div class="row g-2 mb-3">
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold text-muted small">Email Address</label>
-                                <input type="email" name="Email" class="form-control filter-control" value="@t.Email" />
+                                <label class="form-label fw-semibold text-muted small" for="teachers-email-address-@t.TeacherId">Email Address</label>
+                                <input id="teachers-email-address-@t.TeacherId" type="email" name="Email" class="form-control filter-control" value="@t.Email" />
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold text-muted small">Contact Number</label>
-                                <input type="text" name="ContactNumber" class="form-control filter-control" value="@t.ContactNumber" />
+                                <label class="form-label fw-semibold text-muted small" for="teachers-contact-number-@t.TeacherId">Contact Number</label>
+                                <input id="teachers-contact-number-@t.TeacherId" type="text" name="ContactNumber" class="form-control filter-control" value="@t.ContactNumber" />
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-muted small">Status</label>
-                            <select name="Status" class="form-select filter-control">
+                            <label class="form-label fw-semibold text-muted small" for="teachers-status-@t.TeacherId">Status</label>
+                            <select id="teachers-status-@t.TeacherId" name="Status" class="form-select filter-control">
                                 <option value="Active" selected="@(t.Status == "Active")">Active</option>
                                 <option value="Inactive" selected="@(t.Status == "Inactive")">Inactive</option>
                             </select>

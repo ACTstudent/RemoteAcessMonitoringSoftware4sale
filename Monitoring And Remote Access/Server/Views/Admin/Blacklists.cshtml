@@ -76,7 +76,7 @@
 
 @foreach (var b in Model)
 {
-    <div class="modal fade" id="editBlacklist-@b.BlacklistItemId" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post" action="/Admin/UpdateBlacklist">@Html.AntiForgeryToken()<input type="hidden" name="BlacklistItemId" value="@b.BlacklistItemId" /><div class="modal-header"><h5>Edit Blacklist Item</h5></div><div class="modal-body"><label>Target Type</label><select name="TargetType" class="form-select mb-2"><option value="Application" selected="@(b.TargetType == "Application" ? "selected" : null)">Application</option><option value="Website" selected="@(b.TargetType == "Website" ? "selected" : null)">Website</option><option value="Domain" selected="@(b.TargetType == "Domain" ? "selected" : null)">Domain</option><option value="Process" selected="@(b.TargetType == "Process" ? "selected" : null)">Process</option></select><label>Value</label><input name="Value" value="@b.Value" required maxlength="300" class="form-control mb-2" /><label>Reason</label><input name="Reason" value="@b.Reason" maxlength="500" class="form-control mb-2" /><label><input type="checkbox" name="IsActive" value="true" @(b.IsActive ? "checked" : "") /> Active</label></div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div>
+    <div class="modal fade" id="editBlacklist-@b.BlacklistItemId" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post" action="/Admin/UpdateBlacklist">@Html.AntiForgeryToken()<input type="hidden" name="BlacklistItemId" value="@b.BlacklistItemId" /><div class="modal-header"><h5>Edit Blacklist Item</h5></div><div class="modal-body"><label for="blacklists-target-type-@b.BlacklistItemId">Target Type</label><select id="blacklists-target-type-@b.BlacklistItemId" name="TargetType" class="form-select mb-2"><option value="Application" selected="@(b.TargetType == "Application" ? "selected" : null)">Application</option><option value="Website" selected="@(b.TargetType == "Website" ? "selected" : null)">Website</option><option value="Domain" selected="@(b.TargetType == "Domain" ? "selected" : null)">Domain</option><option value="Process" selected="@(b.TargetType == "Process" ? "selected" : null)">Process</option></select><label for="blacklists-value-@b.BlacklistItemId">Value</label><input id="blacklists-value-@b.BlacklistItemId" name="Value" value="@b.Value" required maxlength="300" class="form-control mb-2" /><label for="blacklists-reason-@b.BlacklistItemId">Reason</label><input id="blacklists-reason-@b.BlacklistItemId" name="Reason" value="@b.Reason" maxlength="500" class="form-control mb-2" /><label><input type="checkbox" name="IsActive" value="true" @(b.IsActive ? "checked" : "") /> Active</label></div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div>
 }
 
 <!-- Modal: Create Blacklist Item -->
@@ -93,21 +93,21 @@
                 @Html.AntiForgeryToken()
                 <div class="modal-body py-4">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Target Type</label>
-                        <select name="TargetType" class="form-select filter-control">
+                        <label class="form-label fw-semibold text-muted small" for="blacklists-target-type">Target Type</label>
+                        <select id="blacklists-target-type" name="TargetType" class="form-select filter-control">
                             <option value="Website">Website Domain (URL)</option>
                             <option value="Application">Application Executable</option>
                         </select>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Forbidden URL / App Name <span class="text-danger">*</span></label>
-                        <input type="text" name="Value" class="form-control filter-control" required placeholder="e.g. facebook.com, roblox.exe" />
+                        <label class="form-label fw-semibold text-muted small" for="blacklists-forbidden-url-app-name">Forbidden URL / App Name <span class="text-danger">*</span></label>
+                        <input id="blacklists-forbidden-url-app-name" type="text" name="Value" class="form-control filter-control" required placeholder="e.g. facebook.com, roblox.exe" />
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Reason / Note</label>
-                        <input type="text" name="Reason" class="form-control filter-control" placeholder="e.g. Social media distraction during lab" />
+                        <label class="form-label fw-semibold text-muted small" for="blacklists-reason-note">Reason / Note</label>
+                        <input id="blacklists-reason-note" type="text" name="Reason" class="form-control filter-control" placeholder="e.g. Social media distraction during lab" />
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">

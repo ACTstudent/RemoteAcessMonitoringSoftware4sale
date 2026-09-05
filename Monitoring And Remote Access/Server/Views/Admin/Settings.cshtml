@@ -142,16 +142,16 @@
                 @Html.AntiForgeryToken()
                 <div class="modal-body py-4">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Full Name <span class="text-danger">*</span></label>
-                        <input type="text" name="FullName" class="form-control filter-control" required placeholder="e.g. System Administrator" />
+                        <label class="form-label fw-semibold text-muted small" for="settings-full-name">Full Name <span class="text-danger">*</span></label>
+                        <input id="settings-full-name" type="text" name="FullName" class="form-control filter-control" required placeholder="e.g. System Administrator" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Username <span class="text-danger">*</span></label>
-                        <input type="text" name="Username" class="form-control filter-control" required placeholder="e.g. admin2" />
+                        <label class="form-label fw-semibold text-muted small" for="settings-username">Username <span class="text-danger">*</span></label>
+                        <input id="settings-username" type="text" name="Username" class="form-control filter-control" required placeholder="e.g. admin2" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Password <span class="text-danger">*</span></label>
-                        <input type="password" name="PasswordHash" class="form-control filter-control" required placeholder="••••••••" />
+                        <label class="form-label fw-semibold text-muted small" for="settings-password">Password <span class="text-danger">*</span></label>
+                        <input id="settings-password" type="password" name="PasswordHash" class="form-control filter-control" required placeholder="••••••••" />
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
@@ -177,16 +177,16 @@
                     <input type="hidden" name="Id" value="@admin.Id" />
                     <div class="modal-body py-4">
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-muted small">Full Name</label>
-                            <input type="text" name="FullName" class="form-control filter-control" value="@admin.FullName" required />
+                            <label class="form-label fw-semibold text-muted small" for="settings-full-name-@admin.Id">Full Name</label>
+                            <input id="settings-full-name-@admin.Id" type="text" name="FullName" class="form-control filter-control" value="@admin.FullName" required />
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-muted small">Username</label>
-                            <input type="text" name="Username" class="form-control filter-control" value="@admin.Username" required />
+                            <label class="form-label fw-semibold text-muted small" for="settings-username-@admin.Id">Username</label>
+                            <input id="settings-username-@admin.Id" type="text" name="Username" class="form-control filter-control" value="@admin.Username" required />
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-muted small">New Password <span class="text-muted">(Leave blank to keep current)</span></label>
-                            <input type="password" name="newPassword" class="form-control filter-control" placeholder="Optional new password" />
+                            <label class="form-label fw-semibold text-muted small" for="settings-new-password-leave-blank-to-keep-current-@admin.Id">New Password <span class="text-muted">(Leave blank to keep current)</span></label>
+                            <input id="settings-new-password-leave-blank-to-keep-current-@admin.Id" type="password" name="newPassword" class="form-control filter-control" placeholder="Optional new password" />
                         </div>
                     </div>
                     <div class="modal-footer border-0 pt-0">

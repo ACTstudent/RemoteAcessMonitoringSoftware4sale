@@ -163,13 +163,13 @@
                 @Html.AntiForgeryToken()
                 <div class="modal-body py-4">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Laboratory Station Name <span class="text-danger">*</span></label>
-                        <input type="text" name="LaboratoryStation" class="form-control filter-control" required placeholder="e.g. Unit 01 - Station A" />
+                        <label class="form-label fw-semibold text-muted small" for="computers-laboratory-station-name">Laboratory Station Name <span class="text-danger">*</span></label>
+                        <input id="computers-laboratory-station-name" type="text" name="LaboratoryStation" class="form-control filter-control" required placeholder="e.g. Unit 01 - Station A" />
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Status</label>
-                        <select name="Status" class="form-select filter-control">
+                        <label class="form-label fw-semibold text-muted small" for="computers-status">Status</label>
+                        <select id="computers-status" name="Status" class="form-select filter-control">
                             <option value="Available">Available</option>
                             <option value="In Use">In Use</option>
                             <option value="Maintenance">Maintenance</option>
@@ -177,8 +177,8 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Assigned Student ID (Optional)</label>
-                        <input type="text" name="AssignedTo" class="form-control filter-control" placeholder="Optional Student ID" />
+                        <label class="form-label fw-semibold text-muted small" for="computers-assigned-student-id-optional">Assigned Student ID (Optional)</label>
+                        <input id="computers-assigned-student-id-optional" type="text" name="AssignedTo" class="form-control filter-control" placeholder="Optional Student ID" />
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
@@ -208,13 +208,13 @@
                     <input type="hidden" name="ComputerId" value="@c.ComputerId" />
                     <div class="modal-body py-4">
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-muted small">Laboratory Station Name</label>
-                            <input type="text" name="LaboratoryStation" class="form-control filter-control" value="@c.LaboratoryStation" required />
+                            <label class="form-label fw-semibold text-muted small" for="computers-laboratory-station-name-@c.ComputerId">Laboratory Station Name</label>
+                            <input id="computers-laboratory-station-name-@c.ComputerId" type="text" name="LaboratoryStation" class="form-control filter-control" value="@c.LaboratoryStation" required />
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-muted small">Status</label>
-                            <select name="Status" class="form-select filter-control">
+                            <label class="form-label fw-semibold text-muted small" for="computers-status-@c.ComputerId">Status</label>
+                            <select id="computers-status-@c.ComputerId" name="Status" class="form-select filter-control">
                                 <option value="Available" selected="@(c.Status == "Available")">Available</option>
                                 <option value="In Use" selected="@(c.Status == "In Use")">In Use</option>
                                 <option value="Maintenance" selected="@(c.Status == "Maintenance")">Maintenance</option>
@@ -222,8 +222,8 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-muted small">Assigned Student ID (Optional)</label>
-                            <input type="text" name="AssignedTo" class="form-control filter-control" value="@c.AssignedTo" placeholder="Optional Student ID" />
+                            <label class="form-label fw-semibold text-muted small" for="computers-assigned-student-id-optional-@c.ComputerId">Assigned Student ID (Optional)</label>
+                            <input id="computers-assigned-student-id-optional-@c.ComputerId" type="text" name="AssignedTo" class="form-control filter-control" value="@c.AssignedTo" placeholder="Optional Student ID" />
                         </div>
                     </div>
                     <div class="modal-footer border-0 pt-0">
