@@ -137,23 +137,23 @@
                     @Html.AntiForgeryToken()
                     <div class="modal-body py-4">
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-muted small">Student ID Number</label>
-                            <input type="text" name="StudentNumber" class="form-control filter-control" value="@s.StudentNumber" required />
+                            <label class="form-label fw-semibold text-muted small" for="edit-student-number-@s.Id">Student ID Number</label>
+                            <input type="text" id="edit-student-number-@s.Id" name="StudentNumber" class="form-control filter-control" value="@s.StudentNumber" required />
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-muted small">Full Name</label>
-                            <input type="text" name="FullName" class="form-control filter-control" value="@s.FullName" required />
+                            <label class="form-label fw-semibold text-muted small" for="edit-student-fullname-@s.Id">Full Name</label>
+                            <input type="text" id="edit-student-fullname-@s.Id" name="FullName" class="form-control filter-control" value="@s.FullName" required />
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-muted small">Username</label>
-                            <input type="text" name="Username" class="form-control filter-control" value="@s.Username" required />
+                            <label class="form-label fw-semibold text-muted small" for="edit-student-username-@s.Id">Username</label>
+                            <input type="text" id="edit-student-username-@s.Id" name="Username" class="form-control filter-control" value="@s.Username" required />
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-muted small">New Password <span class="text-muted font-normal">(Leave blank to keep current)</span></label>
-                            <input type="password" name="newPassword" class="form-control filter-control" placeholder="Optional new password" />
+                            <label class="form-label fw-semibold text-muted small" for="edit-student-password-@s.Id">New Password <span class="text-muted font-normal">(Leave blank to keep current)</span></label>
+                            <input type="password" id="edit-student-password-@s.Id" name="newPassword" class="form-control filter-control" placeholder="Optional new password" />
                         </div>
                     </div>
                     <div class="modal-footer border-0 pt-0">

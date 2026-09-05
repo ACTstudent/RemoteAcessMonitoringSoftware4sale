@@ -164,12 +164,12 @@
                     <input type="hidden" name="ComputerId" value="@c.ComputerId" />
                     <div class="modal-body py-4">
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-muted small">Station Name</label>
-                            <input type="text" name="LaboratoryStation" value="@c.LaboratoryStation" maxlength="50" class="form-control filter-control" required />
+                            <label class="form-label fw-semibold text-muted small" for="computer-station-@c.ComputerId">Station Name</label>
+                            <input type="text" id="computer-station-@c.ComputerId" name="LaboratoryStation" value="@c.LaboratoryStation" maxlength="50" class="form-control filter-control" required />
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-muted small">Operational Status</label>
-                            <select name="Status" class="form-select filter-control" required>
+                            <label class="form-label fw-semibold text-muted small" for="computer-status-@c.ComputerId">Operational Status</label>
+                            <select id="computer-status-@c.ComputerId" name="Status" class="form-select filter-control" required>
                                 @if (!statusOptions.Contains(c.Status))
                                 {
                                     <option value="@c.Status" selected>@c.Status</option>

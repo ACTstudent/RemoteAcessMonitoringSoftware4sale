@@ -44,12 +44,34 @@
     </div>
 </div>
 
-<div class="modal fade" id="ruleModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="post" asp-action="CreateRestriction">@Html.AntiForgeryToken()<div class="modal-header"><h5>Add Session Rule</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">@RuleFields(null)</div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div>
+<div class="modal fade" id="ruleModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="post" asp-action="CreateRestriction">@Html.AntiForgeryToken()<div class="modal-header"><h5>Add Session Rule</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body">@RuleFields(null, "new")</div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div>
 @foreach (var rule in Model.Restrictions.Where(rule => rule.TeacherId == teacherId))
 {
-    <div class="modal fade" id="editRule-@rule.RestrictionRuleId" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="post" asp-action="UpdateRestriction">@Html.AntiForgeryToken()<input type="hidden" name="RestrictionRuleId" value="@rule.RestrictionRuleId" /><div class="modal-header"><h5>Edit Session Rule</h5></div><div class="modal-body">@RuleFields(rule)</div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div>
+    <div class="modal fade" id="editRule-@rule.RestrictionRuleId" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="post" asp-action="UpdateRestriction">@Html.AntiForgeryToken()<input type="hidden" name="RestrictionRuleId" value="@rule.RestrictionRuleId" /><div class="modal-header"><h5>Edit Session Rule</h5></div><div class="modal-body">@RuleFields(rule, rule.RestrictionRuleId.ToString())</div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div>
 }
 
 @functions {
-    public IHtmlContent RuleFields(Server.Models.RestrictionRule? rule) => new HtmlString($"<label>Type</label><select name='RuleType' class='form-select mb-2'><option {(rule?.RuleType == "Application" ? "selected" : "")}>Application</option><option {(rule?.RuleType == "Website" ? "selected" : "")}>Website</option></select><label>Mode</label><select name='Mode' class='form-select mb-2'><option {(rule?.Mode != "Allow" ? "selected" : "")}>Block</option><option {(rule?.Mode == "Allow" ? "selected" : "")}>Allow</option></select><label>Target or wildcard</label><input required name='Target' value='{System.Net.WebUtility.HtmlEncode(rule?.Target)}' class='form-control mb-2' maxlength='200' placeholder='chrome* or example.com' /><label>Description</label><input name='Description' value='{System.Net.WebUtility.HtmlEncode(rule?.Description)}' class='form-control mb-2' maxlength='500' /><label><input type='checkbox' name='IsActive' value='true' {(rule?.IsActive != false ? "checked" : "")} /> Active</label>");
+    // Rendered twice - once empty for "add" and once per rule for "edit" - so
+    // every id carries a scope. Without it the two dialogs would share ids and
+    // every label would point at whichever field the browser saw first.
+    public IHtmlContent RuleFields(Server.Models.RestrictionRule? rule, string scope)
+    {
+        string Id(string field) => $"rule-{field}-{scope}";
+        var target = System.Net.WebUtility.HtmlEncode(rule?.Target);
+        var description = System.Net.WebUtility.HtmlEncode(rule?.Description);
+        return new HtmlString(
+            $"<label for='{Id("type")}'>Type</label>" +
+            $"<select id='{Id("type")}' name='RuleType' class='form-select mb-2'>" +
+            $"<option {(rule?.RuleType == "Application" ? "selected" : "")}>Application</option>" +
+            $"<option {(rule?.RuleType == "Website" ? "selected" : "")}>Website</option></select>" +
+            $"<label for='{Id("mode")}'>Mode</label>" +
+            $"<select id='{Id("mode")}' name='Mode' class='form-select mb-2'>" +
+            $"<option {(rule?.Mode != "Allow" ? "selected" : "")}>Block</option>" +
+            $"<option {(rule?.Mode == "Allow" ? "selected" : "")}>Allow</option></select>" +
+            $"<label for='{Id("target")}'>Target or wildcard</label>" +
+            $"<input id='{Id("target")}' required name='Target' value='{target}' class='form-control mb-2' maxlength='200' placeholder='chrome* or example.com' />" +
+            $"<label for='{Id("description")}'>Description</label>" +
+            $"<input id='{Id("description")}' name='Description' value='{description}' class='form-control mb-2' maxlength='500' />" +
+            $"<label for='{Id("active")}'><input type='checkbox' id='{Id("active")}' name='IsActive' value='true' {(rule?.IsActive != false ? "checked" : "")} /> Active</label>");
+    }
 }

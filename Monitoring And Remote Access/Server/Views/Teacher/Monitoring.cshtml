@@ -37,7 +37,7 @@
         </div>
         <div class="col-md-4 col-sm-8">
             <div class="search-input-wrapper">
-                <input type="text" id="gridSearch" class="form-control filter-control search-input py-1.5" placeholder="Filter workstations..." />
+                <input type="text" id="gridSearch" aria-label="Filter workstations" class="form-control filter-control search-input py-1.5" placeholder="Filter workstations..." />
                 <i class="bi bi-search search-icon text-muted"></i>
             </div>
         </div>
@@ -82,11 +82,11 @@
 
 <div class="modal fade" id="warningModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
-        <div class="modal-header"><h5 class="modal-title">Send Student Warning</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-header"><h5 class="modal-title">Send Student Warning</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
         <div class="modal-body">
             <input type="hidden" id="warningTarget" />
-            <label class="form-label">Title</label><input id="warningTitle" class="form-control mb-3" maxlength="120" value="Teacher Warning" />
-            <label class="form-label">Message</label><textarea id="warningMessage" class="form-control" maxlength="1000" rows="4" required></textarea>
+            <label class="form-label" for="warningTitle">Title</label><input id="warningTitle" class="form-control mb-3" maxlength="120" value="Teacher Warning" />
+            <label class="form-label" for="warningMessage">Message</label><textarea id="warningMessage" class="form-control" maxlength="1000" rows="4" required></textarea>
         </div>
         <div class="modal-footer"><button class="btn btn-primary" onclick="sendWarning()">Send Warning</button></div>
     </div></div>

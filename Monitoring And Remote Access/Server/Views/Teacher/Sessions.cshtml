@@ -163,8 +163,8 @@
                 @Html.AntiForgeryToken()
                 <div class="modal-body py-4">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Select Student <span class="text-danger">*</span></label>
-                        <select name="studentId" class="form-select filter-control" required>
+                        <label class="form-label fw-semibold text-muted small" for="start-session-student">Select Student <span class="text-danger">*</span></label>
+                        <select id="start-session-student" name="studentId" class="form-select filter-control" required>
                             <option value="" disabled selected>-- Select Student --</option>
                             @foreach (var s in ViewBag.Students)
                             {
@@ -174,8 +174,8 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Assigned Workstation (Optional)</label>
-                        <select name="computerId" class="form-select filter-control">
+                        <label class="form-label fw-semibold text-muted small" for="start-session-computer">Assigned Workstation (Optional)</label>
+                        <select id="start-session-computer" name="computerId" class="form-select filter-control">
                             <option value="" selected>-- Auto / No station --</option>
                             @foreach (var c in ViewBag.Computers)
                             {
@@ -185,8 +185,8 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small">Session Policy Rule</label>
-                        <select name="sessionRuleId" class="form-select filter-control">
+                        <label class="form-label fw-semibold text-muted small" for="start-session-rule">Session Policy Rule</label>
+                        <select id="start-session-rule" name="sessionRuleId" class="form-select filter-control">
                             <option value="" selected>Default 45-minute rule</option>
                             @foreach (var r in ViewBag.SessionRules)
                             {
