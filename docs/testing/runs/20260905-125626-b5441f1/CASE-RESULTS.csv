@@ -1,0 +1,64 @@
+CaseId,Variant,Source,TestName,Environment,Expected,Actual,Status,Evidence,DefectId,ExecutedAtUtc
+BUILD-01,solution restore,dotnet,restore RemoteMonitoring.sln,Win11 .NET 8.0.422,exit 0,exit 0,PASS,logs/restore_solution.log,,2026-09-05T12:57Z
+BUILD-02,solution build Release,dotnet,build RemoteMonitoring.sln -c Release,Win11 .NET 8.0.422,exit 0 no warnings,exit 0 with 0 warnings,PASS,logs/build_solution_Release.log,,2026-09-05T12:57Z
+BUILD-03,standalone tool,dotnet,build CamsDbCleaner,Win11 .NET 8.0.422,exit 0,exit 0,PASS,logs/build_CamsDbCleaner.log,,2026-09-05T12:57Z
+UNIT-01,server suite,Server.Tests,319 tests,Win11 .NET 8.0.422,all pass,319 of 319 passed with 0 skipped,PASS,trx/server.trx,,2026-09-05T12:57Z
+UNIT-02,client suite,Client.Tests,33 tests,Win11 .NET 8.0.422,all pass,33 of 33 passed with 0 skipped,PASS,trx/client.trx,,2026-09-05T12:57Z
+UNIT-03,server coverage,coverlet,XPlat Code Coverage,Win11 .NET 8.0.422,collected,line 79.62 percent branch 33.86 percent,PASS,trx coverage.cobertura.xml,,2026-09-05T12:57Z
+UNIT-04,client coverage,Client.Tests,no collector configured,Win11 .NET 8.0.422,collected,not collected,NOT RUN,,,
+AUTH-01,anonymous,HTTP,15 protected endpoints,Release server,redirect to login,302 on all 15,PASS,authz-matrix.csv,,2026-09-05T13:05Z
+AUTH-02,Admin,HTTP,admin surfaces,Release server,200,200 on every Admin route,PASS,authz-matrix.csv,,2026-09-05T13:05Z
+AUTH-03,active Teacher shared actions,HTTP,Admin Index Teachers Students Classes,Release server,200,200,PASS,authz-matrix.csv,,2026-09-05T13:05Z
+AUTH-04,active Teacher admin-only,HTTP,Roles SystemLogs AuditLogs LanConfig AdminDatabase,Release server,refused,302 refused on all five,PASS,authz-matrix.csv,,2026-09-05T13:05Z
+AUTH-05,inactive Teacher,HTTP,login and all endpoints,Release server,refused,login refused and 302 on all endpoints,PASS,authz-matrix.csv,,2026-09-05T13:05Z
+AUTH-06,Student escalation,HTTP,Teacher and Admin endpoints,Release server,refused,302 on all,PASS,authz-matrix.csv,,2026-09-05T13:05Z
+AUTH-07,Admin cross-role,HTTP,Teacher and Student endpoints,Release server,refused,302 refused,PASS,authz-matrix.csv,,2026-09-05T13:05Z
+AUTH-08,deployment route,HTTP,Admin/Deployment,Release server,Admin only,200 for admin and 302 for others,PASS,authz-matrix.csv,,2026-09-05T13:08Z
+HUB-01,student connects,SignalR,real transport with cookie auth,Release server,connected,connected,PASS,logs/signalr_probe.log,,2026-09-05T13:10Z
+HUB-02,teacher notified,SignalR,StudentConnected,Release server,event received,received STU-TEST-1,PASS,logs/signalr_probe.log,,2026-09-05T13:10Z
+HUB-03,screen frame relay,SignalR,SendScreenFrame,Release server,relayed to teacher,relayed,PASS,logs/signalr_probe.log,,2026-09-05T13:10Z
+HUB-04,application telemetry,SignalR,ReportActiveApp,Release server,received,received,PASS,logs/signalr_probe.log,,2026-09-05T13:10Z
+HUB-05,infraction alert,SignalR,ReportInfraction,Release server,pushed to teacher,pushed,PASS,logs/signalr_probe.log,,2026-09-05T13:10Z
+HUB-06,broadcast notification,SignalR,SendNotification,Release server,delivered to student,delivered,PASS,logs/signalr_probe.log,,2026-09-05T13:10Z
+HUB-07,targeted warning,SignalR,SendWarningPopup,Release server,delivered to student,delivered,PASS,logs/signalr_probe.log,,2026-09-05T13:10Z
+HUB-08,remote control lifecycle,SignalR,Start then Input then Stop,Release server,accepted,all three accepted,PASS,logs/signalr_probe.log,,2026-09-05T13:10Z
+HUB-09,student cannot lock,SignalR,LockStudent as Student,Release server,refused,refused with HubException,PASS,logs/signalr_negative.log,,2026-09-05T13:20Z
+HUB-10,student cannot force logout,SignalR,ForceLogout as Student,Release server,refused,refused with HubException,PASS,logs/signalr_negative.log,,2026-09-05T13:20Z
+HUB-11,student cannot shut down,SignalR,ShutdownStudent as Student,Release server,refused,refused with HubException,PASS,logs/signalr_negative.log,,2026-09-05T13:20Z
+HUB-12,student cannot remote control,SignalR,StartRemoteControl as Student,Release server,refused,refused with HubException,PASS,logs/signalr_negative.log,,2026-09-05T13:20Z
+HUB-13,student cannot send input,SignalR,SendRemoteInput as Student,Release server,refused,refused with HubException,PASS,logs/signalr_negative.log,,2026-09-05T13:20Z
+HUB-14,student cannot broadcast,SignalR,SendNotification as Student,Release server,refused,refused with HubException,PASS,logs/signalr_negative.log,,2026-09-05T13:20Z
+HUB-15,student cannot end sessions,SignalR,GlobalEndSession as Student,Release server,refused,refused with HubException,PASS,logs/signalr_negative.log,,2026-09-05T13:20Z
+HUB-16,forged connection id,SignalR,LockStudent with random guid,Release server,refused,refused with HubException,PASS,logs/signalr_negative.log,,2026-09-05T13:20Z
+SESS-01,one workstation per student,HTTP,api/client/login with two PcNames,Release server,second refused,200 on same PC and 401 on another,PASS,console transcript,,2026-09-05T13:18Z
+SESS-02,session created on agent login,HTTP,api/client/login,Release server,session created,created and usable for remote control,PASS,logs/signalr_probe.log,,2026-09-05T13:10Z
+RATE-01,login throttle,HTTP,repeated POST to Account/Login,Release server,429 past the limit,429 observed,PASS,console transcript,,2026-09-05T13:02Z
+DB-01,migrations on file-backed SQLite,dotnet,server startup,Release server,applied,applied cleanly,PASS,logs/server_runtime.log,,2026-09-05T13:00Z
+DB-02,cleaner report is non-destructive,CamsDbCleaner,report mode,disposable fixture,file unchanged,md5 identical before and after,PASS,logs/cleaner_report.log,,2026-09-05T13:26Z
+DB-03,cleaner apply deletes history,CamsDbCleaner,apply mode,disposable fixture,history removed,45 rows deleted,PASS,logs/cleaner_apply.log,,2026-09-05T13:27Z
+DB-04,cleaner preserves accounts,CamsDbCleaner,post-apply report,disposable fixture,accounts intact,admins teachers students computers rules roles intact,PASS,logs/cleaner_verify.log,,2026-09-05T13:27Z
+DB-05,workstation state repaired,CamsDbCleaner,apply mode,disposable fixture,no orphaned In Use,1 workstation reset,PASS,logs/cleaner_apply.log,,2026-09-05T13:27Z
+PKG-01,installer hash versus manifest,sha256sum,server and client,build output,match,both match,PASS,console transcript,,2026-09-05T13:30Z
+PKG-02,installer size versus manifest,stat,server and client,build output,match,both match,PASS,console transcript,,2026-09-05T13:30Z
+PKG-03,sidecar checksum files,sha256sum,sha256 sidecars,build output,match,both match,PASS,console transcript,,2026-09-05T13:30Z
+PKG-04,no private key material,find,pfx p12 key in output,build output,none present,0 found,PASS,console transcript,,2026-09-05T13:30Z
+PKG-05,packaging pipeline,build-everything.ps1,full pipeline,Win11 with Inno Setup 6,all checks pass,13 of 13 validation checks passed,PASS,v2.11.5 build log,,2026-09-05T12:40Z
+TLS-01,HTTPS only,curl,plain HTTP request,Release server,no plain listener,connection refused,PASS,console transcript,,2026-09-05T13:34Z
+TLS-02,security headers,curl,response headers,Release server,present,five headers present,PASS,console transcript,,2026-09-05T13:34Z
+TLS-03,agent rejects untrusted certificate,Client.exe,discovery and login,Win11 desktop,refuses to connect,agent reported server not reachable until root trusted,PASS,earlier session evidence,,2026-09-05T09:40Z
+UI-01,admin views render,Chrome,17 pages,headless Chrome 1440x900,no console errors,CSP blocked the font stylesheet on every page,FAIL,ui-sweep.csv,DEF-001,2026-09-05T13:40Z
+UI-02,teacher views render,Chrome,14 pages,headless Chrome 1440x900,no console errors,CSP blocked the font stylesheet on every page,FAIL,ui-sweep.csv,DEF-001,2026-09-05T13:40Z
+UI-03,student views render,Chrome,3 pages,headless Chrome 1440x900,no console errors,CSP blocked the font stylesheet on every page,FAIL,ui-sweep.csv,DEF-001,2026-09-05T13:40Z
+UI-04,each role reaches its landing page,Chrome,login flow,headless Chrome,lands in the right portal,3 of 3 landed correctly,PASS,ui-sweep.csv,,2026-09-05T13:40Z
+UI-05,no 4xx or 5xx on any view,Chrome,34 pages,headless Chrome,all 200,all 200,PASS,ui-sweep.csv,,2026-09-05T13:40Z
+UI-06,sidebar collapse and restore,Chrome,menu button,headless Chrome 1440x900,hide show and persist,all six assertions held,PASS,sidebar-check output,,2026-09-05T12:30Z
+UI-07,toast auto dismissal,Chrome,CamsToast,headless Chrome,fades unaided,present then removed without interaction,PASS,toast-check output,,2026-09-05T12:05Z
+UI-08,static portal is self contained,grep,portal/index.html,filesystem,no CDN assets,0 remote font references,PASS,console transcript,,2026-09-05T13:34Z
+INS-01,clean install,installer,CAMS-Server-Setup.exe,disposable Windows VM,installs and runs,no disposable VM available,BLOCKED,,,
+INS-02,upgrade over populated install,installer,both installers,disposable Windows VM,data preserved,no disposable VM available,BLOCKED,,,
+INS-03,uninstall and reinstall,installer,both installers,disposable Windows VM,clean removal,no disposable VM available,BLOCKED,,,
+CLASS-01,two client classroom walkthrough,live,screen delivery and input targeting,two disposable clients,end to end,no second machine available,BLOCKED,,,
+CLASS-02,lock logout restart shutdown,live,remote OS commands,disposable client,executes on the target,no disposable client and refused on the working machine,BLOCKED,,,
+NET-01,LAN outage and rediscovery,live,discovery fallback,disposable network,recovers,no disposable network,BLOCKED,,,
+NET-02,server address change,live,certificate and address reconciliation,disposable network,recovers,no disposable network,BLOCKED,,,
+CAP-01,capacity and soak,live,40 or more clients,lab,within limits,no lab and no approved numeric limits,NOT ASSESSED,,,

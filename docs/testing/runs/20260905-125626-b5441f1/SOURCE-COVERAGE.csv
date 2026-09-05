@@ -1,0 +1,30 @@
+File,CaseIds,AutomatedTests,ReviewStatus,Evidence,ExclusionReason
+Server/Program.cs,AUTH-01..08;RATE-01;TLS-01;TLS-02;DEF-001,none direct,EXERCISED,authz-matrix.csv;console transcript,
+Server/Controllers/AccountController.cs,AUTH-01..07;RATE-01,AuthenticationServiceTests,EXERCISED,authz-matrix.csv,
+Server/Controllers/AdminController.cs,AUTH-02..04;UI-01,AdminControllerTests,EXERCISED,authz-matrix.csv;ui-sweep.csv,
+Server/Controllers/TeacherController.cs,AUTH-03;AUTH-06;UI-02,TeacherControllerTests,EXERCISED,authz-matrix.csv;ui-sweep.csv,
+Server/Controllers/StudentController.cs,AUTH-06;UI-03,none direct,EXERCISED,ui-sweep.csv,
+Server/Controllers/ClientAuthController.cs,SESS-01;SESS-02,none direct,EXERCISED,logs/signalr_probe.log,
+Server/Controllers/AdminDatabaseController.cs,AUTH-04,none direct,PARTIAL,authz-matrix.csv,maintenance operations not executed
+Server/Controllers/AdminDeploymentController.cs,AUTH-08,AdminDeploymentControllerTests,PARTIAL,authz-matrix.csv,installer download returns 409 in this environment
+Server/Hubs/RemoteMonitoringHub.cs,HUB-01..16,RemoteMonitoringHubSecurityTests,EXERCISED,logs/signalr_probe.log;logs/signalr_negative.log,
+Server/Services/AuthenticationService.cs,AUTH-05;SESS-01;RATE-01,AuthenticationServiceTests,EXERCISED,authz-matrix.csv,
+Server/Services/LabSessionLifecycleService.cs,SESS-01;SESS-02;HUB-08,LabSessionLifecycleServiceTests,EXERCISED,logs/signalr_probe.log,
+Server/Services/WorkstationRegistrationService.cs,SESS-01,WorkstationRegistrationServiceTests,EXERCISED,console transcript,
+Server/Services/AnalyticsService.cs,UI-02,AnalyticsServiceTests,EXERCISED,ui-sweep.csv,
+Server/Services/ClassManagementService.cs,UI-01;UI-02,ClassManagementServiceTests,EXERCISED,ui-sweep.csv,
+Server/Services/DatabaseInitializer.cs,DB-01,DatabaseInitializerTests,EXERCISED,logs/server_runtime.log,
+Server/Services/DatabaseMaintenanceService.cs,none,unit tests only,NOT EXERCISED,,backup and restore need a disposable server; BLOCKED with INS cases
+Server/Services/DeploymentService.cs,AUTH-08;PKG-01..04,AdminDeploymentControllerTests,PARTIAL,console transcript,staged installer download not exercised
+Server/Services/TelemetryService.cs,HUB-04;HUB-05,unit tests,EXERCISED,logs/signalr_probe.log,
+Server/Services/TelemetryRetentionCleanupService.cs,none,unit tests only,NOT EXERCISED,,retention window needs aged fixture data
+Server/Views (all Razor views),UI-01..05,none,EXERCISED,ui-sweep.csv,
+Server/Views/Teacher/_Layout.cshtml,none,none,NOT EXERCISED,,dead file; no view references it and there is no _ViewStart
+Server/wwwroot/css/site.css,UI-01..03;DEF-001,none,EXERCISED,ui-sweep.csv,
+Server/wwwroot/js/site.js,UI-06;UI-07,none,EXERCISED,sidebar-check;toast-check,
+Client/MainForm.cs,TLS-03,Client.Tests,PARTIAL,earlier session evidence,live classroom operation BLOCKED
+Client/Services/*.cs,TLS-03,Client.Tests,PARTIAL,trx/client.trx,discovery and reconnect need a disposable network
+Shared/Contracts/*.cs,HUB-01..16,covered via both suites,EXERCISED,trx/server.trx;trx/client.trx,
+tools/CamsDbCleaner/Program.cs,DB-02..05,none,EXERCISED,logs/cleaner_report.log;logs/cleaner_apply.log,
+build-everything.ps1,PKG-01..05,none,EXERCISED,v2.11.5 build log,
+portal/index.html,UI-08,none,EXERCISED,console transcript,

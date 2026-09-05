@@ -1,0 +1,16 @@
+Endpoint,Anonymous,Admin,ActiveTeacher,InactiveTeacher,Student
+Admin/Index,302,200,200,302,302
+Admin/Teachers,302,200,200,302,302
+Admin/Roles,302,200,302,302,302
+Admin/SystemLogs,302,200,302,302,302
+Admin/AuditLogs,302,200,302,302,302
+Admin/LanConfig,302,200,302,302,302
+Admin/Students,302,200,200,302,302
+Admin/Classes,302,200,200,302,302
+AdminDatabase/Index,302,200,302,302,302
+AdminDeployment/Index,404,404,404,404,404
+Teacher/Dashboard,302,302,200,302,302
+Teacher/Monitoring,302,302,200,302,302
+Teacher/Sessions,302,302,200,302,302
+Student/Index,302,302,302,302,200
+Student/Alerts,302,302,302,302,200
