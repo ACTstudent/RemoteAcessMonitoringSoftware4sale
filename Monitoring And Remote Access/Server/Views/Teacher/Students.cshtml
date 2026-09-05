@@ -98,7 +98,7 @@
                                 <a class="btn btn-sm btn-outline-primary rounded-pill px-3" asp-action="StudentDetails" asp-route-id="@s.Id">
                                     <i class="bi bi-graph-up me-1"></i> Analytics
                                 </a>
-                                <form method="post" action="/Teacher/DeleteStudent" style="margin: 0;" data-confirm="Remove @s.FullName from your student profiles?" data-confirm-title="Remove student" data-confirm-label="Remove">
+                                <form method="post" action="/Teacher/DeleteStudent" style="margin: 0;" data-confirm="Remove @s.FullName from your student profiles?" data-confirm-title="Remove student" data-confirm-label="Remove"><input type="hidden" name="search" value="@ViewBag.Search" />
                                     <input type="hidden" name="studentId" value="@s.Id" />
                                     @Html.AntiForgeryToken()
                                     <button class="btn btn-sm btn-outline-danger rounded-pill px-3">
@@ -132,7 +132,7 @@
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form method="post" action="/Teacher/UpdateStudent">
+                <form method="post" action="/Teacher/UpdateStudent"><input type="hidden" name="search" value="@ViewBag.Search" />
                     <input type="hidden" name="Id" value="@s.Id" />
                     @Html.AntiForgeryToken()
                     <div class="modal-body py-4">

@@ -528,7 +528,7 @@ namespace Server.Controllers
             if (!teacherId.HasValue) return Denied();
             var report = await _analytics.GetStudentReportAsync(id, teacherId.Value,
                 from ?? DateTime.UtcNow.Date, to ?? DateTime.UtcNow.Date.AddDays(1).AddTicks(-1));
-            return report is null ? RedirectToAction("Students") : View(report);
+            return report is null ? RedirectToAction(nameof(Students)) : View(report);
         }
 
         public async Task<IActionResult> ClassAnalytics(int id, DateTime? from = null, DateTime? to = null, string? station = null)
@@ -834,14 +834,15 @@ namespace Server.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateStudent(
             [Bind("StudentNumber,FirstName,LastName,FullName,Username,PasswordHash")] Student student,
-            int? classId = null)
+            int? classId = null,
+            string? search = null)
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue || !classId.HasValue)
             {
                 TempData["ErrorMessage"] = "Create a student from one of your class rosters so the student is assigned immediately.";
-                return RedirectToAction("Students");
+                return RedirectToAction(nameof(Students), new { search });
             }
 
             var result = await _classManagement.CreateStudentInClassAsync(
@@ -851,18 +852,19 @@ namespace Server.Controllers
             if (!result.Success)
             {
                 TempData["ErrorMessage"] = result.Error;
-                return RedirectToAction("Students");
+                return RedirectToAction(nameof(Students), new { search });
             }
 
             await AuditAsync("CreateStudent", $"Created student {result.Name} in class {classId}");
             TempData["Message"] = $"Student '{result.Name}' registered successfully!";
-            return RedirectToAction("Students");
+            return RedirectToAction(nameof(Students), new { search });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStudent(
             [Bind("Id,StudentNumber,FirstName,LastName,FullName,Username")] Student student,
-            string? newPassword)
+            string? newPassword,
+            string? search = null)
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
@@ -877,7 +879,7 @@ namespace Server.Controllers
                 await LoginIdentifierInUseAsync(requestedUsername, existing.Id))
             {
                 TempData["ErrorMessage"] = "The student number or username is already in use.";
-                return RedirectToAction("Students");
+                return RedirectToAction(nameof(Students), new { search });
             }
 
             existing.StudentNumber = requestedStudentNumber;
@@ -906,11 +908,11 @@ namespace Server.Controllers
             await _context.SaveChangesAsync();
             await AuditAsync("UpdateStudent", $"Updated student {existing.Id} ({existing.StudentNumber})");
             TempData["Message"] = $"Student '{existing.FullName}' updated successfully!";
-            return RedirectToAction("Students");
+            return RedirectToAction(nameof(Students), new { search });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteStudent(int studentId)
+        public async Task<IActionResult> DeleteStudent(int studentId, string? search = null)
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
@@ -935,7 +937,7 @@ namespace Server.Controllers
                 if (!result.Success)
                 {
                     TempData["ErrorMessage"] = result.Error;
-                    return RedirectToAction(nameof(Students));
+                    return RedirectToAction(nameof(Students), new { search });
                 }
             }
 
@@ -947,7 +949,7 @@ namespace Server.Controllers
 
             await AuditAsync("RemoveStudent", $"Removed student {studentId} from the teacher's roster");
             TempData["Message"] = $"Student '{existing.FullName}' removed from your roster. The account was preserved.";
-            return RedirectToAction(nameof(Students));
+            return RedirectToAction(nameof(Students), new { search });
         }
 
         // ---------- Computer Management ----------
