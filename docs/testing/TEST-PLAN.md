@@ -5,6 +5,7 @@ Status: planning and source inspection only; no application tests, installers, o
 
 ## Documents and traceability
 
+- [Agent execution handoff](AGENT-HANDOFF.md): copy-ready task and ordered execution instructions.
 - [Source inventory](SOURCE-INVENTORY.md): every tracked file assigned to a verification area.
 - [Test cases](TEST-CASES.md): procedures, expected outcomes, priorities, and evidence.
 - [Run report template](RUN-REPORT-TEMPLATE.md): execution record, defects, and release decision.
