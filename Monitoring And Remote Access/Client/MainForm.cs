@@ -50,6 +50,28 @@ namespace Client
         private string _sessionStatus = "None";
         private int _sessionElapsed = 0;
 
+        // CAMS palette, mirroring the design tokens used by the web portal so the
+        // agent and the browser experience read as one product.
+        private static readonly Color BrandDark = Color.FromArgb(11, 60, 38);      // --sidebar-bg
+        private static readonly Color BrandDarker = Color.FromArgb(9, 48, 31);
+        private static readonly Color BrandEmerald = Color.FromArgb(16, 185, 129); // --accent-emerald
+        private static readonly Color BrandMint = Color.FromArgb(167, 243, 208);
+        private static readonly Color SurfaceBody = Color.FromArgb(248, 250, 252); // --body-bg
+        private static readonly Color SurfaceCard = Color.White;
+        private static readonly Color BorderSubtle = Color.FromArgb(228, 228, 231);// --card-border
+        private static readonly Color TextMain = Color.FromArgb(24, 24, 27);       // --text-main
+        private static readonly Color TextMuted = Color.FromArgb(113, 113, 122);   // --text-muted
+        private static readonly Color StatusOk = Color.FromArgb(4, 120, 87);       // readable emerald on white
+        private static readonly Color StatusWarn = Color.FromArgb(180, 83, 9);
+        private static readonly Color StatusDanger = Color.FromArgb(185, 28, 28);
+
+        // Variants for text sitting on the dark brand bar, where the on-white
+        // status colours above would not meet a readable contrast.
+        private static readonly Color OnDarkStrong = Color.White;
+        private static readonly Color OnDarkMuted = Color.FromArgb(134, 173, 154);
+        private static readonly Color OnDarkWarn = Color.FromArgb(252, 211, 77);
+        private static readonly Color OnDarkDanger = Color.FromArgb(252, 165, 165);
+
         private TextBox txtStudentId = new();
         private TextBox txtPassword = new();
         private Button btnLogin = new();
@@ -78,121 +100,322 @@ namespace Client
             };
         }
 
+        /// <summary>Applies the shared CAMS field styling to a text box.</summary>
+        private static TextBox StyleField(TextBox field, bool isPassword = false)
+        {
+            field.BorderStyle = BorderStyle.FixedSingle;
+            field.Font = new Font("Segoe UI", 10.5f);
+            field.BackColor = SurfaceCard;
+            field.ForeColor = TextMain;
+            field.UseSystemPasswordChar = isPassword;
+            field.Margin = new Padding(0, 2, 0, 12);
+            field.Height = 30;
+            return field;
+        }
+
+        /// <summary>Field caption in the muted, uppercase style used across CAMS.</summary>
+        private static Label FieldLabel(string text) => new()
+        {
+            Text = text,
+            AutoSize = true,
+            ForeColor = TextMuted,
+            Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+            Margin = new Padding(0, 0, 0, 2)
+        };
+
+        private static Button BrandButton(string text, Color background) => new()
+        {
+            Text = text,
+            BackColor = background,
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold),
+            Height = 40,
+            Cursor = Cursors.Hand
+        };
+
         private void BuildUi()
         {
-            Text = "Student Client - Lab Monitor";
-            Size = new Size(420, 360);
+            Controls.Clear();
+            Text = "CAMS Student Client";
+            ClientSize = new Size(440, 460);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
+            BackColor = SurfaceBody;
+            Font = new Font("Segoe UI", 9.75f);
+
+            // Branded banner, echoing the portal's sign-in header.
+            var banner = new Panel { Dock = DockStyle.Top, Height = 118, BackColor = BrandDark };
+            var lblBrand = new Label
+            {
+                Text = "CAMS",
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 20, FontStyle.Bold),
+                AutoSize = true,
+                Location = new Point(24, 26)
+            };
+            var lblBrandSub = new Label
+            {
+                Text = "Student Client  ·  Pardo Elementary School",
+                ForeColor = BrandMint,
+                Font = new Font("Segoe UI", 9),
+                AutoSize = true,
+                Location = new Point(26, 68)
+            };
+            banner.Controls.AddRange(new Control[] { lblBrand, lblBrandSub });
+
+            // Stacked form body; a flow layout keeps it correct at any DPI scale.
+            var body = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                Padding = new Padding(24, 22, 24, 16),
+                BackColor = SurfaceBody
+            };
 
             var lblTitle = new Label
             {
-                Text = "Student Login",
-                Font = new Font("Segoe UI", 14, FontStyle.Bold),
-                Location = new Point(150, 20),
-                AutoSize = true
+                Text = "Sign in to your session",
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                ForeColor = TextMain,
+                AutoSize = true,
+                Margin = new Padding(0, 0, 0, 14)
             };
 
-            var lblId = new Label { Text = "Student ID:", Location = new Point(30, 70), AutoSize = true };
-            txtStudentId.Location = new Point(130, 66);
-            txtStudentId.Size = new Size(230, 24);
+            int fieldWidth = ClientSize.Width - 48;
 
-            var lblPass = new Label { Text = "Password:", Location = new Point(30, 105), AutoSize = true };
-            txtPassword.Location = new Point(130, 101);
-            txtPassword.Size = new Size(230, 24);
-            txtPassword.UseSystemPasswordChar = true;
+            StyleField(txtStudentId).Width = fieldWidth;
+            StyleField(txtPassword, isPassword: true).Width = fieldWidth;
 
-            btnLogin = new Button
-            {
-                Text = "Log In",
-                Location = new Point(130, 145),
-                Size = new Size(230, 35),
-                BackColor = Color.FromArgb(13, 110, 253),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
+            btnLogin = BrandButton("Log in", BrandEmerald);
+            btnLogin.Width = fieldWidth;
+            btnLogin.Margin = new Padding(0, 6, 0, 14);
+            btnLogin.FlatAppearance.BorderSize = 0;
+            btnLogin.FlatAppearance.MouseOverBackColor = Color.FromArgb(5, 150, 105);
             btnLogin.Click += BtnLogin_Click;
 
             lblStatus = new Label
             {
                 Text = "Status: Not connected",
-                Location = new Point(30, 200),
                 AutoSize = true,
-                ForeColor = Color.Gray
-            };
-
-            Controls.AddRange(new Control[] { lblTitle, lblId, txtStudentId, lblPass, txtPassword, btnLogin, lblStatus });
-        }
-
-        // Builds the sticky toolbar shown after a successful login
-        private void BuildToolbar()
-        {
-            Controls.Clear();
-            Size = new Size(640, 400);
-
-            var bar = new Panel
-            {
-                Dock = DockStyle.Top,
-                Height = 46,
-                BackColor = Color.FromArgb(26, 29, 36),
-                Padding = new Padding(10, 0, 10, 0)
-            };
-
-            lblUnit = new Label { Text = "Unit: -", ForeColor = Color.White, AutoSize = true, Font = new Font("Segoe UI", 10, FontStyle.Bold), Location = new Point(12, 13) };
-            lblStudent = new Label { Text = "Student: -", ForeColor = Color.FromArgb(182, 186, 198), AutoSize = true, Font = new Font("Segoe UI", 10), Location = new Point(230, 13) };
-            lblState = new Label { Text = "No Session", ForeColor = Color.FromArgb(120, 130, 150), AutoSize = true, Font = new Font("Segoe UI", 9), Location = new Point(430, 13) };
-            lblTimer = new Label { Text = "--:--", ForeColor = Color.FromArgb(34, 197, 94), AutoSize = true, Font = new Font("Consolas", 16, FontStyle.Bold), Location = new Point(500, 8) };
-
-            bar.Controls.AddRange(new Control[] { lblUnit, lblStudent, lblState, lblTimer });
-
-            lblRemoteState = new Label
-            {
-                Text = "Remote support: inactive",
-                Location = new Point(20, 70),
-                AutoSize = true,
-                ForeColor = Color.FromArgb(120, 130, 150),
-                Font = new Font("Segoe UI", 10, FontStyle.Bold)
-            };
-
-            lblStatus = new Label
-            {
-                Text = "Status: Connected & Streaming",
-                Location = new Point(20, 94),
-                AutoSize = true,
-                ForeColor = Color.Green,
-                Font = new Font("Segoe UI", 10)
-            };
-
-            lblBrowserState = new Label
-            {
-                Text = "Browser monitoring: starting",
-                Location = new Point(20, 116),
-                AutoSize = true,
-                ForeColor = Color.FromArgb(120, 130, 150),
+                MaximumSize = new Size(fieldWidth, 0),
+                ForeColor = TextMuted,
                 Font = new Font("Segoe UI", 9)
             };
 
+            var lblHint = new Label
+            {
+                Text = "Use the account issued by your teacher.",
+                AutoSize = true,
+                ForeColor = TextMuted,
+                Font = new Font("Segoe UI", 8.5f),
+                Margin = new Padding(0, 10, 0, 0)
+            };
+
+            body.Controls.AddRange(new Control[]
+            {
+                lblTitle,
+                FieldLabel("STUDENT ID"), txtStudentId,
+                FieldLabel("PASSWORD"), txtPassword,
+                btnLogin,
+                lblStatus,
+                lblHint
+            });
+
+            // Fill order matters: the banner docks above the filled body.
+            Controls.Add(body);
+            Controls.Add(banner);
+            AcceptButton = btnLogin;
+        }
+
+        /// <summary>One "caption + value" line inside the status card.</summary>
+        private static TableLayoutPanel StatusRow(string caption, Label value)
+        {
+            var row = new TableLayoutPanel
+            {
+                ColumnCount = 2,
+                RowCount = 1,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Dock = DockStyle.Top,
+                Margin = new Padding(0, 0, 0, 8)
+            };
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 172));
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+
+            var label = new Label
+            {
+                Text = caption,
+                AutoSize = true,
+                ForeColor = TextMuted,
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+                Anchor = AnchorStyles.Left,
+                Margin = new Padding(0, 3, 8, 0),
+                UseMnemonic = false
+            };
+
+            value.AutoSize = true;
+            value.UseMnemonic = false;
+            value.Anchor = AnchorStyles.Left;
+            value.Margin = new Padding(0, 2, 0, 0);
+
+            row.Controls.Add(label, 0, 0);
+            row.Controls.Add(value, 1, 0);
+            return row;
+        }
+
+        // Builds the session view shown after a successful login.
+        private void BuildToolbar()
+        {
+            Controls.Clear();
+            ClientSize = new Size(660, 430);
+            BackColor = SurfaceBody;
+
+            // --- Branded header bar -------------------------------------------------
+            // A table layout keeps the identity block and the timer from colliding,
+            // which fixed-position labels could not guarantee with long student names.
+            var bar = new Panel { Dock = DockStyle.Top, Height = 74, BackColor = BrandDark };
+            var barGrid = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 1,
+                Padding = new Padding(18, 0, 18, 0),
+                BackColor = Color.Transparent
+            };
+            barGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            barGrid.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+
+            var identity = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoSize = true,
+                Anchor = AnchorStyles.Left,
+                BackColor = Color.Transparent
+            };
+            lblUnit = new Label
+            {
+                Text = "Unit: -",
+                ForeColor = Color.White,
+                AutoSize = true,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                Margin = new Padding(0, 0, 0, 1)
+            };
+            lblStudent = new Label
+            {
+                Text = "Student: -",
+                ForeColor = BrandMint,
+                AutoSize = true,
+                Font = new Font("Segoe UI", 9),
+                Margin = new Padding(0)
+            };
+            identity.Controls.AddRange(new Control[] { lblUnit, lblStudent });
+
+            var meter = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoSize = true,
+                Anchor = AnchorStyles.Right,
+                BackColor = Color.Transparent
+            };
+            lblTimer = new Label
+            {
+                Text = "--:--",
+                ForeColor = Color.White,
+                AutoSize = true,
+                Font = new Font("Consolas", 19, FontStyle.Bold),
+                Margin = new Padding(0),
+                TextAlign = ContentAlignment.MiddleRight
+            };
+            lblState = new Label
+            {
+                Text = "No Session",
+                ForeColor = BrandMint,
+                AutoSize = true,
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+                Margin = new Padding(0),
+                TextAlign = ContentAlignment.MiddleRight
+            };
+            meter.Controls.AddRange(new Control[] { lblTimer, lblState });
+
+            barGrid.Controls.Add(identity, 0, 0);
+            barGrid.Controls.Add(meter, 1, 0);
+            bar.Controls.Add(barGrid);
+
+            // --- Status card --------------------------------------------------------
+            var content = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20, 18, 20, 18), BackColor = SurfaceBody };
+
+            var card = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 132,
+                BackColor = SurfaceCard,
+                Padding = new Padding(18, 16, 18, 16)
+            };
+            card.Paint += (sender, e) =>
+            {
+                if (sender is not Control c) return;
+                using var pen = new Pen(BorderSubtle);
+                e.Graphics.DrawRectangle(pen, 0, 0, c.Width - 1, c.Height - 1);
+            };
+
+            lblStatus = new Label { Text = "Status: Connected & Streaming", ForeColor = StatusOk, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
+            lblRemoteState = new Label { Text = "Remote support: inactive", ForeColor = TextMuted, Font = new Font("Segoe UI", 9.75f) };
+            lblBrowserState = new Label { Text = "Browser monitoring: starting", ForeColor = TextMuted, Font = new Font("Segoe UI", 9.75f) };
+
+            var rows = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoScroll = false,
+                BackColor = SurfaceCard
+            };
+            rows.Controls.Add(StatusRow("CONNECTION", lblStatus));
+            rows.Controls.Add(StatusRow("REMOTE SUPPORT", lblRemoteState));
+            rows.Controls.Add(StatusRow("BROWSER MONITORING", lblBrowserState));
+            card.Controls.Add(rows);
+
+            // --- Guidance + logout --------------------------------------------------
             var lblInfo = new Label
             {
-                Text = "This workstation is monitored by your teacher.\r\nRestricted applications may be closed.\r\nRestricted websites trigger warnings.\r\nYour session timer appears above.",
-                Location = new Point(20, 140),
+                Dock = DockStyle.Top,
                 AutoSize = true,
-                ForeColor = Color.FromArgb(150, 155, 170)
+                MaximumSize = new Size(600, 0),
+                ForeColor = TextMuted,
+                Font = new Font("Segoe UI", 9),
+                Margin = new Padding(0, 14, 0, 0),
+                Padding = new Padding(0, 14, 0, 10),
+                Text = "This workstation is monitored by your teacher." + Environment.NewLine +
+                       "Restricted applications may be closed automatically." + Environment.NewLine +
+                       "Restricted websites will trigger a warning." + Environment.NewLine +
+                       "Your session timer is shown above."
             };
 
-            var btnLogout = new Button
-            {
-                Text = "Log Out",
-                Location = new Point(20, 210),
-                Size = new Size(140, 32),
-                BackColor = Color.FromArgb(220, 53, 69),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
+            var btnLogout = BrandButton("Log out", BrandDark);
+            btnLogout.Dock = DockStyle.Bottom;
+            btnLogout.Width = 150;
+            btnLogout.Height = 38;
+            btnLogout.FlatAppearance.BorderSize = 0;
+            btnLogout.FlatAppearance.MouseOverBackColor = BrandDarker;
             btnLogout.Click += async (_, _) => await ForceLogout(true);
 
-            Controls.AddRange(new Control[] { bar, lblRemoteState, lblStatus, lblBrowserState, lblInfo, btnLogout });
+            var logoutHost = new Panel { Dock = DockStyle.Bottom, Height = 46, BackColor = SurfaceBody };
+            btnLogout.Dock = DockStyle.Left;
+            logoutHost.Controls.Add(btnLogout);
+
+            // Added last-to-first so docking stacks in the intended order.
+            content.Controls.Add(lblInfo);
+            content.Controls.Add(card);
+            content.Controls.Add(logoutHost);
+
+            Controls.Add(content);
+            Controls.Add(bar);
+
             lblUnit.Text = $"Unit: {Environment.MachineName}";
             lblStudent.Text = $"Student: {_studentName}";
         }
@@ -201,9 +424,7 @@ namespace Client
         {
             int sec = Math.Max(0, _sessionElapsed);
             lblTimer.Text = $"{sec / 60:00}:{sec % 60:00}";
-            lblTimer.ForeColor = _sessionStatus == "Running"
-                ? Color.FromArgb(34, 197, 94)
-                : Color.FromArgb(120, 130, 150);
+            lblTimer.ForeColor = _sessionStatus == "Running" ? OnDarkStrong : OnDarkMuted;
         }
 
         private async void BtnLogin_Click(object? sender, EventArgs e)
@@ -272,7 +493,7 @@ namespace Client
             catch (SocketException)
             {
                 lblStatus.Text = "Status: Server not found";
-                lblStatus.ForeColor = Color.Red;
+                lblStatus.ForeColor = StatusDanger;
                 btnLogin.Enabled = true;
                 var choice = MessageBox.Show(
                     "Cannot reach the server.\n\nMake sure the teacher has started CAMS Server and you are on the same network.\n\nWould you like to enter the server IP manually?",
@@ -285,7 +506,7 @@ namespace Client
                                                   ex.StatusCode == HttpStatusCode.BadRequest)
             {
                 lblStatus.Text = "Status: Login rejected";
-                lblStatus.ForeColor = Color.Red;
+                lblStatus.ForeColor = StatusDanger;
                 btnLogin.Enabled = true;
                 MessageBox.Show(
                     "The server rejected this student login.\n\nCheck the Student ID and password. The student must be active, and the workstation must be available without a conflicting active session.",
@@ -294,7 +515,7 @@ namespace Client
             catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
             {
                 lblStatus.Text = "Status: Login temporarily blocked";
-                lblStatus.ForeColor = Color.Red;
+                lblStatus.ForeColor = StatusDanger;
                 btnLogin.Enabled = true;
                 MessageBox.Show(
                     "Too many failed login attempts were received. Wait one minute and try again.",
@@ -303,7 +524,7 @@ namespace Client
             catch (HttpRequestException ex)
             {
                 lblStatus.Text = "Status: Server not reachable";
-                lblStatus.ForeColor = Color.Red;
+                lblStatus.ForeColor = StatusDanger;
                 btnLogin.Enabled = true;
                 var message = IsCertificateError(ex)
                     ? "The server was discovered, but its HTTPS certificate is not trusted by this PC.\n\nCopy CAMS-Server-Root.cer from the teacher PC and run the client installer again, selecting that certificate. Do not copy the private .pfx file."
@@ -325,7 +546,7 @@ namespace Client
             catch (Exception ex)
             {
                 lblStatus.Text = "Status: Connection failed";
-                lblStatus.ForeColor = Color.Red;
+                lblStatus.ForeColor = StatusDanger;
                 btnLogin.Enabled = true;
                 var choice = MessageBox.Show(
                     $"Connection error:\n\n{ex.Message}\n\nWould you like to enter the server IP manually?",
@@ -424,9 +645,9 @@ namespace Client
             _sessionStatus = state.Status;
             _sessionElapsed = state.ElapsedSeconds;
             lblState.Text = state.Status;
-            lblState.ForeColor = state.Status == "Running" ? Color.FromArgb(34, 197, 94)
-                : state.Status == "Paused" ? Color.FromArgb(245, 158, 11)
-                : state.Status == "Ended" ? Color.FromArgb(239, 68, 68) : Color.FromArgb(120, 130, 150);
+            lblState.ForeColor = state.Status == "Running" ? BrandMint
+                : state.Status == "Paused" ? OnDarkWarn
+                : state.Status == "Ended" ? OnDarkDanger : OnDarkMuted;
             RenderTimer();
         }
 
@@ -452,7 +673,7 @@ namespace Client
         {
             Text = state.IsActive ? "CAMS Student Client - Remote support active" : "CAMS Student Client";
             lblRemoteState.Text = state.IsActive ? "Remote support: active (teacher controls input)" : "Remote support: inactive";
-            lblRemoteState.ForeColor = state.IsActive ? Color.FromArgb(245, 158, 11) : Color.FromArgb(120, 130, 150);
+            lblRemoteState.ForeColor = state.IsActive ? StatusWarn : TextMuted;
             lblStatus.Text = state.IsActive ? "Status: Connected & Streaming" : lblStatus.Text;
         }
 
@@ -754,7 +975,7 @@ namespace Client
         {
             _isLocked = locked;
             lblStatus.Text = locked ? "Status: Locked by teacher" : "Status: Connected & Streaming";
-            lblStatus.ForeColor = locked ? Color.Orange : Color.Green;
+            lblStatus.ForeColor = locked ? StatusWarn : StatusOk;
             if (locked)
             {
                 NativeMethods.LockWorkStation();
@@ -828,46 +1049,58 @@ namespace Client
 
         private void ShowPopup(string title, string heading, string message, bool warning)
         {
+            // Mirrors the portal's themed dialog: a coloured header band above a light body.
+            var accent = warning ? StatusDanger : BrandDark;
+
             var popup = new Form
             {
                 Text = title,
-                Width = 440,
-                Height = 230,
+                ClientSize = new Size(440, 236),
                 StartPosition = FormStartPosition.CenterScreen,
                 TopMost = true,
                 ShowInTaskbar = false,
                 FormBorderStyle = FormBorderStyle.FixedDialog,
-                BackColor = warning ? Color.FromArgb(45, 15, 15) : Color.FromArgb(15, 20, 30)
+                MaximizeBox = false,
+                MinimizeBox = false,
+                BackColor = SurfaceCard,
+                Font = new Font("Segoe UI", 9.75f)
             };
 
+            var header = new Panel { Dock = DockStyle.Top, Height = 62, BackColor = accent };
             var head = new Label
             {
                 Text = heading,
                 Font = new Font("Segoe UI", 13, FontStyle.Bold),
-                ForeColor = warning ? Color.FromArgb(239, 68, 68) : Color.FromArgb(59, 130, 246),
-                Location = new Point(20, 18),
-                AutoSize = true
+                ForeColor = Color.White,
+                AutoSize = true,
+                MaximumSize = new Size(400, 0),
+                Location = new Point(20, 17)
             };
+            header.Controls.Add(head);
+
             var body = new Label
             {
                 Text = message,
                 Font = new Font("Segoe UI", 10),
-                ForeColor = Color.White,
-                Location = new Point(20, 58),
-                Size = new Size(385, 80)
+                ForeColor = TextMain,
+                Dock = DockStyle.Fill,
+                Padding = new Padding(20, 18, 20, 8)
             };
-            var ok = new Button
-            {
-                Text = "OK",
-                Location = new Point(330, 150),
-                Size = new Size(75, 30),
-                BackColor = warning ? Color.FromArgb(220, 53, 69) : Color.FromArgb(13, 110, 253),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
+
+            var ok = BrandButton("I understand", accent);
+            ok.Width = 150;
+            ok.Height = 38;
+            ok.FlatAppearance.BorderSize = 0;
             ok.Click += (_, _) => popup.Close();
 
-            popup.Controls.AddRange(new Control[] { head, body, ok });
+            var footer = new Panel { Dock = DockStyle.Bottom, Height = 58, BackColor = SurfaceCard, Padding = new Padding(20, 0, 20, 16) };
+            ok.Dock = DockStyle.Right;
+            footer.Controls.Add(ok);
+
+            popup.Controls.Add(body);
+            popup.Controls.Add(footer);
+            popup.Controls.Add(header);
+            popup.AcceptButton = ok;
             popup.Show(this);
         }
 
