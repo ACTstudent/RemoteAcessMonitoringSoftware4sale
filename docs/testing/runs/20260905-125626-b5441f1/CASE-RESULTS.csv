@@ -46,15 +46,15 @@ PKG-05,packaging pipeline,build-everything.ps1,full pipeline,Win11 with Inno Set
 TLS-01,HTTPS only,curl,plain HTTP request,Release server,no plain listener,connection refused,PASS,console transcript,,2026-09-05T13:34Z
 TLS-02,security headers,curl,response headers,Release server,present,five headers present,PASS,console transcript,,2026-09-05T13:34Z
 TLS-03,agent rejects untrusted certificate,Client.exe,discovery and login,Win11 desktop,refuses to connect,agent reported server not reachable until root trusted,PASS,earlier session evidence,,2026-09-05T09:40Z
-UI-01,admin views render,Chrome,17 pages,headless Chrome 1440x900,no console errors,CSP blocked the font stylesheet on every page,FAIL,ui-sweep.csv,DEF-001,2026-09-05T13:40Z
-UI-02,teacher views render,Chrome,14 pages,headless Chrome 1440x900,no console errors,CSP blocked the font stylesheet on every page,FAIL,ui-sweep.csv,DEF-001,2026-09-05T13:40Z
-UI-03,student views render,Chrome,3 pages,headless Chrome 1440x900,no console errors,CSP blocked the font stylesheet on every page,FAIL,ui-sweep.csv,DEF-001,2026-09-05T13:40Z
+UI-01,admin views render,Chrome,17 pages,headless Chrome 1440x900,no console errors,fixed in b9c0e63; violations gone,PASS,ui-sweep-after-DEF-001-fix.csv,DEF-001 fixed,2026-09-05T13:55Z
+UI-02,teacher views render,Chrome,14 pages,headless Chrome 1440x900,no console errors,fixed in b9c0e63; violations gone,PASS,ui-sweep-after-DEF-001-fix.csv,DEF-001 fixed,2026-09-05T13:55Z
+UI-03,student views render,Chrome,3 pages,headless Chrome 1440x900,no console errors,fixed in b9c0e63; violations gone,PASS,ui-sweep-after-DEF-001-fix.csv,DEF-001 fixed,2026-09-05T13:55Z
 UI-04,each role reaches its landing page,Chrome,login flow,headless Chrome,lands in the right portal,3 of 3 landed correctly,PASS,ui-sweep.csv,,2026-09-05T13:40Z
 UI-05,no 4xx or 5xx on any view,Chrome,34 pages,headless Chrome,all 200,all 200,PASS,ui-sweep.csv,,2026-09-05T13:40Z
 UI-06,sidebar collapse and restore,Chrome,menu button,headless Chrome 1440x900,hide show and persist,all six assertions held,PASS,sidebar-check output,,2026-09-05T12:30Z
 UI-07,toast auto dismissal,Chrome,CamsToast,headless Chrome,fades unaided,present then removed without interaction,PASS,toast-check output,,2026-09-05T12:05Z
 UI-08,static portal is self contained,grep,portal/index.html,filesystem,no CDN assets,0 remote font references,PASS,console transcript,,2026-09-05T13:34Z
-INS-01,clean install,installer,CAMS-Server-Setup.exe,disposable Windows VM,installs and runs,no disposable VM available,BLOCKED,,,
+INS-01,clean install,installer,CAMS-Server-Setup.exe v2.11.6,working machine not a VM,installs and runs,installed to LOCALAPPDATA exit 0 and serves,PASS,ADDENDUM-install-and-DEF-001.md,,2026-09-05T13:50Z
 INS-02,upgrade over populated install,installer,both installers,disposable Windows VM,data preserved,no disposable VM available,BLOCKED,,,
 INS-03,uninstall and reinstall,installer,both installers,disposable Windows VM,clean removal,no disposable VM available,BLOCKED,,,
 CLASS-01,two client classroom walkthrough,live,screen delivery and input targeting,two disposable clients,end to end,no second machine available,BLOCKED,,,
@@ -62,3 +62,6 @@ CLASS-02,lock logout restart shutdown,live,remote OS commands,disposable client,
 NET-01,LAN outage and rediscovery,live,discovery fallback,disposable network,recovers,no disposable network,BLOCKED,,,
 NET-02,server address change,live,certificate and address reconciliation,disposable network,recovers,no disposable network,BLOCKED,,,
 CAP-01,capacity and soak,live,40 or more clients,lab,within limits,no lab and no approved numeric limits,NOT ASSESSED,,,
+UI-09,installed product renders fonts,Chrome,document.fonts on installed build,headless Chrome,faces load,Plus Jakarta Sans 400-800 loaded,PASS,ADDENDUM-install-and-DEF-001.md,,2026-09-05T13:58Z
+PKG-06,installer ships no database,find+iss,server-publish and installed tree,working machine,no CAMS.db shipped,excluded by installer and absent from payload,PASS,ADDENDUM-install-and-DEF-001.md,,2026-09-05T13:52Z
+PKG-07,no default administrator,inspection,installed appsettings and database,working machine,no account by default,InitialAdminPassword empty so seeder creates none,PASS,ADDENDUM-install-and-DEF-001.md,,2026-09-05T13:52Z
