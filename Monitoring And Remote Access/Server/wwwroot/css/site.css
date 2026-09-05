@@ -1037,3 +1037,134 @@ body {
 .bg-danger-subtle { background-color: #FBE6E6 !important; }
 .text-success-emphasis { color: #12622D !important; }
 .text-danger-emphasis { color: #8F1616 !important; }
+
+/* ---------------------------------------------------------------------------
+   Flash notifications
+
+   Previously these were inline alerts at the top of the content area, so every
+   message shoved the page down and stayed until the user clicked it away. They
+   now float clear of the layout and retire on their own.
+   --------------------------------------------------------------------------- */
+.cams-toast-region {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1080;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    width: min(24rem, calc(100vw - 2rem));
+    pointer-events: none;
+}
+
+.cams-toast {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    padding: 0.9rem 1rem;
+    overflow: hidden;
+    border-radius: 14px;
+    border: 1px solid var(--card-border);
+    border-left: 4px solid var(--cams-success);
+    background: #fff;
+    box-shadow: 0 14px 34px rgba(22, 64, 31, 0.18);
+    pointer-events: auto;
+    animation: cams-toast-in 0.22s ease-out both;
+}
+
+.cams-toast.is-leaving {
+    animation: cams-toast-out 0.22s ease-in both;
+}
+
+@keyframes cams-toast-in {
+    from { opacity: 0; transform: translateX(14px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes cams-toast-out {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(14px); }
+}
+
+.cams-toast-icon {
+    flex-shrink: 0;
+    font-size: 1.05rem;
+    line-height: 1.35;
+    color: var(--cams-success);
+}
+
+.cams-toast-text {
+    margin: 0;
+    flex: 1 1 auto;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--text-main);
+    overflow-wrap: anywhere;
+}
+
+.cams-toast-close {
+    flex-shrink: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    line-height: 1;
+    padding: 0.3rem;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+.cams-toast-close:hover {
+    color: var(--text-main);
+    background: rgba(23, 128, 58, 0.12);
+}
+
+/* Shows how long is left before the toast retires. */
+.cams-toast-progress {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 3px;
+    width: 100%;
+    transform-origin: left center;
+    background: var(--cams-success);
+    opacity: 0.35;
+}
+
+.cams-toast-error {
+    border-left-color: var(--cams-danger);
+}
+
+.cams-toast-error .cams-toast-icon,
+.cams-toast-error .cams-toast-progress {
+    color: var(--cams-danger);
+    background: var(--cams-danger);
+}
+
+.cams-toast-error .cams-toast-icon {
+    background: transparent;
+}
+
+@media (max-width: 575.98px) {
+    .cams-toast-region {
+        top: auto;
+        bottom: 1rem;
+        left: 1rem;
+        right: 1rem;
+        width: auto;
+    }
+}
+
+/* Honour a reduced-motion preference: appear and leave without sliding. */
+@media (prefers-reduced-motion: reduce) {
+    .cams-toast,
+    .cams-toast.is-leaving {
+        animation: none;
+    }
+
+    .cams-toast-progress {
+        display: none;
+    }
+}

@@ -1,0 +1,38 @@
+@*
+    Flash messages. Rendered into a fixed region rather than inline at the top of
+    the page, so showing one no longer pushes the page content down, and each
+    dismisses itself after a few seconds instead of sitting there until clicked.
+*@
+@{
+    var toastSuccess = TempData["Message"]?.ToString();
+    var toastError = TempData["ErrorMessage"]?.ToString();
+}
+
+@if (!string.IsNullOrWhiteSpace(toastSuccess) || !string.IsNullOrWhiteSpace(toastError))
+{
+    <div class="cams-toast-region" aria-live="polite" aria-atomic="true">
+        @if (!string.IsNullOrWhiteSpace(toastSuccess))
+        {
+            <div class="cams-toast cams-toast-success" role="status" data-toast-timeout="5000">
+                <i class="bi bi-check-circle-fill cams-toast-icon" aria-hidden="true"></i>
+                <p class="cams-toast-text">@toastSuccess</p>
+                <button type="button" class="cams-toast-close" data-toast-dismiss aria-label="Dismiss notification">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+                <span class="cams-toast-progress" aria-hidden="true"></span>
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(toastError))
+        {
+            @* Errors linger longer, and are announced assertively. *@
+            <div class="cams-toast cams-toast-error" role="alert" data-toast-timeout="9000">
+                <i class="bi bi-exclamation-triangle-fill cams-toast-icon" aria-hidden="true"></i>
+                <p class="cams-toast-text">@toastError</p>
+                <button type="button" class="cams-toast-close" data-toast-dismiss aria-label="Dismiss notification">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+                <span class="cams-toast-progress" aria-hidden="true"></span>
+            </div>
+        }
+    </div>
+}

@@ -148,3 +148,82 @@ document.addEventListener('click', function (event) {
         icon.className = reveal ? 'bi bi-eye-slash-fill' : 'bi bi-eye-fill';
     }
 });
+
+// Flash notifications: retire on their own, pause while the pointer is over
+// them or focus is inside, so a message cannot vanish mid-read.
+(function () {
+    function setupToast(toast) {
+        var lifetime = parseInt(toast.getAttribute('data-toast-timeout'), 10) || 5000;
+        var progress = toast.querySelector('.cams-toast-progress');
+        var remaining = lifetime;
+        var startedAt = Date.now();
+        var timer = null;
+
+        function dismiss() {
+            if (toast.dataset.dismissed) {
+                return;
+            }
+            toast.dataset.dismissed = 'true';
+            window.clearTimeout(timer);
+            toast.classList.add('is-leaving');
+            var remove = function () {
+                var region = toast.parentElement;
+                toast.remove();
+                if (region && region.children.length === 0) {
+                    region.remove();
+                }
+            };
+            toast.addEventListener('animationend', remove, { once: true });
+            // Fallback in case the animation is suppressed.
+            window.setTimeout(remove, 400);
+        }
+
+        function run(duration) {
+            startedAt = Date.now();
+            if (progress) {
+                progress.style.transition = 'none';
+                progress.style.transform = 'scaleX(1)';
+                // Force a reflow so the transition restarts from full width.
+                void progress.offsetWidth;
+                progress.style.transition = 'transform ' + duration + 'ms linear';
+                progress.style.transform = 'scaleX(0)';
+            }
+            timer = window.setTimeout(dismiss, duration);
+        }
+
+        function hold() {
+            window.clearTimeout(timer);
+            remaining -= Date.now() - startedAt;
+            if (progress) {
+                var width = progress.getBoundingClientRect().width;
+                var full = toast.getBoundingClientRect().width || 1;
+                progress.style.transition = 'none';
+                progress.style.transform = 'scaleX(' + (width / full) + ')';
+            }
+        }
+
+        function resume() {
+            run(Math.max(remaining, 1200));
+        }
+
+        toast.querySelectorAll('[data-toast-dismiss]').forEach(function (button) {
+            button.addEventListener('click', dismiss);
+        });
+        toast.addEventListener('mouseenter', hold);
+        toast.addEventListener('mouseleave', resume);
+        toast.addEventListener('focusin', hold);
+        toast.addEventListener('focusout', resume);
+
+        run(lifetime);
+    }
+
+    function init() {
+        document.querySelectorAll('.cams-toast').forEach(setupToast);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
