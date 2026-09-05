@@ -37,20 +37,32 @@ public sealed class RemoteMonitoringHub : Hub
         _scopeFactory = scopeFactory;
     }
 
-    private bool IsTeacher => Context.User.IsInRole("Teacher") || Context.User.IsInRole("Admin");
-    private bool IsStudent => Context.User.IsInRole("Student");
+    /// <summary>
+    /// The authenticated principal for this connection.
+    ///
+    /// The hub carries [Authorize], so a connection cannot reach these members
+    /// unauthenticated and Context.User is never null in practice. Stating that
+    /// once here removes twenty nullable dereference warnings that were
+    /// previously silenced project-wide, and fails loudly rather than with a
+    /// NullReferenceException if the invariant is ever broken.
+    /// </summary>
+    private System.Security.Claims.ClaimsPrincipal Principal =>
+        Context.User ?? throw new HubException("The connection is not authenticated.");
+
+    private bool IsTeacher => Principal.IsInRole("Teacher") || Principal.IsInRole("Admin");
+    private bool IsStudent => Principal.IsInRole("Student");
     private bool IsStudentClientAgent => IsStudent &&
-        string.Equals(Context.User.FindFirst(AuthPrincipalFactory.ClientAgentClaim)?.Value, bool.TrueString, StringComparison.OrdinalIgnoreCase);
+        string.Equals(Principal.FindFirst(AuthPrincipalFactory.ClientAgentClaim)?.Value, bool.TrueString, StringComparison.OrdinalIgnoreCase);
 
     private async Task RequireTeacherAsync()
     {
         if (!IsTeacher)
             throw new HubException("Only teachers can perform this action.");
 
-        if (Context.User.IsInRole("Admin"))
+        if (Principal.IsInRole("Admin"))
             return;
 
-        if (!int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
+        if (!int.TryParse(Principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
             throw new HubException("The teacher identity is invalid.");
 
         using var scope = _scopeFactory.CreateScope();
@@ -104,16 +116,16 @@ public sealed class RemoteMonitoringHub : Hub
         {
             using var scope = _scopeFactory.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var actorId);
+            int.TryParse(Principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var actorId);
             context.AuditLogs.Add(new AuditLog
             {
-                UserType = Context.User.IsInRole("Admin") ? "Admin" : "Teacher",
+                UserType = Principal.IsInRole("Admin") ? "Admin" : "Teacher",
                 UserId = actorId == 0 ? null : actorId,
                 Action = action,
                 Details = $"{target.StudentId} at {target.PcName} ({target.ConnectionId})",
                 Timestamp = DateTime.UtcNow
             });
-            if (int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
+            if (int.TryParse(Principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
             {
                 context.RemoteCommandLogs.Add(new RemoteCommandLog
                 {
@@ -156,7 +168,7 @@ public sealed class RemoteMonitoringHub : Hub
     private async Task<(StudentConnectionMessage Target, RemoteControlSession Session)> RequireActiveRemoteSessionAsync(string targetConnectionId)
     {
         var target = await RequireTargetAsync(targetConnectionId);
-        if (!int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
+        if (!int.TryParse(Principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
             throw new HubException("The teacher identity is invalid.");
 
         using var scope = _scopeFactory.CreateScope();
@@ -208,14 +220,14 @@ public sealed class RemoteMonitoringHub : Hub
     {
         if (IsStudentClientAgent)
         {
-            if (!int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var accountId))
+            if (!int.TryParse(Principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var accountId))
             {
                 Context.Abort();
                 return;
             }
 
-            var studentNumber = Context.User.FindFirst(AuthPrincipalFactory.StudentNumberClaim)?.Value;
-            var pcName = Context.User.FindFirst(AuthPrincipalFactory.PcNameClaim)?.Value;
+            var studentNumber = Principal.FindFirst(AuthPrincipalFactory.StudentNumberClaim)?.Value;
+            var pcName = Principal.FindFirst(AuthPrincipalFactory.PcNameClaim)?.Value;
             if (string.IsNullOrWhiteSpace(studentNumber) || string.IsNullOrWhiteSpace(pcName))
             {
                 Context.Abort();
@@ -257,9 +269,9 @@ public sealed class RemoteMonitoringHub : Hub
                     return;
                 }
                 await Groups.AddToGroupAsync(Context.ConnectionId, HubEventNames.TeachersGroup);
-                if (Context.User.IsInRole("Admin"))
+                if (Principal.IsInRole("Admin"))
                     await Groups.AddToGroupAsync(Context.ConnectionId, HubEventNames.AdminsGroup);
-                else if (int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
+                else if (int.TryParse(Principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
                     await Groups.AddToGroupAsync(Context.ConnectionId, HubEventNames.TeacherGroup(teacherId));
             }
             else
@@ -415,7 +427,7 @@ public sealed class RemoteMonitoringHub : Hub
     public async Task<RemoteCommandResult> StartRemoteControl(string targetConnectionId)
     {
         var target = await RequireTargetAsync(targetConnectionId);
-        if (!int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
+        if (!int.TryParse(Principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
             throw new HubException("The teacher identity is invalid.");
 
         using var scope = _scopeFactory.CreateScope();
@@ -465,7 +477,7 @@ public sealed class RemoteMonitoringHub : Hub
     public async Task<RemoteCommandResult> StopRemoteControl(string targetConnectionId)
     {
         var target = await RequireTargetAsync(targetConnectionId);
-        if (!int.TryParse(Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
+        if (!int.TryParse(Principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
             throw new HubException("The teacher identity is invalid.");
         if (!RemoteSessions.TryRemove(RemoteSessionKey(Context.ConnectionId, target.ConnectionId), out var sessionId))
             return new RemoteCommandResult(false, "No active remote-support session.", null);

@@ -4,7 +4,9 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <NoWarn>CS8600;CS8601;CS8602;CS8603;CS8604;CS8618;CS8625;CS8605</NoWarn>
+    <!-- Nullable warnings are no longer suppressed: the hub dereferences that
+         triggered them now go through a checked property. Keep this empty so a
+         new null-safety problem surfaces at build time. -->
   </PropertyGroup>
 
   <ItemGroup>
