@@ -3,7 +3,7 @@
 
 #define MyAppName "CAMS Student Client"
 #ifndef MyAppVersion
-  #define MyAppVersion "2.11.1"
+  #define MyAppVersion "2.11.2"
 #endif
 #define MyAppExeName "Client.exe"
 #define MyAppPublisher "CAMS"
