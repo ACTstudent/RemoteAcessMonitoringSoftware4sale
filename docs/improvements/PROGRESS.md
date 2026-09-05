@@ -34,10 +34,10 @@ Owner for every item below: implementation agent, unless a person is named.
 | UX-03 | Standardize table density, row actions and pagination | IN PROGRESS | `8d1328c` |
 | UX-01 | Consolidate design tokens | IN PROGRESS | pre-plan, see below |
 | UX-02 | Shared shell with role-aware navigation | IN PROGRESS | `76b782e` |
-| UX-04 | Standardize loading/empty/error/success states | IN PROGRESS | `c00cc27`, `90fc671` |
+| UX-04 | Standardize states; no duplicate submit | IN PROGRESS | `c00cc27`, `90fc671`, `abecf7b` |
 | UX-05 | Branding, favicon, titles, copy, offline assets | IN PROGRESS | `b9c0e63` |
-| UX-06 | Accessibility pass | NOT STARTED | — |
-| FLOW-02 | Keep list filters, page and return location across actions | VERIFIED (alerts) | `395abe9` |
+| UX-06 | Accessibility pass (names, ids, landmarks) | VERIFIED (web) | `f7b97f4`, `1d46c9c` |
+| FLOW-02 | Keep list filters, page and return location across actions | IN PROGRESS | `395abe9`, `dea6dae` |
 | FLOW-01, 03, 04, 05, 06 | Setup checklist, connection state, command feedback, interruption, collector states | NOT STARTED | — |
 | CODE-01, 03, 05, 06, 07 | Controller/client/constant/CSS/diagnostics work | NOT STARTED | — |
 | OPS-02, 03, 05, 07 | Generated-file inventory, version input, prerequisite checks, evidence retention | NOT STARTED | — |
@@ -336,3 +336,53 @@ Recorded for accuracy. None of these meet the plan's acceptance criteria yet.
 
 These stay open by the plan's own rule: blocked live validation is recorded rather than
 waived, and a polished interface alone does not establish release readiness.
+
+---
+
+## Later additions
+
+### UX-06 — Accessibility pass across the browser portals
+
+- **Observed problem:** an audit of the rendered pages found **44 problems on the 12
+  teacher pages and 128 on the 16 admin pages**. Almost all were the same thing: text
+  that reads as a label on screen but is connected to no control, so a screen reader
+  announces an unnamed field and clicking the label does nothing. Some controls were
+  named only by a placeholder, which disappears the moment the field has content — the
+  name vanishes exactly when someone checking their work needs it. A few close buttons
+  announced only as "button".
+- **Change:** every label now carries a `for` and every control an `id`, with ids inside
+  a loop suffixed by the row key the views already use for their modal ids. Controls
+  that repeat per row or are cloned by script — the bulk student grid, the per-row class
+  and workstation selects — take an `aria-label` instead, which cannot collide. The
+  admin Restrictions field generator, which renders the same fields for both an add and
+  an edit dialog, now takes a scope so the two cannot share ids.
+- **Evidence after:** the same audit reports **0 problems across all 28 pages**, with no
+  duplicate ids and no label pointing at a missing control. The student portal was
+  checked and needed no changes.
+- **Regression checks, because markup moved under 90+ controls:** a restriction rule
+  saves every field through the rewritten generator, the per-rule edit dialog saves,
+  creating a class posts every field from both portals, and clicking a label moves focus
+  into its field.
+- **Test results:** 378/378.
+- **Two mistakes worth recording**, both caught by the build and the audit rather than by
+  reading the diff: the first automated pass took the nearest preceding `-@x.Id` as a row
+  key when that variable belonged to an earlier, already-closed loop, and it lowercased
+  whole ids including the Razor expression, renaming the property being read. Loop
+  extents are now found by matching the `@foreach` header's parentheses and then the
+  body's braces, and only the static half of an id is lowercased.
+- **Status:** VERIFIED for the browser portals. The WinForms client has not been
+  audited, and UX-06 also asks for zoom, scaling and narrow-layout checks, which this
+  did not cover.
+
+### FLOW-02 — extended to the student roster
+
+Searching the roster and then editing or removing a student returned the full
+unfiltered list, so a teacher working through several matches re-typed the search each
+time. Eight redirects now carry the search and the edit and remove forms post it back.
+The fallback redirect in `StudentDetails` was deliberately left alone: it is reached
+without a list behind it.
+
+Verified: `?search=ana` shows one row, the edit form carries `search="ana"`, and saving
+returns to `/Teacher/Students?search=ana`.
+
+Still outstanding for FLOW-02: the computers, records and remote-history lists.
