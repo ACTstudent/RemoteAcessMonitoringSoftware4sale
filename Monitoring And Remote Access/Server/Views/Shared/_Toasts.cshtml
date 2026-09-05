@@ -15,7 +15,7 @@
         {
             <div class="cams-toast cams-toast-success" role="status" data-toast-timeout="5000">
                 <i class="bi bi-check-circle-fill cams-toast-icon" aria-hidden="true"></i>
-                <p class="cams-toast-text">@toastSuccess</p>
+                <div class="cams-toast-body"><p class="cams-toast-text">@toastSuccess</p></div>
                 <button type="button" class="cams-toast-close" data-toast-dismiss aria-label="Dismiss notification">
                     <i class="bi bi-x-lg" aria-hidden="true"></i>
                 </button>
@@ -27,7 +27,7 @@
             @* Errors linger longer, and are announced assertively. *@
             <div class="cams-toast cams-toast-error" role="alert" data-toast-timeout="9000">
                 <i class="bi bi-exclamation-triangle-fill cams-toast-icon" aria-hidden="true"></i>
-                <p class="cams-toast-text">@toastError</p>
+                <div class="cams-toast-body"><p class="cams-toast-text">@toastError</p></div>
                 <button type="button" class="cams-toast-close" data-toast-dismiss aria-label="Dismiss notification">
                     <i class="bi bi-x-lg" aria-hidden="true"></i>
                 </button>

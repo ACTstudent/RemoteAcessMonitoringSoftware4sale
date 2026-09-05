@@ -98,6 +98,7 @@ Validate on the actual classroom hardware and network before rollout:
 
 ## Documentation
 
+- [Whole-codebase testing plan](docs/testing/TEST-PLAN.md)
 - [CAMS Guide](CAMS-Guide.md)
 - [Deployment Guide](DEPLOYMENT.md)
 - [Entity Relationship Diagram](DIAGRAMS/ERD.md)

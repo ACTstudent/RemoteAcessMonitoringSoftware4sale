@@ -132,27 +132,26 @@
             alertModalEl.addEventListener("hidden.bs.modal", () => { location.href = "/Account/Logout"; }, { once: true });
             bootstrap.Modal.getOrCreateInstance(alertModalEl).show();
         });
+        // Messages from the teacher surface as toasts that fade on their own.
+        // Only the end-of-session notice still blocks, because it logs the
+        // student out and must be acknowledged.
         conn.on("SendWarningPopup", (w) => {
-            document.getElementById("alertModalHeader").style.backgroundColor = "var(--cams-danger)";
-            document.getElementById("alertModalTitle").textContent = w.title || "Warning";
-            document.getElementById("alertModalBody").innerHTML = escapeHtml(w.message || "");
-            new bootstrap.Modal(alertModalEl).show();
+            CamsToast.show(w.message || "", { type: "error", title: w.title || "Warning", timeout: 10000 });
         });
         conn.on("SendNotification", (n) => {
-            document.getElementById("alertModalHeader").style.backgroundColor = "var(--sidebar-bg)";
-            document.getElementById("alertModalTitle").textContent = n.title || "Notification";
-            document.getElementById("alertModalBody").innerHTML = escapeHtml(n.message || "");
-            new bootstrap.Modal(alertModalEl).show();
+            CamsToast.show(n.message || "", { title: n.title || "Notification", timeout: 7000 });
         });
+        let dismissBroadcastToast = null;
         conn.on("BroadcastScreen", (b) => {
-            document.getElementById("alertModalHeader").style.backgroundColor = "var(--sidebar-bg)";
-            document.getElementById("alertModalTitle").textContent = "Teacher Screen Broadcast";
-            document.getElementById("alertModalBody").innerHTML = "The teacher is sharing their screen on this unit. Watch the broadcast window on the Student Client.";
-            bootstrap.Modal.getOrCreateInstance(alertModalEl).show();
+            if (dismissBroadcastToast) dismissBroadcastToast();
+            dismissBroadcastToast = CamsToast.show(
+                "Your teacher is sharing their screen. Watch the broadcast window on the Student Client.",
+                { title: "Screen broadcast", icon: "bi-broadcast", timeout: 8000 });
         });
-        conn.on("BroadcastStopped", () => bootstrap.Modal.getInstance(alertModalEl)?.hide());
+        conn.on("BroadcastStopped", () => {
+            if (dismissBroadcastToast) { dismissBroadcastToast(); dismissBroadcastToast = null; }
+        });
 
-        function escapeHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
         conn.start().catch(console.error);
     </script>
     @await RenderSectionAsync("Scripts", required: false)

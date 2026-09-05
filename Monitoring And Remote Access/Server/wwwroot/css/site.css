@@ -1168,3 +1168,22 @@ body {
         display: none;
     }
 }
+
+/* Toasts raised at runtime can carry a heading above the message. */
+.cams-toast-body {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.cams-toast-title {
+    margin: 0 0 0.15rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.cams-toast-body .cams-toast-text {
+    font-weight: 600;
+}

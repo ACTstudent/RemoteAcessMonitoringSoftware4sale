@@ -150,10 +150,26 @@ document.addEventListener('click', function (event) {
 });
 
 // Flash notifications: retire on their own, pause while the pointer is over
-// them or focus is inside, so a message cannot vanish mid-read.
-(function () {
-    function setupToast(toast) {
-        var lifetime = parseInt(toast.getAttribute('data-toast-timeout'), 10) || 5000;
+// them or focus is inside, so a message cannot vanish mid-read. Exposed as
+// CamsToast so live events can raise one without a blocking dialog.
+window.CamsToast = (function () {
+    var DEFAULT_TIMEOUT = 5000;
+
+    function region() {
+        var existing = document.querySelector('.cams-toast-region');
+        if (existing) {
+            return existing;
+        }
+        var created = document.createElement('div');
+        created.className = 'cams-toast-region';
+        created.setAttribute('aria-live', 'polite');
+        created.setAttribute('aria-atomic', 'true');
+        document.body.appendChild(created);
+        return created;
+    }
+
+    function setup(toast) {
+        var lifetime = parseInt(toast.getAttribute('data-toast-timeout'), 10) || DEFAULT_TIMEOUT;
         var progress = toast.querySelector('.cams-toast-progress');
         var remaining = lifetime;
         var startedAt = Date.now();
@@ -167,14 +183,14 @@ document.addEventListener('click', function (event) {
             window.clearTimeout(timer);
             toast.classList.add('is-leaving');
             var remove = function () {
-                var region = toast.parentElement;
+                var host = toast.parentElement;
                 toast.remove();
-                if (region && region.children.length === 0) {
-                    region.remove();
+                if (host && host.children.length === 0) {
+                    host.remove();
                 }
             };
             toast.addEventListener('animationend', remove, { once: true });
-            // Fallback in case the animation is suppressed.
+            // Fallback for when the animation is suppressed.
             window.setTimeout(remove, 400);
         }
 
@@ -183,8 +199,7 @@ document.addEventListener('click', function (event) {
             if (progress) {
                 progress.style.transition = 'none';
                 progress.style.transform = 'scaleX(1)';
-                // Force a reflow so the transition restarts from full width.
-                void progress.offsetWidth;
+                void progress.offsetWidth; // restart the transition from full width
                 progress.style.transition = 'transform ' + duration + 'ms linear';
                 progress.style.transform = 'scaleX(0)';
             }
@@ -215,10 +230,56 @@ document.addEventListener('click', function (event) {
         toast.addEventListener('focusout', resume);
 
         run(lifetime);
+        return dismiss;
+    }
+
+    // Builds a toast at runtime. Text is assigned, never parsed as markup.
+    function show(message, options) {
+        var settings = options || {};
+        var type = settings.type === 'error' ? 'error' : 'success';
+        var timeout = settings.timeout || (type === 'error' ? 9000 : DEFAULT_TIMEOUT);
+
+        var toast = document.createElement('div');
+        toast.className = 'cams-toast cams-toast-' + type;
+        toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+        toast.setAttribute('data-toast-timeout', String(timeout));
+
+        var icon = document.createElement('i');
+        icon.className = 'cams-toast-icon bi ' +
+            (settings.icon || (type === 'error' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill'));
+        icon.setAttribute('aria-hidden', 'true');
+
+        var body = document.createElement('div');
+        body.className = 'cams-toast-body';
+        if (settings.title) {
+            var heading = document.createElement('p');
+            heading.className = 'cams-toast-title';
+            heading.textContent = settings.title;
+            body.appendChild(heading);
+        }
+        var text = document.createElement('p');
+        text.className = 'cams-toast-text';
+        text.textContent = message == null ? '' : String(message);
+        body.appendChild(text);
+
+        var close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'cams-toast-close';
+        close.setAttribute('data-toast-dismiss', '');
+        close.setAttribute('aria-label', 'Dismiss notification');
+        close.innerHTML = '<i class="bi bi-x-lg" aria-hidden="true"></i>';
+
+        var bar = document.createElement('span');
+        bar.className = 'cams-toast-progress';
+        bar.setAttribute('aria-hidden', 'true');
+
+        toast.append(icon, body, close, bar);
+        region().appendChild(toast);
+        return setup(toast);
     }
 
     function init() {
-        document.querySelectorAll('.cams-toast').forEach(setupToast);
+        document.querySelectorAll('.cams-toast').forEach(setup);
     }
 
     if (document.readyState === 'loading') {
@@ -226,4 +287,6 @@ document.addEventListener('click', function (event) {
     } else {
         init();
     }
+
+    return { show: show };
 })();
