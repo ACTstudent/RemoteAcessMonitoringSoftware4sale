@@ -10,6 +10,7 @@ public interface IAnalyticsService
     Task<PagedResult<ActivityTimelineItem>> GetActivityTimelineAsync(int studentId, int teacherId, DateTime from, DateTime to, int page = 1, int pageSize = 100, string? eventType = null, CancellationToken cancellationToken = default);
     Task<PagedResult<MonitoringAlert>> GetAlertsAsync(int teacherId, bool includeAcknowledged = false, DateTime? from = null, DateTime? to = null, string? severity = null, string? studentId = null, int page = 1, int pageSize = 100, CancellationToken cancellationToken = default);
     Task<PagedResult<MonitoringAlert>> GetAlertsAsync(int teacherId, MonitoringAlertFilter filter, CancellationToken cancellationToken = default);
+    Task<int> GetOpenAlertGroupCountAsync(int teacherId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<AlertHistoryItem>> GetAlertHistoryAsync(int alertId, int teacherId, CancellationToken cancellationToken = default);
     Task<bool> SetAlertAcknowledgedAsync(int alertId, int teacherId, bool acknowledged, CancellationToken cancellationToken = default);
     Task<AlertBulkActionResult> AcknowledgeAlertsAsync(IReadOnlyCollection<int> alertIds, int teacherId, CancellationToken cancellationToken = default);
@@ -69,6 +70,23 @@ public sealed class AnalyticsService : IAnalyticsService
 
     public Task<PagedResult<MonitoringAlert>> GetAlertsAsync(int teacherId, bool includeAcknowledged = false, DateTime? from = null, DateTime? to = null, string? severity = null, string? studentId = null, int page = 1, int pageSize = 100, CancellationToken cancellationToken = default) =>
         GetAlertsAsync(teacherId, new MonitoringAlertFilter(from, to, severity, studentId, Status: includeAcknowledged ? null : MonitoringAlertStatus.Open, Page: page, PageSize: pageSize), cancellationToken);
+
+    /// <summary>
+    /// Number of distinct open alert groups a teacher can see. The teacher
+    /// layout previously ran its own copy of this predicate, which stopped
+    /// matching the alerts page when the student scope changed, so the sidebar
+    /// badge under-reported. Both now call this.
+    /// </summary>
+    public async Task<int> GetOpenAlertGroupCountAsync(int teacherId, CancellationToken cancellationToken = default)
+    {
+        var studentNumbers = AccessibleStudents(teacherId).Select(student => student.StudentNumber);
+        return await _db.MonitoringAlerts.AsNoTracking()
+            .Where(alert => !alert.IsAcknowledged && alert.DismissedAt == null &&
+                studentNumbers.Contains(alert.StudentId))
+            .Select(alert => alert.GroupKey)
+            .Distinct()
+            .CountAsync(cancellationToken);
+    }
 
     public async Task<PagedResult<MonitoringAlert>> GetAlertsAsync(int teacherId, MonitoringAlertFilter filter, CancellationToken cancellationToken = default)
     {

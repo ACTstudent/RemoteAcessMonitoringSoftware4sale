@@ -291,4 +291,37 @@ public class AnalyticsServiceTests
         Assert.Equal(alert.CreatedAt, alert.FirstSeenAt);
         Assert.Equal(alert.CreatedAt, alert.LastSeenAt);
     }
+
+    // The teacher layout used to run its own copy of the alert scope predicate.
+    // When the student scope widened, that copy was missed, so the sidebar badge
+    // under-reported against the alerts page. Both now call this method.
+    [Fact]
+    public async Task GetOpenAlertGroupCount_CountsEveryAccessibleStudentAndIgnoresClosedAlerts()
+    {
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
+        await using var db = new ApplicationDbContext(options);
+        db.Students.AddRange(
+            new Student { Id = 1, StudentNumber = "S-OWN", FullName = "Own", Username = "own", PasswordHash = "h", AdviserId = 7 },
+            new Student { Id = 2, StudentNumber = "S-OTHER", FullName = "Other", Username = "other", PasswordHash = "h", AdviserId = 8 });
+        db.MonitoringAlerts.AddRange(
+            new MonitoringAlert { StudentId = "S-OWN", PcName = "PC-01", Title = "A", Message = "M", GroupKey = "g1" },
+            // A student advised by a different teacher still counts, because every
+            // teacher can see every student.
+            new MonitoringAlert { StudentId = "S-OTHER", PcName = "PC-02", Title = "B", Message = "M", GroupKey = "g2" },
+            // Two rows in one group count once.
+            new MonitoringAlert { StudentId = "S-OWN", PcName = "PC-01", Title = "A", Message = "again", GroupKey = "g1" },
+            // Closed alerts are excluded.
+            new MonitoringAlert { StudentId = "S-OWN", PcName = "PC-01", Title = "Ack", Message = "M", GroupKey = "g3", IsAcknowledged = true },
+            new MonitoringAlert { StudentId = "S-OWN", PcName = "PC-01", Title = "Dismissed", Message = "M", GroupKey = "g4", DismissedAt = DateTime.UtcNow });
+        await db.SaveChangesAsync();
+
+        var service = new AnalyticsService(db);
+        var count = await service.GetOpenAlertGroupCountAsync(7);
+
+        Assert.Equal(2, count);
+
+        // The badge and the alerts listing must not disagree.
+        var listed = await service.GetAlertsAsync(7, new MonitoringAlertFilter(Status: MonitoringAlertStatus.Open));
+        Assert.Equal(listed.TotalCount, count);
+    }
 }

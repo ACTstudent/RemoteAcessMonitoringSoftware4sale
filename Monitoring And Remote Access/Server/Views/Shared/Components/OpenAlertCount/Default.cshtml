@@ -1,0 +1,4 @@
+@model int
+@* The sidebar badge. Hidden at zero so a quiet lab shows no clutter. The id is
+   kept because the monitoring script updates this element live. *@
+<span id="monitoringAlertBadge" class="badge bg-danger rounded-pill ms-auto @(Model == 0 ? "d-none" : "")">@Model</span>

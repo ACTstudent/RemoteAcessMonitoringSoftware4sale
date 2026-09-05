@@ -702,12 +702,9 @@ namespace Server.Controllers
             if (!CheckAccess()) return Unauthorized();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Unauthorized();
-            var studentNumbers = AccessibleStudents(teacherId.Value).Select(student => student.StudentNumber);
-            var count = await _context.MonitoringAlerts.AsNoTracking()
-                .Where(alert => !alert.IsAcknowledged && alert.DismissedAt == null && studentNumbers.Contains(alert.StudentId))
-                .Select(alert => alert.GroupKey)
-                .Distinct()
-                .CountAsync();
+            // Shares one implementation with the sidebar badge, so the two can no
+            // longer drift apart as they did when the student scope changed.
+            var count = await _analytics.GetOpenAlertGroupCountAsync(teacherId.Value, HttpContext.RequestAborted);
             return Json(new { count });
         }
 
