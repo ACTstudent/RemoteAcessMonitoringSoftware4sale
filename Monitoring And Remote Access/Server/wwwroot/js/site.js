@@ -398,3 +398,76 @@ window.CamsToast = (function () {
         init();
     }
 })();
+
+// Guards every state-changing form against a second submission while the first
+// is still in flight. A double-click on "Create" used to create two students,
+// two classes or two sessions, and the teacher had no way to tell which of the
+// two was theirs.
+(function () {
+    'use strict';
+
+    // Re-enabling after this long is a compromise: a submission that never
+    // navigates (a blocked download, a dropped connection) must not leave a
+    // permanently dead form, and a duplicate after this much time is a
+    // deliberate second attempt rather than an impatient double-click.
+    var RECOVERY_MS = 20000;
+
+    function submitControls(form) {
+        // form.elements covers controls associated by the form="" attribute,
+        // which the bulk action buttons use from outside the form.
+        return Array.prototype.filter.call(form.elements, function (element) {
+            return element.type === 'submit';
+        });
+    }
+
+    function release(form) {
+        if (form.dataset.camsSubmitting !== 'true') return;
+        delete form.dataset.camsSubmitting;
+        form.removeAttribute('aria-busy');
+        submitControls(form).forEach(function (control) {
+            control.disabled = false;
+            control.removeAttribute('aria-disabled');
+        });
+    }
+
+    document.addEventListener('submit', function (event) {
+        var form = event.target;
+        if (!(form instanceof HTMLFormElement)) return;
+
+        // The confirmation dialog cancels the first pass and re-issues the
+        // submit once approved. That re-issue is the real submission.
+        if (event.defaultPrevented) return;
+
+        // GET forms are filters; re-running one is harmless and blocking it
+        // would strand a teacher who wants to adjust a search.
+        if ((form.getAttribute('method') || 'get').toLowerCase() !== 'post') return;
+        if (form.dataset.noSubmitGuard === 'true') return;
+
+        if (form.dataset.camsSubmitting === 'true') {
+            event.preventDefault();
+            return;
+        }
+        form.dataset.camsSubmitting = 'true';
+        form.setAttribute('aria-busy', 'true');
+
+        var controls = submitControls(form);
+        // Disabled only after the browser has serialized this submission. A
+        // submit button disabled during the event loses its own name and value,
+        // and several forms here choose their action from exactly that.
+        window.setTimeout(function () {
+            controls.forEach(function (control) {
+                control.disabled = true;
+                control.setAttribute('aria-disabled', 'true');
+            });
+        }, 0);
+
+        window.setTimeout(function () { release(form); }, RECOVERY_MS);
+    });
+
+    // Coming back with the browser's Back button restores the page from the
+    // cache with the buttons still disabled, which would leave the form dead.
+    window.addEventListener('pageshow', function (event) {
+        if (!event.persisted) return;
+        Array.prototype.forEach.call(document.querySelectorAll('form[aria-busy="true"]'), release);
+    });
+})();
