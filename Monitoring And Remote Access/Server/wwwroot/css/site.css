@@ -975,3 +975,65 @@ body {
     color: var(--sidebar-bg);
     background: rgba(23, 128, 58, 0.12);
 }
+
+/* ---------------------------------------------------------------------------
+   Bootstrap theme alignment
+
+   Views use Bootstrap's semantic utilities in ~80 places. Left at their
+   defaults they pull in Bootstrap's blue, cyan and a different green, which
+   clash with the CAMS palette. Retheming the utilities centrally keeps every
+   call site aligned without editing each one. All fills below carry white text
+   at 4.5:1 or better.
+   --------------------------------------------------------------------------- */
+:root {
+    --cams-primary: #1D5C2E;   /* deep forest - brand / "Session" */
+    --cams-success: #17803A;   /* accent green - active / healthy */
+    --cams-info: #8A6117;      /* warm ochre - informational, distinct from danger */
+    --cams-danger: #B91C1C;
+    --cams-warning: #B45309;
+}
+
+.bg-primary { background-color: var(--cams-primary) !important; }
+.bg-success { background-color: var(--cams-success) !important; }
+.bg-info { background-color: var(--cams-info) !important; }
+.bg-danger { background-color: var(--cams-danger) !important; }
+
+.text-primary { color: var(--cams-primary) !important; }
+.text-success { color: var(--cams-success) !important; }
+.text-info { color: var(--cams-info) !important; }
+.text-danger { color: var(--cams-danger) !important; }
+
+/* text-bg-* sets fill and readable foreground together. */
+.text-bg-primary { color: #fff !important; background-color: var(--cams-primary) !important; }
+.text-bg-success { color: #fff !important; background-color: var(--cams-success) !important; }
+.text-bg-info { color: #fff !important; background-color: var(--cams-info) !important; }
+.text-bg-danger { color: #fff !important; background-color: var(--cams-danger) !important; }
+
+/* Buttons read their colours from per-component custom properties. */
+.btn-primary {
+    --bs-btn-bg: var(--cams-primary);
+    --bs-btn-border-color: var(--cams-primary);
+    --bs-btn-hover-bg: #16401F;
+    --bs-btn-hover-border-color: #16401F;
+    --bs-btn-active-bg: #16401F;
+    --bs-btn-active-border-color: #16401F;
+    --bs-btn-disabled-bg: var(--cams-primary);
+    --bs-btn-disabled-border-color: var(--cams-primary);
+}
+
+.btn-success {
+    --bs-btn-bg: var(--cams-success);
+    --bs-btn-border-color: var(--cams-success);
+    --bs-btn-hover-bg: var(--accent-emerald-hover);
+    --bs-btn-hover-border-color: var(--accent-emerald-hover);
+    --bs-btn-active-bg: var(--accent-emerald-hover);
+    --bs-btn-active-border-color: var(--accent-emerald-hover);
+    --bs-btn-disabled-bg: var(--cams-success);
+    --bs-btn-disabled-border-color: var(--cams-success);
+}
+
+/* Subtle backgrounds used by badges and callouts. */
+.bg-success-subtle { background-color: #E3F2E7 !important; }
+.bg-danger-subtle { background-color: #FBE6E6 !important; }
+.text-success-emphasis { color: #12622D !important; }
+.text-danger-emphasis { color: #8F1616 !important; }

@@ -126,14 +126,14 @@
         });
         conn.on("SessionEnded", () => {
             sStatus = "Ended"; sElapsed = 0; render();
-            document.getElementById("alertModalHeader").style.backgroundColor = "#dc2626";
+            document.getElementById("alertModalHeader").style.backgroundColor = "var(--cams-danger)";
             document.getElementById("alertModalTitle").textContent = "Session ended";
             document.getElementById("alertModalBody").textContent = "The laboratory session has been ended by the teacher. You will now be logged out.";
             alertModalEl.addEventListener("hidden.bs.modal", () => { location.href = "/Account/Logout"; }, { once: true });
             bootstrap.Modal.getOrCreateInstance(alertModalEl).show();
         });
         conn.on("SendWarningPopup", (w) => {
-            document.getElementById("alertModalHeader").style.backgroundColor = "#dc2626";
+            document.getElementById("alertModalHeader").style.backgroundColor = "var(--cams-danger)";
             document.getElementById("alertModalTitle").textContent = w.title || "Warning";
             document.getElementById("alertModalBody").innerHTML = escapeHtml(w.message || "");
             new bootstrap.Modal(alertModalEl).show();
