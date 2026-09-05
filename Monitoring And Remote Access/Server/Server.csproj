@@ -5,8 +5,13 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- Nullable warnings are no longer suppressed: the hub dereferences that
-         triggered them now go through a checked property. Keep this empty so a
-         new null-safety problem surfaces at build time. -->
+         triggered them now go through a checked property. The project-wide
+         NoWarn that used to sit here hid 20 real ones.
+
+         Promoting them to errors is the no-new-warning check for this area. A
+         warning is easy to walk past, and walking past these is how the
+         suppression came to be needed in the first place. -->
+    <WarningsAsErrors>$(WarningsAsErrors);CS8600;CS8601;CS8602;CS8603;CS8604;CS8618;CS8619;CS8625</WarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
