@@ -1,0 +1,43 @@
+# Line endings and binary handling.
+#
+# Every text file in this repository is already stored with LF — 247 of them,
+# with no exceptions — so `text=auto` records the existing state rather than
+# changing it. Adding this file renormalizes nothing and produces no diff.
+#
+# `eol=crlf` below affects only what lands in the working tree on checkout;
+# storage stays LF either way.
+
+* text=auto
+
+# Windows-only build, packaging and provisioning scripts. Batch files in
+# particular can misbehave with LF endings.
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.ps1   text eol=crlf
+*.psm1  text eol=crlf
+*.iss   text eol=crlf
+*.sln   text eol=crlf
+
+# Never touched as text. The repository deliberately tracks the built
+# installers, so a line-ending conversion applied to one would corrupt a
+# release artifact.
+*.exe   binary
+*.dll   binary
+*.pdb   binary
+*.msi   binary
+*.zip   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary
+*.eot   binary
+*.db    binary
+*.sqlite binary
+*.pfx   binary
+*.cer   binary
+*.crt   binary

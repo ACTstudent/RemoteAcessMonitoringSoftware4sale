@@ -1,0 +1,101 @@
+# Formatting rules for CAMS.
+#
+# These describe the style the codebase already uses — four-space indentation,
+# Allman braces, UTF-8 — so applying them to a file you are already editing
+# produces no unrelated churn. They are deliberately not a mandate to reformat
+# the repository: a mass reformat, if it is ever wanted, belongs in its own
+# commit so that it never hides a behavioral change inside a whitespace diff.
+#
+# C# style rules are set at `suggestion`. The server project builds with zero
+# warnings and that is worth keeping; a style preference should not be what
+# breaks it.
+#
+# Line endings are governed by .gitattributes, which is the rule that actually
+# binds, and are deliberately not repeated here.
+
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Two trailing spaces are a hard line break in Markdown.
+[*.{md,markdown}]
+trim_trailing_whitespace = false
+
+[*.{json,yml,yaml}]
+indent_size = 2
+
+[*.{csproj,props,targets,config,xml,resx,nuspec}]
+indent_size = 2
+
+[*.{iss,bat,cmd}]
+indent_size = 4
+
+[*.{js,css,html,cshtml}]
+indent_size = 4
+
+[*.cs]
+# Namespaces, usings
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+# Both file-scoped and block namespaces are in use today. Converting them is a
+# mass edit, so this stays a suggestion until someone decides to make it.
+csharp_style_namespace_declarations = file_scoped:suggestion
+
+# Braces. Guard clauses are commonly written on one line without braces
+# (`if (!CheckAccess()) return Denied();`), which `when_multiline` allows.
+csharp_new_line_before_open_brace = all
+csharp_prefer_braces = when_multiline:suggestion
+
+# var
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = true:suggestion
+
+# Expression-bodied members, used widely in the services and controllers
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_style_expression_bodied_properties = when_on_single_line:suggestion
+csharp_style_expression_bodied_accessors = when_on_single_line:suggestion
+
+# Modern C# the codebase already leans on
+csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
+csharp_style_pattern_matching_over_as_with_null_check = true:suggestion
+csharp_style_prefer_switch_expression = true:suggestion
+csharp_style_throw_expression = true:suggestion
+csharp_prefer_simple_using_statement = true:suggestion
+dotnet_style_null_propagation = true:suggestion
+dotnet_style_coalesce_expression = true:suggestion
+dotnet_style_object_initializer = true:suggestion
+dotnet_style_prefer_conditional_expression_over_assignment = true:suggestion
+
+# Accessibility modifiers stay explicit; this is a security-relevant codebase
+# and an implicitly private member reads as an oversight.
+dotnet_style_require_accessibility_modifiers = for_non_interface_members:suggestion
+dotnet_style_readonly_field = true:suggestion
+csharp_prefer_static_local_function = true:suggestion
+
+# Naming: interfaces I-prefixed, types and members PascalCase, private fields _camelCase
+dotnet_naming_rule.interfaces_are_prefixed_with_i.severity = suggestion
+dotnet_naming_rule.interfaces_are_prefixed_with_i.symbols = interface_symbols
+dotnet_naming_rule.interfaces_are_prefixed_with_i.style = i_prefixed_pascal
+dotnet_naming_symbols.interface_symbols.applicable_kinds = interface
+dotnet_naming_style.i_prefixed_pascal.required_prefix = I
+dotnet_naming_style.i_prefixed_pascal.capitalization = pascal_case
+
+dotnet_naming_rule.types_and_members_are_pascal_case.severity = suggestion
+dotnet_naming_rule.types_and_members_are_pascal_case.symbols = type_and_member_symbols
+dotnet_naming_rule.types_and_members_are_pascal_case.style = pascal
+dotnet_naming_symbols.type_and_member_symbols.applicable_kinds = class,struct,enum,property,method,event,delegate
+dotnet_naming_style.pascal.capitalization = pascal_case
+
+dotnet_naming_rule.private_fields_are_underscore_camel_case.severity = suggestion
+dotnet_naming_rule.private_fields_are_underscore_camel_case.symbols = private_field_symbols
+dotnet_naming_rule.private_fields_are_underscore_camel_case.style = underscore_camel
+dotnet_naming_symbols.private_field_symbols.applicable_kinds = field
+dotnet_naming_symbols.private_field_symbols.applicable_accessibilities = private
+dotnet_naming_style.underscore_camel.required_prefix = _
+dotnet_naming_style.underscore_camel.capitalization = camel_case
