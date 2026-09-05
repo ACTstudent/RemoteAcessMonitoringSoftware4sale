@@ -42,7 +42,7 @@
                 @foreach (var a in Model)
                 {
                     <tr>
-                        <td class="font-monospace text-muted">@a.Timestamp.ToString("MMM dd, yyyy HH:mm:ss")</td>
+                        <td class="font-monospace text-muted">@a.Timestamp.ToDisplayLocal().ToString("MMM dd, yyyy HH:mm:ss")</td>
                         <td>
                             <span class="badge @(a.UserType == "Admin" ? "bg-dark" : "bg-success") rounded-pill px-3 py-1 font-monospace">
                                 @a.UserType

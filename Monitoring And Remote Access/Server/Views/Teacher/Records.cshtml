@@ -124,8 +124,8 @@
                         <td class="font-monospace text-emerald-700">
                             <i class="bi bi-pc-display me-1"></i> @(s.Computer?.LaboratoryStation ?? s.PCName)
                         </td>
-                        <td>@s.StartTime.ToString("MMM dd, yyyy HH:mm")</td>
-                        <td>@(s.EndTime?.ToString("MMM dd, yyyy HH:mm") ?? "-")</td>
+                        <td>@s.StartTime.ToDisplayLocal().ToString("MMM dd, yyyy HH:mm")</td>
+                        <td>@(s.EndTime?.ToDisplayLocal().ToString("MMM dd, yyyy HH:mm") ?? "-")</td>
                         <td class="fw-bold text-dark">@dur mins</td>
                         <td>
                             <span class="badge @(s.Status == "Running" ? "bg-success" : s.Status == "Paused" ? "bg-warning text-dark" : "bg-secondary") rounded-pill px-3 py-1">

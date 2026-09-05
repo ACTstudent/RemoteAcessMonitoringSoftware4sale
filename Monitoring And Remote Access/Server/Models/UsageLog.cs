@@ -16,6 +16,6 @@ namespace Server.Models
         [StringLength(300)]
         public string AppName { get; set; } = string.Empty;
 
-        public DateTime Timestamp { get; set; } = DateTime.Now;
+        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     }
 }

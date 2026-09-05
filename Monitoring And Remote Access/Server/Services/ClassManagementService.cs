@@ -192,7 +192,7 @@ public sealed class ClassManagementService : IClassManagementService
                 {
                     ClassId = classId,
                     StudentId = student.Id,
-                    EnrolledAt = DateTime.Now
+                    EnrolledAt = DateTime.UtcNow
                 });
                 changed = true;
             }
@@ -253,7 +253,7 @@ public sealed class ClassManagementService : IClassManagementService
             AcademicYear = academicYear,
             Status = "Active",
             IsArchived = false,
-            CreatedAt = DateTime.Now,
+            CreatedAt = DateTime.UtcNow,
             TeacherId = teacherId
         };
 
@@ -502,7 +502,7 @@ public sealed class ClassManagementService : IClassManagementService
             {
                 ClassId = classId,
                 StudentId = studentId,
-                EnrolledAt = DateTime.Now
+                EnrolledAt = DateTime.UtcNow
             });
         }
         else if (existingLinks.Count > 1)
@@ -542,7 +542,7 @@ public sealed class ClassManagementService : IClassManagementService
             {
                 ClassId = classId,
                 StudentId = student.Id,
-                EnrolledAt = DateTime.Now
+                EnrolledAt = DateTime.UtcNow
             });
             await _context.SaveChangesAsync();
             return ClassOperationResult.Ok(student.FullName);
@@ -612,7 +612,7 @@ public sealed class ClassManagementService : IClassManagementService
             {
                 ClassId = classId,
                 StudentId = student.Id,
-                EnrolledAt = DateTime.Now
+                EnrolledAt = DateTime.UtcNow
             }));
             await _context.SaveChangesAsync();
             return ClassOperationResult.Ok(entity.ClassName, students.Count);

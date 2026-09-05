@@ -148,7 +148,7 @@ public class AuthenticationService : IAuthenticationService
                 Action = action,
                 Details = details,
                 IpAddress = ipAddress,
-                Timestamp = DateTime.Now
+                Timestamp = DateTime.UtcNow
             });
             await _context.SaveChangesAsync();
         }

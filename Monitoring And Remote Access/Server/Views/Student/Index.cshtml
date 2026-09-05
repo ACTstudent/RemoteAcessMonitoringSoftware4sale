@@ -35,7 +35,7 @@
         <div class="metric-card">
             <div class="metric-title">Assigned unit</div>
             <div class="stat" id="assignedUnit">@(session?.Computer?.LaboratoryStation ?? "Unassigned")</div>
-            <div class="small text-muted">@(session?.StartTime.ToLocalTime().ToString("MMM dd, HH:mm") ?? "No active session")</div>
+            <div class="small text-muted">@(session?.StartTime.ToDisplayLocal().ToString("MMM dd, HH:mm") ?? "No active session")</div>
         </div>
     </div>
     <div class="col-md-4 col-sm-6">

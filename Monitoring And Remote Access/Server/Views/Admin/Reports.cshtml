@@ -185,8 +185,8 @@
                         <td class="fw-bold text-dark">@(s.Student?.Username ?? "?")</td>
                         <td>@(s.Teacher?.Username ?? "-")</td>
                         <td class="font-monospace text-emerald-700">@(s.Computer?.LaboratoryStation ?? s.PCName)</td>
-                        <td>@s.StartTime.ToString("MMM dd, HH:mm")</td>
-                        <td>@(s.EndTime?.ToString("MMM dd, HH:mm") ?? "-")</td>
+                        <td>@s.StartTime.ToDisplayLocal().ToString("MMM dd, HH:mm")</td>
+                        <td>@(s.EndTime?.ToDisplayLocal().ToString("MMM dd, HH:mm") ?? "-")</td>
                         <td>
                             <span class="badge @(s.Status == "Running" ? "bg-success" : s.Status == "Paused" ? "bg-warning text-dark" : "bg-secondary") rounded-pill px-3 py-1">
                                 @s.Status

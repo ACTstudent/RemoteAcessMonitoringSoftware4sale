@@ -1765,8 +1765,8 @@ namespace Server.Controllers
         public async Task<IActionResult> ExportUsageCsv(DateTime? from, DateTime? to)
         {
             if (!CheckAccess()) return Denied();
-            var fromDate = from ?? DateTime.Now.AddDays(-30);
-            var toDate = to ?? DateTime.Now.AddDays(1);
+            var fromDate = from ?? DateTime.UtcNow.AddDays(-30);
+            var toDate = to ?? DateTime.UtcNow.AddDays(1);
             var logs = await _context.UsageLogs
                 .Where(u => u.Timestamp >= fromDate && u.Timestamp < toDate)
                 .OrderByDescending(u => u.Timestamp)

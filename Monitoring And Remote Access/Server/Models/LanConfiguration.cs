@@ -26,6 +26,6 @@ namespace Server.Models
 
         public bool IsActive { get; set; } = true;
 
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 }

@@ -101,7 +101,7 @@
                         <td class="font-monospace fw-semibold text-emerald-700">
                             <i class="bi bi-pc-display me-1"></i> @(s.Computer?.LaboratoryStation ?? s.PCName)
                         </td>
-                        <td>@s.StartTime.ToString("MMM dd, hh:mm tt")</td>
+                        <td>@s.StartTime.ToDisplayLocal().ToString("MMM dd, hh:mm tt")</td>
                         <td>
                             @if (s.Status == "Running")
                             {

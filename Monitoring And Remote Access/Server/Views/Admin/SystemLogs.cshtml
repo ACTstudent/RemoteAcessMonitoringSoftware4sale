@@ -40,7 +40,7 @@
                 @foreach (var l in Model)
                 {
                     <tr>
-                        <td class="font-monospace text-muted">@l.Timestamp.ToString("MMM dd, yyyy HH:mm:ss")</td>
+                        <td class="font-monospace text-muted">@l.Timestamp.ToDisplayLocal().ToString("MMM dd, yyyy HH:mm:ss")</td>
                         <td>
                             <span class="badge @(l.Level == "Error" || l.Level == "Critical" ? "bg-danger" : l.Level == "Warning" ? "bg-warning text-dark" : "bg-secondary") rounded-pill px-3 py-1 font-monospace">
                                 @l.Level

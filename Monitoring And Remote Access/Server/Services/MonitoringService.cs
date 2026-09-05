@@ -17,7 +17,7 @@ namespace Server.Services
 
         public StudentConnectionMessage RegisterStudent(string connectionId, string studentId, string pcName)
         {
-            var message = new StudentConnectionMessage(connectionId, studentId, pcName, DateTime.Now);
+            var message = new StudentConnectionMessage(connectionId, studentId, pcName, DateTime.UtcNow);
             _students[connectionId] = message;
             return message;
         }

@@ -86,7 +86,7 @@ namespace Server.Controllers
                 Action = action,
                 Details = details,
                 IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
-                Timestamp = DateTime.Now
+                Timestamp = DateTime.UtcNow
             });
             await _context.SaveChangesAsync();
         }

@@ -18,6 +18,6 @@ namespace Server.Models
         [JsonIgnore]
         public Student? Student { get; set; }
 
-        public DateTime EnrolledAt { get; set; } = DateTime.Now;
+        public DateTime EnrolledAt { get; set; } = DateTime.UtcNow;
     }
 }

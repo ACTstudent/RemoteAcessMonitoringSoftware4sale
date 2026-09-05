@@ -39,7 +39,7 @@ else
                             <span class="badge @(notice.Type == "Warning" ? "bg-warning text-dark" : notice.Type == "Alert" ? "bg-danger" : "bg-light text-dark")">@notice.Type</span>
                             <span class="notice-title">@notice.Title</span>
                         </div>
-                        <small class="text-muted text-nowrap">@notice.CreatedAt.ToLocalTime().ToString("MMM dd, HH:mm")</small>
+                        <small class="text-muted text-nowrap">@notice.CreatedAt.ToDisplayLocal().ToString("MMM dd, HH:mm")</small>
                     </div>
                     <p class="notice-message">@notice.Message</p>
                     @if (!notice.IsRead)
