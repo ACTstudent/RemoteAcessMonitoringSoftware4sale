@@ -2,39 +2,58 @@
 @{
     ViewData["Title"] = "Alert Center";
     Layout = "_StudentLayout";
+    var notices = Model?.ToList() ?? new List<Server.Models.Notification>();
+    var unread = notices.Count(n => !n.IsRead);
 }
 
-<h4 class="fw-bold mb-4"><i class="bi bi-bell"></i> Alert Center</h4>
+<div class="page-header">
+    <div class="page-header-main">
+        <div>
+            <h2><i class="bi bi-bell-fill me-2 text-success"></i>Alert Center</h2>
+            <p>Messages and warnings sent to you by your teacher.</p>
+        </div>
+    </div>
+    <span class="badge @(unread > 0 ? "badge-active" : "bg-light text-dark") fs-6 px-3 py-2">
+        @unread unread
+    </span>
+</div>
 
-@if (!Model.Any())
+@if (notices.Count == 0)
 {
-    <div class="card"><div class="card-body text-muted">No notifications yet.</div></div>
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-bell-slash text-muted" style="font-size:2.25rem;"></i>
+            <p class="empty-state mb-0">You have no notifications yet.</p>
+        </div>
+    </div>
 }
-
-<div class="row g-3">
-    @foreach (var n in Model)
-    {
-        <div class="col-md-6">
-            <div class="card @(n.IsRead ? "opacity-50" : "")">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="badge @(n.Type == "Warning" ? "bg-warning text-dark" : n.Type == "Alert" ? "bg-danger" : "bg-info text-dark") me-2">@n.Type</span>
-                        <strong>@n.Title</strong>
+else
+{
+    <div class="row g-3">
+        @foreach (var notice in notices.OrderByDescending(n => n.CreatedAt))
+        {
+            <div class="col-lg-6">
+                <div class="notice-card @(notice.IsRead ? "is-read" : "")">
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="badge @(notice.Type == "Warning" ? "bg-warning text-dark" : notice.Type == "Alert" ? "bg-danger" : "bg-light text-dark")">@notice.Type</span>
+                            <span class="notice-title">@notice.Title</span>
+                        </div>
+                        <small class="text-muted text-nowrap">@notice.CreatedAt.ToLocalTime().ToString("MMM dd, HH:mm")</small>
                     </div>
-                    <small class="text-muted">@n.CreatedAt.ToString("MM/dd HH:mm")</small>
-                </div>
-                <div class="card-body">
-                    <p class="mb-0">@n.Message</p>
-                    @if (!n.IsRead)
+                    <p class="notice-message">@notice.Message</p>
+                    @if (!notice.IsRead)
                     {
-                        <form method="post" action="/Student/MarkRead" class="mt-2">
+                        <form method="post" action="/Student/MarkRead" class="mt-3 mb-0">
                             @Html.AntiForgeryToken()
-                            <input type="hidden" name="id" value="@n.NotificationId" />
-                            <button class="btn btn-sm btn-outline-light">Mark as read</button>
+                            <input type="hidden" name="id" value="@notice.NotificationId" />
+                            <button type="submit" class="btn btn-sm btn-outline-emerald rounded-pill px-3">
+                                <i class="bi bi-check2 me-1"></i>Mark as read
+                            </button>
                         </form>
                     }
                 </div>
             </div>
-        </div>
-    }
-</div>
+        }
+    </div>
+}

@@ -1,97 +1,139 @@
+@using Microsoft.AspNetCore.Http
 @{
-    ViewData["Title"] = "Student Dashboard";
+    ViewData["Title"] = "Session Information";
     Layout = "_StudentLayout";
-    var s = ViewBag.CurrentSession as Server.Models.LabSession;
+    var session = ViewBag.CurrentSession as Server.Models.LabSession;
+    var studentName = Context.Session.GetString("FullName") ?? "Student";
+    var rules = ViewBag.Rules as List<Server.Models.RestrictionRule> ?? new List<Server.Models.RestrictionRule>();
+    var blacklist = ViewBag.Blacklist as List<Server.Models.BlacklistItem> ?? new List<Server.Models.BlacklistItem>();
+    var status = session?.Status ?? "Ended";
+    var statusBadge = status == "Running" ? "badge-active"
+        : status == "Paused" ? "bg-warning text-dark"
+        : "bg-secondary";
 }
 
-<h4 class="fw-bold mb-4"><i class="bi bi-layout-text-window"></i> Session Info</h4>
+<div class="student-hero">
+    <div>
+        <h2>Hello, @studentName</h2>
+        <p>Here is your current laboratory session.</p>
+    </div>
+    <span class="hero-station">
+        <i class="bi bi-pc-display"></i>
+        @(session?.Computer?.LaboratoryStation ?? "No workstation assigned")
+    </span>
+</div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body text-center">
-                <div class="text-muted small">Remaining Time</div>
-                <div class="stat text-success" id="countdown">@(ViewBag.Remaining) min</div>
-                <div class="small text-muted">auto-updates every minute</div>
+<div class="row g-4 mb-4">
+    <div class="col-md-4 col-sm-6">
+        <div class="metric-card metric-card-emerald">
+            <div class="metric-title">Remaining time</div>
+            <div class="stat text-success" id="countdown">@(ViewBag.Remaining) min</div>
+            <div class="small text-muted">Updates automatically</div>
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-6">
+        <div class="metric-card">
+            <div class="metric-title">Assigned unit</div>
+            <div class="stat" id="assignedUnit">@(session?.Computer?.LaboratoryStation ?? "Unassigned")</div>
+            <div class="small text-muted">@(session?.StartTime.ToLocalTime().ToString("MMM dd, HH:mm") ?? "No active session")</div>
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-6">
+        <div class="metric-card">
+            <div class="metric-title">Session status</div>
+            <div class="mt-2" id="sessionStatus">
+                <span class="badge @statusBadge fs-6 px-3 py-2">@status</span>
+            </div>
+            <div class="small text-muted mt-2">Set by your teacher</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-shield-check me-2 text-success"></i>Current restrictions</h5>
+                <span class="badge bg-light text-dark font-monospace">@rules.Count</span>
+            </div>
+            <div class="card-body">
+                @if (rules.Count == 0)
+                {
+                    <p class="empty-state text-center mb-0">No restriction rules are active right now.</p>
+                }
+                else
+                {
+                    foreach (var rule in rules)
+                    {
+                        <div class="info-row">
+                            <span class="badge bg-light text-dark">@rule.RuleType</span>
+                            <span class="info-value">@rule.Target</span>
+                        </div>
+                    }
+                }
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted small">Assigned Unit</div>
-                <div class="stat" id="assignedUnit">@(s?.Computer?.LaboratoryStation ?? "Unassigned")</div>
-                <div class="small text-muted">@(s?.StartTime.ToString("MM/dd HH:mm") ?? "no active session")</div>
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-slash-circle me-2 text-danger"></i>Blocked sites and apps</h5>
+                <span class="badge bg-light text-dark font-monospace">@blacklist.Count</span>
             </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card">
             <div class="card-body">
-                <div class="text-muted small">Session Status</div>
-                <div class="stat" id="sessionStatus">
-                    <span class="badge @(s?.Status == "Running" ? "bg-success" : s?.Status == "Paused" ? "bg-warning text-dark" : "bg-secondary")">@(s?.Status ?? "Ended")</span>
-                </div>
+                @if (blacklist.Count == 0)
+                {
+                    <p class="empty-state text-center mb-0">Nothing is blocked right now.</p>
+                }
+                else
+                {
+                    foreach (var item in blacklist)
+                    {
+                        <div class="info-row">
+                            <span class="badge bg-danger-subtle text-danger-emphasis">@item.TargetType</span>
+                            <span class="info-value">@item.Value</span>
+                        </div>
+                    }
+                }
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-3">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header fw-bold">Current Restrictions</div>
-            <div class="card-body">
-                @if (ViewBag.Rules != null && ((List<Server.Models.RestrictionRule>)ViewBag.Rules).Any())
-                {
-                    <ul class="list-group list-group-flush">
-                        @foreach (var r in ViewBag.Rules)
-                        {
-                            <li class="list-group-item bg-transparent text-light border-secondary"><span class="badge bg-secondary me-2">@r.RuleType</span>@r.Target</li>
-                        }
-                    </ul>
-                }
-                else
-                {
-                    <p class="text-muted small mb-0">No active restriction rules.</p>
-                }
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header fw-bold">Blacklisted Sites/Apps</div>
-            <div class="card-body">
-                @if (ViewBag.Blacklist != null && ((List<Server.Models.BlacklistItem>)ViewBag.Blacklist).Any())
-                {
-                    <ul class="list-group list-group-flush">
-                        @foreach (var b in ViewBag.Blacklist)
-                        {
-                            <li class="list-group-item bg-transparent text-light border-secondary"><span class="badge bg-danger me-2">@b.TargetType</span>@b.Value</li>
-                        }
-                    </ul>
-                }
-                else
-                {
-                    <p class="text-muted small mb-0">No blacklisted items.</p>
-                }
-            </div>
-        </div>
-    </div>
-</div>
-
+@section Scripts {
 <script>
-    // Refresh the per-student session status (own LabSession countdown) every 30 seconds
-    async function refresh() {
-        try {
-            const r = await fetch("/Student/_SessionStatusJson");
-            const d = await r.json();
-            if (d.active) {
-                document.getElementById("countdown").textContent = (d.remaining ?? "-") + " min";
-                document.getElementById("sessionStatus").innerHTML = "<span class='badge " + (d.status === "Running" ? "bg-success" : "bg-warning text-dark") + "'>" + d.status + "</span>";
-                if (d.station) document.getElementById("assignedUnit").textContent = d.station;
+    // Keep the student's own session card in step with the server.
+    (function () {
+        const countdown = document.getElementById("countdown");
+        const statusBox = document.getElementById("sessionStatus");
+        const unitBox = document.getElementById("assignedUnit");
+
+        function badgeClass(status) {
+            if (status === "Running") return "badge-active";
+            if (status === "Paused") return "bg-warning text-dark";
+            return "bg-secondary";
+        }
+
+        async function refresh() {
+            try {
+                const response = await fetch("/Student/_SessionStatusJson");
+                if (!response.ok) return;
+                const data = await response.json();
+                if (!data || !data.active) return;
+                if (countdown) countdown.textContent = (data.remaining ?? "-") + " min";
+                if (statusBox) {
+                    const badge = document.createElement("span");
+                    badge.className = "badge fs-6 px-3 py-2 " + badgeClass(data.status);
+                    badge.textContent = data.status;
+                    statusBox.replaceChildren(badge);
+                }
+                if (unitBox && data.station) unitBox.textContent = data.station;
+            } catch (error) {
+                // A transient poll failure should not disturb the page.
             }
-        } catch (e) { }
-    }
-    setInterval(refresh, 30000);
+        }
+
+        setInterval(refresh, 30000);
+    })();
 </script>
+}

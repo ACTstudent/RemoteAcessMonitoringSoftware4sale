@@ -94,7 +94,16 @@ namespace Server.Controllers
         {
             if (!CheckAccess()) return Denied();
             var studentId = HttpContext.Session.GetInt32("StudentId")!.Value;
-            if (!ModelState.IsValid || !await new AuthenticationService(_context).ChangeStudentPasswordAsync(studentId, input.CurrentPassword, input.NewPassword))
+            if (!ModelState.IsValid)
+            {
+                // Distinguish a rejected new password from a wrong current one, so the
+                // student is not told their current password is wrong when it isn't.
+                ViewBag.Error = input.NewPassword != input.ConfirmPassword
+                    ? "The new password and confirmation do not match."
+                    : "Your new password must be at least 8 characters long.";
+                return View("Settings");
+            }
+            if (!await new AuthenticationService(_context).ChangeStudentPasswordAsync(studentId, input.CurrentPassword, input.NewPassword))
             {
                 ViewBag.Error = "Current password is incorrect.";
                 return View("Settings");

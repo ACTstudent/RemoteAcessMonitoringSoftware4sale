@@ -46,7 +46,7 @@
             <header class="app-header student-toolbar">
                 <div class="d-flex align-items-center gap-3 student-toolbar-primary">
                     <button class="btn-toggle-sidebar d-lg-none" id="sidebarToggle" type="button" aria-label="Toggle Navigation" aria-controls="appSidebar" aria-expanded="false"><i class="bi bi-list"></i></button>
-                    <span class="badge bg-success rounded-pill px-3 py-2" id="toolbarUnit"><i class="bi bi-pc-display me-1"></i> @assignedUnit</span>
+                    <span class="badge badge-active rounded-pill px-3 py-2" id="toolbarUnit"><i class="bi bi-pc-display me-1"></i> @assignedUnit</span>
                     <span class="badge bg-secondary rounded-pill px-3 py-2" id="toolbarSession">No Session</span>
                 </div>
                 <div class="d-flex align-items-center gap-3 student-toolbar-meta">
@@ -114,7 +114,7 @@
             tTimer.textContent = fmt(Math.max(0, sElapsed));
             tTimer.classList.remove("expired", "warn");
             tSession.textContent = sStatus;
-            tSession.className = "badge rounded-pill px-3 py-2 " + (sStatus === "Running" ? "bg-success" : sStatus === "Paused" ? "bg-warning text-dark" : "bg-secondary");
+            tSession.className = "badge rounded-pill px-3 py-2 " + (sStatus === "Running" ? "badge-active" : sStatus === "Paused" ? "bg-warning text-dark" : "bg-secondary");
         }
         setInterval(() => { if (sStatus === "Running") { sElapsed++; render(); } }, 1000);
         render();

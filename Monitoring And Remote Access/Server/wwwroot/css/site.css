@@ -828,3 +828,150 @@ body {
     background-color: var(--accent-emerald);
     border-color: var(--accent-emerald);
 }
+
+/* ---------------------------------------------------------------------------
+   Student portal
+   Utility classes below were referenced by the student views but never defined,
+   so those elements rendered unstyled. They are part of the shared system now.
+   --------------------------------------------------------------------------- */
+.text-emerald-700 {
+    color: #047857;
+}
+
+.text-emerald-200 {
+    color: #a7f3d0;
+}
+
+.stat {
+    font-size: 1.9rem;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    color: var(--text-main);
+}
+
+.session-timer {
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--sidebar-bg);
+}
+
+.session-timer.warn {
+    color: #b45309;
+}
+
+.session-timer.expired {
+    color: #b91c1c;
+}
+
+/* Greeting strip at the top of the student dashboard. */
+.student-hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 1.5rem;
+    border-radius: var(--card-border-radius);
+    color: #fff;
+    background: linear-gradient(135deg, var(--sidebar-bg), var(--sidebar-active-bg));
+    box-shadow: 0 12px 28px rgba(11, 60, 38, 0.22);
+}
+
+.student-hero h2 {
+    margin: 0;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+}
+
+.student-hero p {
+    margin: 0.25rem 0 0;
+    color: #a7f3d0;
+    font-size: 0.9rem;
+}
+
+.student-hero .hero-station {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.1rem;
+    font-weight: 700;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+/* Simple labelled rows used for restrictions and blacklist panels. */
+.info-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid #f1f5f4;
+}
+
+.info-row:last-child {
+    border-bottom: 0;
+}
+
+.info-row .info-value {
+    font-weight: 600;
+    color: var(--text-main);
+    word-break: break-word;
+}
+
+/* Notification cards in the student alert centre. */
+.notice-card {
+    border: 1px solid var(--card-border);
+    border-left: 4px solid var(--accent-emerald);
+    border-radius: 14px;
+    background: #fff;
+    padding: 1rem 1.15rem;
+    height: 100%;
+}
+
+.notice-card.is-read {
+    border-left-color: #d4d4d8;
+    background: #fbfcfc;
+}
+
+.notice-card .notice-title {
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.notice-card .notice-message {
+    color: #3f3f46;
+    margin: 0.4rem 0 0;
+    font-size: 0.93rem;
+}
+
+/* Show/hide control inside password fields. */
+.password-field {
+    position: relative;
+}
+
+.password-field .form-control {
+    padding-right: 2.9rem;
+}
+
+.password-field .password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0.35rem;
+    transform: translateY(-50%);
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    padding: 0.35rem 0.55rem;
+    border-radius: 8px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.password-field .password-toggle:hover {
+    color: var(--sidebar-bg);
+    background: rgba(16, 185, 129, 0.12);
+}

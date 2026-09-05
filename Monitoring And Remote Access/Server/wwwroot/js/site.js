@@ -128,3 +128,23 @@ document.addEventListener('input', function (event) {
         row.hidden = term.length > 0 && row.textContent.toLowerCase().indexOf(term) === -1;
     });
 });
+
+// Show/hide toggle for password fields.
+document.addEventListener('click', function (event) {
+    var toggle = event.target.closest('[data-password-toggle]');
+    if (!toggle) {
+        return;
+    }
+    event.preventDefault();
+    var field = document.querySelector(toggle.getAttribute('data-password-toggle'));
+    if (!field) {
+        return;
+    }
+    var reveal = field.type === 'password';
+    field.type = reveal ? 'text' : 'password';
+    toggle.setAttribute('aria-label', reveal ? 'Hide password' : 'Show password');
+    var icon = toggle.querySelector('i');
+    if (icon) {
+        icon.className = reveal ? 'bi bi-eye-slash-fill' : 'bi bi-eye-fill';
+    }
+});
