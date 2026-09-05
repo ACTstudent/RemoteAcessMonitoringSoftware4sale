@@ -175,7 +175,7 @@ namespace Client
 
             var lblInfo = new Label
             {
-                Text = "This workstation is monitored by your teacher.\r\nRestricted applications and websites are blocked.\r\nYour session timer appears above.",
+                Text = "This workstation is monitored by your teacher.\r\nRestricted applications may be closed.\r\nRestricted websites trigger warnings.\r\nYour session timer appears above.",
                 Location = new Point(20, 140),
                 AutoSize = true,
                 ForeColor = Color.FromArgb(150, 155, 170)
