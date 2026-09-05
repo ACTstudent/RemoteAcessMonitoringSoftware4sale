@@ -170,7 +170,7 @@ public class TeacherControllerTests
     }
 
     [Fact]
-    public async Task BrowserMonitoringHistory_UsesStudentNumberAndScopesTeacherRoster()
+    public async Task BrowserMonitoringHistory_UsesStudentNumberAndCoversEveryStudent()
     {
         using var db = GetDbContext();
         db.Students.AddRange(
@@ -184,8 +184,10 @@ public class TeacherControllerTests
         var result = Assert.IsType<ViewResult>(await CreateController(db).BrowserMonitoringHistory());
         var records = Assert.IsAssignableFrom<IReadOnlyList<BrowserMonitoringRecord>>(result.Model);
 
-        var record = Assert.Single(records);
-        Assert.Equal("STU-A10", record.StudentId);
+        // Global access: browser history for every student is visible to every teacher.
+        Assert.Equal(2, records.Count);
+        Assert.Contains(records, r => r.StudentId == "STU-A10");
+        Assert.Contains(records, r => r.StudentId == "STU-B20");
     }
 
     [Fact]
@@ -484,7 +486,7 @@ public class TeacherControllerTests
     }
 
     [Fact]
-    public async Task Students_SearchReturnsOnlyAdvisedOrActiveClassStudents()
+    public async Task Students_SearchReturnsAllMatchingStudentsGlobally()
     {
         using var db = GetDbContext();
         var controller = CreateController(db);
@@ -503,15 +505,16 @@ public class TeacherControllerTests
         var result = Assert.IsType<ViewResult>(await controller.Students("alpha"));
         var students = Assert.IsAssignableFrom<IEnumerable<Student>>(result.Model).ToList();
 
-        Assert.Equal(2, students.Count);
+        // Global access: every teacher sees every matching student regardless of class assignment.
+        Assert.Equal(4, students.Count);
         Assert.Contains(students, student => student.Username == "alpha-advised");
         Assert.Contains(students, student => student.Username == "alpha-class");
-        Assert.DoesNotContain(students, student => student.Username == "alpha-archived");
-        Assert.DoesNotContain(students, student => student.Username == "alpha-foreign");
+        Assert.Contains(students, student => student.Username == "alpha-archived");
+        Assert.Contains(students, student => student.Username == "alpha-foreign");
     }
 
     [Fact]
-    public async Task StudentMutations_InaccessibleStudentReturnNotFoundWithoutChanges()
+    public async Task StudentMutations_AnyTeacherCanMutateAnyStudentGlobally()
     {
         using var db = GetDbContext();
         var controller = CreateController(db);
@@ -526,6 +529,7 @@ public class TeacherControllerTests
         db.Students.Add(foreignStudent);
         await db.SaveChangesAsync();
 
+        // Global access: a teacher can edit a student advised by another teacher.
         var update = await controller.UpdateStudent(new Student
         {
             Id = foreignStudent.Id,
@@ -533,14 +537,16 @@ public class TeacherControllerTests
             FullName = "Changed Name",
             Username = "changed-user"
         }, null);
-        var delete = await controller.DeleteStudent(foreignStudent.Id);
 
-        Assert.IsType<NotFoundResult>(update);
-        Assert.IsType<NotFoundResult>(delete);
-        var unchanged = await db.Students.FindAsync(foreignStudent.Id);
-        Assert.Equal("S-FOREIGN", unchanged?.StudentNumber);
-        Assert.Equal("foreign-student", unchanged?.Username);
-        Assert.Equal(2, unchanged?.AdviserId);
+        Assert.IsType<RedirectToActionResult>(update);
+        var changed = await db.Students.FindAsync(foreignStudent.Id);
+        Assert.Equal("CHANGED", changed?.StudentNumber);
+        Assert.Equal("changed-user", changed?.Username);
+        Assert.Equal("Changed Name", changed?.FullName);
+
+        // And can remove that student from the roster.
+        var delete = await controller.DeleteStudent(foreignStudent.Id);
+        Assert.IsType<RedirectToActionResult>(delete);
     }
 
     [Fact]
@@ -572,7 +578,7 @@ public class TeacherControllerTests
     }
 
     [Fact]
-    public async Task Computers_AndUpdatesAreLimitedToAccessibleStudents()
+    public async Task Computers_AndUpdatesCoverEveryStudentGlobally()
     {
         using var db = GetDbContext();
         var controller = CreateController(db);
@@ -585,19 +591,22 @@ public class TeacherControllerTests
         db.Computers.AddRange(accessibleComputer, foreignComputer);
         await db.SaveChangesAsync();
 
+        // Global access: every workstation is visible to every teacher.
         var listResult = Assert.IsType<ViewResult>(await controller.Computers());
         var computers = Assert.IsAssignableFrom<IEnumerable<Computer>>(listResult.Model).ToList();
-        Assert.Single(computers);
-        Assert.Equal(accessibleComputer.ComputerId, computers[0].ComputerId);
+        Assert.Equal(2, computers.Count);
+        Assert.Contains(computers, c => c.ComputerId == accessibleComputer.ComputerId);
+        Assert.Contains(computers, c => c.ComputerId == foreignComputer.ComputerId);
 
-        var denied = await controller.UpdateComputer(new Computer
+        // And any teacher can update any workstation.
+        var updatedForeign = await controller.UpdateComputer(new Computer
         {
             ComputerId = foreignComputer.ComputerId,
-            LaboratoryStation = "HACKED",
+            LaboratoryStation = "OTHER-PC-EDITED",
             Status = "Maintenance"
         });
-        Assert.IsType<NotFoundResult>(denied);
-        Assert.Equal("OTHER-PC", (await db.Computers.FindAsync(foreignComputer.ComputerId))?.LaboratoryStation);
+        Assert.IsType<RedirectToActionResult>(updatedForeign);
+        Assert.Equal("OTHER-PC-EDITED", (await db.Computers.FindAsync(foreignComputer.ComputerId))?.LaboratoryStation);
 
         var saved = await controller.UpdateComputer(new Computer
         {
@@ -614,7 +623,7 @@ public class TeacherControllerTests
     }
 
     [Fact]
-    public async Task EnrollStudent_InaccessibleStudentReturnsNotFound()
+    public async Task EnrollStudent_AnyStudentCanBeEnrolledGlobally()
     {
         using var db = GetDbContext();
         var controller = CreateController(db);
@@ -624,9 +633,10 @@ public class TeacherControllerTests
         db.Students.Add(student);
         await db.SaveChangesAsync();
 
+        // Global access: any student can be enrolled into a teacher's class.
         var result = await controller.EnrollStudent(cls.ClassId, student.Id);
 
-        Assert.IsType<NotFoundResult>(result);
-        Assert.Null((await db.Students.FindAsync(student.Id))?.ClassId);
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(cls.ClassId, (await db.Students.FindAsync(student.Id))?.ClassId);
     }
 }

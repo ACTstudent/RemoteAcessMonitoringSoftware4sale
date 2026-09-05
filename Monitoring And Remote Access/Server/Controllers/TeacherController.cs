@@ -52,15 +52,8 @@ namespace Server.Controllers
                        (account.Username.ToLower() == value || account.StudentNumber.ToLower() == value));
         }
 
-        private IQueryable<Student> AccessibleStudents(int teacherId) =>
-            _context.Students.Where(student =>
-                student.AdviserId == teacherId ||
-                _context.Classes.Any(cls =>
-                    cls.TeacherId == teacherId &&
-                    !cls.IsArchived &&
-                    (cls.Status == "Active" || string.IsNullOrEmpty(cls.Status)) &&
-                    (cls.ClassId == student.ClassId ||
-                     _context.ClassStudents.Any(link => link.ClassId == cls.ClassId && link.StudentId == student.Id))));
+        // Global access: every teacher can monitor and manage every student, regardless of class assignment.
+        private IQueryable<Student> AccessibleStudents(int teacherId) => _context.Students;
 
         private IQueryable<Computer> AccessibleComputers(List<int> studentIds)
         {
@@ -173,7 +166,6 @@ namespace Server.Controllers
                 .Include(s => s.Student)
                 .Include(s => s.Teacher)
                 .Include(s => s.Computer)
-                .Where(s => s.TeacherId == teacherId)
                 .OrderByDescending(s => s.StartTime)
                 .Take(100)
                 .ToListAsync();
@@ -189,16 +181,11 @@ namespace Server.Controllers
             var student = teacherId.HasValue
                 ? await _context.Students
                     .Include(s => s.Class)
-                    .FirstOrDefaultAsync(s => s.Id == studentId &&
-                                              _context.Classes.Any(c =>
-                                                  c.TeacherId == teacherId.Value &&
-                                                  !c.IsArchived &&
-                                                  (c.ClassId == s.ClassId ||
-                                                   _context.ClassStudents.Any(cs => cs.ClassId == c.ClassId && cs.StudentId == s.Id))))
+                    .FirstOrDefaultAsync(s => s.Id == studentId)
                 : null;
             if (student == null)
             {
-                TempData["ErrorMessage"] = "You can only start sessions for students assigned to one of your active classes.";
+                TempData["ErrorMessage"] = "The selected student was not found.";
                 return RedirectToAction("Sessions");
             }
 
@@ -264,7 +251,7 @@ namespace Server.Controllers
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
             var session = await _context.LabSessions.Include(s => s.SessionRule)
-                .FirstOrDefaultAsync(s => s.Id == id && s.TeacherId == teacherId.Value && s.IsActive);
+                .FirstOrDefaultAsync(s => s.Id == id && s.IsActive);
             if (session != null)
             {
                 if (session.Status == "Running")
@@ -301,7 +288,7 @@ namespace Server.Controllers
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
             var session = await _context.LabSessions.Include(s => s.Computer)
-                .FirstOrDefaultAsync(s => s.Id == id && s.TeacherId == teacherId.Value);
+                .FirstOrDefaultAsync(s => s.Id == id);
             if (session != null)
             {
                 await _sessionLifecycle.EndAsync(session);
@@ -375,7 +362,6 @@ namespace Server.Controllers
             if (!teacherId.HasValue) return Denied();
 
             ViewBag.RemoteSessions = await _context.RemoteControlSessions.AsNoTracking()
-                .Where(s => s.TeacherId == teacherId.Value)
                 .OrderByDescending(s => s.StartedAt).Take(100).ToListAsync();
             ViewBag.From = from?.ToString("yyyy-MM-dd"); ViewBag.To = to?.ToString("yyyy-MM-dd");
             ViewBag.Command = command; ViewBag.StudentId = studentId;
@@ -475,7 +461,6 @@ namespace Server.Controllers
             var sessions = await _context.LabSessions
                 .Include(s => s.Student)
                 .Include(s => s.Computer)
-                .Where(s => s.TeacherId == teacherId)
                 .OrderByDescending(s => s.StartTime)
                 .Take(500)
                 .ToListAsync();
@@ -484,7 +469,6 @@ namespace Server.Controllers
             ViewBag.TotalMinutes = sessions.Sum(s =>
                 s.EndTime.HasValue ? (s.EndTime.Value - s.StartTime).TotalMinutes : 0);
             var studentIds = await _context.Students
-                .Where(s => s.AdviserId == teacherId || (s.Class != null && s.Class.TeacherId == teacherId))
                 .Select(s => s.Id)
                 .ToListAsync();
             ViewBag.ApplicationUsage = await _context.UsageLogs
@@ -511,7 +495,6 @@ namespace Server.Controllers
             var sessions = await _context.LabSessions
                 .Include(s => s.Student)
                 .Include(s => s.Computer)
-                .Where(s => s.TeacherId == teacherId)
                 .OrderByDescending(s => s.StartTime)
                 .ToListAsync();
 

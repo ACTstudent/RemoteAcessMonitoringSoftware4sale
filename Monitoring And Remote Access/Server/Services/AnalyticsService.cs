@@ -567,11 +567,8 @@ public sealed class AnalyticsService : IAnalyticsService
         await AccessibleStudents(teacherId).AsNoTracking().Include(s => s.Class)
             .FirstOrDefaultAsync(s => s.Id == studentId, cancellationToken);
 
-    private IQueryable<Student> AccessibleStudents(int teacherId) =>
-        _db.Students.Where(s => s.AdviserId == teacherId ||
-            _db.Classes.Any(c => c.TeacherId == teacherId && !c.IsArchived &&
-                (c.Status == "Active" || string.IsNullOrEmpty(c.Status)) &&
-                (c.ClassId == s.ClassId || _db.ClassStudents.Any(cs => cs.ClassId == c.ClassId && cs.StudentId == s.Id))));
+    // Global access: every teacher can view analytics for every student, regardless of class assignment.
+    private IQueryable<Student> AccessibleStudents(int teacherId) => _db.Students;
 
     private async Task<List<string>> AccessibleStudentIds(int teacherId, CancellationToken cancellationToken) =>
         await AccessibleStudents(teacherId).AsNoTracking()

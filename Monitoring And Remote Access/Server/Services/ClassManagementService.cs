@@ -143,13 +143,9 @@ public sealed class ClassManagementService : IClassManagementService
 
     public async Task<IReadOnlyList<Student>> GetStudentsForTeacherAsync(int teacherId)
     {
+        // Global access: every teacher can start sessions for every student, regardless of class assignment.
         return await _context.Students
             .Include(s => s.Class)
-            .Where(s => _context.Classes.Any(c =>
-                c.TeacherId == teacherId &&
-                !c.IsArchived &&
-                (c.ClassId == s.ClassId ||
-                 _context.ClassStudents.Any(cs => cs.ClassId == c.ClassId && cs.StudentId == s.Id))))
             .OrderBy(s => s.LastName)
             .ThenBy(s => s.FirstName)
             .ToListAsync();

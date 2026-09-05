@@ -34,7 +34,7 @@ public class AnalyticsServiceTests
     }
 
     [Fact]
-    public async Task AlertAcknowledgement_IsLimitedToTeacherRoster()
+    public async Task AlertAcknowledgement_CoversEveryStudentGlobally()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
         await using var db = new ApplicationDbContext(options);
@@ -44,13 +44,15 @@ public class AnalyticsServiceTests
         await db.SaveChangesAsync();
         var service = new AnalyticsService(db);
 
+        // Global access: a teacher can acknowledge alerts for any student, not just their roster.
         Assert.True(await service.SetAlertAcknowledgedAsync(10, 1, true));
-        Assert.False(await service.SetAlertAcknowledgedAsync(11, 1, true));
+        Assert.True(await service.SetAlertAcknowledgedAsync(11, 1, true));
         Assert.True((await db.MonitoringAlerts.FindAsync(10))!.IsAcknowledged);
+        Assert.True((await db.MonitoringAlerts.FindAsync(11))!.IsAcknowledged);
     }
 
     [Fact]
-    public async Task AlertExport_OnlyReturnsAuthorizedStudents()
+    public async Task AlertExport_ReturnsEveryStudentGlobally()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
         await using var db = new ApplicationDbContext(options);
@@ -60,8 +62,10 @@ public class AnalyticsServiceTests
         db.MonitoringAlerts.AddRange(new MonitoringAlert { StudentId = "S-1", PcName = "PC", Title = "A", Message = "M" }, new MonitoringAlert { StudentId = "S-2", PcName = "PC", Title = "B", Message = "M" });
         await db.SaveChangesAsync();
         var alerts = await new AnalyticsService(db).GetAlertExportAsync(1);
-        Assert.Single(alerts);
-        Assert.Equal("S-1", alerts[0].StudentId);
+        // Global access: every student's alerts are exported for any teacher.
+        Assert.Equal(2, alerts.Count);
+        Assert.Contains(alerts, a => a.StudentId == "S-1");
+        Assert.Contains(alerts, a => a.StudentId == "S-2");
     }
 
     [Fact]
@@ -164,7 +168,7 @@ public class AnalyticsServiceTests
     }
 
     [Fact]
-    public async Task UnifiedTimeline_CombinesSourcesAndStrictlyScopesEverySource()
+    public async Task UnifiedTimeline_CombinesSourcesGloballyAcrossEveryStudent()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
         await using var db = new ApplicationDbContext(options);
@@ -188,15 +192,20 @@ public class AnalyticsServiceTests
 
         var report = await service.GetUnifiedTimelineAsync(7, new UnifiedTimelineFilter(from, from.AddHours(1), PageSize: 2));
 
+        // Global access: the timeline now spans every student across every source.
+        // 1 session (S-1) + 2 activity (S-1, S-2) + 2 alerts (S-1, S-2) + 3 remote logs (S-1 x2, S-2 x1) = 8.
         Assert.NotNull(report);
-        Assert.Equal(5, report!.Timeline.TotalCount);
+        Assert.Equal(8, report!.Timeline.TotalCount);
         Assert.Equal(2, report.Timeline.Items.Count);
-        Assert.All(report.Timeline.Items, item => Assert.Equal(1, item.StudentId));
         var activityOnly = await service.GetUnifiedTimelineAsync(7,
             new UnifiedTimelineFilter(from, from.AddHours(1), Source: "Activity", EventType: "Connected"));
-        Assert.Single(activityOnly!.Timeline.Items);
-        Assert.Null(await service.GetUnifiedTimelineAsync(7,
-            new UnifiedTimelineFilter(from, from.AddHours(1), StudentId: 2)));
+        Assert.Equal(2, activityOnly!.Timeline.Items.Count);
+
+        // A previously "denied" student is now fully visible.
+        var otherStudent = await service.GetUnifiedTimelineAsync(7,
+            new UnifiedTimelineFilter(from, from.AddHours(1), StudentId: 2));
+        Assert.NotNull(otherStudent);
+        Assert.All(otherStudent!.Timeline.Items, item => Assert.Equal(2, item.StudentId));
     }
 
     [Fact]
@@ -215,24 +224,27 @@ public class AnalyticsServiceTests
         await db.SaveChangesAsync();
         var service = new AnalyticsService(db);
 
+        // Global access: alerts for every student are visible, so S-1 and S-2 form two groups.
         var open = await service.GetAlertsAsync(7);
-        var group = Assert.Single(open.Items);
+        Assert.Equal(2, open.Items.Count);
+        var group = open.Items.Single(g => g.StudentId == "S-1");
         Assert.Equal(3, group.OccurrenceCount);
         Assert.Equal(first, group.FirstSeenAt);
         Assert.Equal(first.AddMinutes(10), group.LastSeenAt);
         Assert.Equal(52, group.MonitoringAlertId);
 
+        // Acknowledging across both students now matches and changes both groups.
         var acknowledged = await service.AcknowledgeAlertsAsync(new[] { group.MonitoringAlertId, 53 }, 7);
         Assert.Equal(2, acknowledged.RequestedCount);
-        Assert.Equal(1, acknowledged.MatchedGroupCount);
-        Assert.Equal(1, acknowledged.ChangedGroupCount);
+        Assert.Equal(2, acknowledged.MatchedGroupCount);
+        Assert.Equal(2, acknowledged.ChangedGroupCount);
         Assert.All(await db.MonitoringAlerts.Where(a => a.StudentId == "S-1").ToListAsync(), alert =>
         {
             Assert.Equal(MonitoringAlertStatus.Acknowledged, alert.Status);
             Assert.Equal(7, alert.AcknowledgedByTeacherId);
             Assert.NotNull(alert.AcknowledgedAt);
         });
-        Assert.Equal(MonitoringAlertStatus.Open, (await db.MonitoringAlerts.FindAsync(53))!.Status);
+        Assert.Equal(MonitoringAlertStatus.Acknowledged, (await db.MonitoringAlerts.FindAsync(53))!.Status);
 
         var dismissed = await service.DismissAlertsAsync(new[] { 51 }, 7, "Handled offline");
         Assert.Equal(1, dismissed.ChangedGroupCount);
