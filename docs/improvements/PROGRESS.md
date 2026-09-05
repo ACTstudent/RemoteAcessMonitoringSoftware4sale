@@ -37,7 +37,7 @@ Owner for every item below: implementation agent, unless a person is named.
 | UX-04 | Standardize states; no duplicate submit | IN PROGRESS | `c00cc27`, `90fc671`, `abecf7b` |
 | UX-05 | Branding, favicon, titles, copy, offline assets | IN PROGRESS | `b9c0e63` |
 | UX-06 | Accessibility pass (names, ids, landmarks) | VERIFIED (web) | `f7b97f4`, `1d46c9c` |
-| FLOW-02 | Keep list filters, page and return location across actions | IN PROGRESS | `395abe9`, `dea6dae` |
+| FLOW-02 | Keep list filters, page and return location across actions | VERIFIED | `395abe9`, `8d1328c`, `dea6dae` |
 | FLOW-01, 03, 04, 05, 06 | Setup checklist, connection state, command feedback, interruption, collector states | NOT STARTED | — |
 | CODE-01, 03, 05, 06, 07 | Controller/client/constant/CSS/diagnostics work | NOT STARTED | — |
 | OPS-02, 03, 05, 07 | Generated-file inventory, version input, prerequisite checks, evidence retention | NOT STARTED | — |
@@ -385,4 +385,9 @@ without a list behind it.
 Verified: `?search=ana` shows one row, the edit form carries `search="ana"`, and saving
 returns to `/Teacher/Students?search=ana`.
 
-Still outstanding for FLOW-02: the computers, records and remote-history lists.
+FLOW-02 is now complete, and the survey that settles it is worth recording: the only
+server-side list filters in the product are the alert filter and the roster search,
+both handled. Remote history is read-only and its filter travels with the pager.
+Teacher Computers and Records take no filter parameters and render no filter form.
+No admin list action takes a filter parameter either - admin filtering is done in the
+browser - so there is no server-held filter state anywhere else to lose.
