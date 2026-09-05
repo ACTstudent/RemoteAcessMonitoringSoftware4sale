@@ -675,25 +675,41 @@ namespace Server.Controllers
             return Json(timeline);
         }
 
-        public async Task<IActionResult> Alerts(bool includeAcknowledged = false, DateTime? from = null, DateTime? to = null, string? severity = null, string? studentId = null, string? station = null, string? status = null, int page = 1, int pageSize = 100)
+        public async Task<IActionResult> Alerts([FromQuery] AlertListFilter filter)
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
-            if (from.HasValue && to.HasValue && to.Value.Date < from.Value.Date) return BadRequest("Invalid date range.");
-            if (page < 1 || pageSize is < 1 or > 500) return BadRequest("Invalid paging.");
-            MonitoringAlertStatus? selectedStatus = includeAcknowledged ? null : MonitoringAlertStatus.Open;
-            if (!string.IsNullOrWhiteSpace(status))
+
+            // Out-of-range paging only reaches here from a hand-edited URL, so
+            // pull it back into range rather than answering a shared link with a
+            // bare 400.
+            filter.ClampPaging();
+
+            if (!filter.TryResolveStatus(out var selectedStatus)) return BadRequest("Invalid alert status.");
+
+            // A teacher can produce a backwards range from the filter form. Keep
+            // the entered dates on screen and say what is wrong instead of
+            // replacing the page with an error.
+            if (!filter.HasUsableDateRange)
             {
-                if (!Enum.TryParse<MonitoringAlertStatus>(status, true, out var parsedStatus)) return BadRequest("Invalid alert status.");
-                selectedStatus = parsedStatus;
+                var empty = new PagedResult<MonitoringAlert>(Array.Empty<MonitoringAlert>(), 1, filter.PageSize, 0);
+                return View(new AlertListViewModel(empty, filter,
+                    "The end date is before the start date, so no alerts can match. Adjust the range and apply the filters again."));
             }
-            var filter = new MonitoringAlertFilter(from, to, severity, studentId?.Trim(), station?.Trim(), selectedStatus, page, pageSize);
-            var alerts = await _analytics.GetAlertsAsync(teacherId.Value, filter);
-            ViewBag.From = from?.ToString("yyyy-MM-dd"); ViewBag.To = to?.ToString("yyyy-MM-dd");
-            ViewBag.Severity = severity; ViewBag.StudentId = studentId; ViewBag.Station = station;
-            ViewBag.Status = selectedStatus; ViewBag.Paging = alerts;
-            return View(alerts.Items);
+
+            var alerts = await _analytics.GetAlertsAsync(teacherId.Value, filter.ToQueryFilter(selectedStatus));
+
+            // Acting on the last group of a page leaves the teacher asking for a
+            // page that no longer exists. The query already falls back to the last
+            // real page, so move the address bar to match rather than showing page
+            // 2 under a page=5 URL that would then be shared or bookmarked.
+            if (alerts.Page != filter.Page)
+            {
+                return RedirectToAction(nameof(Alerts), filter.ToRouteValues(alerts.Page));
+            }
+
+            return View(new AlertListViewModel(alerts, filter));
         }
 
         [HttpGet]
@@ -720,19 +736,22 @@ namespace Server.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ExportAlertsCsv(DateTime? from = null, DateTime? to = null, string? severity = null, string? studentId = null, string? station = null, string? status = null)
+        public async Task<IActionResult> ExportAlertsCsv([FromQuery] AlertListFilter filter)
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
-            MonitoringAlertStatus? selectedStatus = null;
-            if (!string.IsNullOrWhiteSpace(status))
-            {
-                if (!Enum.TryParse<MonitoringAlertStatus>(status, true, out var parsedStatus)) return BadRequest("Invalid alert status.");
-                selectedStatus = parsedStatus;
-            }
-            var alerts = await _analytics.GetAlertExportAsync(teacherId.Value,
-                new MonitoringAlertFilter(from, to, severity, studentId, station, selectedStatus, 1, 500));
+
+            // The export previously ignored includeAcknowledged and defaulted to
+            // every status, so a list filtered to open alerts exported handled
+            // ones too. Resolving through the same filter keeps the file equal to
+            // what the teacher is looking at.
+            if (!filter.TryResolveStatus(out var selectedStatus)) return BadRequest("Invalid alert status.");
+            if (!filter.HasUsableDateRange) return BadRequest("The end date is before the start date.");
+
+            filter.Page = 1;
+            filter.PageSize = AlertListFilter.MaxPageSize;
+            var alerts = await _analytics.GetAlertExportAsync(teacherId.Value, filter.ToQueryFilter(selectedStatus));
             var csv = new System.Text.StringBuilder("First Seen,Last Seen,Student ID,Station,Severity,Title,Message,Occurrences,Status\n");
             foreach (var alert in alerts)
                 csv.AppendLine($"{alert.FirstSeenAt:O},{alert.LastSeenAt:O},{Csv(alert.StudentId)},{Csv(alert.PcName)},{Csv(alert.Severity)},{Csv(alert.Title)},{Csv(alert.Message)},{alert.OccurrenceCount},{alert.Status}");
@@ -740,42 +759,47 @@ namespace Server.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> AcknowledgeAlert(int id, bool acknowledged = true)
+        public async Task<IActionResult> AcknowledgeAlert(int id, bool acknowledged, [FromForm] AlertListFilter filter)
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
             if (id <= 0 || !await _analytics.SetAlertAcknowledgedAsync(id, teacherId.Value, acknowledged)) return NotFound();
-            return RedirectToAction(nameof(Alerts), new { includeAcknowledged = true });
+
+            // Say what happened, because the group may drop out of a filtered list
+            // as a result and silence would read as the action having failed.
+            TempData["Message"] = acknowledged ? "Alert group acknowledged." : "Alert group reopened.";
+            return RedirectToAction(nameof(Alerts), filter.ToRouteValues());
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> BulkAcknowledgeAlerts(List<int>? alertIds) =>
-            await ChangeAlertGroups(alertIds, ids => _analytics.AcknowledgeAlertsAsync(ids, HttpContext.Session.GetInt32("TeacherId")!.Value));
+        public async Task<IActionResult> BulkAcknowledgeAlerts(List<int>? alertIds, [FromForm] AlertListFilter filter) =>
+            await ChangeAlertGroups(alertIds, filter, ids => _analytics.AcknowledgeAlertsAsync(ids, HttpContext.Session.GetInt32("TeacherId")!.Value));
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> BulkDismissAlerts(List<int>? alertIds, string? reason) =>
-            await ChangeAlertGroups(alertIds, ids => _analytics.DismissAlertsAsync(ids, HttpContext.Session.GetInt32("TeacherId")!.Value, reason));
+        public async Task<IActionResult> BulkDismissAlerts(List<int>? alertIds, string? reason, [FromForm] AlertListFilter filter) =>
+            await ChangeAlertGroups(alertIds, filter, ids => _analytics.DismissAlertsAsync(ids, HttpContext.Session.GetInt32("TeacherId")!.Value, reason));
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> BulkReopenAlerts(List<int>? alertIds) =>
-            await ChangeAlertGroups(alertIds, ids => _analytics.ReopenAlertsAsync(ids, HttpContext.Session.GetInt32("TeacherId")!.Value));
+        public async Task<IActionResult> BulkReopenAlerts(List<int>? alertIds, [FromForm] AlertListFilter filter) =>
+            await ChangeAlertGroups(alertIds, filter, ids => _analytics.ReopenAlertsAsync(ids, HttpContext.Session.GetInt32("TeacherId")!.Value));
 
         private async Task<IActionResult> ChangeAlertGroups(
             List<int>? alertIds,
+            AlertListFilter filter,
             Func<IReadOnlyCollection<int>, Task<AlertBulkActionResult>> change)
         {
             if (!CheckAccess()) return Denied();
             if (!HttpContext.Session.GetInt32("TeacherId").HasValue) return Denied();
-            var ids = alertIds?.Where(id => id > 0).Distinct().Take(500).ToList() ?? new List<int>();
+            var ids = alertIds?.Where(id => id > 0).Distinct().Take(AlertListFilter.MaxPageSize).ToList() ?? new List<int>();
             if (ids.Count == 0)
             {
                 TempData["ErrorMessage"] = "Select at least one alert group.";
-                return RedirectToAction(nameof(Alerts));
+                return RedirectToAction(nameof(Alerts), filter.ToRouteValues());
             }
             var result = await change(ids);
             TempData["Message"] = $"Updated {result.ChangedGroupCount} alert group(s).";
-            return RedirectToAction(nameof(Alerts), new { includeAcknowledged = true });
+            return RedirectToAction(nameof(Alerts), filter.ToRouteValues());
         }
 
         // ---------- Student Management ----------

@@ -1,0 +1,44 @@
+@model Server.Models.AlertListFilter
+@*
+    A hidden copy of the alert list's current filter, rendered inside every form
+    that posts an alert action. Without it the action redirects to an unfiltered
+    list and the teacher has to rebuild the filter after each acknowledge.
+
+    Blank values are left out so the redirect produces a clean URL.
+*@
+@if (Model.IncludeAcknowledged)
+{
+    <input type="hidden" name="includeAcknowledged" value="true" />
+}
+@if (Model.From.HasValue)
+{
+    <input type="hidden" name="from" value="@Model.From.Value.ToString("yyyy-MM-dd")" />
+}
+@if (Model.To.HasValue)
+{
+    <input type="hidden" name="to" value="@Model.To.Value.ToString("yyyy-MM-dd")" />
+}
+@if (!string.IsNullOrWhiteSpace(Model.Severity))
+{
+    <input type="hidden" name="severity" value="@Model.Severity" />
+}
+@if (!string.IsNullOrWhiteSpace(Model.StudentId))
+{
+    <input type="hidden" name="studentId" value="@Model.StudentId" />
+}
+@if (!string.IsNullOrWhiteSpace(Model.Station))
+{
+    <input type="hidden" name="station" value="@Model.Station" />
+}
+@if (!string.IsNullOrWhiteSpace(Model.Status))
+{
+    <input type="hidden" name="status" value="@Model.Status" />
+}
+@if (Model.Page > 1)
+{
+    <input type="hidden" name="page" value="@Model.Page" />
+}
+@if (Model.PageSize != Server.Models.AlertListFilter.DefaultPageSize)
+{
+    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+}
