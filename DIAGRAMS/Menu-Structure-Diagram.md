@@ -30,20 +30,21 @@ flowchart TD
     ADM --> AS[Account settings and lockouts]
 
     TCH --> TD[Dashboard and teacher-owned session controls]
-    TCH --> TM[Scoped live monitoring]
+    TCH --> TG[Lab-wide pause/resume/end]
+    TCH --> TM[Lab-wide live monitoring]
     TM --> TMC[Lock/CAMS unlock, logout, restart, shutdown]
     TM --> TMR[Warning, broadcast, permitted remote input]
-    TCH --> TS[Accessible students and workstations]
-    TCH --> TC[Assigned classes and rosters]
+    TCH --> TS[Global student and workstation management via shared Admin actions]
+    TCH --> TC[Global classes and rosters via shared Admin actions]
     TC --> TCR[Create/edit roster; removal preserves account]
-    TCH --> TP[Teacher-owned restrictions]
+    TCH --> TP[Global policy management via shared Admin actions]
     TCH --> TA[Scoped alerts, analytics, records, exports]
 
     STD --> SI[Session information]
     STD --> SN[Alerts and notifications]
     STD --> SA[Account/password settings]
 
-    CLIENT --> CL[Strict assigned-workstation login]
+    CLIENT --> CL[Login and automatic safe workstation registration]
     CLIENT --> CS[Session toolbar and screen/status reporting]
     CLIENT --> CE[Policy enforcement and CAMS topmost dialogs]
     CLIENT --> CC[Authorized workstation commands]
@@ -55,6 +56,6 @@ flowchart TD
 | --- | --- |
 | Public portal | Informational static GitHub Pages site and public release links; no local certificate, credentials, or authenticated controls. |
 | Admin | Global control UI and all system/deployment administration. LAN Status does not configure the network. |
-| Teacher | Assigned/access-checked classroom objects and teacher-owned sessions/policies; no global account deletion or teacher reassignment. |
+| Teacher | Active teachers can monitor and control all connected student clients and use lab-wide pause/resume/end actions. Explicitly shared `/Admin/...` actions provide global account, class, roster, workstation and policy management. Individual session actions, older `/Teacher/...` management pages, and analytics/record queries retain their teacher or adviser/class checks. Admin-only administration remains restricted. |
 | Student web portal | Session, alert, and account views without strict station validation. |
-| Windows CLIENT | Student credentials plus assigned workstation validation, monitoring agent, policy UI, and command receiver. |
+| Windows CLIENT | Student credentials plus automatic safe workstation registration, monitoring agent, policy UI, and command receiver. |

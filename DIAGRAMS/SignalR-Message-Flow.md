@@ -12,10 +12,10 @@ sequenceDiagram
     participant DB as SQLite
 
     C->>API: Credentials plus PC name
-    API->>DB: Validate hash, active account, assigned station
+    API->>DB: Validate hash and active account; register or safely assign station
     alt Invalid credentials or station
         API-->>C: Reject and audit
-    else Valid assigned workstation
+    else Safe workstation registration
         API->>DB: Create or resume active LabSession
         API-->>C: Auth cookie and student identity
         C->>H: Authenticated connect as client agent
@@ -32,10 +32,10 @@ sequenceDiagram
 
         C->>H: Activity, idle, website status, infraction, telemetry batch
         H->>DB: Persist normalized operational records
-        H-->>T: Scoped status or InfractionDetected
+        H-->>T: Lab-wide status or InfractionDetected
 
-        T->>H: Scoped warning, lock, logout, restart, shutdown, input, broadcast
-        H->>DB: Recheck scope and audit authorized command
+        T->>H: Authorized warning, lock, logout, restart, shutdown, input, broadcast
+        H->>DB: Recheck actor, connected target, and applicable session permission
         H-->>C: Target command/event
         A->>H: Authorized global/session action
         H->>DB: Persist state and audit
@@ -52,16 +52,16 @@ sequenceDiagram
 
 | Direction | Event/method | Purpose and scope |
 | --- | --- | --- |
-| Client to Server | HTTPS `/api/client/login` | Validates student credentials and exact assigned workstation before issuing the client-agent identity. |
+| Client to Server | HTTPS `/api/client/login` | Validates student credentials and creates or safely reassigns the named workstation before issuing the client-agent identity; conflicting active use is rejected. |
 | Client to Hub | `SendScreenFrame` | Sends a screen frame; the server forwards it only to authorized teacher/admin viewers. The 50 ms delay is a target, not guaranteed FPS. |
 | Client to Hub | activity/idle/browser/infraction and telemetry batch methods | Reports bounded, normalized classroom state. Browser data excludes credentials, page content, paths, queries, and fragments. |
 | Hub to Dashboard | `StudentConnected` / `StudentDisconnected` | Adds/removes a live card within viewer scope; disconnect does not necessarily end the persisted session. |
 | Hub to Dashboard | `ReceiveScreenFrame` / `InfractionDetected` | Updates authorized monitoring UI and alert state. |
-| Dashboard to Hub | `SendRemoteInput` | Rechecks target scope and session permission, audits, then targets one client. |
+| Dashboard to Hub | `SendRemoteInput` | Rechecks the active actor, connected target and support-session permission, then targets one client. Starting/stopping support is audited; individual input events are not. |
 | Hub to Client | `ExecuteRemoteInput` | Requests input simulation. Result depends on Windows desktop, privilege, and security policy. |
-| Dashboard to Hub | warning method / `BroadcastScreen` | Sends a CAMS topmost warning dialog or teacher screen to accessible clients. |
-| Dashboard to Hub | lock/unlock/logout/restart/shutdown methods | Rechecks target scope and audits before routing. Unlock releases CAMS state only, not Windows secure desktop. |
-| Hub to Client | `GlobalSessionState` / `SessionEnded` | Synchronizes persisted session state or ends/logs out the target client. Admin has global controls; teacher bulk actions remain teacher-owned. |
+| Dashboard to Hub | warning method / `BroadcastScreen` | Sends a CAMS topmost warning dialog or teacher screen to connected student clients across the lab. |
+| Dashboard to Hub | lock/unlock/logout/restart/shutdown methods | Rechecks the active actor and connected student target, and audits before routing. Unlock releases CAMS state only, not Windows secure desktop. |
+| Hub to Client | `GlobalSessionState` / `SessionEnded` | Synchronizes persisted session state or ends/logs out the target client. Admin has global controls; teacher bulk actions are also lab-wide. |
 | Client to Hub | `FetchRestrictions` | Requests active global plus active-session teacher rules. |
 | Hub to Client | `RestrictionsReceived` | Delivers applicable application/domain allow/block rules and refreshes after policy changes. |
 

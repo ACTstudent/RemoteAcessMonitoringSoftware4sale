@@ -3,7 +3,7 @@
 CAMS is a local-first classroom monitoring and computer laboratory management system for Windows networks. It combines an ASP.NET Core server, authenticated browser portals, a Windows student client, SignalR monitoring and control, and a local SQLite database. CAMS is designed for supervised classroom use on a trusted private LAN; it does not require a CAMS cloud service.
 
 [![Build Status](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/actions/workflows/ci-full.yml/badge.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/actions/workflows/ci-full.yml)
-[![Release](https://img.shields.io/badge/Release-v2.8.0-emerald.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest)
+[![Release](https://img.shields.io/badge/Release-v2.9.7-emerald.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest)
 [![.NET](https://img.shields.io/badge/.NET-8.0-blueviolet)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -11,7 +11,7 @@ CAMS is a local-first classroom monitoring and computer laboratory management sy
 
 - Live authenticated screen monitoring with a client capture-loop target of 50 ms. This is not a promised frame rate; effective throughput depends on workstation load, capture time, SignalR backpressure, and LAN conditions.
 - Timed student lab sessions with persisted running, paused, resumed, ended, and expiration state.
-- Teacher-scoped monitoring, session actions, warnings, screen broadcast, remote input, restrictions, records, alerts, and exports.
+- Lab-wide live monitoring, warnings, screen broadcast, remote input and bulk session controls; teacher/adviser-class checks still apply to individual session actions, records, alerts and exports.
 - Workstation lock, release of CAMS lock state, logout, restart, shutdown, and remote input commands. Releasing CAMS state cannot unlock the Windows secure desktop; Windows credentials are still required after `LockWorkStation`.
 - Application and normalized-domain policies. Blocked applications can be terminated; website violations display CAMS-owned topmost dialogs and are recorded, but CAMS does not close the browser.
 - Account, class, roster, workstation, session-rule, global-policy, report, audit, database-maintenance, LAN-status, and Deployment Hub administration.
@@ -24,8 +24,8 @@ CAMS has three fixed application roles: `Admin`, `Teacher`, and `Student`. Autho
 | Role | Current scope |
 | --- | --- |
 | Admin | Global account, class, roster, workstation, policy, session-rule, lab-wide session, reporting, lockout, database, LAN-status, and deployment controls. |
-| Teacher | Global operational access to Teacher and Student accounts, classes, rosters/imports, workstation mappings/history, restrictions/categories, session rules, all lab sessions, all connected Student monitoring, and remote commands. Teachers can manage peer Teacher accounts but cannot edit, unlock, deactivate, or archive themselves; peer deactivation also requires active classes to be reassigned or archived. Administrator accounts, role metadata, reports/logs, database maintenance, LAN status, and Deployment Hub remain Admin-only. |
-| Student | Browser portal access to session information, alerts, and account settings. The WinForms CLIENT login is stricter: it supplies the machine name and succeeds only when the student is assigned to that workstation. |
+| Teacher | Global operational access to Teacher and Student accounts, classes, rosters/imports, workstation mappings/history, restrictions/categories, session rules, lab-wide session controls, all connected Student monitoring, and remote commands. Teachers can manage peer Teacher accounts but cannot edit, unlock, deactivate, or archive themselves; peer deactivation also requires active classes to be reassigned or archived. Individual session actions and older Teacher pages, analytics, records and alerts retain teacher/adviser-class scope. Administrator accounts, role metadata, Admin reports/logs, database maintenance, LAN status, and Deployment Hub remain Admin-only. |
+| Student | Browser portal access to session information, alerts, and account settings. The WinForms CLIENT login is stricter: it supplies the machine name and can create or safely reassign the workstation before creating or resuming a session. Conflicting active sessions and archived/maintenance workstations are rejected. |
 
 ## Architecture And Network
 
@@ -73,7 +73,7 @@ Prerequisites are the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/
 .\build-everything.ps1
 ```
 
-The canonical script tests and builds the solution, publishes self-contained client and server binaries, packages both installers, stages the exact client installer/checksum/deployment manifest inside the server package, creates release hashes and `release-manifest.json`, and runs installer validation. `version.json`, assembly/installer versions, deployment manifest versions, and a release tag such as `v2.8.0` must match.
+The canonical script tests and builds the solution, publishes self-contained client and server binaries, packages both installers, stages the exact client installer/checksum/deployment manifest inside the server package, creates release hashes and `release-manifest.json`, and runs installer validation. `version.json`, assembly/installer versions, deployment manifest versions, and a release tag such as `v2.9.7` must match.
 
 ## Release And GitHub Pages Flow
 
@@ -89,8 +89,8 @@ Validate on the actual classroom hardware and network before rollout:
 - Confirm every machine is Windows x64 and uses the intended Windows user account; the interactive client install, settings, and certificate trust are per user.
 - Mark the classroom network Private. Confirm inbound TCP `5000` reaches the server and, if discovery is required, clients receive UDP `5001`.
 - Confirm the Deployment Hub endpoint is certificate-compatible and the installer SHA-256/version match its manifest.
-- Test first trust without bypassing TLS warnings, then test browser login and strict assigned-workstation client login separately.
-- Confirm the client appears in Deployment Hub's connected-client count and the teacher's scoped monitoring grid.
+- Test first trust without bypassing TLS warnings, then test browser login and client login with workstation registration separately.
+- Confirm the client appears in Deployment Hub's connected-client count and the teacher's lab-wide monitoring grid.
 - Test screen updates, warning dialogs, pause/resume/end, application/domain policy, reconnect, and one approved remote command. Treat the 50 ms capture interval as a target, not guaranteed FPS.
 - Test lock and CAMS unlock-state behavior with the Windows secure desktop limitation understood.
 - Disconnect/reconnect the LAN, then restart the server after an address change and verify certificate coverage, the new endpoint, client URL updates, and reconnection.

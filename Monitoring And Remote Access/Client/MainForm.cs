@@ -175,7 +175,7 @@ namespace Client
 
             var lblInfo = new Label
             {
-                Text = "This workstation is monitored by your teacher.\r\nRestricted applications and websites are blocked.\r\nYour session timer appears above.",
+                Text = "This workstation is monitored by your teacher.\r\nRestricted applications may be closed.\r\nRestricted websites trigger warnings.\r\nYour session timer appears above.",
                 Location = new Point(20, 140),
                 AutoSize = true,
                 ForeColor = Color.FromArgb(150, 155, 170)
@@ -288,7 +288,7 @@ namespace Client
                 lblStatus.ForeColor = Color.Red;
                 btnLogin.Enabled = true;
                 MessageBox.Show(
-                    "The server rejected this student login.\n\nCheck the Student ID and password, and make sure this workstation is assigned to the student.",
+                    "The server rejected this student login.\n\nCheck the Student ID and password. The student must be active, and the workstation must be available without a conflicting active session.",
                     "Student Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
             catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
@@ -746,7 +746,7 @@ namespace Client
                     // Frame dropped; keep the loop alive
                 }
 
-                await Task.Delay(50, token); // ~20 FPS, with one in-flight frame at a time
+                await Task.Delay(50, token); // Capture-loop delay target, with one in-flight frame; effective FPS varies
             }
         }
 
