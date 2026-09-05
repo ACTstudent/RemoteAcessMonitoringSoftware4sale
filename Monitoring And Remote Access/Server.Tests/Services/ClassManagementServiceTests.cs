@@ -122,8 +122,8 @@ public class ClassManagementServiceTests
 
         var result = await service.BulkCreateStudentsInClassAsync(cls.ClassId, new[]
         {
-            new NewStudentInput(null, "Valid", "Student", "", "valid.student", "good123"),
-            new NewStudentInput(null, "Missing", "", "", "missing.last", "good123")
+            new NewStudentInput(null, "Valid", "Student", "", "valid.student", "good1234"),
+            new NewStudentInput(null, "Missing", "", "", "missing.last", "good1234")
         }, teacher.TeacherId);
 
         Assert.False(result.Success);
@@ -139,8 +139,8 @@ public class ClassManagementServiceTests
 
         var result = await service.BulkCreateStudentsAsync(new[]
         {
-            new NewStudentInput(null, "Ana", "Reyes", null, "ana.reyes", "secret1"),
-            new NewStudentInput(null, "Ben", "Cruz", null, null, "secret2")
+            new NewStudentInput(null, "Ana", "Reyes", null, "ana.reyes", "secret12"),
+            new NewStudentInput(null, "Ben", "Cruz", null, null, "secret23")
         });
 
         var students = await db.Students.OrderBy(student => student.FirstName).ToListAsync();
@@ -163,8 +163,8 @@ public class ClassManagementServiceTests
 
         var result = await service.BulkCreateStudentsAsync(new[]
         {
-            new NewStudentInput(null, "Valid", "Student", null, "valid.student", "secret1"),
-            new NewStudentInput(null, "Missing", "", null, "invalid.student", "secret2")
+            new NewStudentInput(null, "Valid", "Student", null, "valid.student", "secret12"),
+            new NewStudentInput(null, "Missing", "", null, "invalid.student", "secret23")
         });
 
         Assert.False(result.Success);
@@ -197,7 +197,7 @@ public class ClassManagementServiceTests
         var service = new ClassManagementService(db);
 
         var preview = await service.PreviewBulkStudentsAsync(cls.ClassId, new[] {
-            new NewStudentInput(null, "Valid", "Student", null, "same", "secret1"),
+            new NewStudentInput(null, "Valid", "Student", null, "same", "secret12"),
             new NewStudentInput(null, "", "", null, "same", "short")
         }, teacher.TeacherId);
 

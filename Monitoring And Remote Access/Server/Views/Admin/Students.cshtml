@@ -204,7 +204,7 @@
             <form method="post" action="/Admin/BulkCreateStudents">
                 @Html.AntiForgeryToken()
                 <div class="modal-body py-4">
-                    <p class="text-muted small mb-2">Create profiles now and assign them to classes later. Every filled row needs a first name, last name, and a password of at least 6 characters. Student IDs and blank usernames are generated automatically.</p>
+                    <p class="text-muted small mb-2">Create profiles now and assign them to classes later. Every filled row needs a first name, last name, and a password of at least 8 characters. Student IDs and blank usernames are generated automatically.</p>
                     <div class="table-responsive">
                         <table class="table table-sm align-middle mb-0">
                             <thead><tr><th>First</th><th>Last</th><th>Username <span class="text-muted">(optional)</span></th><th>Password</th></tr></thead>
@@ -213,7 +213,7 @@
                                     <td><input name="bulkFirstNames" class="form-control form-control-sm filter-control" /></td>
                                     <td><input name="bulkLastNames" class="form-control form-control-sm filter-control" /></td>
                                     <td><input name="bulkUserNames" class="form-control form-control-sm filter-control" /></td>
-                                    <td><input name="bulkPasswords" type="password" minlength="6" class="form-control form-control-sm filter-control" /></td>
+                                    <td><input name="bulkPasswords" type="password" minlength="8" class="form-control form-control-sm filter-control" /></td>
                                 </tr>
                             </tbody>
                         </table>

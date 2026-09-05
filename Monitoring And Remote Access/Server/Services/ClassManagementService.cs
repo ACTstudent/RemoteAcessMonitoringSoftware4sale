@@ -850,10 +850,13 @@ public sealed class ClassManagementService : IClassManagementService
         {
             return ClassOperationResult.Fail("Each student needs a first name and last name.");
         }
+        // Matches the eight character minimum enforced when an account changes its
+        // own password; creating accounts weaker than they can later be changed to
+        // left every new student below the policy.
 
-        if (string.IsNullOrWhiteSpace(input.Password) || input.Password.Trim().Length < 6)
+        if (string.IsNullOrWhiteSpace(input.Password) || input.Password.Trim().Length < 8)
         {
-            return ClassOperationResult.Fail("Each student password must be at least 6 characters.");
+            return ClassOperationResult.Fail("Each student password must be at least 8 characters.");
         }
 
         if (!string.IsNullOrWhiteSpace(input.Username) &&

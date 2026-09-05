@@ -278,7 +278,7 @@ public class TeacherControllerTests
             StudentNumber = "STU-101",
             FullName = "Jose Rizal",
             Username = "jrizal",
-            PasswordHash = "pass123"
+            PasswordHash = "pass1234"
         }, cls.ClassId);
         Assert.IsType<RedirectToActionResult>(createResult);
 
@@ -352,7 +352,7 @@ public class TeacherControllerTests
             new List<string> { "Andres", "Emilio" },
             new List<string> { "Bonifacio", "Aguinaldo" },
             new List<string> { "abonifacio", "eaguinaldo" },
-            new List<string> { "pass123", "pass234" }
+            new List<string> { "pass1234", "pass2345" }
         );
         Assert.IsType<RedirectToActionResult>(bulkResult);
 

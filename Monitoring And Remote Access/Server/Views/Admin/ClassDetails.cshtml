@@ -127,7 +127,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Password</label>
-                                    <input name="password" type="password" minlength="6" class="form-control" required />
+                                    <input name="password" type="password" minlength="8" class="form-control" required />
                                 </div>
                             </div>
                             <div class="d-flex justify-content-end gap-2 mt-4">
@@ -140,7 +140,7 @@
                         <form method="post" asp-controller="Admin" asp-action="BulkAddStudents">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="classId" value="@Model.ClassId" />
-                            <p class="text-muted small">Every filled row needs a first name, last name, and a password of at least six characters.</p>
+                            <p class="text-muted small">Every filled row needs a first name, last name, and a password of at least eight characters.</p>
                             <div class="table-responsive">
                                 <table class="table table-sm align-middle mb-0">
                                     <thead><tr><th>First</th><th>Last</th><th>Username</th><th>Password</th></tr></thead>
@@ -149,7 +149,7 @@
                                             <td><input name="bulkFirstNames" class="form-control form-control-sm" /></td>
                                             <td><input name="bulkLastNames" class="form-control form-control-sm" /></td>
                                             <td><input name="bulkUserNames" class="form-control form-control-sm" /></td>
-                                            <td><input name="bulkPasswords" type="password" minlength="6" class="form-control form-control-sm" /></td>
+                                            <td><input name="bulkPasswords" type="password" minlength="8" class="form-control form-control-sm" /></td>
                                         </tr>
                                     </tbody>
                                 </table>

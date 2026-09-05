@@ -417,7 +417,7 @@ public class AdminControllerTests
         Assert.NotNull(cls);
 
         // 2. Add Student to Class
-        var addStudentResult = await controller.AddStudentToClass(cls.ClassId, "Pedro", "Penduko", "ppenduko", "pass123");
+        var addStudentResult = await controller.AddStudentToClass(cls.ClassId, "Pedro", "Penduko", "ppenduko", "pass1234");
         Assert.IsType<RedirectToActionResult>(addStudentResult);
 
         var student = await db.Students.FirstOrDefaultAsync(s => s.Username == "ppenduko");
@@ -456,7 +456,7 @@ public class AdminControllerTests
             new List<string> { "Ana", "Ben" },
             new List<string> { "Reyes", "Cruz" },
             new List<string> { "ana.reyes", "" },
-            new List<string> { "secret1", "secret2" });
+            new List<string> { "secret12", "secret23" });
 
         var redirect = Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal("Students", redirect.ActionName);
