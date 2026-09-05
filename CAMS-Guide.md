@@ -43,18 +43,18 @@ Roles are fixed as `Admin`, `Teacher`, and `Student`. They are not configurable 
 | Role | Scope |
 | --- | --- |
 | Admin | Global users, classes, rosters, computers/mappings, policies, session rules, lab-wide session controls, reports, logs, lockouts, database maintenance, LAN status, and Deployment Hub. |
-| Teacher | Global operational management of Teacher/Student accounts, classes, rosters/imports, computers/mappings/history, policies, session rules, lab sessions, monitoring, and Student-workstation remote commands. Admin accounts, role metadata, reports/logs, database maintenance, LAN status, and Deployment Hub remain Admin-only. |
-| Student | Web session/alert/account pages, or an assigned-workstation session through the Windows client. |
+| Teacher | Global operational management of Teacher/Student accounts, classes, rosters/imports, computers/mappings/history, policies, session rules, lab-wide session controls, monitoring, and Student-workstation remote commands. Individual session actions and older Teacher pages, analytics, records and alerts retain teacher/adviser-class checks. Admin accounts, role metadata, Admin reports/logs, database maintenance, LAN status, and Deployment Hub remain Admin-only. |
+| Student | Web session/alert/account pages, or a workstation-registered session through the Windows client. |
 
 ## Login Semantics
 
 ### Browser login
 
-Open `https://<server>:5000/Account/Login`. Admin, Teacher, and Student credentials route to their respective browser portal. A Student browser login does not identify a workstation and therefore does not create the strict assigned-PC client session.
+Open `https://<server>:5000/Account/Login`. Admin, Teacher, and Student credentials route to their respective browser portal. A Student browser login does not identify a workstation and therefore does not create the monitored client session.
 
 ### Windows CLIENT login
 
-The WinForms client submits the student username or student number, password, and Windows machine name over HTTPS. Login succeeds only when the active student is mapped to the `Computer.LaboratoryStation` matching that machine name. It creates or resumes the student's active `LabSession` and then opens authenticated SignalR.
+The WinForms client submits the student username or student number, password, and Windows machine name over HTTPS. For an active student, the server creates a missing workstation profile or safely reassigns an existing profile to that student. It rejects archived/maintenance workstations, conflicting active use, or a student already active on another PC. It creates or resumes the student's active `LabSession` and then opens authenticated SignalR.
 
 There are no default passwords. Interactive server setup securely creates or recovers the Administrator account without writing its password to configuration. Teacher and Student accounts are created from the authenticated Admin portal. Accounts store password hashes, not plain passwords.
 
@@ -87,9 +87,9 @@ LAN Status displays the detected request and SignalR paths only. Deployment Hub 
 
 ### Scope rules
 
-Every active Teacher is a global CAMS operator. The server revalidates Teacher status for management requests and SignalR commands; deactivating a Teacher blocks later operations from an existing authenticated session. Shared `/Admin/...` management actions use an explicit allow-list, so unlisted Administrator pages remain forbidden even when a link is hidden.
+Active teachers can monitor and control all connected student clients and use lab-wide pause/resume/end actions. Explicitly shared `/Admin/...` actions provide global account, class, roster, workstation and policy management. Individual session actions, older `/Teacher/...` management pages, and analytics/record queries retain their teacher or adviser/class checks. Admin-only administration remains restricted. The server revalidates Teacher status for management requests and SignalR commands; deactivating a Teacher blocks later operations from an existing authenticated session. Shared `/Admin/...` management actions use an explicit allow-list, so unlisted Administrator pages remain forbidden even when a link is hidden.
 
-### Student and roster semantics
+### Global management through shared Admin actions
 
 - Create, edit, activate/deactivate, unlock, and soft-archive Student accounts globally.
 - Create, edit, activate/deactivate, unlock, and soft-archive peer Teacher accounts. A Teacher cannot change their own account from global management, and active classes must be reassigned or archived before their Teacher is deactivated.
@@ -100,8 +100,8 @@ Every active Teacher is a global CAMS operator. The server revalidates Teacher s
 
 ### Sessions and monitoring
 
-1. Start a session for a student and available assigned computer, optionally using an active session rule.
-2. Resume, pause, or end sessions across all Teachers. Pause still applies only where the session rule permits it.
+1. On `/Teacher/Sessions`, start a session for a student in one of your active classes, optionally selecting an available workstation and active session rule.
+2. Individual pause/resume/end actions apply to your own sessions. The global buttons affect eligible sessions across all teachers; pause still requires a permitting session rule.
 3. Monitor every connected Student client, including screen frames, connectivity, active application, browser status, and idle state.
 4. Globally use lock, release CAMS lock state, force logout, restart, shutdown, warning, notification, broadcast, and remote support/input commands.
 5. End the session to persist its end state, notify the connected client, release the workstation, and log out the client.
@@ -117,7 +117,7 @@ The capture loop targets a 50 ms delay with one frame in flight. This is not a 2
 Teachers can create and edit global block/allow rules, blacklists, whitelists, application/website categories, and session rules. Rules changed through the global Teacher management surface are stored as global and are refreshed on clients after policy changes.
 
 - Application block violations may terminate the matching process and report an infraction.
-- Website policy uses a privacy-normalized domain from supported collection paths. CAMS does not collect browser credentials, cookies, page content, full paths, queries, or fragments.
+- Website telemetry stores normalized domains, not browser credentials, cookies, page content, full paths, queries, or fragments. Live screen frames can still show any content visible on the display.
 - A website violation does not close the browser. It shows a CAMS-owned, topmost WinForms dialog, not a browser popup.
 - Teacher warnings also appear as CAMS topmost dialogs.
 - Alerts can be grouped, filtered, acknowledged, dismissed with a reason, reopened, and exported where supported.
@@ -126,7 +126,7 @@ Teachers can create and edit global block/allow rules, blacklists, whitelists, a
 
 ### Client session
 
-After strict assigned-workstation login, the client shows the unit, student identity, session state, and timer. It streams screen frames and status while connected, applies active policies, queues bounded telemetry during temporary interruptions, and reconnects according to configured resilience behavior.
+After client login and workstation registration, the client shows the unit, student identity, session state, and timer. It streams screen frames and status while connected, applies active policies, queues bounded telemetry during temporary interruptions, and reconnects according to configured resilience behavior.
 
 When a session ends, the client displays a CAMS session-ended dialog, logs out/exits, and may lock the workstation. Secure-desktop unlock still requires Windows sign-in.
 
@@ -142,8 +142,8 @@ stateDiagram-v2
     BrowserPortal --> [*]: Browser logout
 
     [*] --> ClientValidation: CLIENT login with PC name
-    ClientValidation --> Rejected: Invalid credentials or station assignment
-    ClientValidation --> Running: Valid assigned workstation
+    ClientValidation --> Rejected: Invalid credentials or conflicting/unavailable station
+    ClientValidation --> Running: Workstation created, safely assigned, or resumed
     Running --> Paused: Authorized pause and rule allows it
     Paused --> Running: Authorized resume
     Running --> Reconnecting: Temporary SignalR loss
@@ -168,8 +168,8 @@ Only one active session per student and per computer is allowed. A transient hub
 | `/Admin/Deployment` | Authenticated local Deployment Hub. |
 | `/AdminDatabase` | Admin database maintenance. |
 | `/Teacher` | Teacher dashboard. |
-| `/Teacher/Sessions` | Teacher-owned session management. |
-| `/Teacher/Monitoring` | Scoped live monitoring and workstation controls. |
+| `/Teacher/Sessions` | Teacher-owned individual session actions and lab-wide bulk controls. |
+| `/Teacher/Monitoring` | Lab-wide live monitoring and workstation controls. |
 | `/Student` | Student web portal. |
 | `/remoteMonitoringHub` | Authenticated SignalR hub used by client and dashboards. |
 | `/api/client/login` | Strict student CLIENT login with workstation identity. |
@@ -184,13 +184,13 @@ Only one active session per student and per computer is allowed. A transient hub
 5. Install interactively per intended Windows user, or use the approved offline bundle procedure.
 6. Open server inbound Private TCP `5000`. Clients receive UDP `5001` only for optional discovery.
 7. Restart the server after a network/address change, confirm certificate coverage, and update saved client URLs if needed.
-8. Confirm each connected client in Deployment Hub and the correct teacher's monitoring grid.
+8. Confirm each connected client in Deployment Hub and the teacher's lab-wide monitoring grid.
 
 ## Windows And LAN Validation Checklist
 
-- Verify current-user installation and trust context, or explicitly approve the offline bundle's machine-wide root import.
+- Verify current-user installation and trust context for both interactive setup and offline bundles.
 - Verify TLS fingerprint/SHA-256 and endpoint SAN coverage without bypassing warnings.
-- Test browser portal login separately from strict assigned-workstation CLIENT login.
+- Test browser portal login separately from CLIENT login with workstation registration.
 - Test TCP `5000`, optional client-received UDP `5001`, client isolation, and reconnect behavior.
 - Test the 50 ms capture target under realistic load without assuming guaranteed FPS.
 - Test CAMS warning dialogs, policy enforcement, monitoring scope, and connected-client confirmation.

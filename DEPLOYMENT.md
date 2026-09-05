@@ -14,7 +14,7 @@ Do not obtain `CAMS-Server-Root.cer` from a public website. It is unique to a lo
 
 ## Operator Scope
 
-Every active Teacher has global operational access to Teacher and Student management, classes and roster imports, computers and mappings, global policies and session rules, all lab sessions, all connected Student monitoring, and remote workstation commands. Treat every Teacher credential as a privileged lab-wide credential. Teachers cannot manage Administrator accounts, role metadata, database maintenance, deployment assets, LAN status, reports, audit logs, or system logs. Deactivate a Teacher promptly when access is no longer required; CAMS revalidates active status for management and SignalR operations.
+Every active Teacher has global operational access to Teacher and Student management, classes and roster imports, computers and mappings, global policies and session rules, lab-wide session controls, all connected Student monitoring, and remote workstation commands. Individual session actions and older Teacher pages, analytics, records and alerts retain teacher/adviser-class checks. Treat every Teacher credential as a privileged lab-wide credential. Teachers cannot manage Administrator accounts, role metadata, database maintenance, deployment assets, LAN status, Admin reports, audit logs, or system logs. Deactivate a Teacher promptly when access is no longer required; CAMS revalidates active status for management and SignalR operations.
 
 ## 1. Prepare The Server
 
@@ -44,7 +44,7 @@ For the first Admin connection, work on the server PC: inspect the public root C
 
 The interactive client installer imports a selected root CER into the current Windows user's Root store and installs the client/settings under that user's `%LOCALAPPDATA%`. Install and run CAMS under the intended workstation user. A different Windows user does not automatically inherit that per-user client installation or trust.
 
-The generated offline bundle script is a separate elevated path: it imports the validated public root into `LocalMachine\Root`, invokes the client installer, and performs a TLS ping. Because the client installer itself is per-user, run the bundle while signed in as the intended workstation user and verify the resulting client location and launch context. Use local policy to decide whether machine-wide root trust is acceptable.
+The generated offline bundle script imports the validated public root into `CurrentUser\Root`, invokes the per-user client installer, and performs a TLS ping. Run it as the intended workstation user without elevation so that certificate trust and the client installation belong to that user.
 
 ### Production/public certificate mode
 
@@ -60,7 +60,7 @@ Before enabling downloads, CAMS validates that:
 - Installer name, size, and computed SHA-256 match the deployment manifest and checksum file.
 - The installer product version matches the client version in the manifest.
 - The manifest server version matches the running server version.
-- The active HTTPS certificate is valid and covers the selected detected LAN IPv4 endpoint.
+- The configured HTTPS certificate can be loaded. Bundle generation additionally requires a currently valid certificate covering the selected detected LAN IPv4 endpoint; the status page reports endpoint compatibility separately.
 - The local root CER, when offered, is a public CA certificate without a private key.
 
 The page displays warnings instead of claiming readiness when validation fails. It also displays currently connected clients. After each rollout, confirm that count increases and verify the same client in the teacher's authorized monitoring grid; the count alone is not proof of complete classroom behavior.
@@ -77,7 +77,7 @@ Choose a certificate-compatible endpoint and create `CAMS-Client-<version>-Deplo
 - `Install-CAMS-Client.ps1`
 - `Install-CAMS-Client.cmd`
 
-No account credentials or PFX private keys are included. Keep all files together, transfer the ZIP through approved offline media, extract it on the intended workstation, and run `Install-CAMS-Client.cmd` as Administrator. The script verifies the installer SHA-256, validates the root CA when present, passes the exact endpoint to Setup, and calls `/api/deployment/ping` over TLS. A successful ping validates that endpoint at that moment; still confirm student login and connected-client/monitoring behavior.
+No account credentials or PFX private keys are included. Keep all files together, transfer the ZIP through approved offline media, extract it on the intended workstation, and run `Install-CAMS-Client.cmd` as the intended Windows user without elevation. The script verifies the installer SHA-256, validates the root CA when present, passes the exact endpoint to Setup, and calls `/api/deployment/ping` over TLS. A successful ping validates that endpoint at that moment; still confirm student login and connected-client/monitoring behavior.
 
 ## 4. Interactive Or Unattended Client Install
 
@@ -91,7 +91,7 @@ For unattended configuration:
 
 `/ServerUrl` is the preferred switch. Legacy `/ServerIP` remains an alias and still expects the complete HTTPS hub URL, not a bare IP. If both are supplied, they must have the same value. `/ServerRootCert` must point to an existing `.cer`. The endpoint must use HTTPS and end exactly in `/remoteMonitoringHub` with no query or fragment.
 
-The client saves the normalized URL in its per-user installation settings. UDP discovery can find a server, but a manual saved URL remains the fallback.
+The client saves the normalized URL in its per-user installation settings. A saved non-loopback URL takes priority. With the default localhost URL, or when discovery is explicitly retried, the client tries UDP discovery and falls back to the saved URL.
 
 ## 5. Firewall And Discovery
 
@@ -118,7 +118,7 @@ After joining another LAN, changing an address, or switching hotspots:
 2. Open LAN Status and Deployment Hub.
 3. Confirm the intended endpoint is detected and certificate-compatible.
 4. Update clients whose saved `/ServerUrl` address changed; trusting the same root alone does not rewrite the saved endpoint.
-5. Confirm TLS connection, strict assigned-workstation login, Deployment Hub connected-client count, and the teacher monitoring card.
+5. Confirm TLS connection, client login with workstation registration, Deployment Hub connected-client count, and the teacher monitoring card.
 
 Do not claim seamless reconnection across an address change until it has been tested on that LAN. Discovery, certificate coverage, saved URLs, firewall policy, and client isolation can each affect recovery.
 
@@ -146,10 +146,10 @@ The canonical `build-everything.ps1` path is preferred because it tests, creates
 
 - Verify installer and manifest versions/hashes before execution.
 - Verify first trust using the expected certificate SHA-256 without bypassing TLS warnings.
-- Verify interactive per-user install/trust or explicitly approve the bundle's machine-wide root import.
-- Verify browser student portal login separately from strict assigned-workstation CLIENT login.
+- Verify per-user installation and trust for both interactive setup and offline bundles.
+- Verify browser student portal login separately from CLIENT login with workstation registration.
 - Verify server inbound Private TCP `5000`; verify client inbound UDP `5001` only if discovery is required.
-- Verify connected-client count and the correct teacher-scoped monitoring card.
+- Verify connected-client count and the client's card in the lab-wide monitoring grid.
 - Verify screen updates under realistic load; 50 ms is a capture-loop target, not guaranteed FPS.
 - Verify CAMS topmost warning dialogs, application/domain policies, telemetry reconnect, and session pause/resume/end.
 - Verify lock behavior; CAMS cannot programmatically unlock the Windows secure desktop.
@@ -160,10 +160,10 @@ The canonical `build-everything.ps1` path is preferred because it tests, creates
 
 | Symptom | Check |
 | --- | --- |
-| Browser/client reports untrusted TLS | Confirm the expected public root CER is trusted for the relevant Windows user, or the approved machine store for bundle deployment. Do not use a PFX or bypass the warning. |
+| Browser/client reports untrusted TLS | Confirm the expected public root CER is trusted for the Windows user running the client or browser. Do not use a PFX or bypass the warning. |
 | Certificate name mismatch | Restart the server on the target network and select an endpoint marked compatible by Deployment Hub. |
 | Discovery fails | Allow client inbound UDP `5001`, remove client isolation, or use `/ServerUrl`. Do not add server inbound UDP `5001`. |
 | TCP connection fails | Confirm server is running, network is Private, inbound TCP `5000` is allowed, and devices can communicate. |
-| CLIENT rejects valid student credentials | Confirm that student is active and mapped to the workstation name reported by the client. Browser portal login does not perform this station check. |
-| Client remains absent | Confirm TLS ping, saved endpoint, client process/user, SignalR login, Deployment Hub count, and teacher scope. |
+| CLIENT rejects valid student credentials | Confirm the student is active, is not already active on another PC, and the reported workstation is not archived, in maintenance, or occupied by another active session. New profiles and safe reassignments are automatic. Browser login does not register a workstation. |
+| Client remains absent | Confirm TLS ping, saved endpoint, client process/user, SignalR login, Deployment Hub count, and the lab-wide monitoring grid. |
 | Server moved networks | Restart server, verify certificate-compatible endpoint, update saved client URLs, and retest. |

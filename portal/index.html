@@ -88,11 +88,11 @@
           <p class="section-kicker">Purpose-built for computer laboratories</p>
           <h2 id="overview-title">One operational picture, from first login to final logout.</h2>
         </div>
-        <p>CAMS replaces paper logs and disconnected utilities with a coordinated server, browser portal, and Windows workstation agent. Teachers act on the computers assigned to them; administrators retain policy and deployment control.</p>
+        <p>CAMS replaces paper logs and disconnected utilities with a coordinated server, browser portal, and Windows workstation agent. Active teachers can monitor and control all connected student workstations and manage shared accounts, classes, and policies. Administrators retain deployment and system administration.</p>
       </div>
       <div class="shell outcome-strip">
         <article><span>01</span><h3>Observe</h3><p>Authenticated live screen grids, active app state, idle status, and alerts.</p></article>
-        <article><span>02</span><h3>Guide</h3><p>Warnings, screen broadcast, timed sessions, and teacher-scoped policies.</p></article>
+        <article><span>02</span><h3>Guide</h3><p>Warnings, screen broadcast, timed sessions, and global classroom policies.</p></article>
         <article><span>03</span><h3>Act</h3><p>Authorized lock, unlock, logout, restart, shutdown, and remote input.</p></article>
         <article><span>04</span><h3>Account</h3><p>Local attendance, activity timelines, reports, and audit records.</p></article>
       </div>
@@ -121,7 +121,7 @@
             <div class="role-index">T</div><p class="role-label">Teacher</p>
             <h3>Run the active laboratory</h3>
             <ul>
-              <li>Monitor assigned workstations in a live grid</li>
+              <li>Monitor all connected student workstations in a live grid</li>
               <li>Start, pause, resume, and end timed sessions</li>
               <li>Send warnings and broadcast the teacher screen</li>
               <li>Use permitted workstation and remote controls</li>
@@ -132,7 +132,7 @@
             <div class="role-index">S</div><p class="role-label">Student</p>
             <h3>Enter a managed session</h3>
             <ul>
-              <li>Sign in from an assigned Windows workstation</li>
+              <li>Sign in with automatic workstation registration</li>
               <li>See unit, identity, and elapsed session time</li>
               <li>Receive policy notices and teacher messages</li>
               <li>Review alerts in the student portal</li>
@@ -149,6 +149,7 @@
           <p class="section-kicker">Privacy boundary</p>
           <h2 id="privacy-title">Monitoring with a defined edge.</h2>
           <p>CAMS is designed for supervised classroom sessions on a private local network. Operational records remain on the CAMS server's local SQLite database; there is no required CAMS cloud service.</p>
+          <p>Live screen frames show visible display content, including any browser pages on screen.</p>
           <div class="boundary-badge"><span>Data boundary</span><strong>Your classroom LAN</strong></div>
         </div>
         <div class="boundary-grid">
@@ -167,8 +168,8 @@
             <ul>
               <li>No keystroke logging or clipboard capture</li>
               <li>No microphone, camera, or ambient recording</li>
-              <li>No browser credentials, cookies, or page content</li>
-              <li>No full URL paths, queries, or fragments</li>
+              <li>No browser credentials, cookies, or page content in telemetry</li>
+              <li>No full URL paths, queries, or fragments in telemetry</li>
               <li>No required third-party analytics or cloud upload</li>
             </ul>
           </article>
@@ -255,7 +256,7 @@
       <div class="shell trust-layout">
         <div><p class="section-kicker">Security and trust</p><h2 id="trust-title">Trust is established at deployment, not assumed.</h2></div>
         <div class="trust-grid">
-          <article><span>01</span><h3>Authenticated roles</h3><p>Admin, teacher, and student identities enter through role-aware authorization. Teacher actions are scoped to accessible sessions and workstations.</p></article>
+          <article><span>01</span><h3>Authenticated roles</h3><p>Admin, teacher, and student identities enter through role-aware authorization. Live monitoring and bulk session controls are lab-wide. Individual session actions, analytics, and records retain teacher/class checks.</p></article>
           <article><span>02</span><h3>Encrypted local transport</h3><p>Web portals and SignalR traffic use HTTPS. The endpoint must match the active certificate before clients are deployed.</p></article>
           <article><span>03</span><h3>Private keys stay private</h3><p>Local CA private keys remain on the server. Student PCs receive only the deployment-specific public root certificate.</p></article>
           <article><span>04</span><h3>Verifiable packages</h3><p>GitHub release checksums and manifest metadata let administrators verify downloads before execution or redistribution.</p></article>

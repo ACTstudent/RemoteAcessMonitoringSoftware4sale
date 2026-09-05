@@ -56,7 +56,7 @@ public sealed class ClientAuthController : ControllerBase
         if (result.Role != AccountRole.Student || result.AccountId is null)
         {
             LoginCache.Set(cacheKey, failures + 1, TimeSpan.FromMinutes(1));
-            return Unauthorized("Invalid student credentials or workstation assignment.");
+            return Unauthorized("Invalid student credentials or unavailable workstation.");
         }
 
         LoginCache.Remove(cacheKey);
