@@ -1,0 +1,104 @@
+@using Server.Services
+@using Server.Models
+@{
+    Layout = null;
+    // The one page shell. Everything that differs between the Admin, Teacher and
+    // Student portals is in the navigation model; see NavigationBuilder.
+    var variant = ViewData["NavVariant"] as string ?? NavigationBuilder.Teacher;
+    var nav = NavigationBuilder.Build(variant, ViewContext.HttpContext);
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - @nav.TitleSuffix | Pardo Elementary School</title>
+    <link href="~/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet" />
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+</head>
+<body class="app-shell">
+    <a class="skip-to-content" href="#main-content">Skip to main content</a>
+    <div class="app-wrapper">
+        <aside class="app-sidebar" id="appSidebar" aria-label="@nav.NavAriaLabel">
+            <div class="sidebar-header">
+                <img src="~/images/pardo_logo.png" alt="" class="school-logo-img" />
+                <div class="sidebar-brand-text">@nav.BrandText</div>
+                <div class="sidebar-brand-sub">@nav.BrandSubtitle</div>
+            </div>
+
+            <nav class="sidebar-nav">
+                @foreach (var group in nav.Sections)
+                {
+                    if (!string.IsNullOrEmpty(group.Label))
+                    {
+                        <div class="sidebar-label">@group.Label</div>
+                    }
+                    foreach (var item in group.Items)
+                    {
+                        var isActive = nav.IsActive(item, currentController, currentAction);
+                        <a href="@Url.Action(item.Action, item.Controller)"
+                           class="nav-item-custom @(isActive ? "active" : "")"
+                           @(isActive ? Html.Raw("aria-current=\"page\"") : null)>
+                            <i class="bi bi-@item.Icon" aria-hidden="true"></i>
+                            <span>@item.Text</span>
+                            @if (item.BadgeViewComponent is not null)
+                            {
+                                @await Component.InvokeAsync(item.BadgeViewComponent)
+                            }
+                        </a>
+                    }
+                }
+            </nav>
+        </aside>
+        <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+
+        <div class="app-main">
+            <header class="app-header">
+                <button class="btn-toggle-sidebar" id="sidebarToggle" type="button"
+                        aria-label="Toggle navigation" aria-controls="appSidebar" aria-expanded="false">
+                    <i class="bi bi-list" aria-hidden="true"></i>
+                </button>
+
+                @if (nav.TopbarPartial is not null)
+                {
+                    <partial name="@nav.TopbarPartial" />
+                }
+
+                <div class="d-flex align-items-center gap-3 ms-auto">
+                    <div class="user-profile-badge">
+                        <div class="user-avatar-circle">
+                            <i class="bi bi-@nav.AvatarIcon" aria-hidden="true"></i>
+                        </div>
+                        <div class="d-flex flex-column text-end">
+                            <span class="fw-bold fs-6">@nav.DisplayName</span>
+                            <span class="badge @nav.RoleBadgeCss small" style="font-size: 0.7rem;">@nav.RoleBadge</span>
+                        </div>
+                    </div>
+                    <a href="@Url.Action("Logout", "Account")" class="btn btn-outline-danger btn-sm rounded-pill px-3 ms-2">
+                        <i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i> Log out
+                    </a>
+                </div>
+            </header>
+
+            <main role="main" id="main-content" class="content-padding">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <partial name="~/Views/Shared/_ConfirmModal.cshtml" />
+    <partial name="~/Views/Shared/_Toasts.cshtml" />
+
+    <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/signalr/signalr.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @if (nav.ScriptPartial is not null)
+    {
+        <partial name="@nav.ScriptPartial" />
+    }
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

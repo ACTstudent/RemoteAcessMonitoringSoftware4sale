@@ -1,0 +1,23 @@
+    <script>
+        (() => {
+            const badge = document.getElementById("monitoringAlertBadge");
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/remoteMonitoringHub")
+                .withAutomaticReconnect()
+                .build();
+            const refreshAlertCount = async () => {
+                if (!badge) return;
+                const response = await fetch("/Teacher/OpenAlertCount", { credentials: "same-origin" });
+                if (!response.ok) return;
+                const count = Number((await response.json()).count) || 0;
+                badge.textContent = String(count);
+                badge.classList.toggle("d-none", count === 0);
+            };
+            connection.on("MonitoringAlertReceived", () => refreshAlertCount().catch(() => {}));
+            window.teacherHubConnection = connection;
+            window.teacherHubStarted = connection.start();
+            window.teacherHubStarted.catch(error => {
+                console.error("Teacher notifications connection failed", error);
+            });
+        })();
+    </script>

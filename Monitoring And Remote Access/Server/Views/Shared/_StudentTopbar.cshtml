@@ -1,0 +1,15 @@
+@{
+    // The student's own status, shown beside the shared identity block the shell
+    // renders for every portal.
+    var assignedUnit = ViewContext.HttpContext.Session.GetString("AssignedUnit") ?? "Unit -";
+}
+<div class="d-flex align-items-center gap-3 ms-3">
+    <span class="badge badge-active rounded-pill px-3 py-2" id="toolbarUnit">
+        <i class="bi bi-pc-display me-1" aria-hidden="true"></i> @assignedUnit
+    </span>
+    <span class="badge bg-secondary rounded-pill px-3 py-2" id="toolbarSession">No session</span>
+    <span class="d-flex align-items-center gap-2">
+        <i class="bi bi-clock-history text-muted" aria-hidden="true"></i>
+        <span class="session-timer fs-4" id="toolbarTimer" aria-label="Time elapsed in this session">--:--</span>
+    </span>
+</div>

@@ -1355,3 +1355,24 @@ body {
         visibility: hidden;
     }
 }
+
+/* Keyboard users reach the page content without tabbing the whole sidebar.
+   Off-screen until focused, so it costs a sighted user nothing. */
+.skip-to-content {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 2000;
+    padding: 0.75rem 1.25rem;
+    background: var(--cams-emerald, #157347);
+    color: #fff;
+    border-bottom-right-radius: 0.5rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.skip-to-content:focus {
+    left: 0;
+    outline: 3px solid #fff;
+    outline-offset: -3px;
+}
