@@ -1,0 +1,125 @@
+/* Management directories: shared visual language from the supplied reference. */
+body.crud-page {
+    --sidebar-bg: #185c3c;
+    --sidebar-active-bg: #124a30;
+    --accent-emerald: #185c3c;
+    --accent-emerald-hover: #124a30;
+    --body-bg: #f3f3f8;
+    --card-border: #dcdfe3;
+    --text-main: #202a27;
+    --text-muted: #68716d;
+    background: var(--body-bg);
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+.crud-page .app-header { height: 60px; flex-basis: 60px; padding: 0 24px; box-shadow: none; }
+.crud-page .app-header .user-avatar-circle { background: #fff; color: #185c3c; border: 2px solid #185c3c; box-shadow: none; }
+.crud-page .app-header .user-profile-badge { flex-direction: row-reverse; }
+.crud-page .app-header .user-profile-badge .fs-6 { font-size: .8rem !important; }
+.crud-page .app-header .user-profile-badge .badge { background: transparent !important; color: #68716d !important; padding: 0; font-weight: 400; }
+.crud-page .btn-toggle-sidebar { color: #185c3c; }
+.crud-page .content-padding { padding: 26px 30px; }
+.crud-page #main-content > :first-child { flex-wrap: wrap; gap: 16px; }
+.crud-page h2, .crud-page .page-title { font-size: 1.65rem; line-height: 1.3; font-weight: 750; letter-spacing: -.04em; }
+.crud-page h5 { font-size: 1rem; }
+.crud-page .icon-box-primary { width: 52px; height: 52px; border-radius: 10px; background: #e3f4e9; color: #185c3c; box-shadow: none; }
+.crud-page .icon-box-primary .fs-3 { font-size: 1.55rem !important; }
+.crud-page .metric-card { padding: 18px 20px; border: 1px solid #d9dce0; border-radius: 8px; min-height: 94px; box-shadow: 0 2px 0 #e2e4e8; }
+.crud-page .metric-card:hover { transform: none; }
+.crud-page .metric-card-emerald { border-left: 4px solid #185c3c; background: #fff; }
+.crud-page .metric-title { color: #46514c; font-size: .76rem; font-weight: 500; text-transform: none; letter-spacing: 0; margin-bottom: 6px; }
+.crud-page .metric-value { font-size: 1.7rem; line-height: 1.1; color: #192921 !important; font-weight: 700; }
+.crud-page .metric-icon-box { width: 36px; height: 36px; border-radius: 50%; background: #e3f4e9; color: #185c3c; }
+.crud-page .metric-icon-box .fs-3 { font-size: 1.2rem !important; }
+.crud-page .crud-metrics > :last-child .metric-card { border-left: 4px solid #92989f; }
+.crud-page .btn { font-size: .8rem; font-weight: 500; border-radius: 6px !important; }
+.crud-page .btn-emerald, .crud-page .btn-view-class { background: #185c3c; border-color: #185c3c; color: #fff; }
+.crud-page .btn-emerald:hover, .crud-page .btn-view-class:hover { background: #124a30; border-color: #124a30; }
+.crud-page .form-control, .crud-page .form-select { font-size: .82rem; border-radius: 6px; border-color: #dce0e3; }
+.crud-page .crud-panel {
+    display: block; background: #fff; border: 1px solid #d2d7da !important;
+    border-radius: 14px !important; padding: 18px 18px 0;
+    box-shadow: 0 2px 3px rgb(25 45 34 / 3%) !important; margin-bottom: 24px;
+}
+.crud-panel .card-header { padding: 0 0 12px !important; border: 0 !important; }
+.crud-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding-bottom: 16px; }
+.crud-toolbar .crud-search { flex: 1 1 230px; max-width: 380px; min-width: 150px; }
+.crud-toolbar > .form-select { width: auto; min-width: 135px; max-width: 220px; }
+.crud-toolbar > .crud-search + .form-select { margin-left: auto; }
+.crud-toolbar > .btn, .crud-toolbar .crud-actions > .btn { white-space: nowrap; padding: 9px 14px !important; }
+.crud-toolbar .crud-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.crud-toolbar > .btn:last-child { margin-left: auto; }
+.crud-toolbar > .form-select ~ .btn:last-child { margin-left: 0; }
+.crud-page .crud-panel .table-responsive { border: 1px solid #dce2de; border-radius: 12px; }
+.crud-page .crud-panel .custom-table { --bs-table-bg: transparent; font-size: .79rem; }
+.crud-page .crud-panel .custom-table thead th { background: #185c3c; color: #fff; font-size: .73rem; font-weight: 500; text-transform: none; letter-spacing: 0; padding: 13px 12px; border: 0; white-space: nowrap; }
+.crud-page .crud-panel .custom-table tbody td { padding: 12px; border-bottom: 1px solid #edf0ed; vertical-align: middle; }
+.crud-page .crud-panel .custom-table tbody tr:last-child td { border-bottom: 0; }
+.crud-page .crud-panel .custom-table tbody tr:hover { background: #f0f7f2; }
+.crud-page .crud-panel .custom-table tbody tr:nth-child(odd) { background-color: #f9fbf9; }
+.crud-page .crud-panel .custom-table .badge { font-size: .69rem; font-weight: 500; border-radius: 5px !important; padding: 4px 7px !important; }
+.crud-page .crud-panel .badge.bg-success, .crud-page .crud-panel .badge-active { color: #185c3c !important; background: #e4f2e8 !important; }
+.crud-page .crud-panel .badge.bg-secondary { color: #606b65 !important; background: #edf0ee !important; }
+.crud-page .crud-panel .custom-table .btn-sm { font-size: .72rem; padding: 5px 8px !important; }
+.crud-page .crud-panel .custom-table .crud-action { min-width: 30px; min-height: 30px; display: inline-flex; align-items: center; justify-content: center; padding: 5px !important; border-color: transparent; }
+.crud-toolbar form[role="search"] { flex-basis: 260px; }
+.crud-page .crud-panel .custom-table .user-avatar-circle { width: 28px !important; height: 28px !important; font-size: .75rem !important; background: #e6f1e9; color: #185c3c; box-shadow: none; }
+.crud-page .crud-grid { padding: 0 0 16px; }
+.crud-page .class-card { padding: 18px; border: 1px solid #d5dbd7; border-radius: 12px; box-shadow: 0 2px 0 #e4e7e5; }
+.crud-page .class-card:hover { transform: none; border-color: #a7bbae; }
+.crud-page .class-card h5 { font-size: 1rem; }
+.crud-page .class-card .info-list { margin-bottom: 16px !important; }
+.crud-page .class-card .small { font-size: .77rem; }
+.crud-page .crud-card-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.crud-page .crud-card-actions .btn { padding: 6px 10px !important; font-size: .73rem; }
+.crud-page .crud-card-actions .btn-view-class { flex-basis: 100%; }
+.crud-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; color: #68716d; font-size: .75rem; }
+.crud-pagination { display: flex; align-items: center; gap: 5px; }
+.crud-pagination .btn { min-width: 32px; min-height: 30px; padding: 4px 8px; border: 1px solid #d8dedb; color: #4b5c51; background: #fff; }
+.crud-pagination .btn[aria-current=page] { color: #185c3c; border-color: #cfe0d5; background: #e1ede5; }
+.crud-pagination .btn:disabled { opacity: .4; }
+.crud-no-results { padding: 38px 20px; color: #68716d; text-align: center; font-size: .9rem; }
+.crud-page [data-crud-item][hidden], .crud-page [data-crud-empty][hidden] { display: none !important; }
+.crud-page .modal-content { border: 1px solid #d5ddd8; border-radius: 14px !important; }
+.crud-page .modal-header { padding: 18px 22px; }
+.crud-page .modal-body { padding: 22px; }
+.crud-page .modal-footer { padding: 16px 22px; }
+.crud-page .modal .form-label { font-weight: 500; }
+@media (min-width: 992px) {
+    .crud-page .app-sidebar { width: 248px; }
+    .crud-page.sidebar-collapsed .app-sidebar { width: 68px; margin-left: 0; box-shadow: none; }
+    .crud-page.sidebar-collapsed .app-sidebar * { visibility: visible; }
+    .crud-page.sidebar-collapsed .sidebar-header { padding: 16px 8px; border: 0; }
+    .crud-page.sidebar-collapsed .school-logo-img { width: 42px; height: 42px; margin: 0; }
+    .crud-page.sidebar-collapsed .sidebar-brand-text,
+    .crud-page.sidebar-collapsed .sidebar-brand-sub,
+    .crud-page.sidebar-collapsed .sidebar-label,
+    .crud-page.sidebar-collapsed .nav-item-label { display: none; }
+    .crud-page.sidebar-collapsed .sidebar-nav { padding: 12px 9px; }
+    .crud-page.sidebar-collapsed .nav-item-custom { justify-content: center; padding: 12px 5px; margin-bottom: 5px; border-radius: 8px; }
+    .crud-page.sidebar-collapsed .nav-item-custom i { font-size: 1.1rem; }
+    .crud-page.sidebar-collapsed .nav-item-custom { position: relative; }
+    .crud-page.sidebar-collapsed .nav-item-custom .badge { position: absolute; right: 0; top: 1px; font-size: .58rem; padding: 3px; }
+    .crud-page.sidebar-collapsed .nav-item-custom.active { box-shadow: none; background: #124a30; }
+}
+@media (min-width: 1600px) { .crud-page .content-padding { padding-left: max(30px, calc((100vw - 1510px) / 2)); padding-right: max(30px, calc((100vw - 1510px) / 2)); } }
+@media (max-width: 767px) {
+    .crud-page .content-padding { padding: 20px 14px; }
+    .crud-page .app-header { padding: 0 12px; }
+    .crud-page .app-header .user-profile-badge .badge { display: none; }
+    .crud-page h2, .crud-page .page-title { font-size: 1.4rem; }
+    .crud-page .crud-panel { padding: 12px 12px 0; }
+    .crud-toolbar .crud-search { max-width: none; flex-basis: 100%; }
+    .crud-toolbar > .crud-search + .form-select { margin-left: 0; }
+    .crud-toolbar > .form-select { flex: 1; min-width: 110px; }
+    .crud-page .metric-card { min-height: 80px; padding: 14px; }
+    .crud-footer { align-items: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) { .crud-page .app-sidebar { transition: none; } }
+
+/* The collapsed rail sets `box-shadow: none` on the active item to flatten it,
+   and this sheet loads after site.css, so it also erased the focus halo from
+   the one link a keyboard user is most likely to land on. Focus wins. */
+.crud-page .nav-item-custom:focus-visible,
+.crud-page.sidebar-collapsed .nav-item-custom.active:focus-visible {
+    box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color-on-dark);
+}

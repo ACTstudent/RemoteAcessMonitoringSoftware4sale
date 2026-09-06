@@ -2,66 +2,107 @@
 @{
     ViewData["Title"] = "Class Management";
     Layout = "_TeacherLayout";
-    var activeClasses = Model.Where(c => !c.IsArchived).ToList();
-    var archivedClasses = Model.Where(c => c.IsArchived).ToList();
+    var classes = Model.OrderBy(c => c.IsArchived).ThenBy(c => c.ClassName).ToList();
+    var activeCount = classes.Count(c => !c.IsArchived);
+    var archivedCount = classes.Count(c => c.IsArchived);
+    var grades = classes.Select(c => c.GradeLevel?.Trim()).Where(g => !string.IsNullOrWhiteSpace(g)).Distinct().OrderBy(g => g).ToList();
 }
 
-<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-    <div class="d-flex align-items-center gap-3">
-        <div class="icon-box-primary"><i class="bi bi-folder-symlink-fill fs-3"></i></div>
-        <div>
-            <h2 class="fw-extrabold mb-0 text-dark">Class Management</h2>
-            <p class="text-muted mb-0 small">Manage your assigned sections and student profiles.</p>
+<div class="crud-page-header d-flex align-items-center gap-3 mb-4">
+    <div class="icon-box-primary"><i class="bi bi-collection-fill fs-3" aria-hidden="true"></i></div>
+    <div>
+        <h2 class="fw-extrabold mb-1 text-dark">Class Management</h2>
+        <p class="text-muted mb-0 small">Manage your assigned sections and student profiles.</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4 crud-metrics">
+    <div class="col-md-4">
+        <div class="metric-card d-flex justify-content-between align-items-center">
+            <div><div class="metric-title">Total Classes</div><div class="metric-value">@classes.Count</div></div>
+            <div class="metric-icon-box"><i class="bi bi-folder-fill" aria-hidden="true"></i></div>
         </div>
     </div>
-    <button class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold shadow-sm text-white" data-bs-toggle="modal" data-bs-target="#createClassModal"><i class="bi bi-plus-circle-fill me-1"></i>Create class</button>
-</div>
-
-<div class="row g-4 mb-4">
-    <div class="col-md-4"><div class="metric-card d-flex justify-content-between align-items-center"><div><div class="metric-title">Total Classes</div><div class="metric-value">@Model.Count()</div></div><div class="metric-icon-box"><i class="bi bi-folder-fill fs-3"></i></div></div></div>
-    <div class="col-md-4"><div class="metric-card metric-card-emerald d-flex justify-content-between align-items-center"><div><div class="metric-title">Active Classes</div><div class="metric-value text-success">@activeClasses.Count</div></div><div class="metric-icon-box"><i class="bi bi-folder-check-fill fs-3"></i></div></div></div>
-    <div class="col-md-4"><div class="metric-card d-flex justify-content-between align-items-center"><div><div class="metric-title">Archived Classes</div><div class="metric-value text-muted">@archivedClasses.Count</div></div><div class="metric-icon-box"><i class="bi bi-archive-fill fs-3"></i></div></div></div>
-</div>
-
-<div class="row g-4 mb-5">
-    @foreach (var item in activeClasses)
-    {
-        <div class="col-xl-4 col-md-6">
-            <div class="class-card h-100 d-flex flex-column justify-content-between">
-                <div>
-                    <div class="d-flex justify-content-between align-items-start gap-2 mb-3"><div><h5 class="fw-bold mb-1 text-dark">@item.ClassName</h5><span class="text-muted small">@(string.IsNullOrWhiteSpace(item.Section) ? "Main section" : item.Section) · @(string.IsNullOrWhiteSpace(item.GradeLevel) ? "Grade not set" : item.GradeLevel)</span></div><span class="badge badge-active">Active</span></div>
-                    <div class="info-list mb-4">
-                        <div class="d-flex justify-content-between gap-3 py-1 border-bottom-subtle"><span class="text-muted small">Subject</span><span class="fw-semibold text-dark small text-end">@(string.IsNullOrWhiteSpace(item.Subject) ? "General" : item.Subject)</span></div>
-                        <div class="d-flex justify-content-between gap-3 py-1 border-bottom-subtle"><span class="text-muted small">Schedule</span><span class="fw-semibold text-dark small text-end">@(string.IsNullOrWhiteSpace(item.Schedule) ? "Flexible" : item.Schedule)</span></div>
-                        <div class="d-flex justify-content-between gap-3 py-1"><span class="text-muted small">Students</span><span class="fw-bold text-success small">@item.ClassStudents.Count</span></div>
-                    </div>
-                </div>
-                <div class="d-flex flex-wrap gap-2">
-                    <a asp-controller="Teacher" asp-action="ClassDetails" asp-route-id="@item.ClassId" class="btn btn-view-class flex-grow-1 py-2 fw-semibold"><i class="bi bi-people me-1"></i>Class Details</a>
-                    <button type="button" class="btn btn-outline-emerald py-2" data-bs-toggle="modal" data-bs-target="#editClassModal-@item.ClassId" title="Edit class"><i class="bi bi-pencil"></i><span class="visually-hidden">Edit</span></button>
-                    <form method="post" asp-controller="Teacher" asp-action="ArchiveClass" class="m-0"><input type="hidden" name="id" value="@item.ClassId" />@Html.AntiForgeryToken()<button type="submit" class="btn btn-outline-secondary py-2" title="Archive class"><i class="bi bi-archive"></i><span class="visually-hidden">Archive</span></button></form>
-                    <form method="post" asp-controller="Teacher" asp-action="DeleteClass" class="m-0" data-confirm="Delete this class and its enrollment links? Student accounts will be preserved." data-confirm-title="Delete class" data-confirm-label="Delete"><input type="hidden" name="classId" value="@item.ClassId" />@Html.AntiForgeryToken()<button type="submit" class="btn btn-outline-danger py-2" title="Delete class"><i class="bi bi-trash"></i><span class="visually-hidden">Delete</span></button></form>
-                </div>
-            </div>
+    <div class="col-md-4">
+        <div class="metric-card metric-card-emerald d-flex justify-content-between align-items-center">
+            <div><div class="metric-title">Active Classes</div><div class="metric-value">@activeCount</div></div>
+            <div class="metric-icon-box"><i class="bi bi-folder-check" aria-hidden="true"></i></div>
         </div>
-    }
-    @if (activeClasses.Count == 0)
-    {
-        <div class="col-12 text-center py-5 text-muted"><i class="bi bi-folder-x display-4 d-block mb-3 opacity-50"></i><h5>No active classes</h5><p class="small mb-0">Create a section to start adding student profiles.</p></div>
-    }
+    </div>
+    <div class="col-md-4">
+        <div class="metric-card metric-card-muted d-flex justify-content-between align-items-center">
+            <div><div class="metric-title">Archived Classes</div><div class="metric-value">@archivedCount</div></div>
+            <div class="metric-icon-box bg-light text-secondary"><i class="bi bi-archive-fill" aria-hidden="true"></i></div>
+        </div>
+    </div>
 </div>
 
-@if (archivedClasses.Count > 0)
-{
-    <h5 class="fw-bold mb-3 text-muted">Archived Classes</h5>
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4"><div class="table-responsive"><table class="table custom-table align-middle mb-0"><thead><tr><th>Class</th><th>Academic Year</th><th>Students</th><th class="text-end">Actions</th></tr></thead><tbody>
-        @foreach (var item in archivedClasses)
+<section class="crud-panel" data-crud-list data-crud-label="classes" data-crud-page-size="6" aria-label="Class directory">
+    <div class="crud-toolbar">
+        <input type="search" class="form-control crud-search" data-crud-search aria-label="Search classes" placeholder="Search classes..." />
+        <select class="form-select" data-crud-filter="grade" aria-label="Filter class grade">
+            <option value="">All grades</option>
+            @foreach (var grade in grades)
+            {
+                <option value="@grade">@grade</option>
+            }
+        </select>
+        <select class="form-select" data-crud-filter="status" aria-label="Filter class status">
+            <option value="">All statuses</option>
+            <option value="Active">Active</option>
+            <option value="Archived">Archived</option>
+        </select>
+        <button type="button" class="btn btn-emerald" data-bs-toggle="modal" data-bs-target="#createClassModal"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Create Class</button>
+    </div>
+    <div class="crud-grid row g-3">
+        @foreach (var item in classes)
         {
-            <tr><td><strong>@item.ClassName</strong><span class="d-block text-muted small">@item.Section · @item.GradeLevel</span></td><td>@item.AcademicYear</td><td>@item.ClassStudents.Count</td><td class="text-end"><div class="d-flex justify-content-end gap-2"><a asp-controller="Teacher" asp-action="ClassDetails" asp-route-id="@item.ClassId" class="btn btn-sm btn-outline-emerald rounded-pill">Class Details</a><button type="button" class="btn btn-sm btn-outline-emerald rounded-pill" data-bs-toggle="modal" data-bs-target="#editClassModal-@item.ClassId">Edit</button><form method="post" asp-controller="Teacher" asp-action="ArchiveClass" class="m-0"><input type="hidden" name="id" value="@item.ClassId" />@Html.AntiForgeryToken()<button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill">Restore</button></form><form method="post" asp-controller="Teacher" asp-action="DeleteClass" class="m-0" data-confirm="Delete this class and its enrollment links? Student accounts will be preserved." data-confirm-title="Delete class" data-confirm-label="Delete"><input type="hidden" name="classId" value="@item.ClassId" />@Html.AntiForgeryToken()<button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">Delete</button></form></div></td></tr>
+            var status = item.IsArchived ? "Archived" : "Active";
+            <div class="col-xl-4 col-md-6" data-crud-item data-status="@status" data-grade="@(item.GradeLevel?.Trim())" data-crud-search-text="@($"{item.ClassName} {item.Section} {item.GradeLevel} {item.Subject} {item.AcademicYear} {item.Schedule} {item.Teacher?.FirstName} {item.Teacher?.LastName}")">
+                <article class="class-card h-100 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                        <div>
+                            <h3 class="h6 fw-bold mb-1 text-dark">@item.ClassName</h3>
+                            <span class="text-muted small">@(string.IsNullOrWhiteSpace(item.Section) ? "Main section" : item.Section) · @(string.IsNullOrWhiteSpace(item.GradeLevel) ? "Grade not set" : item.GradeLevel)</span>
+                        </div>
+                        <span class="badge @(item.IsArchived ? "bg-secondary-subtle text-secondary" : "badge-active")">@status</span>
+                    </div>
+                    <div class="info-list mb-3">
+                        <div class="d-flex justify-content-between gap-3 py-1"><span class="text-muted small">Academic year</span><span class="fw-semibold text-dark small text-end">@(string.IsNullOrWhiteSpace(item.AcademicYear) ? "Not set" : item.AcademicYear)</span></div>
+                        <div class="d-flex justify-content-between gap-3 py-1"><span class="text-muted small">Schedule</span><span class="fw-semibold text-dark small text-end">@(string.IsNullOrWhiteSpace(item.Schedule) ? "Flexible" : item.Schedule)</span></div>
+                        <div class="d-flex justify-content-between gap-3 py-1"><span class="text-muted small">Subject</span><span class="fw-semibold text-dark small text-end">@(string.IsNullOrWhiteSpace(item.Subject) ? "General" : item.Subject)</span></div>
+                        <div class="d-flex justify-content-between gap-3 py-1"><span class="text-muted small">Students</span><span class="fw-semibold text-dark small">@item.ClassStudents.Count</span></div>
+                    </div>
+                    <a asp-controller="Teacher" asp-action="ClassDetails" asp-route-id="@item.ClassId" class="btn btn-view-class w-100 mt-auto">View Class<span class="visually-hidden"> @item.ClassName</span></a>
+                    <div class="crud-card-actions d-flex justify-content-end flex-wrap gap-2 mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-emerald" data-bs-toggle="modal" data-bs-target="#editClassModal-@item.ClassId" title="Edit class"><i class="bi bi-pencil me-1" aria-hidden="true"></i>Edit<span class="visually-hidden"> @item.ClassName</span></button>
+                        <form method="post" asp-controller="Teacher" asp-action="ArchiveClass" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.ClassId" />
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="@(item.IsArchived ? "Restore class" : "Archive class")"><i class="bi @(item.IsArchived ? "bi-arrow-counterclockwise" : "bi-archive") me-1" aria-hidden="true"></i>@(item.IsArchived ? "Restore" : "Archive")<span class="visually-hidden"> @item.ClassName</span></button>
+                        </form>
+                        <form method="post" asp-controller="Teacher" asp-action="DeleteClass" class="m-0" data-confirm="Delete this class and its enrollment links? Student accounts will be preserved." data-confirm-title="Delete class" data-confirm-label="Delete">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="classId" value="@item.ClassId" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete class"><i class="bi bi-trash" aria-hidden="true"></i><span class="visually-hidden">Delete @item.ClassName</span></button>
+                        </form>
+                    </div>
+                </article>
+            </div>
         }
-    </tbody></table></div></div>
-}
-
+    </div>
+    <div class="crud-no-results" data-crud-empty hidden>
+        @if (classes.Count == 0)
+        {
+            <i class="bi bi-folder-plus" aria-hidden="true"></i><h3 class="h6 mt-2">No classes yet</h3><p class="small mb-0">Select Create Class to add your first section.</p>
+        }
+        else
+        {
+            <span>No classes match your search.</span>
+        }
+    </div>
+    <div class="crud-footer" data-crud-pagination></div>
+</section>
 <div class="modal fade" id="createClassModal" tabindex="-1" aria-labelledby="createClassModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden"><div class="modal-header border-0 text-white surface-brand"><h5 class="modal-title fw-bold" id="createClassModalLabel"><i class="bi bi-folder-plus me-2"></i>Create New Class</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button></div><form method="post" asp-controller="Teacher" asp-action="CreateClass">@Html.AntiForgeryToken()<div class="modal-body py-4"><div class="row g-3"><div class="col-md-8"><label class="form-label fw-semibold small" for="create-class-name">Class name <span class="text-danger">*</span></label><input id="create-class-name" name="ClassName" class="form-control filter-control" required placeholder="e.g. Grade 7 - Sampaguita" /></div><div class="col-md-4"><label class="form-label fw-semibold small" for="create-class-year">Academic year</label><input id="create-class-year" name="AcademicYear" class="form-control filter-control" value="2026-2027" /></div><div class="col-md-6"><label class="form-label fw-semibold small" for="create-class-section">Section</label><input id="create-class-section" name="Section" class="form-control filter-control" placeholder="e.g. Section A" /></div><div class="col-md-6"><label class="form-label fw-semibold small" for="create-class-grade">Grade level</label><input id="create-class-grade" name="GradeLevel" class="form-control filter-control" placeholder="e.g. Grade 7" /></div><div class="col-md-6"><label class="form-label fw-semibold small" for="create-class-subject">Subject</label><input id="create-class-subject" name="Subject" class="form-control filter-control" placeholder="e.g. Computer Education" /></div><div class="col-md-6"><label class="form-label fw-semibold small" for="create-class-schedule">Schedule</label><input id="create-class-schedule" name="Schedule" class="form-control filter-control" placeholder="e.g. Mon/Wed 8:00 AM" /></div></div></div><div class="modal-footer border-0 pt-0"><button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-emerald rounded-pill px-4">Create class</button></div></form></div></div></div>
 
 @foreach (var item in Model)

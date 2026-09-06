@@ -6,13 +6,15 @@
     var admins = ViewBag.Admins as IEnumerable<Server.Models.Admin> ?? Enumerable.Empty<Server.Models.Admin>();
     var currentAdminId = Context.Session.GetInt32("AdminId");
     var activeAdminCount = admins.Count(admin => admin.IsActive);
+    var totalAdminCount = admins.Count();
+    var inactiveAdminCount = totalAdminCount - activeAdminCount;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div class="d-flex align-items-center gap-3">
         <div class="icon-box-primary"><i class="bi bi-shield-lock-fill fs-3"></i></div>
         <div>
-            <h2 class="fw-extrabold mb-0 text-dark">Account Security</h2>
+            <h2 class="page-title">Account Security</h2>
             <p class="text-muted mb-0 small">Manage your password and administrator account availability</p>
         </div>
     </div>
@@ -23,7 +25,113 @@
 </div>
 
 <div class="row g-4 mb-4">
-    <div class="col-lg-5">
+    <div class="col-md-4">
+        <div class="metric-card d-flex justify-content-between align-items-center">
+            <div><div class="metric-title">Total Administrators</div><div class="metric-value">@totalAdminCount</div></div>
+            <div class="metric-icon-box"><i class="bi bi-people-fill fs-3"></i></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="metric-card metric-card-emerald d-flex justify-content-between align-items-center">
+            <div><div class="metric-title">Active Administrators</div><div class="metric-value text-success">@activeAdminCount</div></div>
+            <div class="metric-icon-box"><i class="bi bi-person-check-fill fs-3"></i></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="metric-card d-flex justify-content-between align-items-center">
+            <div><div class="metric-title">Inactive Administrators</div><div class="metric-value text-muted">@inactiveAdminCount</div></div>
+            <div class="metric-icon-box bg-light text-secondary"><i class="bi bi-person-dash-fill fs-3"></i></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card crud-panel border-0 shadow-sm rounded-4 overflow-hidden" data-crud-list data-crud-label="administrators" data-crud-page-size="6">
+            <div class="crud-toolbar">
+                <input type="search" class="form-control crud-search" data-crud-search aria-label="Search administrators" placeholder="Search administrator..." />
+                <select class="form-select" data-crud-filter="status" aria-label="Filter administrators by status">
+                    <option value="">All Statuses</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+                <button type="button" class="btn btn-emerald" data-bs-toggle="modal" data-bs-target="#createAdminModal"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Add Administrator</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table custom-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Administrator</th>
+                            <th>Username</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var admin in admins)
+                        {
+                            var isLocked = admin.LockoutEndUtc.HasValue && admin.LockoutEndUtc.Value > DateTime.UtcNow;
+                            var isCurrent = currentAdminId == admin.Id;
+                            var isLastActive = admin.IsActive && activeAdminCount <= 1;
+                            <tr data-crud-item data-status="@(admin.IsActive ? "Active" : "Inactive")">
+                                <td>
+                                    <span class="fw-bold">@admin.FullName</span>
+                                    @if (isCurrent)
+                                    {
+                                        <span class="badge bg-light text-dark ms-1">You</span>
+                                    }
+                                </td>
+                                <td>@admin.Username</td>
+                                <td>
+                                    <span class="badge @(admin.IsActive ? "bg-success" : "bg-secondary") rounded-pill">@(admin.IsActive ? "Active" : "Inactive")</span>
+                                    @if (isLocked)
+                                    {
+                                        <span class="badge bg-danger rounded-pill ms-1">Locked</span>
+                                        <div class="small text-muted mt-1">Until @admin.LockoutEndUtc.GetValueOrDefault().ToLocalTime().ToString("g")</div>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="crud-actions d-flex justify-content-end gap-1 flex-wrap">
+                                        @if (isLocked || admin.FailedLoginAttempts > 0)
+                                        {
+                                            <form method="post" action="/Admin/UnlockAccount" class="form-inline-action">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="accountRole" value="Admin" />
+                                                <input type="hidden" name="id" value="@admin.Id" />
+                                                <button class="btn btn-sm btn-outline-warning crud-action" title="Unlock account" aria-label="Unlock @admin.FullName"><i class="bi bi-unlock" aria-hidden="true"></i></button>
+                                            </form>
+                                        }
+                                        <form method="post" action="/Admin/SetAccountActive" class="form-inline-action" data-confirm="@(admin.IsActive ? "Deactivate" : "Activate") this administrator account?" data-confirm-title="@(admin.IsActive ? "Deactivate" : "Activate") administrator" data-confirm-label="@(admin.IsActive ? "Deactivate" : "Activate")" data-confirm-variant="@(admin.IsActive ? "danger" : "success")">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="accountRole" value="Admin" />
+                                            <input type="hidden" name="id" value="@admin.Id" />
+                                            <input type="hidden" name="isActive" value="@((!admin.IsActive).ToString())" />
+                                            <button class="btn btn-sm @(admin.IsActive ? "btn-outline-secondary" : "btn-outline-success") crud-action" disabled="@(isLastActive ? "disabled" : null)" title="@(isLastActive ? "The last active administrator cannot be deactivated." : admin.IsActive ? "Deactivate account" : "Activate account")" aria-label="@(admin.IsActive ? "Deactivate" : "Activate") @admin.FullName">
+                                                <i class="bi @(admin.IsActive ? "bi-person-dash" : "bi-person-check")" aria-hidden="true"></i>
+                                            </button>
+                                        </form>
+                                        <button type="button" class="btn btn-sm btn-outline-emerald crud-action" data-bs-toggle="modal" data-bs-target="#editAdminModal-@admin.Id" title="Edit administrator" aria-label="Edit @admin.FullName"><i class="bi bi-pencil-square" aria-hidden="true"></i></button>
+                                        <form method="post" action="/Admin/DeleteAdmin" class="form-inline-action" data-confirm="Delete this administrator account? This action cannot be undone." data-confirm-title="Delete administrator" data-confirm-label="Delete">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@admin.Id" />
+                                            <button class="btn btn-sm btn-outline-danger crud-action" disabled="@(isCurrent ? "disabled" : null)" title="@(isCurrent ? "You cannot delete the account you are signed in as." : "Delete administrator")" aria-label="Delete @admin.FullName"><i class="bi bi-trash" aria-hidden="true"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        @if (!admins.Any())
+                        {
+                            <tr><td colspan="4" class="text-center empty-state"><span class="empty-state-message">No administrator accounts found.</span></td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="crud-no-results" data-crud-empty hidden>No administrators match your search.</div>
+            <div class="crud-footer" data-crud-pagination></div>
+        </div>
+    </div>
+    <div class="col-12">
         <div class="card border-0 shadow-sm rounded-4 h-100">
             <div class="card-header bg-white py-3 border-bottom">
                 <h5 class="fw-bold mb-0"><i class="bi bi-key me-2 text-emerald-700"></i>Change My Password</h5>
@@ -50,82 +158,6 @@
                     </div>
                     <button type="submit" class="btn btn-emerald rounded-pill px-4 text-white">Change Password</button>
                 </form>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-7">
-        <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
-            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                <h5 class="fw-bold mb-0"><i class="bi bi-person-gear me-2 text-emerald-700"></i>Administrator Accounts</h5>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-success rounded-pill">@activeAdminCount active</span>
-                    <button class="btn btn-emerald btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#createAdminModal"><i class="bi bi-person-plus me-1"></i>Add administrator</button>
-                </div>
-            </div>
-            <div class="table-responsive">
-                <table class="table custom-table align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th>Administrator</th>
-                            <th>Status</th>
-                            <th class="text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var admin in admins)
-                        {
-                            var isLocked = admin.LockoutEndUtc.HasValue && admin.LockoutEndUtc.Value > DateTime.UtcNow;
-                            var isCurrent = currentAdminId == admin.Id;
-                            var isLastActive = admin.IsActive && activeAdminCount <= 1;
-                            <tr>
-                                <td>
-                                    <span class="fw-bold">@admin.FullName</span>
-                                    @if (isCurrent)
-                                    {
-                                        <span class="badge bg-light text-dark ms-1">You</span>
-                                    }
-                                    <div class="small text-muted font-monospace">@@@admin.Username</div>
-                                </td>
-                                <td>
-                                    <span class="badge @(admin.IsActive ? "bg-success" : "bg-secondary") rounded-pill">@(admin.IsActive ? "Active" : "Inactive")</span>
-                                    @if (isLocked)
-                                    {
-                                        <span class="badge bg-danger rounded-pill ms-1">Locked</span>
-                                        <div class="small text-muted mt-1">Until @admin.LockoutEndUtc.GetValueOrDefault().ToLocalTime().ToString("g")</div>
-                                    }
-                                </td>
-                                <td>
-                                    <div class="d-flex justify-content-end gap-1 flex-wrap">
-                                        @if (isLocked || admin.FailedLoginAttempts > 0)
-                                        {
-                                            <form method="post" action="/Admin/UnlockAccount" class="form-inline-action">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="accountRole" value="Admin" />
-                                                <input type="hidden" name="id" value="@admin.Id" />
-                                                <button class="btn btn-sm btn-outline-warning rounded-pill px-3"><i class="bi bi-unlock me-1"></i>Unlock</button>
-                                            </form>
-                                        }
-                                        <form method="post" action="/Admin/SetAccountActive" class="form-inline-action" data-confirm="@(admin.IsActive ? "Deactivate" : "Activate") this administrator account?" data-confirm-title="@(admin.IsActive ? "Deactivate" : "Activate") administrator" data-confirm-label="@(admin.IsActive ? "Deactivate" : "Activate")" data-confirm-variant="@(admin.IsActive ? "danger" : "success")">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="accountRole" value="Admin" />
-                                            <input type="hidden" name="id" value="@admin.Id" />
-                                            <input type="hidden" name="isActive" value="@((!admin.IsActive).ToString())" />
-                                            <button class="btn btn-sm @(admin.IsActive ? "btn-outline-secondary" : "btn-outline-success") rounded-pill px-3" disabled="@(isLastActive ? "disabled" : null)" title="@(isLastActive ? "The last active administrator cannot be deactivated." : null)">
-                                                @(admin.IsActive ? "Deactivate" : "Activate")
-                                            </button>
-                                        </form>
-                                        <button type="button" class="btn btn-sm btn-outline-emerald rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editAdminModal-@admin.Id"><i class="bi bi-pencil me-1"></i>Edit</button>
-                                        <form method="post" action="/Admin/DeleteAdmin" class="form-inline-action" data-confirm="Delete this administrator account? This action cannot be undone." data-confirm-title="Delete administrator" data-confirm-label="Delete">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="id" value="@admin.Id" />
-                                            <button class="btn btn-sm btn-outline-danger rounded-pill px-3" disabled="@(isCurrent ? "disabled" : null)" title="@(isCurrent ? "You cannot delete the account you are signed in as." : null)"><i class="bi bi-trash me-1"></i>Delete</button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
             </div>
         </div>
     </div>

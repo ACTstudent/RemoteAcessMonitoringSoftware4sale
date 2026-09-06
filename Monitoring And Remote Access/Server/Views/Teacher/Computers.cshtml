@@ -81,10 +81,20 @@
 </div>
 
 <!-- Workstation List Card -->
-<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+<div class="card crud-panel border-0 shadow-sm rounded-4 overflow-hidden mb-4" data-crud-list data-crud-label="workstations" data-crud-page-size="6">
     <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
         <h5 class="fw-bold mb-0 text-dark">Laboratory Workstations</h5>
         <span class="badge bg-light text-dark font-monospace fs-6">@total Workstations</span>
+    </div>
+    <div class="crud-toolbar">
+        <input type="search" class="form-control crud-search" data-crud-search aria-label="Search workstations" placeholder="Search workstation..." />
+        <select class="form-select" data-crud-filter="status" aria-label="Filter workstations by status">
+            <option value="">All statuses</option>
+            @foreach (var status in statusOptions.Concat(Model.Select(c => c.Status)).Distinct().OrderBy(status => status))
+            {
+                <option value="@status">@status</option>
+            }
+        </select>
     </div>
     <div class="table-responsive">
         <table class="table custom-table align-middle mb-0">
@@ -100,7 +110,7 @@
                 @foreach (var c in Model)
                 {
                     var assignedName = c.AssignedTo != null && studentNames.TryGetValue(c.AssignedTo, out var name) ? name : null;
-                    <tr>
+                    <tr data-crud-item data-status="@c.Status">
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 <i class="bi bi-pc-display-horizontal fs-5 text-emerald-700"></i>
@@ -118,7 +128,7 @@
                             }
                             else
                             {
-                                <span class="badge bg-warning text-dark rounded-pill px-3 py-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> Maintenance</span>
+                                <span class="badge bg-secondary rounded-pill px-3 py-1"><i class="bi bi-circle-fill me-1" style="font-size:0.5rem;"></i> @c.Status</span>
                             }
                         </td>
                         <td>
@@ -148,6 +158,8 @@
             </tbody>
         </table>
     </div>
+    <div class="crud-no-results" data-crud-empty hidden>No workstations match your search.</div>
+    <div class="crud-footer" data-crud-pagination></div>
 </div>
 
 @foreach (var c in Model)

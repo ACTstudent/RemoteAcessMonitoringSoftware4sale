@@ -87,22 +87,24 @@ public static class NavigationBuilder
     // ---------- Admin ----------
     //
     // A teacher reaches this portal too, for the lab-wide operations they share.
-    // They get a way back to their own portal and none of the administrator-only
-    // links, which the authorization filter refuses anyway - the sidebar should
-    // not offer a door that will be shut in their face.
+    // When they do, they keep their own menu: one list covering both their
+    // classroom pages and the global ones, rather than a second menu with a
+    // "back to my portal" link. A teacher moving between a class roster and the
+    // global roster is doing one job, and should not have to notice that the
+    // two pages belong to different controllers.
+    //
+    // An administrator still gets the administrator menu, which carries the
+    // admin-only links a teacher would be refused.
 
     private static NavigationModel BuildAdmin(HttpContext context)
     {
         var isTeacherActor = context.User.IsInRole("Teacher") && !context.User.IsInRole("Admin");
-
-        var sections = new List<NavSection>();
         if (isTeacherActor)
         {
-            sections.Add(new NavSection(null, new[]
-            {
-                new NavItem("My Teacher Portal", "arrow-left-circle-fill", "Dashboard", "Teacher")
-            }));
+            return BuildTeacher(context);
         }
+
+        var sections = new List<NavSection>();
 
         sections.Add(new NavSection("Global Operations", new[]
         {
@@ -128,32 +130,27 @@ public static class NavigationBuilder
             new NavItem("Session Rules", "hourglass-split", "SessionRules", "Admin")
         }));
 
-        if (!isTeacherActor)
+        sections.Add(new NavSection("Administrator Only", new[]
         {
-            sections.Add(new NavSection("Administrator Only", new[]
-            {
-                new NavItem("Admin Accounts & Lockouts", "person-gear", "Settings", "Admin"),
-                new NavItem("Roles & Permissions", "key-fill", "Roles", "Admin"),
-                new NavItem("LAN Status", "router-fill", "LanConfig", "Admin"),
-                new NavItem("Deployment Hub", "box-seam-fill", "Index", "AdminDeployment"),
-                new NavItem("Database Maintenance", "database-gear", "Index", "AdminDatabase"),
-                new NavItem("System Reports", "bar-chart-line-fill", "Reports", "Admin"),
-                new NavItem("Audit Trail", "journal-text", "AuditLogs", "Admin"),
-                new NavItem("System Logs", "bug-fill", "SystemLogs", "Admin")
-            }));
-        }
+            new NavItem("Admin Accounts & Lockouts", "person-gear", "Settings", "Admin"),
+            new NavItem("Roles & Permissions", "key-fill", "Roles", "Admin"),
+            new NavItem("LAN Status", "router-fill", "LanConfig", "Admin"),
+            new NavItem("Deployment Hub", "box-seam-fill", "Index", "AdminDeployment"),
+            new NavItem("Database Maintenance", "database-gear", "Index", "AdminDatabase"),
+            new NavItem("System Reports", "bar-chart-line-fill", "Reports", "Admin"),
+            new NavItem("Audit Trail", "journal-text", "AuditLogs", "Admin"),
+            new NavItem("System Logs", "bug-fill", "SystemLogs", "Admin")
+        }));
 
         return new NavigationModel(
-            BrandText: isTeacherActor ? "CAMS Global" : "CAMS Admin",
+            BrandText: "CAMS Admin",
             BrandSubtitle: "Pardo Elementary School",
-            NavAriaLabel: isTeacherActor ? "Teacher global management navigation" : "Administrator navigation",
-            TitleSuffix: isTeacherActor ? "CAMS Global Management" : "CAMS Admin",
-            DisplayName: isTeacherActor
-                ? Name(context, "TeacherName", "Teacher")
-                : Name(context, "AdminName", "System Administrator"),
-            RoleBadge: isTeacherActor ? "Instructor" : "Administrator",
-            RoleBadgeCss: isTeacherActor ? "bg-success" : "bg-primary",
-            AvatarIcon: isTeacherActor ? "person-badge" : "shield-check",
+            NavAriaLabel: "Administrator navigation",
+            TitleSuffix: "CAMS Admin",
+            DisplayName: Name(context, "AdminName", "System Administrator"),
+            RoleBadge: "Administrator",
+            RoleBadgeCss: "bg-primary",
+            AvatarIcon: "shield-check",
             Sections: sections);
     }
 

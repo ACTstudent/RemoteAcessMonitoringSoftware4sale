@@ -15,16 +15,24 @@
             <p class="text-muted mb-0 small">Enforce forbidden website domains and prohibited application executables</p>
         </div>
     </div>
-    <button class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#createBlacklistModal">
-        <i class="bi bi-plus-circle-fill me-1"></i> Add Blacklist Item
-    </button>
 </div>
 
 <!-- Blacklist Items Card -->
-<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="metric-card d-flex justify-content-between align-items-center"><div><div class="metric-title">Total Items</div><div class="metric-value">@Model.Count()</div></div><div class="metric-icon-box"><i class="bi bi-shield-check fs-3" aria-hidden="true"></i></div></div></div>
+    <div class="col-md-4"><div class="metric-card metric-card-emerald d-flex justify-content-between align-items-center"><div><div class="metric-title">Active Items</div><div class="metric-value">@Model.Count(rule => rule.IsActive)</div></div><div class="metric-icon-box"><i class="bi bi-check-circle fs-3" aria-hidden="true"></i></div></div></div>
+    <div class="col-md-4"><div class="metric-card d-flex justify-content-between align-items-center"><div><div class="metric-title">Inactive Items</div><div class="metric-value">@Model.Count(rule => !rule.IsActive)</div></div><div class="metric-icon-box"><i class="bi bi-pause-circle fs-3" aria-hidden="true"></i></div></div></div>
+</div>
+
+<div class="card crud-panel border-0 shadow-sm rounded-4 overflow-hidden mb-4" data-crud-list data-crud-label="blacklist items" data-crud-page-size="6">
     <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
         <h5 class="fw-bold mb-0 text-dark">Blacklisted Domains & Applications</h5>
         <span class="badge bg-light text-dark font-monospace fs-6">@Model.Count() Items</span>
+    </div>
+    <div class="crud-toolbar">
+        <input type="search" class="form-control crud-search" data-crud-search aria-label="Search blacklist items" placeholder="Search blacklist item..." />
+        <select class="form-select" data-crud-filter="status" aria-label="Filter blacklist items by status"><option value="">All statuses</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
+        <button type="button" class="btn btn-emerald" data-bs-toggle="modal" data-bs-target="#createBlacklistModal"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Add Blacklist Item</button>
     </div>
     <div class="table-responsive">
         <table class="table custom-table align-middle mb-0">
@@ -40,7 +48,7 @@
             <tbody>
                 @foreach (var b in Model)
                 {
-                    <tr>
+                    <tr data-crud-item data-status="@(b.IsActive ? "Active" : "Inactive")">
                         <td>
                             <span class="badge bg-danger rounded-pill px-3 py-1 font-monospace">@b.TargetType</span>
                         </td>
@@ -48,7 +56,7 @@
                         <td>@(string.IsNullOrEmpty(b.Reason) ? "Policy violation" : b.Reason)</td>
                         <td>
                             <span class="badge @(b.IsActive ? "bg-success" : "bg-secondary") rounded-pill px-2 py-1">
-                                @(b.IsActive ? "Active Block" : "Disabled")
+                                @(b.IsActive ? "Active" : "Inactive")
                             </span>
                         </td>
                         <td class="text-end">
@@ -72,6 +80,8 @@
             </tbody>
         </table>
     </div>
+    <div class="crud-no-results" data-crud-empty hidden>No blacklist items match your search.</div>
+    <div class="crud-footer" data-crud-pagination></div>
 </div>
 
 @foreach (var b in Model)

@@ -20,9 +20,6 @@
             <p class="text-muted mb-0 small">Manage laboratory workstations, status, and unit mapping</p>
         </div>
     </div>
-    <button class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#createComputerModal">
-        <i class="bi bi-plus-circle-fill me-1"></i> Add Workstation
-    </button>
 </div>
 
 <!-- Metric Summary Cards -->
@@ -74,10 +71,21 @@
 </div>
 
 <!-- Computer Directory Table Card -->
-<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+<div class="card crud-panel border-0 shadow-sm rounded-4 overflow-hidden mb-4" data-crud-list data-crud-label="workstations" data-crud-page-size="6">
     <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
         <h5 class="fw-bold mb-0 text-dark">Laboratory Workstation Directory</h5>
         <span class="badge bg-light text-dark font-monospace fs-6">@totalComputers Units Registered</span>
+    </div>
+    <div class="crud-toolbar">
+        <input type="search" class="form-control crud-search" data-crud-search aria-label="Search workstations" placeholder="Search workstation..." />
+        <select class="form-select" data-crud-filter="status" aria-label="Filter workstations by status">
+            <option value="">All statuses</option>
+            @foreach (var status in new[] { "Available", "In Use", "Maintenance", "Archived" }.Concat(Model.Select(c => c.Status)).Distinct().OrderBy(status => status))
+            {
+                <option value="@status">@status</option>
+            }
+        </select>
+        <button type="button" class="btn btn-emerald" data-bs-toggle="modal" data-bs-target="#createComputerModal"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Add Workstation</button>
     </div>
     <div class="table-responsive">
         <table class="table custom-table align-middle mb-0">
@@ -93,7 +101,7 @@
             <tbody>
                 @foreach (var c in Model)
                 {
-                    <tr>
+                    <tr data-crud-item data-status="@c.Status">
                         <td class="fw-bold text-muted font-monospace">#PC-@c.ComputerId.ToString("D3")</td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
@@ -147,6 +155,8 @@
             </tbody>
         </table>
     </div>
+    <div class="crud-no-results" data-crud-empty hidden>No workstations match your search.</div>
+    <div class="crud-footer" data-crud-pagination></div>
 </div>
 
 <!-- Modal: Create Computer -->

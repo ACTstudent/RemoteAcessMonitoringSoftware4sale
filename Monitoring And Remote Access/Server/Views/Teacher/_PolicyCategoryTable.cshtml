@@ -5,9 +5,14 @@
     var updateAction = $"Update{Model.Item2}Category";
     var deleteAction = $"Delete{Model.Item2}Category";
 }
-<div class="card border-0 shadow-sm rounded-4 p-3 h-100">
-    <div class="d-flex justify-content-between align-items-center mb-3"><h5 class="fw-bold mb-0">@Model.Item2 Categories</h5><button class="btn btn-sm btn-emerald rounded-pill" data-bs-toggle="modal" data-bs-target="#category-@Model.Item2">Add</button></div>
-    <div class="table-responsive"><table class="table custom-table align-middle mb-0"><thead><tr><th>Name / Pattern</th><th>Mode</th><th>State</th><th></th></tr></thead><tbody>
+<div class="card crud-panel border-0 shadow-sm rounded-4 h-100" data-crud-list data-crud-label="categories" data-crud-page-size="6">
+    <div class="card-header bg-white py-3"><h5 class="fw-bold mb-0">@Model.Item2 Categories</h5></div>
+    <div class="crud-toolbar">
+        <input type="search" class="form-control crud-search" data-crud-search aria-label="Search @Model.Item2 categories" placeholder="Search category..." />
+        <select class="form-select" data-crud-filter="status" aria-label="Filter @Model.Item2 categories by status"><option value="">All statuses</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
+        <button type="button" class="btn btn-emerald" data-bs-toggle="modal" data-bs-target="#category-@Model.Item2"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Add Category</button>
+    </div>
+    <div class="table-responsive"><table class="table custom-table align-middle mb-0"><thead><tr><th>Name / Pattern</th><th>Mode</th><th>Status</th><th class="text-end">Actions</th></tr></thead><tbody>
     @foreach (var item in Model.Item1)
     {
         var app = item as Server.Models.ApplicationCategory;
@@ -17,10 +22,12 @@
         var pattern = app?.Pattern ?? web?.DomainPattern ?? "";
         var mode = app?.Mode ?? web?.Mode ?? "Block";
         var active = app?.IsActive ?? web?.IsActive ?? false;
-        <tr><td><strong>@name</strong><br /><code>@pattern</code></td><td>@mode</td><td>@(active ? "Enabled" : "Disabled")</td><td class="text-end"><button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#edit-@Model.Item2-@id">Edit</button> <form class="d-inline" method="post" action="/Teacher/@deleteAction" data-confirm="Delete this category?" data-confirm-title="Delete category" data-confirm-label="Delete">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@id" /><button class="btn btn-sm btn-outline-danger">Delete</button></form></td></tr>
+        <tr data-crud-item data-status="@(active ? "Active" : "Inactive")"><td><strong>@name</strong><br /><code>@pattern</code></td><td>@mode</td><td><span class="badge @(active ? "bg-success" : "bg-secondary")">@(active ? "Active" : "Inactive")</span></td><td class="text-end"><button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#edit-@Model.Item2-@id">Edit</button> <form class="d-inline" method="post" action="/Teacher/@deleteAction" data-confirm="Delete this category?" data-confirm-title="Delete category" data-confirm-label="Delete">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@id" /><button class="btn btn-sm btn-outline-danger">Delete</button></form></td></tr>
     }
     @if (!Model.Item1.Any()) { <tr><td colspan="4" class="text-center empty-state"><i class="bi bi-tags empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No categories configured.</span></td></tr> }
     </tbody></table></div>
+    <div class="crud-no-results" data-crud-empty hidden>No categories match your search.</div>
+    <div class="crud-footer" data-crud-pagination></div>
 </div>
 
 <div class="modal fade" id="category-@Model.Item2" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="post" action="/Teacher/@createAction">@Html.AntiForgeryToken()<div class="modal-header"><h5>Add @Model.Item2 Category</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><label>Name</label><input name="Name" required maxlength="100" class="form-control mb-2" /><label>@(isApplication ? "Application pattern" : "Domain pattern")</label><input name="@(isApplication ? "Pattern" : "DomainPattern")" required maxlength="300" class="form-control mb-2" placeholder="@(isApplication ? "chrome*" : "example.org")" /><label>Mode</label><select name="Mode" class="form-select mb-2"><option>Block</option><option>Allow</option></select><label>Description</label><input name="Description" maxlength="500" class="form-control mb-2" /><label><input type="checkbox" name="IsActive" value="true" checked /> Active</label></div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div>

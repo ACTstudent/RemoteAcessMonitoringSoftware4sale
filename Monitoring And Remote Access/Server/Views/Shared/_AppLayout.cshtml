@@ -8,6 +8,10 @@
     var nav = NavigationBuilder.Build(variant, ViewContext.HttpContext);
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    // The CRUD management design is the standard for the whole system, so it is
+    // on by default. A view can set ViewData["CrudPage"] = false if it genuinely
+    // needs the plainer treatment; nothing does at present.
+    var isCrudPage = ViewData["CrudPage"] as bool? ?? true;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -19,8 +23,12 @@
     <link href="~/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
     <link href="~/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+    @if (isCrudPage)
+    {
+        <link href="~/css/crud.css" rel="stylesheet" asp-append-version="true" />
+    }
 </head>
-<body class="app-shell">
+<body class="app-shell @(isCrudPage ? "crud-page" : "")">
     <a class="skip-to-content" href="#main-content">Skip to main content</a>
     <div class="app-wrapper">
         <aside class="app-sidebar" id="appSidebar" aria-label="@nav.NavAriaLabel">
@@ -41,10 +49,11 @@
                     {
                         var isActive = nav.IsActive(item, currentController, currentAction);
                         <a href="@Url.Action(item.Action, item.Controller)"
+                           title="@item.Text" aria-label="@item.Text"
                            class="nav-item-custom @(isActive ? "active" : "")"
                            @(isActive ? Html.Raw("aria-current=\"page\"") : null)>
                             <i class="bi bi-@item.Icon" aria-hidden="true"></i>
-                            <span>@item.Text</span>
+                            <span class="nav-item-label">@item.Text</span>
                             @if (item.BadgeViewComponent is not null)
                             {
                                 @await Component.InvokeAsync(item.BadgeViewComponent)
@@ -105,6 +114,10 @@
     <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/signalr/signalr.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @if (isCrudPage)
+    {
+        <script src="~/js/crud-list.js" asp-append-version="true"></script>
+    }
     @if (nav.ScriptPartial is not null)
     {
         <partial name="@nav.ScriptPartial" />

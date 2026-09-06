@@ -23,9 +23,7 @@
         <form asp-action="GlobalStartSession" method="post" data-confirm="Resume every paused session across CAMS?" data-confirm-title="Resume all sessions" data-confirm-label="Resume" data-confirm-variant="success">@Html.AntiForgeryToken()<button class="btn btn-success rounded-pill px-3"><i class="bi bi-play-fill"></i> Resume all sessions</button></form>
         <form asp-action="GlobalPauseSession" method="post" data-confirm="Pause every lab session whose rule permits pausing?" data-confirm-title="Pause all sessions" data-confirm-label="Pause" data-confirm-variant="warning">@Html.AntiForgeryToken()<button class="btn btn-warning rounded-pill px-3"><i class="bi bi-pause-fill"></i> Pause all sessions</button></form>
         <form asp-action="GlobalEndSession" method="post" data-confirm="End every active lab session? Ended sessions cannot be resumed." data-confirm-title="End all sessions" data-confirm-label="End sessions">@Html.AntiForgeryToken()<button class="btn btn-danger rounded-pill px-3"><i class="bi bi-stop-fill"></i> End all sessions</button></form>
-        <button class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#startSessionModal">
-            <i class="bi bi-play-circle me-1"></i> Start New Session
-        </button>
+
     </div>
 </div>
 
@@ -67,11 +65,10 @@
 </div>
 
 <!-- Active & Recent Sessions Card -->
-<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-        <h5 class="fw-bold mb-0 text-dark">Session History & Live Log</h5>
-        <span class="badge bg-light text-dark font-monospace fs-6">@totalSessions Recorded</span>
-    </div>
+<div class="crud-panel" data-crud-list data-crud-label="sessions" data-crud-page-size="6">
+    <div class="crud-toolbar"><input type="search" class="form-control crud-search" data-crud-search placeholder="Search sessions..." aria-label="Search sessions" /><select class="form-select" data-crud-filter="status" aria-label="Filter session status"><option value="">All statuses</option><option>Running</option><option>Paused</option><option>Ended</option></select><button class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#startSessionModal">
+            <i class="bi bi-play-circle me-1"></i> Start New Session
+        </button></div>
     <div class="table-responsive">
         <table class="table custom-table align-middle mb-0">
             <thead>
@@ -88,7 +85,7 @@
             <tbody>
                 @foreach (var s in Model)
                 {
-                    <tr>
+                    <tr data-crud-item data-status="@(s.Status == "Running" || s.Status == "Paused" ? s.Status : "Ended")">
                         <td class="fw-bold text-muted font-monospace">#SES-@s.Id.ToString("D4")</td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
@@ -147,6 +144,8 @@
             </tbody>
         </table>
     </div>
+    <div class="crud-no-results" data-crud-empty hidden></div>
+    <div class="crud-footer" data-crud-pagination></div>
 </div>
 
 <!-- Modal: Start Session -->

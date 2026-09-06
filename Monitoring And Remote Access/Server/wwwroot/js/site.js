@@ -309,18 +309,21 @@ window.CamsToast = (function () {
 
         var desktop = window.matchMedia(DESKTOP_QUERY);
         var isDesktop = function () { return desktop.matches; };
+        var compactNavigation = document.body.classList.contains('crud-page');
+        var storageKey = compactNavigation ? 'cams.crud.navigation.compact' : STORAGE_KEY;
 
         function readStored() {
             try {
-                return window.localStorage.getItem(STORAGE_KEY) === 'true';
+                var stored = window.localStorage.getItem(storageKey);
+                return stored === null ? compactNavigation : stored === 'true';
             } catch (error) {
-                return false; // storage can be unavailable; default to visible
+                return compactNavigation;
             }
         }
 
         function store(collapsed) {
             try {
-                window.localStorage.setItem(STORAGE_KEY, String(collapsed));
+                window.localStorage.setItem(storageKey, String(collapsed));
             } catch (error) {
                 // Not being able to remember the choice is not worth failing over.
             }
