@@ -952,12 +952,29 @@ namespace Client
             _ => "unavailable"
         };
 
+        /// <summary>How long capture may keep failing before the student is told rather than left with a silent stream.</summary>
+        private const int CaptureFailuresBeforeReporting = 20;
+
         private async Task ScreenCaptureLoop(CancellationToken token)
         {
+            var consecutiveFailures = 0;
+
             while (_isStreaming && !token.IsCancellationRequested)
             {
+                // Pace on elapsed time. Capture, JPEG encode, base64 and the send
+                // are all serial, so delaying afterwards made the real interval
+                // the frame's cost plus the delay - well over the 50 ms target.
+                // Measuring the work and waiting only the remainder makes the
+                // interval mean what it says, and costs nothing when a frame is
+                // slower than the target.
+                var startedAt = System.Diagnostics.Stopwatch.GetTimestamp();
+
                 try
                 {
+                    // While the workstation is locked, Windows is showing the
+                    // secure desktop and CopyFromScreen cannot see it. Nothing is
+                    // sent, and the teacher's view reports that frames have
+                    // stopped rather than leaving the last image looking live.
                     if (_hubClient != null && !_isLocked)
                     {
                         var frame = new ScreenFrameMessage(
@@ -968,13 +985,79 @@ namespace Client
 
                         await _hubClient.SendScreenFrameAsync(frame);
                     }
+
+                    if (consecutiveFailures >= CaptureFailuresBeforeReporting)
+                    {
+                        ReportCaptureRecovered();
+                    }
+                    consecutiveFailures = 0;
                 }
-                catch
+                catch (OperationCanceledException)
                 {
-                    // Frame dropped; keep the loop alive
+                    return;   // Streaming was stopped; not a failure.
+                }
+                catch (Exception ex)
+                {
+                    // A single dropped frame is normal and not worth mentioning.
+                    // A run of them is not: the stream has stopped without the
+                    // student or the teacher being told, which is what used to
+                    // happen behind a bare catch.
+                    consecutiveFailures++;
+                    if (consecutiveFailures == CaptureFailuresBeforeReporting)
+                    {
+                        ReportCaptureStalled(ex);
+                    }
                 }
 
-                await Task.Delay(50, token); // Capture-loop delay target, with one in-flight frame; effective FPS varies
+                var elapsedMs = (System.Diagnostics.Stopwatch.GetTimestamp() - startedAt)
+                    * 1000d / System.Diagnostics.Stopwatch.Frequency;
+                var remaining = (int)Math.Max(0, CaptureIntervalMs - elapsedMs);
+                if (remaining > 0)
+                {
+                    await Task.Delay(remaining, token);
+                }
+            }
+        }
+
+        /// <summary>Target interval between frames. The real rate is lower whenever a frame costs more than this.</summary>
+        private const int CaptureIntervalMs = 50;
+
+        /// <summary>Surfaces a stalled capture on the status line instead of failing silently.</summary>
+        private void ReportCaptureStalled(Exception cause)
+        {
+            if (_isClosing || IsDisposed) return;
+            try
+            {
+                BeginInvoke(() =>
+                {
+                    if (_isClosing || IsDisposed) return;
+                    lblStatus.Text = "Status: Screen sharing interrupted";
+                    lblStatus.ForeColor = StatusWarn;
+                });
+            }
+            catch (InvalidOperationException)
+            {
+                // The window went away between the checks above and the marshal.
+            }
+            Debug.WriteLine($"[CAMS] Screen capture failing: {cause.Message}");
+        }
+
+        /// <summary>Puts the status line back once frames start flowing again.</summary>
+        private void ReportCaptureRecovered()
+        {
+            if (_isClosing || IsDisposed) return;
+            try
+            {
+                BeginInvoke(() =>
+                {
+                    if (_isClosing || IsDisposed || _isLocked) return;
+                    lblStatus.Text = "Status: Connected & Streaming";
+                    lblStatus.ForeColor = StatusOk;
+                });
+            }
+            catch (InvalidOperationException)
+            {
+                // The window went away between the checks above and the marshal.
             }
         }
 

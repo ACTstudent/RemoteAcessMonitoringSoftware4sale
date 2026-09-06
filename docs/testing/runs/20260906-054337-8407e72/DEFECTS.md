@@ -257,12 +257,25 @@ The lasting guard is structural rather than a test: there is now a single
 definition of "the screen", so a future divergence would mean deliberately
 introducing a second one.
 
-**Not fixed, observed while reading the same code:**
+**Observed while reading the same code, and since fixed:**
 
-- `MainForm.cs:953` — the capture loop skips frames while `_isLocked`, so a
-  teacher cannot see a screen they have just locked.
-- Secure desktop (UAC prompts, Ctrl+Alt+Del, the lock screen) — `CopyFromScreen`
-  returns black and `keybd_event` cannot reach it. Standard Windows behaviour,
-  but nothing detects or reports it, so it presents as a frozen screen.
-- `MainForm.cs:947` — capture, JPEG encode, base64 and send are serial before a
-  50 ms delay, so the effective frame rate is well below the implied 20 fps.
+- **A screen that stopped updating looked exactly like one that was live.** The
+  capture loop skips frames while the workstation is locked — correctly, because
+  `SetLocked` calls `LockWorkStation` and Windows then shows the secure desktop,
+  which `CopyFromScreen` cannot see. The same silence follows a UAC prompt or a
+  capture error. The teacher was left looking at the last frame with nothing to
+  say it was stale. The monitoring page now marks a card whose frames have
+  stopped for more than five seconds, greys the image, and says how long ago the
+  last frame arrived. It does not guess **why**: the agent cannot report from the
+  secure desktop either, so inventing a reason would be worse than none.
+- **Capture errors were swallowed by a bare `catch`.** A single dropped frame is
+  normal; a run of them meant the stream had stopped with nobody told. Twenty
+  consecutive failures now put "Screen sharing interrupted" on the status line of
+  the agent, and it clears itself when frames resume.
+- **The frame interval did not mean what it said.** Capture, JPEG encode, base64
+  and the send were serial and *then* the loop waited 50 ms, so the real interval
+  was the cost of a frame plus the delay. The loop now measures the work and
+  waits only the remainder.
+
+Verified live: an agent streamed one frame and went quiet, and the teacher's page
+reported "Screen not updating - last frame 5s ago" within four seconds. 5 of 5.

@@ -1548,3 +1548,15 @@ summary:focus-visible,
         outline-offset: 2px;
     }
 }
+
+/* A workstation whose screen has stopped updating. The image is left visible -
+   it is the last thing that was really there - but the card says so, because a
+   frozen desktop and a live one look identical. */
+.workstation-card.workstation-stale {
+    border-color: var(--cams-warning, #B45309);
+}
+
+.workstation-card.workstation-stale img {
+    filter: grayscale(0.7);
+    opacity: 0.72;
+}

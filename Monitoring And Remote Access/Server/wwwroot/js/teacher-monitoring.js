@@ -33,7 +33,7 @@ function createWorkstationCard(connectionId, studentId, pcName) {
     if (!connectionId || document.getElementById(`unit-card-${connectionId}`)) return;
 
     document.getElementById("emptyState")?.remove();
-    activeUnits.set(connectionId, { studentId, pcName, lastFrame: null, applicationName: "Unknown", isIdle: false, browsers: {} });
+    activeUnits.set(connectionId, { studentId, pcName, lastFrame: null, lastFrameAt: 0, applicationName: "Unknown", isIdle: false, browsers: {} });
 
     const column = document.createElement("div");
     column.className = "col-lg-3 col-md-4 col-sm-6 unit-col";
@@ -116,7 +116,10 @@ function updateWorkstationCard(connectionId, frame) {
 
     createWorkstationCard(connectionId, studentId, pcName);
     const unit = activeUnits.get(connectionId);
-    if (unit) unit.lastFrame = base64Image;
+    if (unit) {
+        unit.lastFrame = base64Image;
+        unit.lastFrameAt = Date.now();
+    }
     const image = document.getElementById(`img-${connectionId}`);
     if (image) image.src = `data:image/jpeg;base64,${base64Image}`;
     const timestamp = document.getElementById(`time-${connectionId}`);
@@ -358,6 +361,42 @@ async function loadLiveState() {
 }
 
 hub.on("ReceiveScreenFrame", (connectionId, frame) => updateWorkstationCard(connectionId, frame));
+
+// A screen that cannot be captured sends nothing, so silence is the only signal
+// available. Five seconds is well clear of the capture interval and of a slow
+// frame, without letting a locked workstation sit unremarked.
+const STALE_AFTER_MS = 5000;
+
+function describeGap(milliseconds) {
+    const seconds = Math.round(milliseconds / 1000);
+    if (seconds < 60) return `${seconds}s ago`;
+    const minutes = Math.floor(seconds / 60);
+    return `${minutes}m ${seconds % 60}s ago`;
+}
+
+function reviewFrameFreshness() {
+    const now = Date.now();
+    activeUnits.forEach((unit, connectionId) => {
+        const card = document.getElementById(`unit-card-${connectionId}`)?.querySelector(".workstation-card");
+        const timestamp = document.getElementById(`time-${connectionId}`);
+        if (!card || !timestamp) return;
+
+        // A unit that has never sent a frame is still connecting, not stale.
+        const gap = unit.lastFrameAt ? now - unit.lastFrameAt : 0;
+        const stale = unit.lastFrameAt > 0 && gap > STALE_AFTER_MS;
+
+        card.classList.toggle("workstation-stale", stale);
+        card.setAttribute("aria-describedby", stale ? `time-${connectionId}` : "");
+        if (stale) {
+            timestamp.textContent = `Screen not updating - last frame ${describeGap(gap)}`;
+            timestamp.classList.add("text-warning-emphasis", "fw-semibold");
+        } else {
+            timestamp.classList.remove("text-warning-emphasis", "fw-semibold");
+        }
+    });
+}
+
+setInterval(reviewFrameFreshness, 1000);
 hub.on("ActiveAppReceived", app => updateActivity(valueOf(app, "connectionId", "ConnectionId"), valueOf(app, "applicationName", "ApplicationName"), false));
 hub.on("WebsiteActivityReceived", website => updateActivity(valueOf(website, "connectionId", "ConnectionId"), `Web: ${valueOf(website, "domain", "Domain")}`, false));
 hub.on("BrowserMonitoringStatusReceived", updateBrowserStatus);
