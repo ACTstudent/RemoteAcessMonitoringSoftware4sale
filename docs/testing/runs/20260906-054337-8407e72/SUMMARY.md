@@ -5,6 +5,11 @@
 > [ADDENDUM-defect-fixes.md](ADDENDUM-defect-fixes.md) for what changed and the
 > re-verification results. The release decision is unchanged — the blocked
 > hardware cases still block acceptance.
+>
+> **2026-09-06, later:** the live transport lane has since been tested — real
+> SignalR (24/24), UDP discovery, telemetry, policy delivery and a real remote
+> command. See [ADDENDUM-live-transport.md](ADDENDUM-live-transport.md). Desktop
+> capture, input injection and installation remain blocked.
 
 **Outcome: not ready for release acceptance.** Every automated test passes and
 the authorization surface came back clean, but 12 required cases remain BLOCKED

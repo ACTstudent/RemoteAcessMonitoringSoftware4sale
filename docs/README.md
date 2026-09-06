@@ -66,7 +66,7 @@ Both upload their TRX results, including when they fail.
 
 | Run | Revision | Outcome |
 | --- | --- | --- |
-| [20260906-054337-8407e72](testing/runs/20260906-054337-8407e72/SUMMARY.md) | `8407e72` | Not accepted for release: 12 cases blocked for want of hardware. All 153 controller actions refuse an anonymous caller and every shared admin action matches its `[TeacherSharedAction]` attribute. The three defects it found have since been fixed and re-verified — see the [addendum](testing/runs/20260906-054337-8407e72/ADDENDUM-defect-fixes.md) |
+| [20260906-054337-8407e72](testing/runs/20260906-054337-8407e72/SUMMARY.md) | `8407e72` | Not accepted for release: 12 cases blocked for want of hardware. All 153 controller actions refuse an anonymous caller and every shared admin action matches its `[TeacherSharedAction]` attribute. The three defects it found have since been fixed ([addendum](testing/runs/20260906-054337-8407e72/ADDENDUM-defect-fixes.md)), and the live transport lane tested ([addendum](testing/runs/20260906-054337-8407e72/ADDENDUM-live-transport.md)) |
 | [20260905-125626-b5441f1](testing/runs/20260905-125626-b5441f1/SUMMARY.md) | `b5441f1` | Not accepted for release: seven live cases blocked for want of hardware. DEF-001 has since been fixed — see the [addendum](testing/runs/20260905-125626-b5441f1/ADDENDUM-install-and-DEF-001.md) |
 
 Run reports are kept as written. When something in one later turns out to be
