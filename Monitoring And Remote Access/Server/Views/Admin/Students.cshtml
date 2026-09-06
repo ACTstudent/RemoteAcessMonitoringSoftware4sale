@@ -121,11 +121,11 @@
                             }
                         </td>
                         <td>
-                            <form method="post" action="/Admin/AssignStudentToClass" class="student-class-form d-flex gap-2 align-items-center form-inline-action">
+                            <form method="post" action="/Admin/AssignStudentToClass" class="student-class-form d-flex gap-2 align-items-center form-inline-action" data-move-confirm>
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="studentId" value="@s.Id" />
-                                <input type="hidden" name="moveStudent" value="false" />
-                                <select aria-label="Class for @s.FullName" name="classId" class="form-select filter-control py-1 px-2" style="font-size: 0.85rem; min-width: 190px;" data-current-class="@(s.Class?.ClassName ?? "")" data-current-class-id="@(s.ClassId?.ToString() ?? "")">
+                                <input type="hidden" name="moveStudent" value="false" data-move-flag />
+                                <select aria-label="Class for @s.FullName" name="classId" class="form-select filter-control py-1 px-2" style="font-size: 0.85rem; min-width: 190px;" data-move-select data-current-class="@(s.Class?.ClassName ?? "")" data-current-class-id="@(s.ClassId?.ToString() ?? "")">
                                     <option value="">-- Unassigned --</option>
                                     @foreach (var cls in classes)
                                     {
@@ -320,21 +320,6 @@
     </div>
 }
 
-<script>
-    document.querySelectorAll(".student-class-form").forEach(function (form) {
-        form.addEventListener("submit", async function (event) {
-            const select = form.querySelector("select[name='classId']");
-            const currentClass = select?.dataset.currentClass || "";
-            const currentClassId = select?.dataset.currentClassId || "";
-            const selectedClassId = select?.value || "";
-            const selectedClass = select?.selectedOptions[0]?.textContent?.trim() || "";
-            const moveField = form.querySelector("input[name='moveStudent']");
-            if (!currentClass || !currentClassId || !selectedClassId || selectedClassId === currentClassId || moveField.value === "true") return;
-            event.preventDefault();
-            const confirmed = await window.camsConfirm({ title: "Move student", message: `Move this student from ${currentClass} to ${selectedClass}?`, confirmLabel: "Move student", variant: "warning" });
-            if (!confirmed) return;
-            moveField.value = "true";
-            form.requestSubmit();
-        });
-    });
-</script>
+@section Scripts {
+    <script src="~/js/student-move-confirm.js" asp-append-version="true"></script>
+}

@@ -188,13 +188,14 @@
                 </ul>
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="enrollSinglePane" role="tabpanel">
-                        <form method="post" asp-controller="Admin" asp-action="EnrollStudent" id="existingStudentForm">
+                        <form method="post" asp-controller="Admin" asp-action="EnrollStudent" id="existingStudentForm"
+                              data-move-confirm data-move-target="@Model.ClassName">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="classId" value="@Model.ClassId" />
-                            <input type="hidden" name="moveStudent" id="moveStudent" value="false" />
+                            <input type="hidden" name="moveStudent" id="moveStudent" value="false" data-move-flag />
                             <p class="text-muted small">Moving a student from another class requires confirmation.</p>
                             <label class="form-label" for="existingStudentSelect">Registered student</label>
-                            <select name="studentId" id="existingStudentSelect" class="form-select" required>
+                            <select name="studentId" id="existingStudentSelect" class="form-select" required data-move-select>
                                 <option value="">Select a student</option>
                                 @foreach (var student in availableStudents)
                                 {
@@ -279,18 +280,5 @@
 }
 
 @section Scripts {
-    <script>
-        document.getElementById('existingStudentForm')?.addEventListener('submit', async function (event) {
-            const select = document.getElementById('existingStudentSelect');
-            const option = select?.selectedOptions[0];
-            const currentClass = option?.dataset.currentClass || '';
-            const moveField = document.getElementById('moveStudent');
-            if (!currentClass || moveField.value === 'true') return;
-            event.preventDefault();
-            const confirmed = await window.camsConfirm({ title: 'Move student', message: `Move this student from ${currentClass} to @Model.ClassName?`, confirmLabel: 'Move student', variant: 'warning' });
-            if (!confirmed) return;
-            moveField.value = 'true';
-            this.requestSubmit();
-        });
-    </script>
+    <script src="~/js/student-move-confirm.js" asp-append-version="true"></script>
 }

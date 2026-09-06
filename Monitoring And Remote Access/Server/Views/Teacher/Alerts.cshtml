@@ -65,7 +65,7 @@
     </div>
 </form>
 
-<form id="bulk-alert-form" method="post">
+<form id="bulk-alert-form" method="post" data-alert-bulk-form>
     @Html.AntiForgeryToken()
     <partial name="_AlertFilterFields" model="filter" />
 </form>
@@ -86,7 +86,7 @@
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
     <div class="table-responsive">
         <table class="table custom-table align-middle mb-0">
-            <thead><tr><th class="ps-3"><input id="select-all-alerts" class="form-check-input" type="checkbox" aria-label="Select all alerts" /></th><th>Alert group</th><th>Student / station</th><th>Occurrences</th><th>First / last seen</th><th>Status</th><th class="text-end pe-3">Actions</th></tr></thead>
+            <thead><tr><th class="ps-3"><input id="select-all-alerts" class="form-check-input" type="checkbox" data-alert-select-all aria-label="Select all alerts" /></th><th>Alert group</th><th>Student / station</th><th>Occurrences</th><th>First / last seen</th><th>Status</th><th class="text-end pe-3">Actions</th></tr></thead>
             <tbody>
             @foreach (var alert in paging.Items)
             {
@@ -98,7 +98,7 @@
                     _ => "text-bg-secondary"
                 };
                 <tr>
-                    <td class="ps-3"><input class="form-check-input alert-selector" type="checkbox" name="alertIds" value="@alert.MonitoringAlertId" form="bulk-alert-form" aria-label="Select @alert.Title" /></td>
+                    <td class="ps-3"><input class="form-check-input alert-selector" type="checkbox" data-alert-select name="alertIds" value="@alert.MonitoringAlertId" form="bulk-alert-form" aria-label="Select @alert.Title" /></td>
                     <td><span class="badge rounded-pill bg-light text-dark border mb-1">@alert.Severity</span><strong class="d-block">@alert.Title</strong><small class="text-muted">@alert.Message</small></td>
                     <td><span class="font-monospace">@alert.StudentId</span><small class="d-block text-muted">@alert.PcName</small></td>
                     <td><span class="fs-5 fw-bold">@alert.OccurrenceCount</span></td>
@@ -146,17 +146,5 @@
 @await Html.PartialAsync("_Pager", PagerViewModel.For(paging, "grouped alerts", "Alerts", filter.ToRouteValues()))
 
 @section Scripts {
-    <script>
-        (() => {
-            const selectAll = document.getElementById('select-all-alerts');
-            const selectors = Array.from(document.querySelectorAll('.alert-selector'));
-            selectAll?.addEventListener('change', () => selectors.forEach(box => box.checked = selectAll.checked));
-            document.getElementById('bulk-alert-form')?.addEventListener('submit', event => {
-                if (!selectors.some(box => box.checked)) {
-                    event.preventDefault();
-                    window.camsConfirm({ title: 'Select alerts', message: 'Select at least one alert group before using a bulk action.', confirmLabel: 'OK', variant: 'primary' });
-                }
-            });
-        })();
-    </script>
+    <script src="~/js/alert-bulk.js" asp-append-version="true"></script>
 }

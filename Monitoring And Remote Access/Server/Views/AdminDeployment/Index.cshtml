@@ -77,7 +77,7 @@
         @Html.AntiForgeryToken()
         <label class="form-label fw-semibold" for="deploymentEndpoint">Server endpoint</label>
         <div class="input-group">
-            <select id="deploymentEndpoint" name="endpoint" class="form-select" required disabled="@(viableEndpoints.Count == 0 ? "disabled" : null)">
+            <select id="deploymentEndpoint" name="endpoint" data-deployment-endpoint class="form-select" required disabled="@(viableEndpoints.Count == 0 ? "disabled" : null)">
                 @foreach (var endpoint in Model.Endpoints.OrderByDescending(endpoint => endpoint.CertificateCompatible))
                 {
                     <option value="@endpoint.Url" disabled="@(!endpoint.CertificateCompatible ? "disabled" : null)">@endpoint.Url@(endpoint.CertificateCompatible ? "" : " - certificate mismatch")</option>
@@ -85,18 +85,12 @@
             </select>
             <button class="btn btn-success px-4" type="submit" disabled="@(!Model.AssetsReady || viableEndpoints.Count == 0 ? "disabled" : null)"><i class="bi bi-file-earmark-zip me-1"></i>Create bundle</button>
         </div>
-        <div id="endpointHelp" class="form-text">The bundle contains only the verified installer metadata, install scripts, and the public root certificate when local CA mode requires it.</div>
+        <div id="endpointHelp" class="form-text" data-deployment-endpoint-help>The bundle contains only the verified installer metadata, install scripts, and the public root certificate when local CA mode requires it.</div>
     </form>
 </section>
 
 @section Scripts {
-<script>
-    (() => {
-        const select = document.getElementById('deploymentEndpoint');
-        const help = document.getElementById('endpointHelp');
-        select?.addEventListener('change', () => { help.textContent = `Selected endpoint: ${select.value}`; });
-    })();
-</script>
+<script src="~/js/deployment-endpoint.js" asp-append-version="true"></script>
 }
 
 <style>

@@ -81,10 +81,21 @@ async function post(path, fields, pageForToken) {
   console.log(`create xss probe student -> ${r.status} ${r.location || ''}`);
 
   // --- Class and workstation ---
-  const teachersPage = await get('/Admin/Teachers');
-  const teacherId = (teachersPage.body.match(
-    new RegExp('value="(\\d+)"[^>]*>[^<]*' + RUN)) || [])[1];
+  // Read the id out of the very select the class form posts, rather than
+  // scraping the teacher list. The old regex ran against /Admin/Teachers,
+  // stopped matching when that markup changed, and failed silently - which
+  // produced a class with no teacher. That class is then filtered out of the
+  // roster's assignment dropdown (Admin/Students only offers classes that have
+  // an active teacher), so checks that depend on moving a student between
+  // classes had nothing to work with and reported hollow passes.
+  const classesPage = await get('/Admin/Classes');
+  const teacherId = (classesPage.body.match(
+    new RegExp('<option value="(\\d+)"[^>]*>[^<]*' + RUN)) || [])[1];
   created.teacherId = teacherId || null;
+  if (!teacherId) {
+    console.log('  WARNING: no teacher id found. The class will have no teacher, and');
+    console.log('           it will not appear in the roster assignment dropdown.');
+  }
 
   created.className = `Class ${RUN}`;
   r = await post('/Admin/CreateClass', {
@@ -93,6 +104,17 @@ async function post(path, fields, pageForToken) {
     TeacherId: teacherId || ''
   }, '/Admin/Classes');
   console.log(`create class    -> ${r.status} ${r.location || ''}`);
+
+  // A second class, because one class cannot exercise a move. Anything that
+  // asks "did moving a student between classes behave" needs somewhere to move
+  // them to.
+  created.secondClassName = `Class ${RUN}-B`;
+  r = await post('/Admin/CreateClass', {
+    ClassName: created.secondClassName, Section: 'B', Subject: 'Computer Education',
+    GradeLevel: '6', AcademicYear: '2026-2027', Schedule: 'TTh 10:00',
+    TeacherId: teacherId || ''
+  }, '/Admin/Classes');
+  console.log(`create class B  -> ${r.status} ${r.location || ''}`);
 
   created.station = `LAB-${RUN}`;
   r = await post('/Admin/CreateComputer', {
