@@ -245,8 +245,6 @@ All rows start UNREVIEWED. Area assignments are based on paths and require behav
 | `Monitoring And Remote Access/Shared/Shared.csproj` | BLD-01; DEP-01; DOC-01 | UNREVIEWED |
 | `README.md` | DOC-01 | UNREVIEWED |
 | `build-everything.ps1` | BLD-01; INS-01..02; DEP-01; DOC-01 | UNREVIEWED |
-| `client-dist/CAMS-Client-Setup.exe` | BLD-01; INS-01..02; DEP-01; DOC-01 | UNREVIEWED |
-| `client-dist/CAMS-Client-Setup.exe.sha256` | BLD-01; INS-01..02; DEP-01; DOC-01 | UNREVIEWED |
 | `client-installer.iss` | BLD-01; INS-01..02; DEP-01; DOC-01 | UNREVIEWED |
 | `portal/README.md` | WEB-01; UI-02; DOC-01 | UNREVIEWED |
 | `portal/assets/app.js` | WEB-01; UI-02; DOC-01 | UNREVIEWED |
@@ -254,9 +252,6 @@ All rows start UNREVIEWED. Area assignments are based on paths and require behav
 | `portal/assets/styles.css` | WEB-01; UI-02; DOC-01 | UNREVIEWED |
 | `portal/index.html` | WEB-01; UI-02; DOC-01 | UNREVIEWED |
 | `portal/version.json` | WEB-01; UI-02; DOC-01 | UNREVIEWED |
-| `server-dist/CAMS-Server-Setup.exe` | BLD-01; INS-01..02; DEP-01; DOC-01 | UNREVIEWED |
-| `server-dist/CAMS-Server-Setup.exe.sha256` | BLD-01; INS-01..02; DEP-01; DOC-01 | UNREVIEWED |
-| `server-dist/release-manifest.json` | BLD-01; INS-01..02; DEP-01; DOC-01 | UNREVIEWED |
 | `server-installer.iss` | BLD-01; INS-01..02; DEP-01; DOC-01 | UNREVIEWED |
 | `start-server.bat` | BLD-01; INS-01..02; DEP-01; DOC-01 | UNREVIEWED |
 | `test-installer.ps1` | BLD-01; INS-01..02; DEP-01; DOC-01 | UNREVIEWED |

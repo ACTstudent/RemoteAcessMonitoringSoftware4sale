@@ -44,8 +44,10 @@ dotnet test "Monitoring And Remote Access\RemoteMonitoring.sln"
 ```
 
 The canonical release build runs both suites and then packages and validates the
-installers. It rebuilds the tracked installers, so run it when you intend to
-produce a release candidate, not to check a change:
+installers into `server-dist/` and `client-dist/`. Those are build output and are
+not committed - the [GitHub release](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest)
+is where installers are published. Run this when you intend to produce a release
+candidate, not to check a change:
 
 ```powershell
 .\build-everything.ps1

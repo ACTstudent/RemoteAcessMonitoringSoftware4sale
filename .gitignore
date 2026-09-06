@@ -11,9 +11,21 @@ dist/
 *.db-shm
 *.db-wal
 
-# Allow tracked installers in server-dist and client-dist
-!server-dist/*.exe
-!client-dist/*.exe
+# Build output. The installers are NOT tracked: they are release artifacts, and
+# the GitHub release is the only place they are published.
+#
+# They used to be committed here, which meant every release added ~170 MB to
+# history and, worse, put a second copy of each installer in the repository that
+# was not the one anyone downloaded - Inno Setup does not produce identical bytes
+# twice, so the CI-built release asset and the committed copy always differed.
+# The repository's own .sha256 files therefore described a build that existed
+# only on one machine.
+#
+# Get an installer from the release:
+#   https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest
+# Or build one with .\build-everything.ps1, which recreates these folders.
+server-dist/
+client-dist/
 
 # Test result files written by build-everything.ps1 and CI
 test-results/

@@ -5,16 +5,14 @@ so the two stay distinguishable. Measured 2026-09-06 at `18f51bd`.
 
 ## The headline
 
-**355 tracked files, 176.29 MB. Two of them are 97.4% of it.**
+**383 tracked files, 4.46 MB — all of it source, assets, tests and documentation.**
 
-| | Bytes | Share |
-| --- | ---: | ---: |
-| `server-dist/CAMS-Server-Setup.exe` + `client-dist/CAMS-Client-Setup.exe` | 171,750,187 | 97.4% |
-| Everything else — all source, assets, tests, docs | 4,543,669 | 2.6% |
+When this inventory was first taken it read: *355 tracked files, 176.29 MB, two
+of them 97.4% of it.* The two installers were 171,750,187 bytes against
+4,543,669 for everything else, and every release rewrote both.
 
-Every release rewrites both binaries, so each one adds roughly its full size to
-history permanently. This is the single fact that should drive the decision in
-the last section.
+They are no longer tracked. See the last section for what that changed and what
+it did not.
 
 ## Generated files — ignored, correctly
 
@@ -64,34 +62,42 @@ provenance was never recorded. **Do not write a licence file from memory.**
 Re-obtain each file from its upstream project, record the version and source,
 and commit the licence that came with it.
 
-## Release artifacts that are tracked
+## Release artifacts are no longer tracked
 
-`server-dist/` and `client-dist/` hold the two installers, their `.sha256` files
-and `release-manifest.json`. All five are build outputs, tracked by an explicit
-`.gitignore` exception. Nothing else generated is tracked.
+`server-dist/` and `client-dist/` are build output and are gitignored. The
+[GitHub release](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest)
+is the only place an installer is published.
 
-They are also, as of `b4134fd`, the same bytes as the published v2.12.0 release —
-but only because that release was uploaded from this machine. A release cut by
-`release.yml` rebuilds on a CI runner, and Inno output is not reproducible, so
-the tracked copies and the published assets diverge. They did for v2.11.6:
-tracked `D359E853…`, published `96015CF6…`. Two different binaries for one
-version number, with the repository's checksum file describing neither.
+**Why this changed.** Size was the obvious reason and the weaker one. The real
+problem was that committing them put a *second* copy of each installer in the
+repository which was never the one anyone downloaded. Inno Setup does not
+produce identical bytes twice, and `release.yml` rebuilds on a CI runner when a
+tag is pushed, so the committed copy and the published asset always differed:
 
-## The decision this inventory does not make
+| Release | Committed | Published |
+| --- | --- | --- |
+| v2.11.6 | `D359E853…` | `96015CF6…` |
+| v2.13.0 | `86DB1285…` | `8C03361E…` |
 
-The plan is explicit that moving the installers out is a policy change, not
-cleanup: it "must update CI, download links and packaging checks together". So
-this document records the position rather than changing it.
+Two different binaries for one version number, and the repository's own
+`.sha256` file described neither — it described a build that existed on one
+machine. Anyone following the verification procedure in `DEPLOYMENT.md` against
+the repository copy would get a mismatch and reasonably conclude something was
+wrong.
 
-**Keeping them** means a fresh clone contains a runnable installer with no
-network access, and 97.4% of the repository is binary that diverges from what
-ships.
+**What still works.** `build-everything.ps1` recreates both folders, so
+`test-installer.ps1` validates as before and `release.yml` and `ci-full.yml`
+upload from them unchanged — all three run after the build that produces them.
+The portal's download buttons already addressed the release rather than the
+repository.
 
-**Dropping them** means the release is the single source, the repository becomes
-about 4.5 MB, and the divergence cannot recur — at the cost of updating
-`.gitignore`, the `release.yml` upload path, `test-installer.ps1`, and any
-documentation pointing at `server-dist/`. Existing history keeps its size either
-way; only new releases stop adding to it.
+**What this did not do.** History keeps its size: the ~170 MB per release
+already committed is still in the object store. Only new releases stop adding to
+it. Shrinking what is already there means rewriting history, which invalidates
+every existing clone and every commit hash quoted in these documents — not worth
+it to reclaim space in a repository nobody is short of.
 
-Whichever is chosen, the checksum files should describe the artifact a user can
-actually download. Today they describe a build that only exists on one machine.
+**The cost.** A fresh clone no longer contains a runnable installer; you need
+either network access to the release or a local `build-everything.ps1` run.
+That is the trade, and it is the right way round: the copy people actually
+install is now the only copy, and its published checksum describes it.

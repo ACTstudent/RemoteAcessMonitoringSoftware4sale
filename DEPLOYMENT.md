@@ -136,7 +136,7 @@ The canonical `build-everything.ps1` path is preferred because it tests, creates
 ## Release And Public Portal Publishing
 
 1. Set the three-part version in `version.json` and build with `build-everything.ps1`.
-2. Verify both installer checksum files and `server-dist\release-manifest.json`.
+2. Verify both installer checksum files and `server-dist\release-manifest.json` in the build output. These are build artifacts and are not committed; the release is where installers are published.
 3. Push a matching `vMAJOR.MINOR.PATCH` tag, or manually dispatch the release workflow with that tag.
 4. `.github/workflows/release.yml` rejects mismatched tags, rebuilds/validates on Windows, and publishes both installers, both checksums, and `release-manifest.json`.
 5. Changes under `portal/**` pushed to `main`, or a manual Pages dispatch, are configured to publish the static public site through `.github/workflows/pages.yml`. Enable GitHub Pages and verify the workflow's reported URL before advertising the site.
