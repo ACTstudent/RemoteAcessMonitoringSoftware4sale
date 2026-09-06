@@ -93,6 +93,12 @@
         </div>
     </div>
 
+    @* A form that was rejected leaves its values here; site.js puts them back. *@
+    @if (TempData[Server.Filters.PreserveSubmissionFilter.TempDataKey] is string preservedSubmission)
+    {
+        <script type="application/json" id="preservedSubmission">@Html.Raw(preservedSubmission)</script>
+    }
+
     <partial name="~/Views/Shared/_ConfirmModal.cshtml" />
     <partial name="~/Views/Shared/_Toasts.cshtml" />
 

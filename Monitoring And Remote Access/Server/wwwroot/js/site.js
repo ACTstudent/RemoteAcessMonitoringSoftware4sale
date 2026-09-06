@@ -550,3 +550,81 @@ window.CamsConnection = (function () {
         }
     };
 })();
+
+// Puts a rejected submission back into its form.
+//
+// Validation failures redirect to the list with a message, which loses whatever
+// was typed. PreserveSubmissionFilter carries the values across the redirect and
+// this restores them, then reopens the dialog they came from - a form that is
+// refilled but hidden behind a closed modal is no better than an empty one.
+//
+// Passwords are deliberately not carried, so any password field is left for the
+// user to retype and is focused if there is one.
+(function () {
+    var holder = document.getElementById("preservedSubmission");
+    if (!holder || !holder.textContent.trim()) {
+        return;
+    }
+
+    var values;
+    try {
+        values = JSON.parse(holder.textContent);
+    } catch (error) {
+        return;   // Nothing sensible to restore; the error message still shows.
+    }
+
+    var names = Object.keys(values);
+    if (!names.length) {
+        return;
+    }
+
+    // The form holding the most of these fields is the one that was submitted.
+    var best = null, bestScore = 0;
+    Array.prototype.forEach.call(document.querySelectorAll("form"), function (form) {
+        var score = 0;
+        names.forEach(function (name) {
+            if (form.querySelector("[name='" + CSS.escape(name) + "']")) {
+                score++;
+            }
+        });
+        if (score > bestScore) {
+            bestScore = score;
+            best = form;
+        }
+    });
+
+    if (!best) {
+        return;
+    }
+
+    var firstEmptyPassword = null;
+    names.forEach(function (name) {
+        var field = best.querySelector("[name='" + CSS.escape(name) + "']");
+        if (!field) {
+            return;
+        }
+        if (field.type === "checkbox" || field.type === "radio") {
+            field.checked = field.value === values[name];
+        } else {
+            field.value = values[name];
+        }
+    });
+
+    Array.prototype.forEach.call(best.querySelectorAll("input[type=password]"), function (field) {
+        if (!firstEmptyPassword && !field.value) {
+            firstEmptyPassword = field;
+        }
+    });
+
+    // Reopen the dialog this form lives in, if it lives in one.
+    var modal = best.closest(".modal");
+    if (modal && window.bootstrap && window.bootstrap.Modal) {
+        var instance = window.bootstrap.Modal.getOrCreateInstance(modal);
+        modal.addEventListener("shown.bs.modal", function () {
+            (firstEmptyPassword || best.querySelector("input, select, textarea")).focus();
+        }, { once: true });
+        instance.show();
+    } else if (firstEmptyPassword) {
+        firstEmptyPassword.focus();
+    }
+})();
