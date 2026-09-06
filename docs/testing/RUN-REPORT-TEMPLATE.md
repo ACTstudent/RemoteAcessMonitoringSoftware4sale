@@ -12,6 +12,13 @@
 - Scope / excluded areas with owner and reason:
 - Performance acceptance limits agreed before execution:
 
+Record the **command and fixture** that produce each figure, not a path into a
+working directory. Raw logs and the isolated database are not retained; the two
+existing runs cited scratch directories that no longer exist and each needed an
+addendum to correct it. Derived evidence — the CSVs — goes beside the report,
+and the harness that produced it belongs in
+[`tools/verification/`](../../tools/verification/README.md).
+
 ## Automated execution
 
 | Project/check | Command/log link | Discovered | Passed | Failed | Skipped | Exit code | Evidence |

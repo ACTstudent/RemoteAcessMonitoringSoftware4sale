@@ -68,12 +68,22 @@ Both upload their TRX results, including when they fail.
 
 | Run | Revision | Outcome |
 | --- | --- | --- |
-| [20260906-054337-8407e72](testing/runs/20260906-054337-8407e72/SUMMARY.md) | `8407e72` | Not accepted for release: 12 cases blocked for want of hardware. All 153 controller actions refuse an anonymous caller and every shared admin action matches its `[TeacherSharedAction]` attribute. The three defects it found have since been fixed ([addendum](testing/runs/20260906-054337-8407e72/ADDENDUM-defect-fixes.md)), and the live transport lane tested ([addendum](testing/runs/20260906-054337-8407e72/ADDENDUM-live-transport.md)) |
-| [20260905-125626-b5441f1](testing/runs/20260905-125626-b5441f1/SUMMARY.md) | `b5441f1` | Not accepted for release: seven live cases blocked for want of hardware. DEF-001 has since been fixed — see the [addendum](testing/runs/20260905-125626-b5441f1/ADDENDUM-install-and-DEF-001.md) |
+| [20260906-054337-8407e72](testing/runs/20260906-054337-8407e72/SUMMARY.md) | `8407e72` | Not accepted for release: 12 cases blocked for want of hardware. All 153 controller actions refuse an anonymous caller and every shared admin action matches its `[TeacherSharedAction]` attribute. The three defects it found have since been fixed ([addendum](testing/runs/20260906-054337-8407e72/ADDENDUM-defect-fixes.md)), the live transport lane tested ([addendum](testing/runs/20260906-054337-8407e72/ADDENDUM-live-transport.md)), and its harnesses committed ([addendum](testing/runs/20260906-054337-8407e72/ADDENDUM-evidence-locations.md)) |
+| [20260905-125626-b5441f1](testing/runs/20260905-125626-b5441f1/SUMMARY.md) | `b5441f1` | Not accepted for release: seven live cases blocked for want of hardware. DEF-001 has since been fixed — see the [addendum](testing/runs/20260905-125626-b5441f1/ADDENDUM-install-and-DEF-001.md). Its raw evidence path no longer exists ([addendum](testing/runs/20260905-125626-b5441f1/ADDENDUM-evidence-locations.md)) |
 
 Run reports are kept as written. When something in one later turns out to be
 wrong or superseded, the correction goes in a dated addendum beside it and the
 original is left intact, so the history stays readable.
+
+**What is retained, and what is not.** A run keeps its derived evidence — the
+summary, the case results and the CSVs — beside the report, and the harness that
+produced them is committed under
+[`tools/verification/`](../tools/verification/README.md). Raw logs, TRX and
+Cobertura XML are not retained: they carry absolute paths and full console
+output, and they date immediately. A figure you want to confirm is re-derived by
+running the harness against a fresh isolated server. So a report should record
+the command and the fixture, never a path into a working directory — both runs
+above did the latter and needed an addendum for it.
 
 ## Improvement ledger
 

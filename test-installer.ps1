@@ -238,6 +238,54 @@ if ($innounp -and (Test-Path -LiteralPath $serverInstaller -PathType Leaf)) {
     }
 }
 
+# version.json is the only place the release version is written down, but three
+# files outside the build restate it and none of them is generated. Each one is
+# a place the version can silently fall behind, and a portal advertising a
+# version that was never released is worse than no version at all.
+$propagated = @(
+    @{
+        Path    = "portal\version.json"
+        What    = "portal version feed"
+        # The portal fetches this at runtime and fills every [data-version] span.
+        Pattern = '"version"\s*:\s*"([^"]+)"'
+    },
+    @{
+        Path    = "portal\index.html"
+        What    = "portal fallback version"
+        # The visible text, used when the fetch above fails or JavaScript is off.
+        Pattern = '<span data-version>([^<]*)</span>'
+    },
+    @{
+        Path    = "README.md"
+        What    = "README release badge"
+        Pattern = 'Release-v([0-9]+\.[0-9]+\.[0-9]+)-'
+    }
+)
+
+foreach ($target in $propagated) {
+    $path = Join-Path $Root $target.Path
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+        Fail "$($target.What): $($target.Path) is missing"
+        continue
+    }
+
+    $versionMatches = [regex]::Matches((Get-Content -LiteralPath $path -Raw), $target.Pattern)
+    if ($versionMatches.Count -eq 0) {
+        Fail "$($target.What): no version found in $($target.Path)"
+        continue
+    }
+
+    # Every occurrence is checked, not just the first. index.html restates the
+    # version in five places and they have disagreed before.
+    $found = @($versionMatches | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+    $wrong = @($found | Where-Object { -not (Test-VersionAlignment $_ $version) })
+    if ($wrong.Count -eq 0) {
+        Pass "$($target.What) is $version in all $($versionMatches.Count) place(s)"
+    } else {
+        Fail "$($target.What) in $($target.Path) reads '$($wrong -join "', '")' but version.json says '$version'"
+    }
+}
+
 Write-Host ""
 if ($failed -ne 0) {
     Write-Host "$failed installer validation check(s) failed." -ForegroundColor Red
