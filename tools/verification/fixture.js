@@ -116,6 +116,40 @@ async function post(path, fields, pageForToken) {
   }, '/Admin/Classes');
   console.log(`create class B  -> ${r.status} ${r.location || ''}`);
 
+  // A class this teacher does not own, so a scoping check has a genuine
+  // negative to test against.
+  created.foreignClassName = `Class ${RUN}-Foreign`;
+  r = await post('/Admin/CreateClass', {
+    ClassName: created.foreignClassName, Section: 'Z', Subject: 'Computer Education',
+    GradeLevel: '6', AcademicYear: '2026-2027', Schedule: 'F 14:00',
+    TeacherId: ''
+  }, '/Admin/Classes');
+  console.log(`create foreign class -> ${r.status} ${r.location || ''}`);
+
+  // Record the ids. Hard-coding class 1 was wrong on any database that had seen
+  // more than one fixture run: the check then asked a teacher about someone
+  // else's class, got a correct refusal, and reported it as a failure.
+  const classList = await get('/Admin/Classes');
+  // In this table the class name is rendered before the link that carries its
+  // id, so a row's id is the first ClassDetails link *after* its name. Looking
+  // backwards instead returns the previous row's id, which swaps the two ids
+  // and inverts every scoping result - checked against the database rather than
+  // guessed, because both directions look plausible from the markup.
+  const links = [...classList.body.matchAll(/ClassDetails\/(\d+)/g)]
+    .map(m => ({ id: Number(m[1]), at: m.index }));
+  const idOf = name => {
+    const at = classList.body.indexOf(name);
+    if (at === -1) return null;
+    const following = links.find(l => l.at > at);
+    return following ? following.id : null;
+  };
+  created.classIds = [...new Set(links.map(l => l.id))];
+  created.ownClassId = idOf(created.className);
+  created.foreignClassId = idOf(created.foreignClassName);
+  if (!created.ownClassId) {
+    console.log('  WARNING: could not resolve the teacher\'s own class id.');
+  }
+
   created.station = `LAB-${RUN}`;
   r = await post('/Admin/CreateComputer', {
     LaboratoryStation: created.station, Status: 'Available', AssignedTo: ''

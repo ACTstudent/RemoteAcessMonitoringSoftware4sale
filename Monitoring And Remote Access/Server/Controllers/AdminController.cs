@@ -14,7 +14,7 @@ namespace Server.Controllers
     [Authorize(Roles = RoleNames.AdminOrTeacher)]
     [ServiceFilter(typeof(AdminControllerAuthorizationFilter))]
     [AutoValidateAntiforgeryToken]
-    public class AdminController : Controller
+    public class AdminController : PortalController
     {
         private readonly ApplicationDbContext _context;
         private readonly PasswordHasher<object> _hasher = new();
@@ -62,7 +62,14 @@ namespace Server.Controllers
             _ => type.Trim()
         };
 
-        private IActionResult Denied() => RedirectToAction("Login", "Account");
+        protected override ApplicationDbContext Db => _context;
+
+        // The admin portal is reachable by a teacher through
+        // [TeacherSharedAction], so who is acting has to be worked out.
+        protected override (string UserType, int? UserId) Actor =>
+            IsTeacherActor
+                ? (RoleNames.Teacher, ActorTeacherId)
+                : (RoleNames.Admin, HttpContext.Session.GetInt32("AdminId"));
 
         private async Task<bool> LoginIdentifierInUseAsync(string value, AccountRole? excludedRole = null, int? excludedId = null)
         {
@@ -89,21 +96,6 @@ namespace Server.Controllers
                 .AsNoTracking()
                 .OrderBy(admin => admin.Username)
                 .ToListAsync();
-        }
-
-        private async Task AuditAsync(string action, string details)
-        {
-            var teacherActor = IsTeacherActor;
-            _context.AuditLogs.Add(new AuditLog
-            {
-                UserType = teacherActor ? "Teacher" : "Admin",
-                UserId = teacherActor ? ActorTeacherId : HttpContext.Session.GetInt32("AdminId"),
-                Action = action,
-                Details = details,
-                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
-                 Timestamp = DateTime.UtcNow
-            });
-            await _context.SaveChangesAsync();
         }
 
         // ---------- Account settings and lockout management ----------
@@ -1243,19 +1235,12 @@ namespace Server.Controllers
                 return RedirectToAction("Students");
             }
 
-            if (!result.Success)
-            {
-                TempData["ErrorMessage"] = result.Error;
-            }
-            else
-            {
-                await AuditAsync("AssignStudentToClass", classId.HasValue
-                    ? $"Assigned student {studentId} to class {classId}"
-                    : $"Unassigned student {studentId} from class");
-                TempData["Message"] = classId.HasValue
-                    ? $"Student '{result.Name}' assigned successfully."
-                    : $"Student '{result.Name}' unassigned. The account was preserved.";
-            }
+            await RecordAsync(result, "AssignStudentToClass", classId.HasValue
+                ? $"Assigned student {studentId} to class {classId}"
+                : $"Unassigned student {studentId} from class",
+                classId.HasValue
+                ? $"Student '{result.Name}' assigned successfully."
+                : $"Student '{result.Name}' unassigned. The account was preserved.");
 
             return RedirectToAction("Students");
         }
@@ -1285,14 +1270,12 @@ namespace Server.Controllers
                 actorTeacherId: null,
                 isAdmin: true);
 
-            if (!result.Success)
+            if (!await RecordAsync(result, "ClassCreated", $"Created class '{result.Name}'",
+                $"Class '{result.Name}' created successfully!"))
             {
-                TempData["ErrorMessage"] = result.Error;
                 return RedirectToAction("Classes");
             }
 
-            await AuditAsync("ClassCreated", $"Created class '{result.Name}'");
-            TempData["Message"] = $"Class '{result.Name}' created successfully!";
             return RedirectToAction("Classes");
         }
 
@@ -1307,14 +1290,12 @@ namespace Server.Controllers
                 actorTeacherId: null,
                 isAdmin: true);
 
-            if (!result.Success)
+            if (!await RecordAsync(result, "ClassUpdated", $"Updated class '{result.Name}'",
+                $"Class '{result.Name}' updated successfully!"))
             {
-                TempData["ErrorMessage"] = result.Error;
                 return RedirectToAction("Classes");
             }
 
-            await AuditAsync("ClassUpdated", $"Updated class '{result.Name}'");
-            TempData["Message"] = $"Class '{result.Name}' updated successfully!";
             return RedirectToAction("Classes");
         }
 
@@ -1327,15 +1308,8 @@ namespace Server.Controllers
                 ? await _classManagement.AssignTeacherAsync(classId, teacherId.Value)
                 : ClassOperationResult.Fail("Select an active teacher before assigning the class.");
 
-            if (!result.Success)
-            {
-                TempData["ErrorMessage"] = result.Error;
-            }
-            else
-            {
-                await AuditAsync("AssignTeacher", $"Assigned teacher {teacherId} to class '{result.Name}'");
-                TempData["Message"] = $"Teacher assigned successfully to '{result.Name}'.";
-            }
+            await RecordAsync(result, "AssignTeacher", $"Assigned teacher {teacherId} to class '{result.Name}'",
+                $"Teacher assigned successfully to '{result.Name}'.");
             return RedirectToAction("ClassDetails", new { id = classId });
         }
 
@@ -1353,16 +1327,10 @@ namespace Server.Controllers
 
             var archived = !existing.IsArchived;
             var result = await _classManagement.SetArchiveStateAsync(id, archived);
-            if (!result.Success)
-            {
-                TempData["ErrorMessage"] = result.Error;
-            }
-            else
-            {
-                var state = archived ? "archived" : "restored";
-                await AuditAsync(archived ? "ClassArchived" : "ClassRestored", $"{state} class '{result.Name}'");
-                TempData["Message"] = $"Class '{result.Name}' {state} successfully.";
-            }
+            var state = archived ? "archived" : "restored";
+            await RecordAsync(result, archived ? "ClassArchived" : "ClassRestored",
+                $"{state} class '{result.Name}'",
+                $"Class '{result.Name}' {state} successfully.");
             return RedirectToAction("Classes");
         }
 
@@ -1372,15 +1340,8 @@ namespace Server.Controllers
         {
             if (!CheckAccess()) return Denied();
             var result = await _classManagement.DeleteClassAsync(classId);
-            if (!result.Success)
-            {
-                TempData["ErrorMessage"] = result.Error;
-            }
-            else
-            {
-                await AuditAsync("ClassDeleted", $"Deleted class '{result.Name}'");
-                TempData["Message"] = $"Class '{result.Name}' deleted successfully.";
-            }
+            await RecordAsync(result, "ClassDeleted", $"Deleted class '{result.Name}'",
+                $"Class '{result.Name}' deleted successfully.");
             return RedirectToAction("Classes");
         }
 
@@ -1416,14 +1377,12 @@ namespace Server.Controllers
             var result = await _classManagement.CreateStudentInClassAsync(
                 classId,
                 new NewStudentInput(null, firstName, lastName, null, username, password));
-            if (!result.Success)
+            if (!await RecordAsync(result, "AddStudentToClass", $"Added student {result.Name} to class {classId}",
+                $"Student '{result.Name}' added successfully!"))
             {
-                TempData["ErrorMessage"] = result.Error;
                 return RedirectToAction("ClassDetails", new { id = classId });
             }
 
-            await AuditAsync("AddStudentToClass", $"Added student {result.Name} to class {classId}");
-            TempData["Message"] = $"Student '{result.Name}' added successfully!";
             return RedirectToAction("ClassDetails", new { id = classId });
         }
 
@@ -1451,14 +1410,12 @@ namespace Server.Controllers
                 .ToList();
 
             var result = await _classManagement.BulkCreateStudentsAsync(rows);
-            if (!result.Success)
+            if (!await RecordAsync(result, "BulkCreateStudents", $"Bulk created {result.Count} unassigned student profiles",
+                $"Successfully created {result.Count} student profile(s)."))
             {
-                TempData["ErrorMessage"] = result.Error;
                 return RedirectToAction("Students");
             }
 
-            await AuditAsync("BulkCreateStudents", $"Bulk created {result.Count} unassigned student profiles");
-            TempData["Message"] = $"Successfully created {result.Count} student profile(s).";
             return RedirectToAction("Students");
         }
 
@@ -1486,14 +1443,12 @@ namespace Server.Controllers
                 .ToList();
 
             var result = await _classManagement.BulkCreateStudentsInClassAsync(classId, rows);
-            if (!result.Success)
+            if (!await RecordAsync(result, "BulkAddStudents", $"Bulk added {result.Count} students to class {classId}",
+                $"Successfully added {result.Count} student(s) to the class."))
             {
-                TempData["ErrorMessage"] = result.Error;
                 return RedirectToAction("ClassDetails", new { id = classId });
             }
 
-            await AuditAsync("BulkAddStudents", $"Bulk added {result.Count} students to class {classId}");
-            TempData["Message"] = $"Successfully added {result.Count} student(s) to the class.";
             return RedirectToAction("ClassDetails", new { id = classId });
         }
 
@@ -1525,15 +1480,8 @@ namespace Server.Controllers
         {
             if (!CheckAccess()) return Denied();
             var result = await _classManagement.EnrollExistingStudentAsync(classId, studentId, moveStudent);
-            if (!result.Success)
-            {
-                TempData["ErrorMessage"] = result.Error;
-            }
-            else
-            {
-                await AuditAsync("EnrollStudent", $"Enrolled student {studentId} in class {classId}");
-                TempData["Message"] = $"Student '{result.Name}' enrolled successfully.";
-            }
+            await RecordAsync(result, "EnrollStudent", $"Enrolled student {studentId} in class {classId}",
+                $"Student '{result.Name}' enrolled successfully.");
             return RedirectToAction("ClassDetails", new { id = classId });
         }
 
@@ -1576,15 +1524,8 @@ namespace Server.Controllers
         {
             if (!CheckAccess()) return Denied();
             var result = await _classManagement.RemoveStudentAsync(classId, studentId);
-            if (!result.Success)
-            {
-                TempData["ErrorMessage"] = result.Error;
-            }
-            else
-            {
-                await AuditAsync("RemoveStudent", $"Removed student {studentId} from class {classId}");
-                TempData["Message"] = "Student removed from class.";
-            }
+            await RecordAsync(result, "RemoveStudent", $"Removed student {studentId} from class {classId}",
+                "Student removed from class.");
             return RedirectToAction("ClassDetails", new { id = classId });
         }
 
@@ -1779,8 +1720,5 @@ namespace Server.Controllers
             return CsvExport.Result("UsageLog", csv.ToString());
         }
 
-        // One implementation, in CsvExport. Kept as a local name because 58
-        // call sites read better with it.
-        private static string Csv(string? value) => CsvExport.Escape(value);
     }
 }

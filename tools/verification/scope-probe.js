@@ -56,34 +56,48 @@ const check = (name, pass, detail) => {
   if (r.status !== 302) { console.error('teacher sign-in failed: ' + r.status); process.exit(2); }
   console.log('teacher signed in -> ' + r.location + '\n');
 
-  console.log('Class-scoped pages, before the class belongs to this teacher:');
-  const beforeAnalytics = await teacher.get('/Teacher/ClassAnalytics/1');
-  const beforeDetails = await teacher.get('/Teacher/ClassDetails/1');
-  check('ClassAnalytics refuses a class owned by nobody else',
-    beforeAnalytics.status !== 200, 'HTTP ' + beforeAnalytics.status);
+  // Ids come from the fixture. Hard-coding class 1 was wrong on any database
+  // that had seen more than one fixture run: it asked this teacher about a
+  // different teacher's class, received a correct refusal, and reported it as
+  // a failure. Five false alarms in one run is how a check stops being read.
+  const ownClassId = fixture.ownClassId;
+  const foreignClassId = fixture.foreignClassId;
+  if (!ownClassId || !foreignClassId) {
+    console.error('fixture.json has no ownClassId/foreignClassId. Rebuild it with fixture.js.');
+    process.exit(2);
+  }
+
+  console.log("A class that is not this teacher's:");
+  const foreignAnalytics = await teacher.get(`/Teacher/ClassAnalytics/${foreignClassId}`);
+  const foreignDetails = await teacher.get(`/Teacher/ClassDetails/${foreignClassId}`);
+  check('ClassAnalytics refuses a class this teacher does not own',
+    foreignAnalytics.status !== 200, 'HTTP ' + foreignAnalytics.status);
   check('ClassDetails refuses the same class',
-    beforeDetails.status !== 200, 'HTTP ' + beforeDetails.status);
+    foreignDetails.status !== 200 || /\/Teacher\/Classes$/.test(foreignDetails.location || ''),
+    'HTTP ' + foreignDetails.status + (foreignDetails.location ? ' -> ' + foreignDetails.location : ''));
 
-  // Assign the class through the admin portal, then ask again as the teacher.
-  const admin = session();
-  r = await admin.login(config.admin.user, config.admin.password);
-  if (r.status !== 302) { console.error('admin sign-in failed: ' + r.status); process.exit(2); }
-  const assign = await admin.post('/Admin/AssignTeacher',
-    { classId: 1, teacherId: fixture.teacherIdResolved || 1 }, '/Admin/Classes');
-  console.log(`\n  admin assigned the class -> ${assign.status} ${assign.location || ''}\n`);
+  console.log("\nThe teacher's own class:");
+  const ownAnalytics = await teacher.get(`/Teacher/ClassAnalytics/${ownClassId}`);
+  const ownDetails = await teacher.get(`/Teacher/ClassDetails/${ownClassId}`);
+  check('ClassAnalytics renders for the owning teacher',
+    ownAnalytics.status === 200, 'HTTP ' + ownAnalytics.status);
+  check('ClassDetails renders for the owning teacher',
+    ownDetails.status === 200, 'HTTP ' + ownDetails.status);
 
-  console.log('The same two URLs, after the class belongs to this teacher:');
-  const afterAnalytics = await teacher.get('/Teacher/ClassAnalytics/1');
-  const afterDetails = await teacher.get('/Teacher/ClassDetails/1');
-  check('ClassAnalytics now renders for the owning teacher',
-    afterAnalytics.status === 200, 'HTTP ' + afterAnalytics.status);
-  check('ClassDetails now renders for the owning teacher',
-    afterDetails.status === 200, 'HTTP ' + afterDetails.status);
+  // Some admin pages are shared with teachers on purpose - they carry
+  // [TeacherSharedAction], and role-matrix.js checks every one of them against
+  // that attribute. Expecting a refusal here contradicted the product and
+  // produced three more false failures.
+  console.log('\nAdmin pages shared with teachers by design:');
+  for (const path of ['/Admin/Index', '/Admin/Students', '/Admin/Teachers']) {
+    const res = await teacher.get(path);
+    check(`teacher can open ${path}`, res.status === 200,
+      'HTTP ' + res.status + (res.location ? ' -> ' + res.location : ''));
+  }
 
-  // A teacher must not reach admin-only surfaces at any point.
   console.log('\nAdmin-only surfaces, as the teacher:');
-  for (const path of ['/Admin/Index', '/Admin/Students', '/Admin/Teachers', '/Admin/AuditLogs',
-                      '/Admin/SystemLogs', '/Admin/Database', '/Admin/Deployment', '/Admin/Roles']) {
+  for (const path of ['/Admin/AuditLogs', '/Admin/SystemLogs', '/Admin/Database',
+                      '/Admin/Deployment', '/Admin/Roles']) {
     const res = await teacher.get(path);
     const refused = res.status !== 200;
     check(`teacher cannot open ${path}`, refused,
