@@ -404,15 +404,6 @@ body {
     overscroll-behavior: contain;
 }
 
-.student-toolbar {
-    gap: 1rem;
-}
-
-.student-toolbar-primary,
-.student-toolbar-meta {
-    min-width: 0;
-}
-
 /* Shared page and dialog treatment */
 .page-header {
     display: flex;
@@ -491,13 +482,6 @@ body {
 .modal .form-select:focus {
     border-color: var(--accent-emerald);
     box-shadow: 0 0 0 3px rgba(23, 128, 58, 0.14);
-}
-
-.modal-section {
-    padding: 1rem;
-    background: #FAF8F3;
-    border: 1px solid #E7E2D9;
-    border-radius: var(--radius-md);
 }
 
 /* Height is applied only to grid-column action cards (below) so they match each
@@ -598,11 +582,6 @@ body {
     justify-content: center;
 }
 
-.bg-light-green {
-    background-color: #d1fae5;
-    color: #065f46;
-}
-
 /* Icon Box Primary */
 .icon-box-primary {
     width: 48px;
@@ -679,10 +658,6 @@ body {
     font-size: 0.8rem;
     padding: 0.35em 0.7em;
     border-radius: var(--radius-xl);
-}
-
-.border-bottom-subtle {
-    border-bottom: 1px solid #f4f4f5;
 }
 
 .btn-view-class {
@@ -874,10 +849,6 @@ body {
         display: none !important;
     }
 
-    .student-toolbar .student-identity {
-        display: none !important;
-    }
-
     .student-toolbar #toolbarUnit {
         max-width: 180px;
         overflow: hidden;
@@ -923,12 +894,6 @@ body {
         gap: 0.5rem;
     }
 
-    .student-toolbar-primary,
-    .student-toolbar-meta {
-        gap: 0.45rem !important;
-    }
-
-    .student-toolbar .student-identity,
     .student-toolbar #toolbarUnit {
         display: none !important;
     }
@@ -1027,10 +992,6 @@ body {
    --------------------------------------------------------------------------- */
 .text-emerald-700 {
     color: #15803D;
-}
-
-.text-emerald-200 {
-    color: #BBF3C6;
 }
 
 .stat {

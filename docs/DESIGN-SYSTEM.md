@@ -148,6 +148,32 @@ A sidebar link is current when **controller and action** both match. Matching on
 the action alone is what made `/Admin/Students` highlight the teacher's own
 Students link — both actions carry that name.
 
+## Rules kept although nothing uses them
+
+`tools/verification/css-audit.js` reports every class selector nothing
+references. Four survive that report on purpose, so the next person to run it
+does not delete them:
+
+- **`.bg-info` and `.text-info`** complete a four-colour semantic set alongside
+  `primary`, `success` and `danger`. Removing one colour because no page happens
+  to use it today leaves a palette with a hole in it, and surprises whoever
+  reaches for `bg-info` next.
+- **`.btn-dark` and `.btn-outline-dark`** are Bootstrap names sharing a rule with
+  `.btn-primary`. The rule stays either way; dropping the alias only means a
+  future `btn-dark` renders in Bootstrap's colours instead of the product's.
+
+Everything else the audit reported was removed, after confirming no rendered
+page carried the class — `tools/verification/removed-css-check.js` visits every
+page each role owns and fails if one still does.
+
+**Two traps that audit exists to avoid.** Class names are built at runtime here:
+`site.js` writes `"connection-status connection-status-" + state`, so
+`.connection-status-lost` appears nowhere in the source and is very much alive.
+And a rule can be dead because its *hook* was dropped rather than its markup —
+the narrow-screen student toolbar rules stopped matching when the three layouts
+were merged in `0485327`, which reads as unused CSS but was a broken selector
+over live markup. The fix there was to restore the class, not delete the rules.
+
 ## What this document does not cover
 
 - The WinForms client's own controls. Its palette mirrors these tokens and names

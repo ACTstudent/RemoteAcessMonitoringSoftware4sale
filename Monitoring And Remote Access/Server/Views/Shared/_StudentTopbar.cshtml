@@ -3,7 +3,11 @@
     // renders for every portal.
     var assignedUnit = ViewContext.HttpContext.Session.GetString("AssignedUnit") ?? "Unit -";
 }
-<div class="d-flex align-items-center gap-3 ms-3">
+@* student-toolbar is the hook for the narrow-screen rules in site.css, which
+   shrink the timer and hide the unit badge. It was dropped when the three
+   layouts were merged into one shell in 0485327, and those rules have been
+   matching nothing since. *@
+<div class="student-toolbar d-flex align-items-center gap-3 ms-3">
     <span class="badge badge-active rounded-pill px-3 py-2" id="toolbarUnit">
         <i class="bi bi-pc-display me-1" aria-hidden="true"></i> @assignedUnit
     </span>
