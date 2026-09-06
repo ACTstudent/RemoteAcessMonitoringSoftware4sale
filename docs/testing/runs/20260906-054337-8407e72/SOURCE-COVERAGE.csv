@@ -1,0 +1,36 @@
+File,CaseIds,AutomatedTests,LineCoveragePct,ReviewStatus,Evidence,ExclusionReason
+Server/Program.cs,AUTH-05;SEC-01;TLS-01;DB-01,none,0.0,exercised live but not unit tested,logs/server-stdout.log;authz-anonymous.csv,startup and middleware run only in a hosted process; needs the HTTP integration harness
+Server/Controllers/ClientAuthController.cs,CLIENT-01;AUTH-05,ClientAuthControllerTests (18),100.0,covered,trx-final/server-final.trx,
+Server/Controllers/StudentController.cs,AUTH-02;ALT-01;SES-02;POL-01,StudentControllerTests (48),96.0,covered,trx-final/server-final.trx,
+Server/Controllers/MonitoringController.cs,AUTH-02,MonitoringControllerTests (7),100.0,covered,trx-final/server-final.trx,
+Server/Controllers/AccountController.cs,AUTH-01;AUTH-04;AUTH-05,AccountControllerTests,see coverage-after.csv,covered,trx-final/server-final.trx;curl transcripts,
+Server/Controllers/AdminController.cs,AUTH-02;AUTH-03;CRUD-01;REP-01;TIME-01,AdminControllerTests,60.0,partially covered,authz-teacher-matrix.csv;trx-final/server-final.trx,1072 lines; the teacher/admin split is fully matrix-tested but many action bodies are not
+Server/Controllers/TeacherController.cs,AUTH-03;ALT-01;REP-01,TeacherControllerTests;TeacherAlertFilterTests,59.0,partially covered,trx-final/server-final.trx;ui-sweep.csv,847 lines; alert filtering is covered in depth, monitoring and remote actions are not
+Server/Controllers/AdminDatabaseController.cs,DB-02,AdminDatabaseControllerTests,34.0,partially covered,trx-final/server-final.trx,restore and backup paths need a real fixture database
+Server/Controllers/AdminDeploymentController.cs,DEP-01,AdminDeploymentControllerTests,52.0,partially covered,authz-anonymous.csv,download bodies were not fetched in this run
+Server/Authorization/AdminControllerAuthorizationFilter.cs,AUTH-02;AUTH-03,none directly,see coverage-after.csv,covered live,authz-teacher-matrix.csv;inactive-teacher transcript,all three branches (admin, active teacher shared, inactive teacher) exercised against a running server
+Server/Hubs/RemoteMonitoringHub.cs,HUB-01;HUB-02;HUB-03,RemoteMonitoringHubSecurityTests,56.0,partially covered,trx-final/server-final.trx,mocked only; real transport reconnect and delivery remain BLOCKED
+Server/Services/AuthenticationService.cs,AUTH-01;AUTH-04,AuthenticationServiceTests,see coverage-after.csv,covered,trx-final/server-final.trx,
+Server/Services/AuthPrincipalFactory.cs,AUTH-01;CLIENT-01,AuthPrincipalFactoryTests;ClientAuthControllerTests,see coverage-after.csv,covered,trx-final/server-final.trx,
+Server/Services/SessionHelper.cs,AUTH-02,StudentControllerTests;MonitoringControllerTests,75.0,covered,trx-final/server-final.trx,
+Server/Services/AnalyticsService.cs,REP-01;ALT-01,AnalyticsServiceTests,see coverage-after.csv,covered,trx-final/server-final.trx,
+Server/Services/TelemetryService.cs,TEL-01,TelemetryServiceTests,see coverage-after.csv,partially covered,trx-final/server-final.trx,queue bounds under real client load remain BLOCKED
+Server/Services/LabSessionLifecycleService.cs,SES-01;SES-02,LabSessionLifecycleServiceTests;ClientAuthControllerTests,see coverage-after.csv,covered,trx-final/server-final.trx,
+Server/Services/ServerDiscoveryService.cs,NET-01,none,0.0,not covered,coverage-after.csv,101 lines of UDP discovery; BLOCKED on a disposable network
+Server/Services/PolicyChangeBroadcastInterceptor.cs,POL-01,none,0.0,not covered,coverage-after.csv,26 lines; needs a connected client to observe a broadcast
+Server/Services/ExpiredLabSessionCleanupService.cs,SES-02;DB-03,none,0.0,not covered,coverage-after.csv,hosted background service; needs a timed integration harness
+Server/Services/TelemetryRetentionCleanupService.cs,DB-03,TelemetryRetentionCleanerTests,see coverage-after.csv,partially covered,trx-final/server-final.trx,the cleaner logic is tested; the hosted loop is not
+Server/Services/DatabaseMaintenanceService.cs,DB-02,DatabaseMaintenanceServiceTests,see coverage-after.csv,partially covered,trx-final/server-final.trx,restore rehearsal on a real file remains NOT RUN
+Server/Services/ServerCertificateManager.cs,TLS-01,ServerCertificateManagerTests,see coverage-after.csv,covered,trx-final/server-final.trx;logs/server-stdout.log,generation observed live on first start
+Server/Services/AccountSeeder.cs,AUTH-01;INS-01,AccountSeederTests,see coverage-after.csv,covered,trx-final/server-final.trx;logs/server-stdout.log,no-default-password behaviour confirmed live
+Server/Extensions/DateTimeDisplayExtensions.cs,TIME-01,DateTimeDisplayExtensionsTests (6),100.0,covered,trx-final/server-final.trx,
+Server/Models/PagerViewModel.cs,UI-01,PagerViewModelTests (5),100.0,covered,trx-final/server-final.trx,
+Server/Models/AlertListModels.cs,ALT-01;REP-01,TeacherAlertFilterTests,see coverage-after.csv,covered,trx-final/server-final.trx,
+Server/ViewComponents/OpenAlertCountViewComponent.cs,ALT-01,none,0.0,exercised live,ui-sweep.csv,rendered on every teacher page during the sweep but has no unit test
+Server/Views/**/*.cshtml (48 files),UI-01;UI-02;SEC-01,none,0.0 from unit tests,covered live,ui-sweep.csv,views are not executed by unit tests; 42 pages rendered with no console or network error
+Server/Migrations/*,DB-01,DatabaseInitializerTests,excluded from the aggregate,covered live,logs/server-stdout.log,9 migrations applied to a new file-backed SQLite database
+Server/wwwroot/js/site.js,UI-01,none,n/a,exercised live,ui-sweep.csv,loaded on every page with no console error; the repeat-submit guard has no automated test
+Client/** (WinForms agent),WIN-01;WIN-02;TEL-02,Client.Tests (33),not measured,partially covered,trx-final/client-final.trx,no coverage collector configured; interactive behaviour BLOCKED on a Windows client
+Shared/Contracts/*,HUB-01;TEL-01;CLIENT-01,ContractTests;ClientAuthControllerTests,see coverage-after.csv,covered,trx-final/server-final.trx,
+tools/CamsDbCleaner/*,TOOL-01,none,not measured,built only,logs/build_CamsDbCleaner.log,execution against a fixture database is NOT RUN
+build-everything.ps1;test-installer.ps1;*.iss,INS-01;INS-02;BLD-01,none,n/a,not exercised,,packaging was deliberately not run: it rebuilds tracked installers and the brief forbids publishing a release

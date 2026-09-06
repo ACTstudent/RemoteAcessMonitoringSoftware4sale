@@ -66,6 +66,7 @@ Both upload their TRX results, including when they fail.
 
 | Run | Revision | Outcome |
 | --- | --- | --- |
+| [20260906-054337-8407e72](testing/runs/20260906-054337-8407e72/SUMMARY.md) | `8407e72` | Not accepted for release: 12 cases blocked for want of hardware. 459 automated tests pass; all 153 controller actions refuse an anonymous caller and every shared admin action matches its `[TeacherSharedAction]` attribute. Three open defects, two of them Medium |
 | [20260905-125626-b5441f1](testing/runs/20260905-125626-b5441f1/SUMMARY.md) | `b5441f1` | Not accepted for release: seven live cases blocked for want of hardware. DEF-001 has since been fixed — see the [addendum](testing/runs/20260905-125626-b5441f1/ADDENDUM-install-and-DEF-001.md) |
 
 Run reports are kept as written. When something in one later turns out to be
