@@ -75,12 +75,17 @@ namespace Server.Controllers
             switch (result.Role)
             {
                 case AccountRole.Student:
-                    await SignInAsync(result, string.Empty);
-                    HttpContext.Session.SetInt32("StudentId", result.AccountId!.Value);
-                    HttpContext.Session.SetString("FullName", result.DisplayName ?? "");
-                    HttpContext.Session.SetString("Role", "Student");
-                    _loginCache.Remove(key);
-                    return RedirectToAction("Index", "Monitoring");
+                    // The web portal is for teachers and administrators. A
+                    // student's account is real and their password is right, so
+                    // this is not a failed login and must not count against the
+                    // attempt ceiling - it is the wrong door. They are told
+                    // which door is theirs.
+                    //
+                    // The student agent signs in through ClientAuthController
+                    // instead, which is unaffected by this.
+                    ViewBag.Error = "This portal is for teachers and administrators. " +
+                        "Sign in on the CAMS Student Client on your workstation instead.";
+                    return View();
 
                 case AccountRole.Teacher:
                     await SignInAsync(result, string.Empty);

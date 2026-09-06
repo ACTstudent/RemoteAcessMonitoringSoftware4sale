@@ -83,17 +83,22 @@ public class AccountControllerTests
         Assert.Equal("Dashboard", redirect.ActionName);
     }
 
+    /// <summary>
+    /// This used to assert that a student signing in on the web was redirected
+    /// to the monitoring index. The web portal is now for teachers and
+    /// administrators only, so the expectation is inverted: no redirect at all,
+    /// because there is nowhere on the web for a student to go.
+    /// </summary>
     [Fact]
-    public async Task LoginPost_StudentRole_RedirectsToMonitoringIndex()
+    public async Task LoginPost_StudentRole_DoesNotEnterThePortal()
     {
         _authMock.Setup(a => a.LoginAsync("student", "pass", It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new LoginResult(AccountRole.Student, 1, "John"));
 
         var result = await _controller.Login("student", "pass");
 
-        var redirect = Assert.IsType<RedirectToActionResult>(result);
-        Assert.Equal("Monitoring", redirect.ControllerName);
-        Assert.Equal("Index", redirect.ActionName);
+        Assert.IsNotType<RedirectToActionResult>(result);
+        Assert.IsType<ViewResult>(result);
     }
 
     [Fact]
@@ -122,6 +127,55 @@ public class AccountControllerTests
             hasher.VerifyHashedPassword(new object(), student.PasswordHash, "newpassword"));
         Assert.False(await service.ChangeStudentPasswordAsync(student.Id, "wrongpass", "anotherpass"));
     }
+
+    /// <summary>
+    /// The web portal is for teachers and administrators. A student uses the
+    /// CAMS Student Client, which signs in through ClientAuthController; the
+    /// browser form must turn them away and say where to go instead.
+    /// </summary>
+    [Fact]
+    public async Task LoginPost_StudentCredentials_AreRefusedAndPointedAtTheClient()
+    {
+        _authMock.Setup(a => a.LoginAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new LoginResult(AccountRole.Student, 7, "Sam Student", "student1", "S-7"));
+
+        var result = await _controller.Login("student1", "correct-password");
+
+        var view = Assert.IsType<ViewResult>(result);
+        var message = view.ViewData["Error"] as string ?? "";
+        Assert.Contains("teachers and administrators", message);
+        Assert.Contains("CAMS Student Client", message);
+    }
+
+    [Fact]
+    public async Task LoginPost_StudentCredentials_EstablishNoSession()
+    {
+        _authMock.Setup(a => a.LoginAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new LoginResult(AccountRole.Student, 7, "Sam Student", "student1", "S-7"));
+
+        await _controller.Login("student1", "correct-password");
+
+        var session = _controller.HttpContext.Session;
+        Assert.Null(session.GetString("Role"));
+        Assert.Null(session.GetInt32("StudentId"));
+        Assert.Null(session.GetString("FullName"));
+    }
+
+    [Fact]
+    public async Task LoginPost_StudentCredentials_DoNotSpendTheAttemptBudget()
+    {
+        // Their password was right; they are simply at the wrong door. Counting
+        // it would lock a shared workstation out of a portal it cannot use anyway.
+        _authMock.Setup(a => a.LoginAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new LoginResult(AccountRole.Student, 7, "Sam Student", "student1", "S-7"));
+
+        for (var attempt = 0; attempt < 8; attempt++)
+        {
+            var view = Assert.IsType<ViewResult>(await _controller.Login("student1", "correct-password"));
+            Assert.DoesNotContain("Too many", view.ViewData["Error"] as string ?? "");
+        }
+    }
+
 }
 
 internal sealed class FakeSession : ISession
