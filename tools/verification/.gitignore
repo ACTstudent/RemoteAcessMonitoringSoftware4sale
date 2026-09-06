@@ -1,0 +1,9 @@
+# The fixture file holds the passwords fixture.js generated for its synthetic
+# accounts. It is regenerated per run and must not be committed.
+fixture.json
+routes.json
+
+# Harness output.
+*.csv
+bin/
+obj/

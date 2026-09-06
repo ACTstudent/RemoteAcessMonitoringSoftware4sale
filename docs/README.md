@@ -37,7 +37,7 @@ both points.
 
 ## Running the tests
 
-The whole suite, 475 tests, runs from the solution:
+The whole suite, 506 tests, runs from the solution:
 
 ```powershell
 dotnet test "Monitoring And Remote Access\RemoteMonitoring.sln"
@@ -57,6 +57,7 @@ produce a release candidate, not to check a change:
 | [Test cases](testing/TEST-CASES.md) | The case families and their identifiers |
 | [Agent handoff](testing/AGENT-HANDOFF.md) | How to execute a run in isolation, and the constraints on doing so |
 | [Run report template](testing/RUN-REPORT-TEMPLATE.md) | The shape a run report must take |
+| [Verification harnesses](../tools/verification/README.md) | Checks that drive a running server — authorization, accessibility, SignalR, discovery. These produced the evidence in the run reports |
 
 In CI, `test.yml` is the fast baseline on ubuntu and runs the server tests only —
 `Client.Tests` targets `net8.0-windows` and cannot build there. `ci-full.yml`
