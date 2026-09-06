@@ -19,11 +19,11 @@ Owner for every item below: implementation agent, unless a person is named.
 
 ## Summary
 
-**37 work items. 13 VERIFIED (35%), 5 IN PROGRESS, 5 BLOCKED, 14 NOT STARTED.**
+**37 work items. 14 VERIFIED (38%), 4 IN PROGRESS, 5 BLOCKED, 14 NOT STARTED.**
 
 Counting only what can be finished on this machine — that is, setting aside the
 5 items blocked on a second Windows client, a disposable network and snapshot
-VMs — it is 13 of 32, or 41%.
+VMs — it is 14 of 32, or 44%.
 
 Two caveats on reading that number. It counts items, not effort: the 14 not-started
 items include the largest single pieces of work in the plan (`AdminController` at
@@ -48,7 +48,7 @@ UX-06 was VERIFIED and a later, wider sweep still found four more problems.
 | UX-01 | Consolidate design tokens | VERIFIED | `f15fece`, `3d2e552`, `8a7f000` |
 | UX-02 | Shared shell with role-aware navigation | VERIFIED | `0485327` |
 | UX-04 | Standardize states; no duplicate submit | VERIFIED | `c00cc27`, `90fc671`, `abecf7b`, `860e200`, `dcd6d72`, `0a82e92`, `0769992` |
-| UX-05 | Branding, favicon, titles, copy, offline assets | IN PROGRESS | `b9c0e63`, `3d2e552` |
+| UX-05 | Branding, favicon, titles, copy, offline assets | VERIFIED | `b9c0e63`, `3d2e552`, `a83a15e` |
 | UX-06 | Accessibility pass (names, ids, landmarks) | VERIFIED (web) | `f7b97f4`, `1d46c9c` |
 | FLOW-02 | Keep list filters, page and return location across actions | VERIFIED | `395abe9`, `8d1328c`, `dea6dae` |
 | FLOW-01, 03, 04, 05, 06 | Setup checklist, connection state, command feedback, interruption, collector states | NOT STARTED | — |
@@ -292,15 +292,13 @@ made.
   plan asks for. Migrations, backups, databases, certificate stores and archived test
   evidence are explicitly out of scope for deletion.
 
-### UX-05 — partially delivered
+### Phase 1 and 2 items are complete
 
-Recorded for accuracy. It does not meet the plan's acceptance criteria yet.
-UX-01, UX-02, UX-03 and UX-04 have since been finished and moved to the
-verified section.
+UX-01 to UX-06 and FLOW-02 are verified; their entries are below. FLOW-01 and
+FLOW-03 to FLOW-06 have not been started.
 
 | Item | Delivered | Not yet done |
 | --- | --- | --- |
-| UX-05 | Fonts self-hosted as subsetted woff2 with CSP updated so they load offline (`b9c0e63`, closes DEF-001). 16 action labels normalised to sentence case, so "Create class" no longer sits beside "Add more rows"; page names and acronyms deliberately keep their Title Case. A favicon exists at last — 708 bytes of SVG rather than the 825 KB school logo, ending a 404 on every page load (`3d2e552`) | Helper text and error copy still unaudited. The public portal under `portal/` and the WinForms dialogs were not part of this pass |
 
 ### LIVE-01 / LIVE-02 — Test suites and decision-branch coverage
 
@@ -573,3 +571,34 @@ browser - so there is no server-held filter state anywhere else to lose.
 - **Status:** VERIFIED.
 - **Not covered:** the WinForms client's own dialogs have not been reviewed for these
   states.
+
+### UX-05 — Branding, titles, labels and copy
+
+- **Observed problem:** CAMS had **no favicon at all**, so every tab showed a blank icon
+  and every page load ended in a 404 for `/favicon.ico`. Action labels mixed two
+  conventions — "Create Class" beside "Add more rows". Error copy capitalised **Teacher**
+  mid-sentence while administrator and student stayed lowercase. And the desktop agent
+  said "No Session" for the state the web calls "No session".
+- **User outcome:** the product reads as one thing across the browser, the desktop agent
+  and the public portal.
+- **Change:** 16 action labels moved to sentence case, leaving page names and acronyms
+  alone; 7 error messages made consistent on role words; the agent's two divergent
+  labels aligned with the web.
+- **One mark, not three.** The public portal already had a product mark. I had invented
+  a second for the app favicon, which would have been a third design in the product.
+  The app now serves the portal's mark verbatim — the drawing is byte-identical — so a
+  browser showing the portal in one tab and the server in another sees one product.
+  631 bytes, against the 825 KB school logo the tag would otherwise have pointed at.
+- **Public portal:** already carries a title, meta description and its own icon. It uses
+  a brighter palette than the application. Left alone deliberately: recolouring a public
+  marketing page is a branding decision, not a consistency fix.
+- **Windows dialog captions** keep their Title Case — that is the platform convention for
+  a window title, and matching the web's sentence case there would look wrong on Windows.
+- **Evidence after:** the mark serves at 200 as `image/svg+xml` and its drawing diffs
+  clean against `portal/assets/cams-mark.svg`; no page reports a failed asset request in
+  the 45-page sweep; server 460/460, client 43/43.
+- **Rollout/rollback:** revert the copy commit. Text, one SVG and two label constants.
+- **Status:** VERIFIED.
+- **Not covered:** the agent's helper text was reviewed but not rewritten — it is clear
+  and specific as it stands. The portal's palette divergence is recorded above as a
+  decision rather than a defect.

@@ -340,7 +340,7 @@ namespace Client
             };
             lblState = new Label
             {
-                Text = "No Session",
+                Text = "No session",
                 ForeColor = BrandMint,
                 AutoSize = true,
                 Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
@@ -615,7 +615,7 @@ namespace Client
             };
             var btnOk = new Button
             {
-                Text = "Save & Retry",
+                Text = "Save and retry",
                 Location = new Point(250, 80),
                 Size = new Size(100, 30),
                 BackColor = Color.FromArgb(13, 110, 253),

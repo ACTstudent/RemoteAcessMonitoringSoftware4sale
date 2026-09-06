@@ -150,7 +150,7 @@ namespace Server.Controllers
             if (IsTeacherActor && accountRole == AccountRole.Admin) return Forbid();
             if (accountRole == AccountRole.Teacher && IsTeacherSelf(id))
             {
-                TempData["ErrorMessage"] = "You cannot unlock your own Teacher account from global Teacher management.";
+                TempData["ErrorMessage"] = "You cannot unlock your own teacher account from global teacher management.";
                 return RedirectToAction(nameof(Teachers));
             }
 
@@ -202,7 +202,7 @@ namespace Server.Controllers
             if (IsTeacherActor && accountRole == AccountRole.Admin) return Forbid();
             if (!isActive && accountRole == AccountRole.Teacher && IsTeacherSelf(id))
             {
-                TempData["ErrorMessage"] = "You cannot deactivate your own Teacher account from global Teacher management.";
+                TempData["ErrorMessage"] = "You cannot deactivate your own teacher account from global teacher management.";
                 return RedirectToAction(nameof(Teachers));
             }
 
@@ -236,7 +236,7 @@ namespace Server.Controllers
                     var accountIsActive = account.Status == "Active" || string.IsNullOrEmpty(account.Status);
                     if (IsTeacherActor && !isActive && accountIsActive && await ActiveTeacherCountAsync() <= 1)
                     {
-                        TempData["ErrorMessage"] = "The last active Teacher cannot be deactivated.";
+                        TempData["ErrorMessage"] = "The last active teacher cannot be deactivated.";
                         return RedirectToAction(nameof(Teachers));
                     }
 
@@ -462,7 +462,7 @@ namespace Server.Controllers
             if (!CheckAccess()) return Denied();
             if (IsTeacherSelf(teacher.TeacherId))
             {
-                TempData["ErrorMessage"] = "You cannot edit your own Teacher account from global Teacher management.";
+                TempData["ErrorMessage"] = "You cannot edit your own teacher account from global teacher management.";
                 return RedirectToAction(nameof(Teachers));
             }
             var existing = await _context.Teachers.FindAsync(teacher.TeacherId);
@@ -486,7 +486,7 @@ namespace Server.Controllers
             if (IsTeacherActor && string.Equals(requestedStatus, "Inactive", StringComparison.OrdinalIgnoreCase) &&
                 existingIsActive && await ActiveTeacherCountAsync() <= 1)
             {
-                TempData["ErrorMessage"] = "The last active Teacher cannot be deactivated.";
+                TempData["ErrorMessage"] = "The last active teacher cannot be deactivated.";
                 return RedirectToAction(nameof(Teachers));
             }
 
@@ -515,7 +515,7 @@ namespace Server.Controllers
             if (!CheckAccess()) return Denied();
             if (IsTeacherSelf(id))
             {
-                TempData["ErrorMessage"] = "You cannot delete your own Teacher account from global Teacher management.";
+                TempData["ErrorMessage"] = "You cannot delete your own teacher account from global teacher management.";
                 return RedirectToAction(nameof(Teachers));
             }
             var teacher = await _context.Teachers.FindAsync(id);
@@ -531,7 +531,7 @@ namespace Server.Controllers
                 var teacherIsActive = teacher.Status == "Active" || string.IsNullOrEmpty(teacher.Status);
                 if (IsTeacherActor && teacherIsActive && await ActiveTeacherCountAsync() <= 1)
                 {
-                    TempData["ErrorMessage"] = "The last active Teacher cannot be deleted.";
+                    TempData["ErrorMessage"] = "The last active teacher cannot be deleted.";
                     return RedirectToAction(nameof(Teachers));
                 }
 
