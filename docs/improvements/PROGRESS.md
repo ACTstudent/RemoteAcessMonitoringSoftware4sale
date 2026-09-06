@@ -20,19 +20,19 @@ Owner for every item below: implementation agent, unless a person is named.
 
 ## Summary
 
-**37 work items. 25 VERIFIED (68%), 1 PARTIAL, 2 IN PROGRESS, 5 BLOCKED, 4 NOT STARTED.**
+**37 work items. 29 VERIFIED (78%), 1 PARTIAL, 2 IN PROGRESS, 5 BLOCKED, 0 NOT STARTED.**
 
 Counting only what can be finished on this machine — that is, setting aside the
 5 items blocked on a second Windows client, a disposable network and snapshot
-VMs — it is 25 of 32, or 78%.
+VMs — it is 29 of 32, or 91%.
 
 Phase 3 and Phase 4 are complete but for CODE-03, which is partial by choice
 (see below), and OPS-06, which is blocked on a token scope rather than on work:
 pushing to `.github/workflows/` needs the `workflow` OAuth scope, and the change
 is ready on branch `ci-test-results`.
 
-What remains unstarted is four of the six Phase 2 flow items: FLOW-01, 03, 04
-and 05.
+Nothing is unstarted. What is left is CODE-03's second half, OPS-06's token
+scope, and the five items that need hardware.
 
 Two caveats on reading that number. It counts items, not effort. And the file
 sizes quoted in earlier revisions of this ledger were stale; measured
@@ -61,7 +61,10 @@ UX-06 was VERIFIED and a later, wider sweep still found four more problems.
 | UX-06 | Accessibility pass (names, ids, landmarks) | VERIFIED (web) | `f7b97f4`, `1d46c9c` |
 | FLOW-02 | Keep list filters, page and return location across actions | VERIFIED | `395abe9`, `8d1328c`, `dea6dae` |
 | FLOW-06 | Plain labels for the browser collector states | VERIFIED | `371669f` |
-| FLOW-01, 03, 04, 05 | Setup checklist, connection state, command feedback, interruption | NOT STARTED | — |
+| FLOW-01 | Administrator setup checklist | VERIFIED | this commit |
+| FLOW-03 | Transport, session and control shown apart | VERIFIED | `826b8ea` |
+| FLOW-04 | Command progress and partial failure | VERIFIED | `eb35e61` |
+| FLOW-05 | Deduplicated notices with a history | VERIFIED | `c8d01fb` |
 | CODE-01 | Shared exports and one HTTP shell for both portals | VERIFIED | `e95e65b`, `9a35df7` |
 | CODE-03 | Agent decisions lifted out of MainForm | PARTIAL | `ead8771`, see below |
 | CODE-05 | Domain and role constants | VERIFIED | `7b23236` |

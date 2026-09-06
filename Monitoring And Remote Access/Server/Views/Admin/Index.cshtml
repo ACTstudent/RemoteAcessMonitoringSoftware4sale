@@ -1,6 +1,56 @@
+@using Server.Services
 @{
     ViewData["Title"] = "Global Operations Dashboard";
     Layout = "_Layout";
+
+    var setupSteps = ViewBag.SetupSteps as IReadOnlyList<SetupStep>;
+    var setupIncomplete = setupSteps is not null && !SetupChecklist.IsComplete(setupSteps);
+    var nextStep = setupSteps is null ? null : SetupChecklist.NextStep(setupSteps);
+}
+
+@* FLOW-01. Shown only while something is outstanding: a running school does not
+   need to be told every morning that its setup is finished. *@
+@if (setupIncomplete)
+{
+    <section class="card border-0 shadow-sm rounded-4 mb-4 setup-checklist" aria-labelledby="setup-heading">
+        <div class="card-body">
+            <h2 class="h5 fw-bold mb-1" id="setup-heading">Finish setting up CAMS</h2>
+            @{ var steps = setupSteps!; }
+            <p class="text-muted small mb-3">
+                @steps.Count(step => step.Done) of @steps.Count done.
+                @if (nextStep is not null)
+                {
+                    <span>Next: <strong>@nextStep.Title</strong>.</span>
+                }
+            </p>
+
+            <ol class="setup-step-list list-unstyled mb-0">
+                @foreach (var step in steps)
+                {
+                    <li class="setup-step @(step.Done ? "is-done" : "is-outstanding")">
+                        <i class="bi @(step.Done ? "bi-check-circle-fill" : "bi-circle") setup-step-icon"
+                           aria-hidden="true"></i>
+                        <div class="setup-step-body">
+                            <span class="setup-step-title">@step.Title</span>
+                            @if (!step.Done)
+                            {
+                                <span class="setup-step-why">@step.Why</span>
+                                @if (step.Href is not null)
+                                {
+                                    <a class="setup-step-action" href="@step.Href">@step.NextAction</a>
+                                }
+                                else
+                                {
+                                    <span class="setup-step-action text-muted">@step.NextAction</span>
+                                }
+                            }
+                        </div>
+                        <span class="visually-hidden">@(step.Done ? "Done" : "Still to do")</span>
+                    </li>
+                }
+            </ol>
+        </div>
+    </section>
 }
 
 <div class="mb-4 d-flex justify-content-between align-items-center">

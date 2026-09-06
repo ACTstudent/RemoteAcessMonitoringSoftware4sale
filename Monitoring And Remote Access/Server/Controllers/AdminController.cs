@@ -21,17 +21,24 @@ namespace Server.Controllers
         private readonly IClassManagementService _classManagement;
         private readonly IAuthenticationService _authentication;
         private readonly LabSessionLifecycleService _sessionLifecycle;
+        // Optional: resolved from DI in the running server, absent in tests
+        // that construct the controller directly. When it is absent the two
+        // deployment steps read as outstanding, which is the honest answer to
+        // "is the installer staged" when nothing can say.
+        private readonly IDeploymentService? _deployment;
 
         public AdminController(
             ApplicationDbContext context,
             LabSessionLifecycleService sessionLifecycle,
             IClassManagementService? classManagement = null,
-            IAuthenticationService? authentication = null)
+            IAuthenticationService? authentication = null,
+            IDeploymentService? deployment = null)
         {
             _context = context;
             _classManagement = classManagement ?? new ClassManagementService(context);
             _authentication = authentication ?? new AuthenticationService(context);
             _sessionLifecycle = sessionLifecycle;
+            _deployment = deployment;
         }
 
         private bool CheckAccess() => HttpContext.IsAdmin() || HttpContext.IsTeacher();
@@ -368,7 +375,39 @@ namespace Server.Controllers
             ViewBag.ActiveSessions = await _context.LabSessions.CountAsync(s => s.IsActive);
             ViewBag.RunningSessions = await _context.LabSessions.CountAsync(s => s.IsActive && s.Status == LabSessionStatus.Running);
             ViewBag.PausedSessions = await _context.LabSessions.CountAsync(s => s.IsActive && s.Status == LabSessionStatus.Paused);
+
+            // FLOW-01. Only for an administrator: a teacher cannot act on any of
+            // these steps, so showing them the list would be noise on a page
+            // they visit every day.
+            if (!IsTeacherActor)
+            {
+                ViewBag.SetupSteps = await BuildSetupChecklistAsync();
+            }
+
             return View();
+        }
+
+        /// <summary>
+        /// What still stands between this install and a working classroom.
+        /// Derived on each request rather than stored, so deleting the last
+        /// class puts the step back rather than leaving a checklist that
+        /// remembers being complete.
+        /// </summary>
+        private async Task<IReadOnlyList<SetupStep>> BuildSetupChecklistAsync()
+        {
+            var deployment = _deployment is null ? null : await _deployment.GetStatusAsync();
+
+            return SetupChecklist.Build(
+                teacherCount: await _context.Teachers.CountAsync(t =>
+                    t.Status == RecordStatus.Active || string.IsNullOrEmpty(t.Status)),
+                classCount: await _context.Classes.CountAsync(c => !c.IsArchived),
+                workstationCount: await _context.Computers.CountAsync(c =>
+                    c.Status != WorkstationStatus.Archived),
+                installerReady: deployment?.AssetsReady ?? false,
+                rootCertificateAvailable: deployment?.RootCertificateAvailable ?? false,
+                // A lab session has only ever existed if an agent signed in, so
+                // this asks the question without needing a separate flag.
+                everConnected: await _context.LabSessions.AnyAsync());
         }
 
         [HttpPost, ValidateAntiForgeryToken]

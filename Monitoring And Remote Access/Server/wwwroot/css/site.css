@@ -1624,3 +1624,60 @@ summary:focus-visible,
     color: var(--text-muted);
     font-variant-numeric: tabular-nums;
 }
+
+/* FLOW-01. The setup checklist. Outstanding steps carry their reason and their
+   next action; done ones collapse to a line, because a finished step is
+   reference, not instruction. */
+.setup-step-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+}
+
+.setup-step {
+    display: flex;
+    gap: var(--space-3);
+    align-items: flex-start;
+}
+
+.setup-step-icon {
+    flex: 0 0 auto;
+    margin-top: 0.15rem;
+    font-size: 1.05rem;
+}
+
+.setup-step.is-done .setup-step-icon {
+    color: var(--cams-success);
+}
+
+.setup-step.is-outstanding .setup-step-icon {
+    color: var(--text-muted);
+}
+
+.setup-step-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.setup-step-title {
+    font-weight: 600;
+}
+
+.setup-step.is-done .setup-step-title {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.setup-step-why {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.setup-step-action {
+    align-self: flex-start;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
