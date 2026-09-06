@@ -44,11 +44,11 @@ namespace Client
         // Restriction rules fetched from the server after login
         private readonly List<RestrictionRuleMessage> _blockRules = new();
         private readonly List<RestrictionRuleMessage> _allowRules = new();
-        private readonly Dictionary<string, DateTime> _lastInfraction = new();
 
         // Global session state
-        private string _sessionStatus = "None";
-        private int _sessionElapsed = 0;
+        // Owns every "should this be sent" decision the status loop makes.
+        private readonly TelemetryGate _telemetry = new();
+        private readonly SessionClock _session = new();
 
         // CAMS palette, mirroring the design tokens used by the web portal so the
         // agent and the browser read as one product. Every entry names the token
@@ -99,11 +99,7 @@ namespace Client
             _countdownTimer.Interval = 1000;
             _countdownTimer.Tick += (_, _) =>
             {
-                if (_sessionStatus == LabSessionStatus.Running)
-                {
-                    _sessionElapsed++;
-                    RenderTimer();
-                }
+                if (_session.Tick()) RenderTimer();
             };
         }
 
@@ -429,9 +425,8 @@ namespace Client
 
         private void RenderTimer()
         {
-            int sec = Math.Max(0, _sessionElapsed);
-            lblTimer.Text = $"{sec / 60:00}:{sec % 60:00}";
-            lblTimer.ForeColor = _sessionStatus == LabSessionStatus.Running ? OnDarkStrong : OnDarkMuted;
+            lblTimer.Text = _session.Display();
+            lblTimer.ForeColor = _session.IsRunning ? OnDarkStrong : OnDarkMuted;
         }
 
         private async void BtnLogin_Click(object? sender, EventArgs e)
@@ -649,8 +644,7 @@ namespace Client
 
         private void OnSessionStateChanged(GlobalSessionMessage state)
         {
-            _sessionStatus = state.Status;
-            _sessionElapsed = state.ElapsedSeconds;
+            _session.Apply(state.Status, state.ElapsedSeconds);
             lblState.Text = state.Status;
             lblState.ForeColor = state.Status == LabSessionStatus.Running ? BrandMint
                 : state.Status == LabSessionStatus.Paused ? OnDarkWarn
@@ -660,8 +654,7 @@ namespace Client
 
         private async Task OnSessionEnded()
         {
-            _sessionStatus = LabSessionStatus.Ended;
-            _sessionElapsed = 0;
+            _session.End();
             RenderTimer();
             ShowPopup("Session Ended", "",
                 "Your laboratory session has ended by the teacher. The workstation is being locked.", true);
@@ -764,12 +757,9 @@ namespace Client
 
         private async Task ReportViolation(string targetType, string app, string processName, bool kill, CancellationToken token, string? reportedTarget = null)
         {
-            var key = targetType + ":" + app;
-            if (_lastInfraction.TryGetValue(key, out var last) && DateTime.UtcNow - last < TimeSpan.FromSeconds(30))
-            {
-                return; // throttled
-            }
-            _lastInfraction[key] = DateTime.UtcNow;
+            // One alert per target per cooldown. A student parked on a blocked
+            // page would otherwise fill the teacher's list on every pass.
+            if (!_telemetry.ShouldReportInfraction(targetType, app, DateTime.UtcNow)) return;
 
             if (kill)
             {
@@ -804,11 +794,7 @@ namespace Client
                 true));
         }
 
-        private bool _lastIdleReported = false;
-        private DateTime _lastActiveAppReport = DateTime.MinValue;
-        private string _lastWebsiteReport = string.Empty;
         private BrowserWebsiteObservation? _lastForegroundWebsite;
-        private readonly Dictionary<string, string> _lastBrowserStatus = new(StringComparer.OrdinalIgnoreCase);
         private readonly ManagedBrowserCollector _managedBrowserCollector = CreateManagedBrowserCollector();
 
         private static ManagedBrowserCollector CreateManagedBrowserCollector()
@@ -862,9 +848,8 @@ namespace Client
                         var idleSeconds = (uint)NativeMethods.GetIdleTime() / 1000;
                         bool isIdle = idleSeconds >= 60; // 60s inactivity threshold
 
-                        if (isIdle != _lastIdleReported)
+                        if (_telemetry.ShouldReportIdle(isIdle))
                         {
-                            _lastIdleReported = isIdle;
                             await _hubClient.ReportIdleStatusAsync(new IdleStatusMessage(
                                 ConnectionId: "",
                                 StudentId: "",
@@ -873,9 +858,8 @@ namespace Client
                                 Timestamp: DateTime.UtcNow));
                         }
 
-                        if (DateTime.UtcNow - _lastActiveAppReport > TimeSpan.FromSeconds(5))
+                        if (_telemetry.ShouldReportActiveApp(DateTime.UtcNow))
                         {
-                            _lastActiveAppReport = DateTime.UtcNow;
                             var appName = ActiveAppInfo.Get();
                             if (!string.IsNullOrEmpty(appName))
                             {
@@ -897,13 +881,14 @@ namespace Client
                                     ? website
                                     : null;
                                 if (website is { Status: BrowserMonitoringStatus.Captured, Domain: not null } &&
-                                    $"{website.Browser}:{website.Domain}" != _lastWebsiteReport)
+                                    _telemetry.ShouldReportWebsite(website.Browser, website.Domain))
                                 {
-                                    _lastWebsiteReport = $"{website.Browser}:{website.Domain}";
                                     await _hubClient.ReportWebsiteActivityAsync(new WebsiteActivityMessage(
                                         "", "", Environment.MachineName, website.Domain, website.Browser, DateTime.UtcNow));
                                 }
-                                if (_lastForegroundWebsite is null) _lastWebsiteReport = string.Empty;
+                                // Clearing the remembered site means returning to it
+                                // after leaving reports again.
+                                if (_lastForegroundWebsite is null) _telemetry.ShouldReportWebsite(null, null);
                                 await ReportBrowserMonitoringStatusAsync(website);
                             }
                         }
@@ -934,9 +919,7 @@ namespace Client
                     : status.Message;
                 var signature = $"{mode}:{detail}";
                 summaries.Add($"{status.Identity}: {ModeLabel(mode)}");
-                if (_lastBrowserStatus.TryGetValue(status.Identity, out var previous) && previous == signature) continue;
-
-                _lastBrowserStatus[status.Identity] = signature;
+                if (!_telemetry.ShouldReportBrowserStatus(status.Identity, signature)) continue;
                 await _hubClient.ReportBrowserMonitoringStatusAsync(new BrowserMonitoringStatusMessage(
                     "", "", Environment.MachineName, status.Identity, mode, DateTime.UtcNow, detail));
             }
@@ -945,12 +928,9 @@ namespace Client
                 BeginInvoke(() => lblBrowserState.Text = $"Browser monitoring: {string.Join(" | ", summaries)}");
         }
 
-        private static string ModeLabel(BrowserMonitoringMode mode) => mode switch
-        {
-            BrowserMonitoringMode.ManagedProtocol => "managed",
-            BrowserMonitoringMode.WindowTitleFallback => "fallback",
-            _ => "unavailable"
-        };
+        // Was "managed"/"fallback"/"unavailable", which described the same
+        // three states in words the portal does not use.
+        private static string ModeLabel(BrowserMonitoringMode mode) => BrowserMonitoringLabels.For(mode);
 
         /// <summary>How long capture may keep failing before the student is told rather than left with a silent stream.</summary>
         private const int CaptureFailuresBeforeReporting = 20;

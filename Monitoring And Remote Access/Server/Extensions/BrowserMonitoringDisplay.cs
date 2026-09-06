@@ -17,13 +17,9 @@ namespace Server.Extensions;
 /// </summary>
 public static class BrowserMonitoringDisplay
 {
-    public static string Label(BrowserMonitoringMode mode) => mode switch
-    {
-        BrowserMonitoringMode.ManagedProtocol => "Full addresses",
-        BrowserMonitoringMode.WindowTitleFallback => "Page titles only",
-        BrowserMonitoringMode.Unavailable => "Not being recorded",
-        _ => "Unknown"
-    };
+    // Defined in Shared so the agent shows the student the same words the
+    // portal shows the teacher.
+    public static string Label(BrowserMonitoringMode mode) => BrowserMonitoringLabels.For(mode);
 
     /// <summary>What the label means, and what to do about it. Shown on demand.</summary>
     public static string Explanation(BrowserMonitoringMode mode) => mode switch
