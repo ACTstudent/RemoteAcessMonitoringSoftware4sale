@@ -1569,3 +1569,58 @@ summary:focus-visible,
     border-left-color: var(--cams-warning);
     font-weight: 600;
 }
+
+/* FLOW-05. A repeated notice is counted rather than stacked: five identical
+   warnings are one thing that happened five times, and showing five of them
+   buries everything else on screen. */
+.cams-toast-count {
+    display: inline-block;
+    margin-left: var(--space-2);
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-pill, 999px);
+    background: rgba(0, 0, 0, 0.12);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* Notices survive their toast. A teacher looking at a workstation when one
+   appeared can still find out what it said. */
+.cams-toast-history {
+    max-width: 22rem;
+    margin-top: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    font-size: 0.8125rem;
+}
+
+.cams-toast-history > summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.cams-toast-history ol {
+    max-height: 14rem;
+    overflow-y: auto;
+    margin: var(--space-2) 0 0;
+    padding-left: 0;
+    list-style: none;
+}
+
+.cams-toast-history-item {
+    display: flex;
+    gap: var(--space-2);
+    padding: var(--space-1, 0.25rem) 0;
+    border-top: 1px solid var(--card-border);
+}
+
+.cams-toast-history-item.is-error {
+    color: var(--cams-danger);
+}
+
+.cams-toast-history-time {
+    flex: 0 0 auto;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}

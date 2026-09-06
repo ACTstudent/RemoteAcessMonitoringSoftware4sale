@@ -233,11 +233,64 @@ window.CamsToast = (function () {
         return dismiss;
     }
 
+    // FLOW-05. Everything shown, kept after it fades.
+    //
+    // A toast that has gone is gone: a teacher who was looking at a workstation
+    // when one appeared had no way to find out what it said. The history is
+    // bounded, because an unbounded log of notices is its own kind of noise.
+    var HISTORY_LIMIT = 50;
+    var history = [];
+
+    function remember(entry) {
+        history.unshift(entry);
+        if (history.length > HISTORY_LIMIT) history.length = HISTORY_LIMIT;
+        renderHistory();
+    }
+
+    // Live toasts, by what they say. A repeated notice updates its existing
+    // toast instead of stacking another one on top.
+    var live = {};
+
+    function signatureOf(type, title, message) {
+        return type + ' ' + (title || '') + ' ' + message;
+    }
+
+    function markRepeat(toast, count) {
+        var badge = toast.querySelector('.cams-toast-count');
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'cams-toast-count';
+            toast.querySelector('.cams-toast-body').appendChild(badge);
+        }
+        badge.textContent = '×' + count;
+        badge.setAttribute('aria-label', 'happened ' + count + ' times');
+    }
+
     // Builds a toast at runtime. Text is assigned, never parsed as markup.
     function show(message, options) {
         var settings = options || {};
         var type = settings.type === 'error' ? 'error' : 'success';
         var timeout = settings.timeout || (type === 'error' ? 9000 : DEFAULT_TIMEOUT);
+        var text = message == null ? '' : String(message);
+        var signature = signatureOf(type, settings.title, text);
+
+        remember({
+            at: new Date(),
+            type: type,
+            title: settings.title || '',
+            message: text
+        });
+
+        // Same notice, still on screen: count it rather than stack it. Five
+        // identical warnings in a row is one thing that happened five times,
+        // and showing it five times buries everything else.
+        var existing = live[signature];
+        if (existing && document.body.contains(existing.toast)) {
+            existing.count += 1;
+            markRepeat(existing.toast, existing.count);
+            existing.restart();
+            return existing.dismiss;
+        }
 
         var toast = document.createElement('div');
         toast.className = 'cams-toast cams-toast-' + type;
@@ -257,10 +310,10 @@ window.CamsToast = (function () {
             heading.textContent = settings.title;
             body.appendChild(heading);
         }
-        var text = document.createElement('p');
-        text.className = 'cams-toast-text';
-        text.textContent = message == null ? '' : String(message);
-        body.appendChild(text);
+        var line = document.createElement('p');
+        line.className = 'cams-toast-text';
+        line.textContent = text;
+        body.appendChild(line);
 
         var close = document.createElement('button');
         close.type = 'button';
@@ -275,7 +328,62 @@ window.CamsToast = (function () {
 
         toast.append(icon, body, close, bar);
         region().appendChild(toast);
-        return setup(toast);
+
+        var dismiss = setup(toast);
+        var entry = {
+            toast: toast,
+            count: 1,
+            dismiss: function () {
+                delete live[signature];
+                dismiss();
+            },
+            // Reuse setup's timer by re-running it; the previous one is cleared
+            // inside setup's own dismiss path.
+            restart: function () { /* replaced below */ }
+        };
+        entry.restart = function () {
+            // Restarting the countdown keeps a recurring notice on screen while
+            // it is still recurring, rather than fading mid-repeat.
+            toast.dataset.dismissed = '';
+            entry.dismiss = setup(toast);
+        };
+        live[signature] = entry;
+
+        toast.addEventListener('animationend', function () {
+            if (toast.dataset.dismissed) delete live[signature];
+        });
+
+        return entry.dismiss;
+    }
+
+    // The history panel: present only once something has been shown, so a quiet
+    // page stays quiet.
+    function renderHistory() {
+        var panel = document.getElementById('cams-toast-history');
+        if (!panel) {
+            panel = document.createElement('details');
+            panel.id = 'cams-toast-history';
+            panel.className = 'cams-toast-history';
+            var summary = document.createElement('summary');
+            summary.textContent = 'Recent notifications';
+            panel.appendChild(summary);
+            panel.appendChild(document.createElement('ol'));
+            region().appendChild(panel);
+        }
+
+        var list = panel.querySelector('ol');
+        list.replaceChildren();
+        history.forEach(function (item) {
+            var row = document.createElement('li');
+            row.className = 'cams-toast-history-item' + (item.type === 'error' ? ' is-error' : '');
+            var when = document.createElement('span');
+            when.className = 'cams-toast-history-time';
+            when.textContent = item.at.toLocaleTimeString();
+            var what = document.createElement('span');
+            what.textContent = (item.title ? item.title + ': ' : '') + item.message;
+            row.append(when, what);
+            list.appendChild(row);
+        });
     }
 
     function init() {
@@ -288,7 +396,12 @@ window.CamsToast = (function () {
         init();
     }
 
-    return { show: show };
+    return {
+        show: show,
+        // Read-only copy, so a caller cannot quietly rewrite what was shown.
+        history: function () { return history.slice(); },
+        clearHistory: function () { history.length = 0; renderHistory(); }
+    };
 })();
 
 // Sidebar menu button. Below 992px it opens the sidebar as an overlay drawer;
