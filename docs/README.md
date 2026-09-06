@@ -37,7 +37,7 @@ both points.
 
 ## Running the tests
 
-The whole suite, 506 tests, runs from the solution:
+The whole suite, 575 tests, runs from the solution:
 
 ```powershell
 dotnet test "Monitoring And Remote Access\RemoteMonitoring.sln"

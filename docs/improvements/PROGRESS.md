@@ -5,7 +5,8 @@ work item; the detail sections below carry the fields the plan requires (observe
 problem, user outcome, source files, dependencies, change, before/after evidence,
 test results, rollout/rollback, owner, status).
 
-**Status values:** NOT STARTED / IN PROGRESS / VERIFIED / BLOCKED.
+**Status values:** NOT STARTED / IN PROGRESS / PARTIAL / VERIFIED / BLOCKED. PARTIAL means
+part of the item is done and the rest is deliberately not attempted, with the reason recorded.
 VERIFIED requires evidence recorded here — a passing test run, a browser check or
 a reference check. "It compiles" is not evidence.
 
@@ -19,20 +20,24 @@ Owner for every item below: implementation agent, unless a person is named.
 
 ## Summary
 
-**37 work items. 19 VERIFIED (51%), 3 IN PROGRESS, 5 BLOCKED, 10 NOT STARTED.**
+**37 work items. 25 VERIFIED (68%), 1 PARTIAL, 2 IN PROGRESS, 5 BLOCKED, 4 NOT STARTED.**
 
 Counting only what can be finished on this machine — that is, setting aside the
 5 items blocked on a second Windows client, a disposable network and snapshot
-VMs — it is 19 of 32, or 59%.
+VMs — it is 25 of 32, or 78%.
 
-Phase 4 is complete except OPS-06, which is blocked on a token scope rather than
-on work: pushing to `.github/workflows/` needs the `workflow` OAuth scope, and
-the change is ready on branch `ci-test-results`.
+Phase 3 and Phase 4 are complete but for CODE-03, which is partial by choice
+(see below), and OPS-06, which is blocked on a token scope rather than on work:
+pushing to `.github/workflows/` needs the `workflow` OAuth scope, and the change
+is ready on branch `ci-test-results`.
 
-Two caveats on reading that number. It counts items, not effort: the 10 not-started
-items include the largest single pieces of work in the plan (`AdminController` at
-1072 lines, `TeacherController` at 847, `MainForm` at 1178), so the share of
-*effort* completed is lower than the share of items. And VERIFIED here means
+What remains unstarted is four of the six Phase 2 flow items: FLOW-01, 03, 04
+and 05.
+
+Two caveats on reading that number. It counts items, not effort. And the file
+sizes quoted in earlier revisions of this ledger were stale; measured
+2026-09-07 after the Phase 3 work, `AdminController` is 1724 lines,
+`TeacherController` 1291 and `MainForm` 1248. And VERIFIED here means
 evidence is recorded below, not that the item is beyond further improvement —
 UX-06 was VERIFIED and a later, wider sweep still found four more problems.
 
@@ -40,7 +45,7 @@ UX-06 was VERIFIED and a later, wider sweep still found four more problems.
 | --- | --- | --- | --- |
 | P0 | Baseline capture and reconciliation | VERIFIED | `acc8761`, `e477560` |
 | CODE-02 | Move layout database queries into a view component | VERIFIED | `45b07d9` |
-| CODE-04 | Extract page JavaScript from Razor into local files | IN PROGRESS | `265fd4e` |
+| CODE-04 | Extract page JavaScript from Razor into local files | VERIFIED | `265fd4e`, `7fe7a68` |
 | CODE-08 | Remove the global nullable suppression | VERIFIED | `fb590c7`, `3b06603` |
 | CODE-09 | Session lifecycle duration and expiry correctness | VERIFIED | pre-plan, see below |
 | OPS-01 | `.editorconfig` and line-ending rules | VERIFIED | `35cd09e` |
@@ -55,8 +60,13 @@ UX-06 was VERIFIED and a later, wider sweep still found four more problems.
 | UX-05 | Branding, favicon, titles, copy, offline assets | VERIFIED | `b9c0e63`, `3d2e552`, `014eb78` |
 | UX-06 | Accessibility pass (names, ids, landmarks) | VERIFIED (web) | `f7b97f4`, `1d46c9c` |
 | FLOW-02 | Keep list filters, page and return location across actions | VERIFIED | `395abe9`, `8d1328c`, `dea6dae` |
-| FLOW-01, 03, 04, 05, 06 | Setup checklist, connection state, command feedback, interruption, collector states | NOT STARTED | — |
-| CODE-01, 03, 05, 06, 07 | Controller/client/constant/CSS/diagnostics work | NOT STARTED | — |
+| FLOW-06 | Plain labels for the browser collector states | VERIFIED | `371669f` |
+| FLOW-01, 03, 04, 05 | Setup checklist, connection state, command feedback, interruption | NOT STARTED | — |
+| CODE-01 | Shared exports and one HTTP shell for both portals | VERIFIED | `e95e65b`, `9a35df7` |
+| CODE-03 | Agent decisions lifted out of MainForm | PARTIAL | `ead8771`, see below |
+| CODE-05 | Domain and role constants | VERIFIED | `7b23236` |
+| CODE-06 | CSS consolidation after a reference audit | VERIFIED | `49ccefd` |
+| CODE-07 | Exception handling and structured diagnostics | VERIFIED | `1323522` |
 | OPS-02 | Generated-file and release-artifact inventory | VERIFIED | see [inventory](REPOSITORY-INVENTORY.md) |
 | OPS-03 | Centralized version input, propagation validated | VERIFIED | `b4134fd`, `18f51bd` |
 | OPS-05 | Deterministic SDK and restore policy | VERIFIED | `global.json`, `NuGet.config` |
@@ -321,6 +331,40 @@ made.
   report if that comes back dead.
 - **Status:** VERIFIED. Migrations, backups, databases, certificate stores and
   archived test evidence remain explicitly out of scope for deletion.
+
+### CODE-03 — what was extracted, and what was left alone
+
+The agent cannot be run without a second Windows machine, and there is none. So
+this pass deliberately took the parts that are pure decisions and left the parts
+that draw or connect.
+
+- **Done.** `TelemetryGate` owns the five reporting decisions the status loop
+  made inline (idle change, active-app interval, website change, browser-state
+  change, infraction cooldown), and `SessionClock` owns the two session fields
+  that were read and written from four places including a WinForms Tick handler.
+  Twenty-nine tests; the client suite went from 43 to 72.
+- **Behaviour preserved rather than improved.** The idle field started `false`,
+  so a student active when a session begins produces no idle report at all. That
+  is now a test recording the fact, not a fix — an extraction that also changes
+  what goes over the wire cannot be reviewed as an extraction.
+- **Not done.** Separating visual construction from the connection lifecycle.
+
+**The ownership audit the item asks for was done, and found the lifecycle sound.**
+Fourteen hub events are subscribed with lambdas, which cannot be unsubscribed —
+but a fresh `MonitoringHubClient` is built per login attempt, so they cannot
+accumulate, and the `finally` disposes any client that did not become the
+current one. That holds even on the recursive retry path, where an outer attempt
+is still inside its `catch` when an inner attempt succeeds: the outer's
+`pendingClient` no longer matches `_hubClient` and is disposed. No duplicate
+handlers.
+
+**One finding, deliberately not fixed.** `_streamCts` is cancelled on logout and
+on form close, but never disposed and never set to null. Disposing it is the
+obvious tidy-up and is the wrong move here: three loops still hold its token,
+and `Task.Delay(_, token)` against a disposed source throws
+`ObjectDisposedException` during teardown. Doing that safely means awaiting the
+loops before disposing, which changes shutdown ordering — not something to
+change without being able to run the agent. Left for LIVE-04.
 
 ### Phase 1 and 2 items are complete
 
