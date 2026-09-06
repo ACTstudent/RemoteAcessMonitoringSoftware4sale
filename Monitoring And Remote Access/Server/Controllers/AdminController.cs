@@ -7,10 +7,11 @@ using Server.Authorization;
 using Server.Data;
 using Server.Models;
 using Server.Services;
+using Shared.Contracts;
 
 namespace Server.Controllers
 {
-    [Authorize(Roles = "Admin,Teacher")]
+    [Authorize(Roles = RoleNames.AdminOrTeacher)]
     [ServiceFilter(typeof(AdminControllerAuthorizationFilter))]
     [AutoValidateAntiforgeryToken]
     public class AdminController : Controller
@@ -35,7 +36,7 @@ namespace Server.Controllers
 
         private bool CheckAccess() => HttpContext.IsAdmin() || HttpContext.IsTeacher();
 
-        private bool IsTeacherActor => User.IsInRole("Teacher") || HttpContext.IsTeacher();
+        private bool IsTeacherActor => User.IsInRole(RoleNames.Teacher) || HttpContext.IsTeacher();
 
         private int? ActorTeacherId
         {
@@ -49,7 +50,7 @@ namespace Server.Controllers
         private bool IsTeacherSelf(int teacherId) => IsTeacherActor && ActorTeacherId == teacherId;
 
         private Task<int> ActiveTeacherCountAsync() => _context.Teachers.CountAsync(teacher =>
-            teacher.Status == "Active" || teacher.Status == null || teacher.Status == string.Empty);
+            teacher.Status == RecordStatus.Active || teacher.Status == null || teacher.Status == string.Empty);
 
         private static bool ValidMode(string? mode) => mode is "Block" or "Allow";
         private static bool ValidRuleType(string? type) => type is "Application" or "Website" or "BlockApplication" or "BlockWebsite";
@@ -233,7 +234,7 @@ namespace Server.Controllers
                         return RedirectToAction(nameof(Teachers));
                     }
 
-                    var accountIsActive = account.Status == "Active" || string.IsNullOrEmpty(account.Status);
+                    var accountIsActive = account.Status == RecordStatus.Active || string.IsNullOrEmpty(account.Status);
                     if (IsTeacherActor && !isActive && accountIsActive && await ActiveTeacherCountAsync() <= 1)
                     {
                         TempData["ErrorMessage"] = "The last active teacher cannot be deactivated.";
@@ -373,8 +374,8 @@ namespace Server.Controllers
             ViewBag.TeacherCount = await _context.Teachers.CountAsync();
             ViewBag.ComputerCount = await _context.Computers.CountAsync();
             ViewBag.ActiveSessions = await _context.LabSessions.CountAsync(s => s.IsActive);
-            ViewBag.RunningSessions = await _context.LabSessions.CountAsync(s => s.IsActive && s.Status == "Running");
-            ViewBag.PausedSessions = await _context.LabSessions.CountAsync(s => s.IsActive && s.Status == "Paused");
+            ViewBag.RunningSessions = await _context.LabSessions.CountAsync(s => s.IsActive && s.Status == LabSessionStatus.Running);
+            ViewBag.PausedSessions = await _context.LabSessions.CountAsync(s => s.IsActive && s.Status == LabSessionStatus.Paused);
             return View();
         }
 
@@ -482,7 +483,7 @@ namespace Server.Controllers
                 TempData["ErrorMessage"] = "Reassign or archive this teacher's active classes before deactivating the account.";
                 return RedirectToAction("Teachers");
             }
-            var existingIsActive = existing.Status == "Active" || string.IsNullOrEmpty(existing.Status);
+            var existingIsActive = existing.Status == RecordStatus.Active || string.IsNullOrEmpty(existing.Status);
             if (IsTeacherActor && string.Equals(requestedStatus, "Inactive", StringComparison.OrdinalIgnoreCase) &&
                 existingIsActive && await ActiveTeacherCountAsync() <= 1)
             {
@@ -528,14 +529,14 @@ namespace Server.Controllers
                     return RedirectToAction("Teachers");
                 }
 
-                var teacherIsActive = teacher.Status == "Active" || string.IsNullOrEmpty(teacher.Status);
+                var teacherIsActive = teacher.Status == RecordStatus.Active || string.IsNullOrEmpty(teacher.Status);
                 if (IsTeacherActor && teacherIsActive && await ActiveTeacherCountAsync() <= 1)
                 {
                     TempData["ErrorMessage"] = "The last active teacher cannot be deleted.";
                     return RedirectToAction(nameof(Teachers));
                 }
 
-                teacher.Status = "Inactive";
+                teacher.Status = RecordStatus.Inactive;
                 await _context.SaveChangesAsync();
                 await AuditAsync("DeactivateTeacher", $"Deactivated teacher {teacher.Username}; historical records retained");
                 TempData["Message"] = $"Teacher '{teacher.Username}' deactivated. Historical records were retained.";
@@ -548,10 +549,10 @@ namespace Server.Controllers
         public async Task<IActionResult> Students()
         {
             if (!CheckAccess()) return Denied();
-            ViewBag.Computers = await _context.Computers.Where(c => c.Status != "Archived").ToListAsync();
+            ViewBag.Computers = await _context.Computers.Where(c => c.Status != WorkstationStatus.Archived).ToListAsync();
             ViewBag.Classes = await _context.Classes
                 .Where(c => !c.IsArchived && c.TeacherId.HasValue &&
-                            (c.Teacher!.Status == "Active" || string.IsNullOrEmpty(c.Teacher.Status)))
+                            (c.Teacher!.Status == RecordStatus.Active || string.IsNullOrEmpty(c.Teacher.Status)))
                 .Include(c => c.Teacher)
                 .OrderBy(c => c.ClassName)
                 .ToListAsync();
@@ -687,11 +688,11 @@ namespace Server.Controllers
                 if (computer != null)
                 {
                     computer.AssignedTo = null;
-                    if (computer.Status == "Assigned") computer.Status = "Available";
+                    if (computer.Status == WorkstationStatus.Assigned) computer.Status = WorkstationStatus.Available;
                 }
 
                 await _sessionLifecycle.EndStudentSessionsAndNotifyAsync(student.Id);
-                student.Status = "Inactive";
+                student.Status = RecordStatus.Inactive;
                 await _context.SaveChangesAsync();
                 await AuditAsync("DeactivateStudent", $"Deactivated student {student.Username}; historical records retained");
                 TempData["Message"] = $"Student '{student.Username}' deactivated. Historical records were retained.";
@@ -1155,7 +1156,7 @@ namespace Server.Controllers
                     TempData["ErrorMessage"] = "End the active lab session before archiving this workstation.";
                     return RedirectToAction(nameof(Computers));
                 }
-                computer.Status = "Archived";
+                computer.Status = WorkstationStatus.Archived;
                 computer.AssignedTo = null;
                 await _context.SaveChangesAsync();
                 await AuditAsync("ArchiveComputer", $"Archived {computer.LaboratoryStation}; historical records retained");
@@ -1177,7 +1178,7 @@ namespace Server.Controllers
             {
                 selected = await _context.Computers.FindAsync(computerId.Value);
                 if (selected is null) return NotFound();
-                if (selected.Status == "Archived")
+                if (selected.Status == WorkstationStatus.Archived)
                 {
                     TempData["ErrorMessage"] = "Archived workstations cannot be assigned.";
                     return RedirectToAction(nameof(Students));
@@ -1187,7 +1188,7 @@ namespace Server.Controllers
                     TempData["ErrorMessage"] = "That workstation is already assigned to another student.";
                     return RedirectToAction(nameof(Students));
                 }
-                if (await _context.LabSessions.AnyAsync(session => session.ComputerId == selected.ComputerId && session.IsActive && session.Status != "Ended"))
+                if (await _context.LabSessions.AnyAsync(session => session.ComputerId == selected.ComputerId && session.IsActive && session.Status != LabSessionStatus.Ended))
                 {
                     TempData["ErrorMessage"] = "That workstation is currently in use.";
                     return RedirectToAction(nameof(Students));
@@ -1199,12 +1200,12 @@ namespace Server.Controllers
             foreach (var previous in previousAssignments)
             {
                 previous.AssignedTo = null;
-                if (previous.Status == "Assigned") previous.Status = "Available";
+                if (previous.Status == WorkstationStatus.Assigned) previous.Status = WorkstationStatus.Available;
             }
             if (selected is not null)
             {
                 selected.AssignedTo = studentId.ToString();
-                selected.Status = "Assigned";
+                selected.Status = WorkstationStatus.Assigned;
             }
 
             await _context.SaveChangesAsync();
@@ -1267,7 +1268,7 @@ namespace Server.Controllers
             var classes = await _classManagement.GetClassesAsync();
 
             ViewBag.TeacherList = await _context.Teachers
-                .Where(t => t.Status == "Active" || string.IsNullOrEmpty(t.Status))
+                .Where(t => t.Status == RecordStatus.Active || string.IsNullOrEmpty(t.Status))
                 .OrderBy(t => t.FirstName)
                 .ToListAsync();
 
@@ -1395,7 +1396,7 @@ namespace Server.Controllers
             cls.ClassStudents = roster.ToList();
             ViewBag.EnrolledStudents = roster;
             ViewBag.AvailableTeachers = await _context.Teachers
-                .Where(t => t.Status == "Active" || string.IsNullOrEmpty(t.Status))
+                .Where(t => t.Status == RecordStatus.Active || string.IsNullOrEmpty(t.Status))
                 .OrderBy(t => t.LastName)
                 .ThenBy(t => t.FirstName)
                 .ToListAsync();
@@ -1648,7 +1649,7 @@ namespace Server.Controllers
 
         private static TimeSpan SessionDuration(LabSession session, DateTime from, DateTime to, DateTime now)
         {
-            var end = session.EndTime ?? (session.Status == "Paused" && session.PauseTime.HasValue ? session.PauseTime.Value : now);
+            var end = session.EndTime ?? (session.Status == LabSessionStatus.Paused && session.PauseTime.HasValue ? session.PauseTime.Value : now);
             var start = session.StartTime > from ? session.StartTime : from;
             var clippedEnd = end < to ? end : to;
             return clippedEnd > start ? clippedEnd - start : TimeSpan.Zero;

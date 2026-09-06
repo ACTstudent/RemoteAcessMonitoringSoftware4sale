@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Server.Models;
+using Shared.Contracts;
 
 namespace Server.Services;
 
@@ -98,7 +99,7 @@ public static class NavigationBuilder
 
     private static NavigationModel BuildAdmin(HttpContext context)
     {
-        var isTeacherActor = context.User.IsInRole("Teacher") && !context.User.IsInRole("Admin");
+        var isTeacherActor = context.User.IsInRole(RoleNames.Teacher) && !context.User.IsInRole(RoleNames.Admin);
         if (isTeacherActor)
         {
             return BuildTeacher(context);

@@ -11,7 +11,7 @@ using Server.Authorization;
 
 namespace Server.Controllers
 {
-    [Authorize(Roles = "Teacher")]
+    [Authorize(Roles = RoleNames.Teacher)]
     [ServiceFilter(typeof(ActiveTeacherAuthorizationFilter))]
     [AutoValidateAntiforgeryToken]
     public class TeacherController : Controller
@@ -133,7 +133,7 @@ namespace Server.Controllers
             if (!teacherId.HasValue) return Denied();
             var studentIds = AccessibleStudents(teacherId.Value).Select(s => s.Id);
             ViewBag.RunningSessions = await _context.LabSessions.CountAsync(s =>
-                studentIds.Contains(s.StudentId) && s.Status == "Running");
+                studentIds.Contains(s.StudentId) && s.Status == LabSessionStatus.Running);
             ViewBag.ActiveStudents = await _context.LabSessions.CountAsync(s =>
                 studentIds.Contains(s.StudentId) && s.IsActive);
             ViewBag.GlobalSession = _sessionManager.Snapshot();
@@ -159,8 +159,8 @@ namespace Server.Controllers
             ViewBag.Students = students;
             var assignedStudentIds = students.Select(student => student.Id.ToString()).ToList();
             ViewBag.Computers = await _context.Computers
-                .Where(c => c.Status == "Available" ||
-                    (c.Status == "Assigned" && c.AssignedTo != null && assignedStudentIds.Contains(c.AssignedTo)))
+                .Where(c => c.Status == WorkstationStatus.Available ||
+                    (c.Status == WorkstationStatus.Assigned && c.AssignedTo != null && assignedStudentIds.Contains(c.AssignedTo)))
                 .ToListAsync();
             var sessions = await _context.LabSessions
                 .Include(s => s.Student)
@@ -200,7 +200,7 @@ namespace Server.Controllers
                 TempData["ErrorMessage"] = "The selected session rule is unavailable.";
                 return RedirectToAction(nameof(Sessions));
             }
-            if (await _context.LabSessions.AnyAsync(s => s.StudentId == studentId && s.IsActive && s.Status != "Ended"))
+            if (await _context.LabSessions.AnyAsync(s => s.StudentId == studentId && s.IsActive && s.Status != LabSessionStatus.Ended))
             {
                 TempData["ErrorMessage"] = "This student already has an active session.";
                 return RedirectToAction(nameof(Sessions));
@@ -214,7 +214,7 @@ namespace Server.Controllers
                 if (computer is null ||
                     (!string.Equals(computer.Status, "Available", StringComparison.OrdinalIgnoreCase) && !assignedToStudent) ||
                     (!string.IsNullOrWhiteSpace(computer.AssignedTo) && !assignedToStudent) ||
-                    await _context.LabSessions.AnyAsync(s => s.ComputerId == computerId.Value && s.IsActive && s.Status != "Ended"))
+                    await _context.LabSessions.AnyAsync(s => s.ComputerId == computerId.Value && s.IsActive && s.Status != LabSessionStatus.Ended))
                 {
                     TempData["ErrorMessage"] = "The selected workstation is not available.";
                     return RedirectToAction(nameof(Sessions));
@@ -230,14 +230,14 @@ namespace Server.Controllers
                 PCName = computer?.LaboratoryStation ?? string.Empty,
                 MaxDurationMinutes = rule?.MaxDurationMinutes,
                  StartTime = DateTime.UtcNow,
-                Status = "Running",
+                Status = LabSessionStatus.Running,
                 IsActive = true
             };
 
             _context.LabSessions.Add(session);
             if (computer is not null)
             {
-                computer.Status = "In Use";
+                computer.Status = WorkstationStatus.InUse;
                 computer.AssignedTo = studentId.ToString();
             }
             await _context.SaveChangesAsync();
@@ -257,24 +257,24 @@ namespace Server.Controllers
                 .FirstOrDefaultAsync(s => s.Id == id && s.IsActive);
             if (session != null)
             {
-                if (session.Status == "Running")
+                if (session.Status == LabSessionStatus.Running)
                 {
                     if (session.SessionRule is { AllowPause: false })
                     {
                         TempData["ErrorMessage"] = "The session rule does not allow pausing.";
                         return RedirectToAction(nameof(Sessions));
                     }
-                    session.Status = "Paused";
+                    session.Status = LabSessionStatus.Paused;
                      session.PauseTime = DateTime.UtcNow;
                 }
-                else if (session.Status == "Paused")
+                else if (session.Status == LabSessionStatus.Paused)
                 {
                     if (session.PauseTime.HasValue)
                     {
                         session.AccumulatedPauseSeconds += Math.Max(0, (int)(DateTime.UtcNow - session.PauseTime.Value).TotalSeconds);
                         session.PauseTime = null;
                     }
-                    session.Status = "Running";
+                    session.Status = LabSessionStatus.Running;
                 }
                 await _context.SaveChangesAsync();
                 await _sessionLifecycle.NotifyStateAsync(session);
@@ -925,7 +925,7 @@ namespace Server.Controllers
             var accessibleClassIds = await _context.Classes
                 .Where(cls => cls.TeacherId == teacherId.Value &&
                               !cls.IsArchived &&
-                              (cls.Status == "Active" || string.IsNullOrEmpty(cls.Status)) &&
+                              (cls.Status == RecordStatus.Active || string.IsNullOrEmpty(cls.Status)) &&
                               (cls.ClassId == existing.ClassId ||
                                _context.ClassStudents.Any(link => link.ClassId == cls.ClassId && link.StudentId == existing.Id)))
                 .Select(cls => cls.ClassId)

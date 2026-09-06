@@ -99,7 +99,7 @@ namespace Client
             _countdownTimer.Interval = 1000;
             _countdownTimer.Tick += (_, _) =>
             {
-                if (_sessionStatus == "Running")
+                if (_sessionStatus == LabSessionStatus.Running)
                 {
                     _sessionElapsed++;
                     RenderTimer();
@@ -431,7 +431,7 @@ namespace Client
         {
             int sec = Math.Max(0, _sessionElapsed);
             lblTimer.Text = $"{sec / 60:00}:{sec % 60:00}";
-            lblTimer.ForeColor = _sessionStatus == "Running" ? OnDarkStrong : OnDarkMuted;
+            lblTimer.ForeColor = _sessionStatus == LabSessionStatus.Running ? OnDarkStrong : OnDarkMuted;
         }
 
         private async void BtnLogin_Click(object? sender, EventArgs e)
@@ -652,15 +652,15 @@ namespace Client
             _sessionStatus = state.Status;
             _sessionElapsed = state.ElapsedSeconds;
             lblState.Text = state.Status;
-            lblState.ForeColor = state.Status == "Running" ? BrandMint
-                : state.Status == "Paused" ? OnDarkWarn
-                : state.Status == "Ended" ? OnDarkDanger : OnDarkMuted;
+            lblState.ForeColor = state.Status == LabSessionStatus.Running ? BrandMint
+                : state.Status == LabSessionStatus.Paused ? OnDarkWarn
+                : state.Status == LabSessionStatus.Ended ? OnDarkDanger : OnDarkMuted;
             RenderTimer();
         }
 
         private async Task OnSessionEnded()
         {
-            _sessionStatus = "Ended";
+            _sessionStatus = LabSessionStatus.Ended;
             _sessionElapsed = 0;
             RenderTimer();
             ShowPopup("Session Ended", "",

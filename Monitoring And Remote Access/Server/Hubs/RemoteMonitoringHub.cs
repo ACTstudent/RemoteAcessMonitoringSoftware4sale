@@ -49,8 +49,8 @@ public sealed class RemoteMonitoringHub : Hub
     private System.Security.Claims.ClaimsPrincipal Principal =>
         Context.User ?? throw new HubException("The connection is not authenticated.");
 
-    private bool IsTeacher => Principal.IsInRole("Teacher") || Principal.IsInRole("Admin");
-    private bool IsStudent => Principal.IsInRole("Student");
+    private bool IsTeacher => Principal.IsInRole(RoleNames.Teacher) || Principal.IsInRole(RoleNames.Admin);
+    private bool IsStudent => Principal.IsInRole(RoleNames.Student);
     private bool IsStudentClientAgent => IsStudent &&
         string.Equals(Principal.FindFirst(AuthPrincipalFactory.ClientAgentClaim)?.Value, bool.TrueString, StringComparison.OrdinalIgnoreCase);
 
@@ -59,7 +59,7 @@ public sealed class RemoteMonitoringHub : Hub
         if (!IsTeacher)
             throw new HubException("Only teachers can perform this action.");
 
-        if (Principal.IsInRole("Admin"))
+        if (Principal.IsInRole(RoleNames.Admin))
             return;
 
         if (!int.TryParse(Principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
@@ -68,7 +68,7 @@ public sealed class RemoteMonitoringHub : Hub
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var active = await context.Teachers.AsNoTracking().AnyAsync(teacher =>
-            teacher.TeacherId == teacherId && (teacher.Status == "Active" || string.IsNullOrEmpty(teacher.Status)));
+            teacher.TeacherId == teacherId && (teacher.Status == RecordStatus.Active || string.IsNullOrEmpty(teacher.Status)));
         if (!active)
             throw new HubException("The teacher account is inactive.");
     }
@@ -119,7 +119,7 @@ public sealed class RemoteMonitoringHub : Hub
             int.TryParse(Principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var actorId);
             context.AuditLogs.Add(new AuditLog
             {
-                UserType = Principal.IsInRole("Admin") ? "Admin" : "Teacher",
+                UserType = Principal.IsInRole(RoleNames.Admin) ? RoleNames.Admin : RoleNames.Teacher,
                 UserId = actorId == 0 ? null : actorId,
                 Action = action,
                 Details = $"{target.StudentId} at {target.PcName} ({target.ConnectionId})",
@@ -177,7 +177,7 @@ public sealed class RemoteMonitoringHub : Hub
             .Include(s => s.SessionRule)
             .Include(s => s.Student)
             .FirstOrDefaultAsync(s => s.IsActive &&
-                (s.Status == "Running" || s.Status == "Paused") &&
+                (s.Status == LabSessionStatus.Running || s.Status == LabSessionStatus.Paused) &&
                 s.Student != null && s.Student.StudentNumber == target.StudentId);
         if (labSession is null)
             throw new HubException("The workstation has no active lab session.");
@@ -188,7 +188,7 @@ public sealed class RemoteMonitoringHub : Hub
         if (duration is > 0 && LabSessionLifecycleService.GetElapsedSeconds(labSession, DateTime.UtcNow) >= duration.Value * 60)
         {
             labSession.IsActive = false;
-            labSession.Status = "Ended";
+            labSession.Status = LabSessionStatus.Ended;
             labSession.EndTime = DateTime.UtcNow;
             var expired = await context.RemoteControlSessions
                 .Where(s => s.IsActive && s.ConnectionId == target.ConnectionId)
@@ -269,7 +269,7 @@ public sealed class RemoteMonitoringHub : Hub
                     return;
                 }
                 await Groups.AddToGroupAsync(Context.ConnectionId, HubEventNames.TeachersGroup);
-                if (Principal.IsInRole("Admin"))
+                if (Principal.IsInRole(RoleNames.Admin))
                     await Groups.AddToGroupAsync(Context.ConnectionId, HubEventNames.AdminsGroup);
                 else if (int.TryParse(Principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var teacherId))
                     await Groups.AddToGroupAsync(Context.ConnectionId, HubEventNames.TeacherGroup(teacherId));
@@ -434,7 +434,7 @@ public sealed class RemoteMonitoringHub : Hub
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var labSession = await context.LabSessions.Include(s => s.SessionRule).Include(s => s.Student)
             .FirstOrDefaultAsync(s => s.IsActive &&
-                (s.Status == "Running" || s.Status == "Paused") && s.Student != null &&
+                (s.Status == LabSessionStatus.Running || s.Status == LabSessionStatus.Paused) && s.Student != null &&
                 s.Student.StudentNumber == target.StudentId);
         if (labSession is null)
             throw new HubException("The workstation has no active lab session.");
@@ -444,7 +444,7 @@ public sealed class RemoteMonitoringHub : Hub
         if (duration is > 0 && LabSessionLifecycleService.GetElapsedSeconds(labSession, DateTime.UtcNow) >= duration.Value * 60)
         {
             labSession.IsActive = false;
-            labSession.Status = "Ended";
+            labSession.Status = LabSessionStatus.Ended;
             labSession.EndTime = DateTime.UtcNow;
             foreach (var old in await context.RemoteControlSessions.Where(s => s.IsActive &&
                 s.ConnectionId == target.ConnectionId).ToListAsync())
@@ -586,7 +586,7 @@ public sealed class RemoteMonitoringHub : Hub
         {
             var activeTeacherIds = await context.LabSessions.AsNoTracking()
                 .Where(session => session.StudentId == student.Id && session.IsActive &&
-                    session.Status != "Ended" && session.TeacherId.HasValue)
+                    session.Status != LabSessionStatus.Ended && session.TeacherId.HasValue)
                 .Select(session => session.TeacherId!.Value)
                 .ToListAsync();
             teacherIds.UnionWith(activeTeacherIds);

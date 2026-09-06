@@ -76,7 +76,7 @@ public sealed class ClientAuthController : ControllerBase
             result.DisplayName ?? request.Username.Trim()));
     }
 
-    [Authorize(Roles = "Student")]
+    [Authorize(Roles = RoleNames.Student)]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {

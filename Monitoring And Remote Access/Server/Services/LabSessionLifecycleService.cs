@@ -22,7 +22,7 @@ public sealed class LabSessionLifecycleService
     {
         var now = DateTime.UtcNow;
         var sessions = await _db.LabSessions.Include(s => s.SessionRule).Include(s => s.Computer)
-            .Where(s => s.IsActive && s.Status == "Running")
+            .Where(s => s.IsActive && s.Status == LabSessionStatus.Running)
             .ToListAsync(cancellationToken);
         var ended = 0;
         foreach (var session in sessions)
@@ -42,7 +42,7 @@ public sealed class LabSessionLifecycleService
 
     public async Task EndAsync(Server.Models.LabSession session, CancellationToken cancellationToken = default)
     {
-        if (!session.IsActive && session.Status == "Ended") return;
+        if (!session.IsActive && session.Status == LabSessionStatus.Ended) return;
         if (session.ComputerId.HasValue && session.Computer is null)
             await _db.Entry(session).Reference(s => s.Computer).LoadAsync(cancellationToken);
         End(session, DateTime.UtcNow);
@@ -83,7 +83,7 @@ public sealed class LabSessionLifecycleService
 
     public static int GetElapsedSeconds(Server.Models.LabSession session, DateTime now)
     {
-        var effectiveNow = session.Status == "Paused" && session.PauseTime.HasValue
+        var effectiveNow = session.Status == LabSessionStatus.Paused && session.PauseTime.HasValue
             ? ToUtc(session.PauseTime.Value)
             : ToUtc(now);
         return Math.Max(0, (int)(effectiveNow - ToUtc(session.StartTime)).TotalSeconds - session.AccumulatedPauseSeconds);
@@ -104,7 +104,7 @@ public sealed class LabSessionLifecycleService
         CancellationToken cancellationToken = default)
     {
         var query = _db.LabSessions.Include(s => s.Computer)
-            .Where(s => s.StudentId == studentId && s.IsActive && s.Status != "Ended");
+            .Where(s => s.StudentId == studentId && s.IsActive && s.Status != LabSessionStatus.Ended);
         if (!string.IsNullOrWhiteSpace(pcName))
             query = query.Where(s => s.PCName == pcName);
         var sessions = await query.ToListAsync(cancellationToken);
@@ -132,7 +132,7 @@ public sealed class LabSessionLifecycleService
     public async Task<int> EndTeacherSessionsAsync(int teacherId, CancellationToken cancellationToken = default)
     {
         var sessions = await _db.LabSessions.Include(s => s.Computer)
-            .Where(s => s.TeacherId == teacherId && s.IsActive && s.Status != "Ended")
+            .Where(s => s.TeacherId == teacherId && s.IsActive && s.Status != LabSessionStatus.Ended)
             .ToListAsync(cancellationToken);
         foreach (var session in sessions) End(session, DateTime.UtcNow);
         if (sessions.Count > 0)
@@ -149,13 +149,13 @@ public sealed class LabSessionLifecycleService
     public async Task<int> PauseAllSessionsAsync(CancellationToken cancellationToken = default)
     {
         var sessions = await _db.LabSessions.Include(s => s.SessionRule)
-            .Where(s => s.IsActive && s.Status == "Running" &&
+            .Where(s => s.IsActive && s.Status == LabSessionStatus.Running &&
                 (s.SessionRule == null || s.SessionRule.AllowPause))
             .ToListAsync(cancellationToken);
         var now = DateTime.UtcNow;
         foreach (var session in sessions)
         {
-            session.Status = "Paused";
+            session.Status = LabSessionStatus.Paused;
             session.PauseTime = now;
         }
         if (sessions.Count > 0)
@@ -169,7 +169,7 @@ public sealed class LabSessionLifecycleService
     public async Task<int> ResumeAllSessionsAsync(CancellationToken cancellationToken = default)
     {
         var sessions = await _db.LabSessions
-            .Where(s => s.IsActive && s.Status == "Paused")
+            .Where(s => s.IsActive && s.Status == LabSessionStatus.Paused)
             .ToListAsync(cancellationToken);
         var now = DateTime.UtcNow;
         foreach (var session in sessions)
@@ -177,7 +177,7 @@ public sealed class LabSessionLifecycleService
             if (session.PauseTime.HasValue)
                 session.AccumulatedPauseSeconds += Math.Max(0, (int)(now - session.PauseTime.Value).TotalSeconds);
             session.PauseTime = null;
-            session.Status = "Running";
+            session.Status = LabSessionStatus.Running;
         }
         if (sessions.Count > 0)
         {
@@ -190,7 +190,7 @@ public sealed class LabSessionLifecycleService
     public async Task<int> EndAllSessionsAsync(CancellationToken cancellationToken = default)
     {
         var sessions = await _db.LabSessions.Include(s => s.Computer)
-            .Where(s => s.IsActive && s.Status != "Ended")
+            .Where(s => s.IsActive && s.Status != LabSessionStatus.Ended)
             .ToListAsync(cancellationToken);
         foreach (var session in sessions) End(session, DateTime.UtcNow);
         if (sessions.Count > 0)
@@ -252,7 +252,7 @@ public sealed class LabSessionLifecycleService
 
     private static void End(Server.Models.LabSession session, DateTime endedAt)
     {
-        session.IsActive = false; session.Status = "Ended"; session.EndTime ??= endedAt;
+        session.IsActive = false; session.Status = LabSessionStatus.Ended; session.EndTime ??= endedAt;
         if (session.Computer is not null)
             session.Computer.Status = string.IsNullOrWhiteSpace(session.Computer.AssignedTo) ? "Available" : "Assigned";
     }

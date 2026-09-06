@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Models;
+using Shared.Contracts;
 
 namespace Server.Services;
 
@@ -96,7 +97,7 @@ public class AuthenticationService : IAuthenticationService
         if (teacher != null && IsUsable(teacher.Status, teacher.LockoutEndUtc) && VerifyPassword(teacher.PasswordHash, password))
         {
             ClearFailures(teacher);
-            if (teacher.Status != "Active" && !string.IsNullOrEmpty(teacher.Status))
+            if (teacher.Status != RecordStatus.Active && !string.IsNullOrEmpty(teacher.Status))
             {
                 await AuditAsync("Teacher", teacher.TeacherId, "LoginDenied",
                     $"Teacher {username} attempted login but account is inactive", ipAddress);
@@ -170,7 +171,7 @@ public class AuthenticationService : IAuthenticationService
         foreach (var session in activeSessions)
         {
             session.IsActive = false;
-            session.Status = "Ended";
+            session.Status = LabSessionStatus.Ended;
             // StartTime and every other EndTime write use UTC. Writing local time
             // here inflated (EndTime - StartTime) by the machine's UTC offset, so
             // reported session durations were wrong for sessions closed by logout.

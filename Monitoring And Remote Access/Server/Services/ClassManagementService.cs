@@ -251,7 +251,7 @@ public sealed class ClassManagementService : IClassManagementService
             GradeLevel = NormalizeOptional(input.GradeLevel) ?? string.Empty,
             Schedule = NormalizeOptional(input.Schedule) ?? string.Empty,
             AcademicYear = academicYear,
-            Status = "Active",
+            Status = RecordStatus.Active,
             IsArchived = false,
             CreatedAt = DateTime.UtcNow,
             TeacherId = teacherId
@@ -824,7 +824,7 @@ public sealed class ClassManagementService : IClassManagementService
 
         return await _context.Teachers.FirstOrDefaultAsync(t =>
             t.TeacherId == teacherId.Value &&
-            (t.Status == "Active" || string.IsNullOrEmpty(t.Status)));
+            (t.Status == RecordStatus.Active || string.IsNullOrEmpty(t.Status)));
     }
 
     private async Task<List<Student>> GetMembersForMutationAsync(int classId)
@@ -901,7 +901,7 @@ public sealed class ClassManagementService : IClassManagementService
             FullName = $"{name.First} {name.Last}".Trim(),
             Username = username,
             PasswordHash = _hasher.HashPassword(new object(), input.Password!.Trim()),
-            Status = "Active",
+            Status = RecordStatus.Active,
             GradeSection = entity?.ClassName ?? string.Empty,
             ClassId = entity?.ClassId,
             AdviserId = entity?.TeacherId

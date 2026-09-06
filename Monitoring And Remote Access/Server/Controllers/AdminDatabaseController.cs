@@ -5,10 +5,11 @@ using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Models;
 using Server.Services;
+using Shared.Contracts;
 
 namespace Server.Controllers;
 
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = RoleNames.Admin)]
 [AutoValidateAntiforgeryToken]
 [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
 public sealed class AdminDatabaseController : Controller

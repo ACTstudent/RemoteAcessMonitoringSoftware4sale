@@ -5,10 +5,11 @@ using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Models;
 using Server.Services;
+using Shared.Contracts;
 
 namespace Server.Controllers
 {
-    [Authorize(Roles = "Student")]
+    [Authorize(Roles = RoleNames.Student)]
     [AutoValidateAntiforgeryToken]
     public class StudentController : Controller
     {

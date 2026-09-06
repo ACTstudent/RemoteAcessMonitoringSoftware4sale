@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Server.Services;
 using ServerAuthService = Server.Services.IAuthenticationService;
+using Shared.Contracts;
 
 namespace Server.Controllers
 {
@@ -91,7 +92,7 @@ namespace Server.Controllers
                     await SignInAsync(result, string.Empty);
                     HttpContext.Session.SetInt32("TeacherId", result.AccountId!.Value);
                     HttpContext.Session.SetString("TeacherName", result.DisplayName ?? "");
-                    HttpContext.Session.SetString("Role", "Teacher");
+                    HttpContext.Session.SetString("Role", RoleNames.Teacher);
                     _loginCache.Remove(key);
                     return RedirectToAction("Dashboard", "Teacher");
 
@@ -99,7 +100,7 @@ namespace Server.Controllers
                     await SignInAsync(result, string.Empty);
                     HttpContext.Session.SetInt32("AdminId", result.AccountId!.Value);
                     HttpContext.Session.SetString("AdminName", result.DisplayName ?? "");
-                    HttpContext.Session.SetString("Role", "Admin");
+                    HttpContext.Session.SetString("Role", RoleNames.Admin);
                     _loginCache.Remove(key);
                     return RedirectToAction("Index", "Admin");
 

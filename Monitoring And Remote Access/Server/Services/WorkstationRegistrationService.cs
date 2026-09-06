@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Server.Data;
 using Server.Models;
+using Shared.Contracts;
 
 namespace Server.Services;
 
@@ -46,7 +47,7 @@ public sealed class WorkstationRegistrationService : IWorkstationRegistrationSer
                 ?? throw new InvalidOperationException("The student account was not found.");
             var studentKey = studentId.ToString();
             var activeStudentSession = await _db.LabSessions.AsNoTracking()
-                .FirstOrDefaultAsync(session => session.StudentId == studentId && session.IsActive && session.Status != "Ended", cancellationToken);
+                .FirstOrDefaultAsync(session => session.StudentId == studentId && session.IsActive && session.Status != LabSessionStatus.Ended, cancellationToken);
             if (activeStudentSession is not null &&
                 !string.Equals(activeStudentSession.PCName, pcName, StringComparison.OrdinalIgnoreCase))
             {
@@ -70,7 +71,7 @@ public sealed class WorkstationRegistrationService : IWorkstationRegistrationSer
             if (computer is not null && !string.IsNullOrWhiteSpace(computer.AssignedTo) && computer.AssignedTo != studentKey)
             {
                 var occupied = await _db.LabSessions.AsNoTracking().AnyAsync(session =>
-                    session.IsActive && session.Status != "Ended" &&
+                    session.IsActive && session.Status != LabSessionStatus.Ended &&
                     (session.ComputerId == computer.ComputerId || session.PCName.ToLower() == normalizedName), cancellationToken);
                 if (occupied)
                 {
@@ -86,7 +87,7 @@ public sealed class WorkstationRegistrationService : IWorkstationRegistrationSer
             foreach (var previous in previousComputers)
             {
                 previous.AssignedTo = null;
-                previous.Status = "Available";
+                previous.Status = WorkstationStatus.Available;
             }
 
             var created = computer is null;
@@ -98,7 +99,7 @@ public sealed class WorkstationRegistrationService : IWorkstationRegistrationSer
             }
 
             computer.AssignedTo = studentKey;
-            computer.Status = "In Use";
+            computer.Status = WorkstationStatus.InUse;
             if (created)
                 AddAudit(studentId, "WorkstationAutoCreated", $"Workstation {pcName} was automatically created for student {student.StudentNumber}.");
             if (previousComputers.Count > 0 || (!string.IsNullOrWhiteSpace(previousAssignment) && previousAssignment != studentKey))
@@ -135,7 +136,7 @@ public sealed class WorkstationRegistrationService : IWorkstationRegistrationSer
         {
             var computer = await GetOrCreateForStudentAsync(studentId, pcName, cancellationToken);
             var existing = await _db.LabSessions.Include(session => session.Computer)
-                .FirstOrDefaultAsync(session => session.StudentId == studentId && session.IsActive && session.Status != "Ended", cancellationToken);
+                .FirstOrDefaultAsync(session => session.StudentId == studentId && session.IsActive && session.Status != LabSessionStatus.Ended, cancellationToken);
             if (existing is not null)
             {
                 if (!string.Equals(existing.PCName, pcName, StringComparison.OrdinalIgnoreCase))
@@ -144,7 +145,7 @@ public sealed class WorkstationRegistrationService : IWorkstationRegistrationSer
                 existing.IPAddress = ipAddress;
                 existing.ComputerId = computer.ComputerId;
                 existing.Computer = computer;
-                computer.Status = "In Use";
+                computer.Status = WorkstationStatus.InUse;
                 await _db.SaveChangesAsync(cancellationToken);
                 if (transaction is not null) await transaction.CommitAsync(cancellationToken);
                 return existing;
@@ -163,7 +164,7 @@ public sealed class WorkstationRegistrationService : IWorkstationRegistrationSer
                 PCName = pcName,
                 IPAddress = ipAddress,
                 StartTime = DateTime.UtcNow,
-                Status = "Running",
+                Status = LabSessionStatus.Running,
                 IsActive = true,
                 MaxDurationMinutes = rule?.MaxDurationMinutes
             };

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Models;
+using Shared.Contracts;
 
 namespace Server.Services;
 
@@ -154,7 +155,7 @@ public sealed class AnalyticsService : IAnalyticsService
     {
         var cls = await _db.Classes.AsNoTracking()
             .FirstOrDefaultAsync(c => c.ClassId == classId && !c.IsArchived && c.TeacherId == teacherId &&
-                                      (c.Status == "Active" || string.IsNullOrEmpty(c.Status)), cancellationToken);
+                                      (c.Status == RecordStatus.Active || string.IsNullOrEmpty(c.Status)), cancellationToken);
         if (cls is null) return null;
 
         var range = NormalizeRange(from, to);
@@ -605,7 +606,7 @@ public sealed class AnalyticsService : IAnalyticsService
     private async Task<List<AnalyticsClassOption>> GetClassOptionsAsync(int teacherId, CancellationToken cancellationToken) =>
         await _db.Classes.AsNoTracking()
             .Where(c => c.TeacherId == teacherId && !c.IsArchived &&
-                        (c.Status == "Active" || string.IsNullOrEmpty(c.Status)))
+                        (c.Status == RecordStatus.Active || string.IsNullOrEmpty(c.Status)))
             .OrderBy(c => c.ClassName)
             .Select(c => new AnalyticsClassOption(c.ClassId, c.ClassName))
             .ToListAsync(cancellationToken);
@@ -646,7 +647,7 @@ public sealed class AnalyticsService : IAnalyticsService
     private static DateTime EffectiveSessionEnd(LabSession session, DateTime upperBound)
     {
         if (session.EndTime.HasValue) return session.EndTime.Value;
-        if (session.Status == "Paused" && session.PauseTime.HasValue) return session.PauseTime.Value;
+        if (session.Status == LabSessionStatus.Paused && session.PauseTime.HasValue) return session.PauseTime.Value;
         var now = DateTime.UtcNow;
         return now < upperBound ? now : upperBound;
     }

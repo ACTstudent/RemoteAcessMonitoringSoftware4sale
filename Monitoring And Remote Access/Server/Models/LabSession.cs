@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Shared.Contracts;
 
 namespace Server.Models
 {
@@ -37,7 +38,7 @@ namespace Server.Models
         public bool IsActive { get; set; } = true;
 
         [StringLength(20)]
-        public string Status { get; set; } = "Running"; // Running | Paused | Ended
+        public string Status { get; set; } = LabSessionStatus.Running;
 
         public int? MaxDurationMinutes { get; set; }
     }

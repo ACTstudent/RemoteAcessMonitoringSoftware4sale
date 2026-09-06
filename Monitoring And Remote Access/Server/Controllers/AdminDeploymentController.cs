@@ -2,10 +2,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.Models;
 using Server.Services;
+using Shared.Contracts;
 
 namespace Server.Controllers;
 
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = RoleNames.Admin)]
 [AutoValidateAntiforgeryToken]
 [Route("Admin/Deployment")]
 public sealed class AdminDeploymentController : Controller
