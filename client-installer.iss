@@ -2,8 +2,12 @@
 ; Builds "CAMS-Client-Setup.exe" - a clean installation wizard.
 
 #define MyAppName "CAMS Student Client"
+; No fallback version on purpose. A default here goes stale the moment
+; version.json moves on, and then a hand-compiled installer claims a version it
+; was not built from. build-everything.ps1 passes /DMyAppVersion from
+; version.json, which is the only place the version is written down.
 #ifndef MyAppVersion
-  #define MyAppVersion "2.11.6"
+  #error MyAppVersion is not defined. Build through build-everything.ps1, or pass /DMyAppVersion=<version from version.json> to ISCC.
 #endif
 #define MyAppExeName "Client.exe"
 #define MyAppPublisher "CAMS"
@@ -21,7 +25,19 @@ DefaultGroupName=CAMS
 DisableProgramGroupPage=yes
 DisableWelcomePage=no
 DisableDirPage=no
+; The file name deliberately carries no version. The portal's download buttons
+; and the Deployment Hub both address this file by a fixed name through
+; releases/latest/download/, and those links must keep working across releases.
+; The version lives in the metadata below instead.
 OutputBaseFilename=CAMS-Client-Setup
+; Windows reads these, not AppVersion, for the Details tab and Explorer's
+; "File version" column. Without VersionInfoVersion the setup file shows no
+; version at all, and one release looks identical to the last.
+VersionInfoVersion={#MyAppVersion}
+VersionInfoProductVersion={#MyAppVersion}
+VersionInfoProductName={#MyAppName}
+VersionInfoCompany={#MyAppPublisher}
+VersionInfoDescription={#MyAppName} Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern

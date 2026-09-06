@@ -109,6 +109,17 @@ foreach ($installer in @($serverInstaller, $clientInstaller)) {
         } else {
             Fail "$([System.IO.Path]::GetFileName($installer)) product version '$productVersion' does not align with version.json '$version'"
         }
+
+        # Checked separately from the product version because the two come from
+        # different Inno directives. Only this one reaches Explorer's "File
+        # version" column, and it was empty through 2.12.0 - the setup file had
+        # no version on its face and one release looked like the last.
+        $fileVersion = (Get-Item -LiteralPath $installer).VersionInfo.FileVersion
+        if ($fileVersion -and (Test-VersionAlignment $fileVersion $version)) {
+            Pass "$([System.IO.Path]::GetFileName($installer)) file version $fileVersion aligns with version.json"
+        } else {
+            Fail "$([System.IO.Path]::GetFileName($installer)) file version '$fileVersion' does not align with version.json '$version'"
+        }
     }
 }
 

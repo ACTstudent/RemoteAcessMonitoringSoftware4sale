@@ -6,14 +6,14 @@
                       {
                           "fileName":  "CAMS-Server-Setup.exe",
                           "checksumFileName":  "CAMS-Server-Setup.exe.sha256",
-                          "size":  104630613,
-                          "sha256":  "1469BEA4E10AD0BF615580126AE7476128DB81BDB6D7F231921888CD500D57FA"
+                          "size":  104641215,
+                          "sha256":  "582C9B7BFA4FAF06394C8AE27DE21EFD23816942D9C1F008B517F3B8FDFA4BE0"
                       },
                       {
                           "fileName":  "CAMS-Client-Setup.exe",
                           "checksumFileName":  "CAMS-Client-Setup.exe.sha256",
-                          "size":  67108865,
-                          "sha256":  "3B3E614F4E2352960334E668244EC85BAE938C99C3745EDC7F3B9FB6A4B2CA2C"
+                          "size":  67108972,
+                          "sha256":  "AF7F2297FC27CC5A7F8BCDF4D5B6D9D5C282A0B60217F54BCBFBE01EAD43D436"
                       }
                   ]
 }
