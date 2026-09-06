@@ -1521,3 +1521,13 @@ summary:focus-visible,
     filter: grayscale(0.7);
     opacity: 0.72;
 }
+
+/* FLOW-03. A state we can no longer confirm is shown as unconfirmed rather than
+   overwritten with a transport word. The lab may have been paused or ended while
+   the connection was down; saying "Ready" would be a guess. */
+.state-stale {
+    opacity: 0.6;
+    text-decoration: underline dotted;
+    text-underline-offset: 0.2em;
+    cursor: help;
+}

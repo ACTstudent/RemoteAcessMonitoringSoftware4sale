@@ -27,7 +27,12 @@
         <div class="col-md-3 col-sm-6">
             <div class="d-flex align-items-center gap-2">
                 <span class="badge bg-success rounded-circle p-2"></span>
-                <span class="fw-bold text-dark small">Status: <span id="lblSessionState" class="text-success">Connecting</span></span>
+                @* FLOW-03: this shows the session's own state and nothing else.
+                   The transport is reported by the header indicator, and remote
+                   control by lblRemoteControlState below. All three used to
+                   share this label. *@
+                <span class="fw-bold text-dark small">Session: <span id="lblSessionState" class="text-success">Waiting for the server</span></span>
+                <span class="small ms-2" id="lblRemoteControlState">Not in control</span>
             </div>
         </div>
         <div class="col-md-3 col-sm-6">

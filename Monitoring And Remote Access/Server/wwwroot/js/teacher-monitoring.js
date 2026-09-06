@@ -151,19 +151,74 @@ function drawRemoteFrame(base64Image) {
     image.src = `data:image/jpeg;base64,${base64Image}`;
 }
 
+// --- FLOW-03: the three states, kept apart ---
+
+/** Session lifecycle, and only that. Never written by a transport event. */
+function renderSessionState(status) {
+    const label = document.getElementById("lblSessionState");
+    if (!label) return;
+    label.textContent = status;
+    label.dataset.sessionState = status;
+    markSessionStateStale(false);
+}
+
+/**
+ * Marks the session state as possibly out of date, which is honest while the
+ * connection is down: the lab may have been paused or ended since the last
+ * message arrived. It does not overwrite the state with a transport word.
+ */
+function markSessionStateStale(stale) {
+    const label = document.getElementById("lblSessionState");
+    if (!label) return;
+    label.classList.toggle("state-stale", stale);
+    label.title = stale
+        ? "The connection dropped, so this may be out of date. It will refresh when the connection returns."
+        : "";
+}
+
+/** Remote control, which is neither the transport nor the session. */
+function setRemoteControlState(active, reasonIfStopped) {
+    remoteSupportActive = active;
+    document.getElementById("liveViewImage")?.classList.toggle("d-none", active);
+    remoteCanvas?.classList.toggle("d-none", !active);
+    const button = document.getElementById("remoteSupportButton");
+    if (button) button.textContent = active ? "Stop Remote Support" : "Start Remote Support";
+
+    const indicator = document.getElementById("lblRemoteControlState");
+    if (indicator) {
+        indicator.textContent = active ? "Control active" : "Not in control";
+        indicator.classList.toggle("text-danger", active);
+        indicator.classList.toggle("text-muted", !active);
+    }
+    if (!active && reasonIfStopped) {
+        showError(`Remote control stopped because ${reasonIfStopped}.`);
+    }
+}
+
+/** True when the hub is connected well enough to carry a command. */
+function canSendCommand() {
+    return hub && hub.state === signalR.HubConnectionState.Connected;
+}
+
 async function toggleRemoteSupport() {
     if (!selectedConnectionId) return;
     const nextState = !remoteSupportActive;
+
+    // Commands are guarded rather than fired into a dropped connection, where
+    // they would fail with a transport error the teacher cannot act on.
+    if (!canSendCommand()) {
+        showError("Not connected to the server, so that cannot be sent yet. It will be possible again once the connection returns.");
+        return;
+    }
+
     try {
         await hub.invoke(nextState ? "StartRemoteControl" : "StopRemoteControl", selectedConnectionId);
     } catch (error) {
         showError(`Remote support could not ${nextState ? "start" : "stop"}: ${error.message || error}`);
         return;
     }
-    remoteSupportActive = nextState;
-    document.getElementById("liveViewImage").classList.toggle("d-none", remoteSupportActive);
-    remoteCanvas.classList.toggle("d-none", !remoteSupportActive);
-    document.getElementById("remoteSupportButton").textContent = remoteSupportActive ? "Stop Remote Support" : "Start Remote Support";
+
+    setRemoteControlState(nextState);
     const unit = activeUnits.get(selectedConnectionId);
     if (remoteSupportActive && unit?.lastFrame) drawRemoteFrame(unit.lastFrame);
     if (remoteSupportActive) remoteCanvas.focus();
@@ -172,11 +227,10 @@ async function toggleRemoteSupport() {
 async function stopRemoteSupport() {
     if (!remoteSupportActive || !selectedConnectionId) return;
     const targetConnectionId = selectedConnectionId;
-    remoteSupportActive = false;
-    document.getElementById("liveViewImage").classList.remove("d-none");
-    remoteCanvas.classList.add("d-none");
-    document.getElementById("remoteSupportButton").textContent = "Start Remote Support";
-    if (hub.state === signalR.HubConnectionState.Connected) {
+    // Through the shared setter, so the control indicator cannot say "Control
+    // active" after control has stopped.
+    setRemoteControlState(false);
+    if (canSendCommand()) {
         try { await hub.invoke("StopRemoteControl", targetConnectionId); }
         catch (error) { showError(`Remote support could not stop: ${error.message || error}`); }
     }
@@ -446,13 +500,40 @@ hub.on("StudentConnected", student => createWorkstationCard(valueOf(student, "co
 hub.on("StudentDisconnected", connectionId => removeWorkstationCard(connectionId));
 hub.on("GlobalSessionState", state => {
     const status = valueOf(state, "status", "Status") || "Ready";
-    document.getElementById("lblSessionState").textContent = status;
+    renderSessionState(status);
     const elapsed = Number(valueOf(state, "elapsedSeconds", "ElapsedSeconds")) || 0;
     document.getElementById("lblSessionTimer").textContent = `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`;
 });
-hub.onreconnecting(() => document.getElementById("lblSessionState").textContent = "Reconnecting");
-hub.onreconnected(() => document.getElementById("lblSessionState").textContent = "Ready");
-hub.onclose(() => showError("The monitoring connection closed. Refresh the page to reconnect."));
+
+// FLOW-03. These three are different things and used to share one label.
+//
+// The transport dropping was written into lblSessionState as "Reconnecting",
+// and onreconnected then wrote "Ready" - so a paused session came back from any
+// blip reading Ready, and a teacher had no way to tell a paused lab from a
+// dropped connection. The transport now reports itself in the header, where
+// CamsConnection already owns it; the session label only ever shows what the
+// server said about the session.
+hub.onreconnecting(() => {
+    // The session state on screen is now only as good as the last message.
+    markSessionStateStale(true);
+});
+
+hub.onreconnected(async () => {
+    // Reconcile rather than guess. Whatever happened while the connection was
+    // down, the server knows and this page does not.
+    try {
+        await loadLiveState();
+        markSessionStateStale(false);
+    } catch {
+        markSessionStateStale(true);
+    }
+});
+
+hub.onclose(() => {
+    markSessionStateStale(true);
+    setRemoteControlState(false, "the connection closed");
+    showError("The monitoring connection closed. Refresh the page to reconnect.");
+});
 
 document.getElementById("gridSearch")?.addEventListener("input", function () {
     const query = this.value.toLowerCase();
