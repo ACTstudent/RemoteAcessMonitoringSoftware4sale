@@ -84,6 +84,17 @@ builder.Services.AddSession(options =>
 builder.Services.AddSignalR(options =>
 {
     options.MaximumReceiveMessageSize = 8 * 1024 * 1024;
+
+    // Defaults are a 15s keep-alive and a 30s client timeout, which meant a
+    // dropped classroom connection sat unreported for around 25 seconds - long
+    // enough for a teacher to act on a monitoring view that had already stopped
+    // updating. A 5s ping lets the browser notice within about 15s.
+    //
+    // The browser sets its serverTimeout to three times this interval; the
+    // guidance is at least double, so a single missed ping on a busy Wi-Fi link
+    // does not read as a disconnection.
+    options.KeepAliveInterval = TimeSpan.FromSeconds(5);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(15);
 });
 
 var httpsPort = builder.Configuration.GetValue("Cams:HttpsPort", 5000);

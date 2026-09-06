@@ -68,5 +68,10 @@
             if (dismissBroadcastToast) { dismissBroadcastToast(); dismissBroadcastToast = null; }
         });
 
-        conn.start().catch(console.error);
+        conn.serverTimeoutInMilliseconds = 15000;   // three times the 5s server keep-alive
+
+        // A student whose connection drops stops receiving warnings and the
+        // end-of-session notice, so this must be visible rather than silent.
+        CamsConnection.watch(conn, { label: "connection to your teacher" });
+        CamsConnection.started(conn.start());
     </script>

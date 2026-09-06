@@ -14,10 +14,12 @@
                 badge.classList.toggle("d-none", count === 0);
             };
             connection.on("MonitoringAlertReceived", () => refreshAlertCount().catch(() => {}));
+            // Three times the server keep-alive of 5s, so one missed ping on a
+            // busy link is not read as a disconnection.
+            connection.serverTimeoutInMilliseconds = 15000;
             window.teacherHubConnection = connection;
-            window.teacherHubStarted = connection.start();
-            window.teacherHubStarted.catch(error => {
-                console.error("Teacher notifications connection failed", error);
-            });
+            // The badge stops counting if this drops, so the header says so.
+            CamsConnection.watch(connection, { label: "notifications connection" });
+            window.teacherHubStarted = CamsConnection.started(connection.start());
         })();
     </script>

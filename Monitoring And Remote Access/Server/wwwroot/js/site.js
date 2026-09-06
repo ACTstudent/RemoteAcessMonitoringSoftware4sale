@@ -471,3 +471,82 @@ window.CamsToast = (function () {
         Array.prototype.forEach.call(document.querySelectorAll('form[aria-busy="true"]'), release);
     });
 })();
+
+// Connection status. Every portal page holds a SignalR connection - the teacher's
+// carries the alert badge, the student's carries session state and any warning a
+// teacher sends. When one dropped, nothing said so: the badge quietly stopped
+// counting and a student stopped receiving messages while the page looked fine.
+//
+// CamsConnection attaches to a connection and reports its state in the header,
+// staying out of the way while things are working.
+window.CamsConnection = (function () {
+    var indicator = null;
+
+    function element() {
+        if (indicator === null) {
+            indicator = document.getElementById("connectionStatus") || false;
+        }
+        return indicator || null;
+    }
+
+    // "connected" hides the pill entirely; there is no news in working normally.
+    function render(state, message) {
+        var el = element();
+        if (!el) {
+            return;
+        }
+        if (state === "connected") {
+            el.hidden = true;
+            el.textContent = "";
+            return;
+        }
+        el.hidden = false;
+        el.className = "connection-status connection-status-" + state;
+        el.textContent = message;
+    }
+
+    return {
+        /**
+         * Wires a SignalR connection to the header indicator.
+         * Returns the connection so it can be chained.
+         */
+        watch: function (connection, options) {
+            var settings = options || {};
+            var label = settings.label || "connection";
+
+            connection.onreconnecting(function () {
+                render("waiting", "Reconnecting\u2026");
+            });
+
+            connection.onreconnected(function () {
+                render("connected");
+                if (window.CamsToast && settings.announceRecovery !== false) {
+                    window.CamsToast.show("The " + label + " is back.", { timeout: 4000 });
+                }
+            });
+
+            // Automatic reconnection has given up. A refresh is the recovery
+            // path, so say so rather than leaving a dead page that looks live.
+            connection.onclose(function () {
+                render("lost", "Offline \u2014 refresh to reconnect");
+            });
+
+            return connection;
+        },
+
+        /** Called once the initial start() resolves or rejects. */
+        started: function (promise, options) {
+            var settings = options || {};
+            render("waiting", "Connecting\u2026");
+            return promise.then(function (value) {
+                render("connected");
+                return value;
+            }).catch(function (error) {
+                render("lost", "Offline \u2014 refresh to reconnect");
+                if (settings.rethrow) {
+                    throw error;
+                }
+            });
+        }
+    };
+})();

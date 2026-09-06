@@ -68,6 +68,9 @@
                     <partial name="@nav.TopbarPartial" />
                 }
 
+                @* Hidden while the connection is healthy; CamsConnection reveals it. *@
+                <span id="connectionStatus" class="connection-status" role="status" aria-live="polite" hidden></span>
+
                 <div class="d-flex align-items-center gap-3 ms-auto">
                     <div class="user-profile-badge">
                         <div class="user-avatar-circle">

@@ -1426,3 +1426,40 @@ body {
 .form-inline-action {
     margin: 0;
 }
+
+/* ---------------------------------------------------------------------------
+   Connection status
+
+   Every portal page holds a SignalR connection. When one dropped there was no
+   sign of it: the teacher's alert badge stopped counting and a student stopped
+   receiving warnings while the page still looked live. This says so, and stays
+   hidden while things are working.
+   --------------------------------------------------------------------------- */
+.connection-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.connection-status::before {
+    content: "";
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.connection-status-waiting {
+    background: #FEF3C7;
+    color: #7C4A03;          /* 6.65:1 on #FEF3C7 */
+}
+
+.connection-status-lost {
+    background: #FEE2E2;
+    color: #991B1B;          /* 6.80:1 on #FEE2E2 */
+}
