@@ -19,11 +19,11 @@ Owner for every item below: implementation agent, unless a person is named.
 
 ## Summary
 
-**37 work items. 9 VERIFIED (24%), 9 IN PROGRESS, 5 BLOCKED, 14 NOT STARTED.**
+**37 work items. 10 VERIFIED (27%), 8 IN PROGRESS, 5 BLOCKED, 14 NOT STARTED.**
 
 Counting only what can be finished on this machine — that is, setting aside the
 5 items blocked on a second Windows client, a disposable network and snapshot
-VMs — it is 9 of 32, or 28%.
+VMs — it is 10 of 32, or 31%.
 
 Two caveats on reading that number. It counts items, not effort: the 14 not-started
 items include the largest single pieces of work in the plan (`AdminController` at
@@ -44,11 +44,11 @@ UX-06 was VERIFIED and a later, wider sweep still found four more problems.
 | OPS-06 | Upload test results and failure logs in CI | BLOCKED | branch `ci-test-results` |
 | OPS-08 | One documentation index | VERIFIED | `ab6fe95` |
 | OPS-09 | Delete proven-unused code after reference checks | IN PROGRESS | `6fcf499` |
-| UX-03 | Standardize table density, row actions and pagination | IN PROGRESS | `8d1328c` |
-| UX-01 | Consolidate design tokens | IN PROGRESS | pre-plan, see below |
-| UX-02 | Shared shell with role-aware navigation | IN PROGRESS | `76b782e` |
-| UX-04 | Standardize states; no duplicate submit | IN PROGRESS | `c00cc27`, `90fc671`, `abecf7b` |
-| UX-05 | Branding, favicon, titles, copy, offline assets | IN PROGRESS | `b9c0e63` |
+| UX-03 | Standardize table density, row actions and pagination | IN PROGRESS | `8d1328c`, `860e200` |
+| UX-01 | Consolidate design tokens | IN PROGRESS | `f15fece`, `3d2e552` |
+| UX-02 | Shared shell with role-aware navigation | VERIFIED | `0485327` |
+| UX-04 | Standardize states; no duplicate submit | IN PROGRESS | `c00cc27`, `90fc671`, `abecf7b`, `860e200` |
+| UX-05 | Branding, favicon, titles, copy, offline assets | IN PROGRESS | `b9c0e63`, `3d2e552` |
 | UX-06 | Accessibility pass (names, ids, landmarks) | VERIFIED (web) | `f7b97f4`, `1d46c9c` |
 | FLOW-02 | Keep list filters, page and return location across actions | VERIFIED | `395abe9`, `8d1328c`, `dea6dae` |
 | FLOW-01, 03, 04, 05, 06 | Setup checklist, connection state, command feedback, interruption, collector states | NOT STARTED | — |
@@ -292,16 +292,16 @@ made.
   plan asks for. Migrations, backups, databases, certificate stores and archived test
   evidence are explicitly out of scope for deletion.
 
-### UX-01, UX-02, UX-04, UX-05 — partially delivered before the plan was adopted
+### UX-01, UX-04, UX-05 — partially delivered
 
 Recorded for accuracy. None of these meet the plan's acceptance criteria yet.
+UX-02 has since been finished and moved to the verified section below.
 
 | Item | Delivered | Not yet done |
 | --- | --- | --- |
-| UX-01 | Warm green palette as CSS custom properties in `site.css`; Bootstrap utilities rethemed to the palette; all 10 foreground/background pairs verified at WCAG AA 4.5:1 | `Client/MainForm` palette not reconciled with the web tokens; control variants not documented |
-| UX-02 | Menu button collapses and restores the sidebar, persisted in `localStorage` (`76b782e`); dead layout removed (`6fcf499`) | Admin, Teacher and Student layouts remain three separate files; active-link correctness not audited per controller and action |
-| UX-04 | Inline flash alerts replaced with auto-fading toasts (`c00cc27`, `90fc671`); shared `window.CamsToast` helper | Loading, empty, no-results, forbidden and offline states not standardized; repeat-submit guard not applied broadly |
-| UX-05 | Fonts self-hosted as subsetted woff2 with CSP updated so they load offline (`b9c0e63`, closes DEF-001) | Titles, button labels, helper text and error copy not audited |
+| UX-01 | Warm green palette as CSS custom properties; Bootstrap utilities rethemed; all 10 foreground/background pairs at WCAG AA. 57 repeated inline styles moved into `.page-title`, `.surface-brand` and `.form-inline-action`, with the computed styles read back from the running page to confirm nothing shifted (`f15fece`). `Client/MainForm` palette now names the token each colour corresponds to and carries its measured contrast; `StatusOk` realigned from #157A3D to the web success token #17803A, 5.02:1 on white (`3d2e552`) | Spacing, radius and focus tokens are still ad hoc — only `--card-border-radius` and `--font-family` exist. Variants for buttons, forms, tables, status badges, toasts and dialogs are still undocumented, which is half the item |
+| UX-04 | Inline flash alerts replaced with auto-fading toasts; shared `window.CamsToast`; repeat-submit guard in `site.js`. 28 empty tables, written six different ways, now share one treatment — an icon above the sentence, with the icon chosen from what is missing (`860e200`) | Loading, forbidden and offline states are still not standardized. There is no shared spinner or skeleton, and a page that cannot reach the hub shows nothing to say so |
+| UX-05 | Fonts self-hosted as subsetted woff2 with CSP updated so they load offline (`b9c0e63`, closes DEF-001). 16 action labels normalised to sentence case, so "Create class" no longer sits beside "Add more rows"; page names and acronyms deliberately keep their Title Case. A favicon exists at last — 708 bytes of SVG rather than the 825 KB school logo, ending a 404 on every page load (`3d2e552`) | Helper text and error copy still unaudited. The public portal under `portal/` and the WinForms dialogs were not part of this pass |
 
 ### LIVE-01 / LIVE-02 — Test suites and decision-branch coverage
 
@@ -437,3 +437,38 @@ both handled. Remote history is read-only and its filter travels with the pager.
 Teacher Computers and Records take no filter parameters and render no filter form.
 No admin list action takes a filter parameter either - admin filtering is done in the
 browser - so there is no server-held filter state anywhere else to lose.
+
+### UX-02 — One shared shell for the three portals
+
+- **Observed problem:** Admin, Teacher and Student each carried a full copy of the page
+  shell — sidebar, header, scripts — **472 lines of near-identical markup** across three
+  files. Any change to the shell had to be made three times and stayed consistent only
+  by care.
+- **The bug that copy caused:** each layout decided which sidebar link was current by
+  comparing the **action name alone**. Opening `/Admin/Students` from the teacher portal
+  therefore highlighted the teacher's own "Student Profiles" link, because both actions
+  are called `Students`. Detail pages with no sidebar entry of their own — class details,
+  student details, alert history — highlighted nothing at all.
+- **User outcome:** the sidebar always marks the page you are on, and the three portals
+  behave identically because they are the same shell.
+- **Source files:** `Server/Views/Shared/_AppLayout.cshtml` (new),
+  `Server/Models/NavigationModel.cs` (new), `Server/Services/NavigationBuilder.cs` (new),
+  `Server/Views/Shared/_StudentTopbar.cshtml`, `_StudentSessionScript.cshtml`,
+  `_TeacherAlertBadgeScript.cshtml` (new), and the three old layouts, now 12 lines each.
+- **Change:** what differs between the portals is a link list and some branding, so it is
+  now data. Matching requires controller **and** action, and an item can name further
+  actions it should stay current for.
+- **Added for every portal rather than one:** a skip-to-content link (the student portal
+  had no keyboard route past the sidebar), `aria-current="page"` on the current link, and
+  the same identity block in the header.
+- **Evidence after:** 45 pages swept — 44 render with no console errors, no failed
+  sub-requests and no accessibility findings; the 15 not-applicable rows are file
+  downloads and one id the fixture does not hold. A dedicated navigation check passes
+  **19 of 19**, including that `/Admin/Students` no longer marks the teacher's link, that
+  detail pages keep their parent marked, and that a teacher in the global portal is still
+  not offered the administrator-only links the authorization filter would refuse.
+- **Test results:** server 442/442, client 43/43.
+- **Rollout/rollback:** revert `0485327`. No route, contract or schema change.
+- **Status:** VERIFIED.
+- **Not covered:** responsive behaviour at narrow widths and 200% zoom is UX-06's
+  remaining half and was not re-checked here.
