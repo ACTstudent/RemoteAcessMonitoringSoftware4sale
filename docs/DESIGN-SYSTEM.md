@@ -63,7 +63,7 @@ rule at a time.
 | Token | Value |
 | --- | --- |
 | `--focus-ring-color` | `#1D5C2E` |
-| `--focus-ring-width` | `3px` |
+| `--focus-ring-width` | `2px` |
 | `--focus-ring-offset` | `2px` |
 
 One ring on everything focusable, via `:focus-visible` so a mouse click is left
