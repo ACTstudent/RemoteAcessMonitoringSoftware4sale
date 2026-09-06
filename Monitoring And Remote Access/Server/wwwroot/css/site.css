@@ -1531,3 +1531,41 @@ summary:focus-visible,
     text-underline-offset: 0.2em;
     cursor: help;
 }
+
+/* FLOW-04. Four states a command can be in, and they must not look alike.
+   "Outcome unknown" is the one that matters: it is not a failure, and a teacher
+   who reads it as one may shut a workstation down twice. */
+.command-feed {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin: 0 0 var(--space-4);
+    padding: 0;
+}
+
+.command-entry {
+    border-left: 3px solid var(--card-border);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    font-size: 0.875rem;
+}
+
+.command-pending {
+    border-left-color: var(--text-muted);
+    opacity: 0.8;
+}
+
+.command-ok {
+    border-left-color: var(--cams-success);
+}
+
+.command-failed {
+    border-left-color: var(--cams-danger);
+}
+
+/* Amber, not red: nobody knows what happened, which is its own thing. */
+.command-unknown {
+    border-left-color: var(--cams-warning);
+    font-weight: 600;
+}

@@ -267,26 +267,85 @@ remoteCanvas.addEventListener("keydown", event => {
     event.preventDefault();
 });
 
-async function sendWorkstationCommand(method, dangerous = false) {
-    if (!selectedConnectionId) return;
-    if (dangerous) {
-        const command = method.replace("Student", "").toLowerCase();
-        const confirmed = await window.camsConfirm({ title: "Confirm workstation command", message: `Run ${command} on this workstation?`, confirmLabel: "Run command" });
-        if (!confirmed) return;
-    }
-    try {
-        const result = await hub.invoke(method, selectedConnectionId);
-        showCommandResult(result);
-    } catch (error) {
-        showError(`Command failed: ${error.message || error}`);
-    }
+// --- FLOW-04: what happened to the command, and to which workstation ---
+
+/**
+ * Every command gets an entry naming its target, so a result can never be read
+ * against the wrong workstation. Previously a bare message appeared with no
+ * indication of which station it referred to; a teacher who selected another
+ * station while waiting had no way to tell.
+ */
+function describeTarget(connectionId) {
+    const unit = activeUnits.get(connectionId);
+    if (!unit) return "a workstation that is no longer connected";
+    return unit.pcName || unit.studentId || connectionId;
 }
 
-function showCommandResult(result) {
-    if (!result) return;
-    const message = valueOf(result, "message", "Message") || "Command completed.";
-    if (!Boolean(valueOf(result, "succeeded", "Succeeded"))) showError(message);
-    else document.getElementById("hubError").classList.add("d-none");
+function trackCommand(label, target) {
+    const feed = document.getElementById("commandFeed");
+    const entry = document.createElement("li");
+    entry.className = "command-entry command-pending";
+    entry.textContent = `${label} on ${target}: sending…`;
+    entry.setAttribute("role", "status");
+    feed?.prepend(entry);
+
+    // Keep the list short enough to read at a glance.
+    while (feed && feed.children.length > 6) feed.lastElementChild.remove();
+
+    const settle = (cls, text) => {
+        entry.className = `command-entry ${cls}`;
+        entry.textContent = `${label} on ${target}: ${text}`;
+    };
+
+    return {
+        acknowledged: message => settle("command-ok", message || "done"),
+        failed: message => settle("command-failed", `refused — ${message}`),
+        // Deliberately its own state. A transport error after the server took
+        // the command means nobody knows whether it ran, and calling that
+        // "failed" invites a teacher to shut a machine down twice.
+        unknown: message =>
+            settle("command-unknown",
+                `outcome unknown — ${message}. Check the workstation before sending it again.`)
+    };
+}
+
+async function sendWorkstationCommand(method, dangerous = false) {
+    if (!selectedConnectionId) return;
+
+    const label = method.replace("Student", "").replace(/([a-z])([A-Z])/g, "$1 $2");
+    const target = describeTarget(selectedConnectionId);
+
+    if (dangerous) {
+        const confirmed = await window.camsConfirm({
+            title: "Confirm workstation command",
+            message: `Run ${label.toLowerCase()} on ${target}?`,
+            confirmLabel: "Run command"
+        });
+        if (!confirmed) return;
+    }
+
+    if (!canSendCommand()) {
+        showError("Not connected to the server, so that command was not sent.");
+        return;
+    }
+
+    const tracked = trackCommand(label, target);
+    try {
+        const result = await hub.invoke(method, selectedConnectionId);
+        const message = valueOf(result, "message", "Message") || "done";
+        if (Boolean(valueOf(result, "succeeded", "Succeeded"))) {
+            tracked.acknowledged(message);
+            document.getElementById("hubError").classList.add("d-none");
+        } else {
+            // The server answered and said no. That is a refusal, not a mystery.
+            tracked.failed(message);
+            showError(message);
+        }
+    } catch (error) {
+        // No answer came back. The command may or may not have reached the
+        // workstation, and there is no automatic retry for exactly that reason.
+        tracked.unknown(error.message || String(error));
+    }
 }
 
 function openWarning(allStudents) {
@@ -362,12 +421,30 @@ async function bulkCommand(method, label) {
         .filter(column => column.style.display !== "none")
         .map(column => column.id.replace("unit-card-", ""));
     if (!targets.length) return;
-    const confirmed = await window.camsConfirm({ title: "Confirm bulk command", message: `Run ${label} for ${targets.length} visible workstations?`, confirmLabel: "Run command" });
+
+    const confirmed = await window.camsConfirm({
+        title: "Confirm bulk command",
+        message: `Run ${label} for ${targets.length} visible workstations?`,
+        confirmLabel: "Run command"
+    });
     if (!confirmed) return;
+
+    if (!canSendCommand()) {
+        showError("Not connected to the server, so that command was not sent.");
+        return;
+    }
+
+    // Named by count rather than by station: this is one call covering many, and
+    // pretending to report per-station would be a fiction the hub does not
+    // support.
+    const tracked = trackCommand(label, `${targets.length} visible workstations`);
     try {
         await hub.invoke(method, targets);
+        tracked.acknowledged("the server accepted it for every listed workstation");
     } catch (error) {
-        showError(`Bulk command failed: ${error.message || error}`);
+        // Partial failure is the likely case here - some workstations may have
+        // been reached before the error. Saying "failed" would be wrong.
+        tracked.unknown(error.message || String(error));
     }
 }
 

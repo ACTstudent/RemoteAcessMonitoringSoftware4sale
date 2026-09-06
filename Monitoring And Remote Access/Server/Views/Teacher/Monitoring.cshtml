@@ -22,6 +22,11 @@
 
 <div id="hubError" class="alert alert-danger d-none rounded-3" role="alert"></div>
 
+@* FLOW-04. What was sent, to which workstation, and what came back. A command
+   whose result does not name its target can be read against the wrong machine,
+   and one that never answered is not the same as one that was refused. *@
+<ul id="commandFeed" class="command-feed list-unstyled" aria-live="polite" aria-label="Recent workstation commands"></ul>
+
 <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
     <div class="row g-3 align-items-center">
         <div class="col-md-3 col-sm-6">
