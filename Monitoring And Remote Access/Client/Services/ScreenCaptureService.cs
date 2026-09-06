@@ -6,12 +6,17 @@ public class ScreenCaptureService : IScreenCaptureService
 {
     public string CaptureBase64()
     {
-        Rectangle bounds = Screen.PrimaryScreen!.Bounds;
+        // The whole virtual desktop, which is the same rectangle InputSimulator
+        // maps a teacher's click into. See CaptureGeometry for why they have to
+        // match. The source point is the desktop origin rather than (0,0),
+        // because a monitor placed left of or above the primary one gives the
+        // virtual desktop a negative origin.
+        Rectangle bounds = CaptureGeometry.DesktopBounds;
         using (Bitmap captured = new Bitmap(bounds.Width, bounds.Height))
         {
             using (Graphics g = Graphics.FromImage(captured))
             {
-                g.CopyFromScreen(Point.Empty, Point.Empty, bounds.Size);
+                g.CopyFromScreen(bounds.Left, bounds.Top, 0, 0, bounds.Size);
             }
 
             const int maxWidth = 1280;

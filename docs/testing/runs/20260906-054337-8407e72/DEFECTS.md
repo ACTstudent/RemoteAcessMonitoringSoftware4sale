@@ -206,3 +206,63 @@ behaviour. They are recorded so a later run does not re-raise them.
 | Every page reported a stylesheet failure | The first sweep ran `bin/Release` output, which has no `wwwroot`; that directory is populated by `dotnet publish`. Re-run against a publish, all assets served `200`. |
 | Only one deactivate control appeared on `/Admin/Teachers` | Two Puppeteer pages shared one cookie jar, so the "admin" page had been re-authenticated as the teacher, who sees "This is you" on their own row. Fixed with an isolated browser context per role. |
 | Student dashboard showed another teacher's rule | `RestrictionRule.IsGlobal` defaults to `true`; the fixture set `TeacherId` without clearing it. Test fixture corrected. |
+
+---
+
+## DEF-0906-006 — Remote control aimed clicks at the wrong monitor
+
+- **Severity:** High on any student machine with more than one display; no effect on a single display
+- **Case:** WIN-02, HUB-02
+- **Source:** `Client/Services/ScreenCaptureService.cs:9` and `Client/InputSimulator.cs:32`
+- **Found by:** reading the two ends together, not by a test
+- **Status:** **Fixed**, commit below
+
+**Expected.** A teacher clicking a point on the streamed image moves the student's
+cursor to that same point.
+
+**Actual.** The two ends measured different rectangles:
+
+| | Rectangle used |
+| --- | --- |
+| Capture | `Screen.PrimaryScreen.Bounds` — the primary monitor only |
+| Input | `SystemInformation.VirtualScreen` — every monitor |
+
+On one display these are the same rectangle, so it worked and the mismatch was
+invisible. On two 1920-wide displays the teacher saw 1920 pixels while their
+clicks were spread across 3840:
+
+| Teacher clicks | Cursor lands at |
+| --- | --- |
+| Centre of the image | x=1920 — the first pixel of a monitor they cannot see |
+| Right edge of the image | x=3839 — the far edge of that second monitor |
+
+Roughly half of every click landed on a display absent from the teacher's view,
+and the error grew with distance from the left edge. A second monitor was also
+never streamed at all, so a student could keep anything on it unwatched.
+
+If the primary monitor is not the leftmost, `VirtualScreen.Left` is negative and
+the offset is wrong in the other direction.
+
+**Why no test caught it.** `InputSimulatorTests` checks `ScaleCoordinate` in
+isolation. The arithmetic was never wrong — the choice of rectangle was.
+
+**Fix.** Both ends now take their rectangle from one place,
+`Client/Services/CaptureGeometry.cs`. The capture takes the whole virtual
+desktop, with the desktop origin as the source point so a negative origin is
+handled, which also removes the unwatched-monitor blind spot. `CaptureGeometryTests`
+adds seven cases including a negative-origin two-monitor layout, which a
+single-display test machine would otherwise never exercise.
+
+The lasting guard is structural rather than a test: there is now a single
+definition of "the screen", so a future divergence would mean deliberately
+introducing a second one.
+
+**Not fixed, observed while reading the same code:**
+
+- `MainForm.cs:953` — the capture loop skips frames while `_isLocked`, so a
+  teacher cannot see a screen they have just locked.
+- Secure desktop (UAC prompts, Ctrl+Alt+Del, the lock screen) — `CopyFromScreen`
+  returns black and `keybd_event` cannot reach it. Standard Windows behaviour,
+  but nothing detects or reports it, so it presents as a frozen screen.
+- `MainForm.cs:947` — capture, JPEG encode, base64 and send are serial before a
+  50 ms delay, so the effective frame rate is well below the implied 20 fps.

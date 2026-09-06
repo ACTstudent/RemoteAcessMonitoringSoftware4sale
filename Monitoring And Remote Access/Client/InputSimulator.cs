@@ -29,9 +29,11 @@ namespace Client
 
         public static void ProcessRemoteInput(string eventType, int x, int y, int keyCode, bool isShift)
         {
-            var screen = System.Windows.Forms.SystemInformation.VirtualScreen;
-            var screenX = screen.Left + ScaleCoordinate(x, screen.Width);
-            var screenY = screen.Top + ScaleCoordinate(y, screen.Height);
+            // The same rectangle the capture is taken from, so a click lands
+            // where the teacher aimed it. See CaptureGeometry.
+            var target = Client.Services.CaptureGeometry.ToDesktopPoint(x, y);
+            var screenX = target.X;
+            var screenY = target.Y;
             switch (eventType)
             {
                 case "mousemove":
@@ -63,7 +65,8 @@ namespace Client
             }
         }
 
+        /// <summary>Kept as the public entry point callers already use; the definition lives with the capture geometry.</summary>
         public static int ScaleCoordinate(int normalizedCoordinate, int screenSize) =>
-            screenSize <= 1 ? 0 : (int)Math.Round(Math.Clamp(normalizedCoordinate, 0, 10000) / 10000d * (screenSize - 1));
+            Client.Services.CaptureGeometry.ScaleCoordinate(normalizedCoordinate, screenSize);
     }
 }
