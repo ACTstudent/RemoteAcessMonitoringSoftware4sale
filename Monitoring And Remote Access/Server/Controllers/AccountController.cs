@@ -25,6 +25,32 @@ namespace Server.Controllers
             return View();
         }
 
+        /// <summary>
+        /// Where an authenticated user lands when their role does not reach a
+        /// page. This used to be the login form, which told someone who was
+        /// already signed in to sign in, and offered no way onward but the
+        /// browser's Back button.
+        /// </summary>
+        [HttpGet]
+        public IActionResult AccessDenied(string? returnUrl = null)
+        {
+            // Someone with no session at all belongs on the sign-in form; this
+            // page is for a role that is real but insufficient.
+            var role = HttpContext.Session.GetString("Role");
+            if (string.IsNullOrEmpty(role))
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            Response.StatusCode = StatusCodes.Status403Forbidden;
+            ViewBag.AttemptedPath = returnUrl;
+            ViewBag.Role = role;
+            ViewBag.DisplayName = HttpContext.Session.GetString("TeacherName")
+                ?? HttpContext.Session.GetString("AdminName")
+                ?? HttpContext.Session.GetString("FullName");
+            return View();
+        }
+
         // Students, Teachers, and Admins can log in
         [HttpPost]
         [ValidateAntiForgeryToken]

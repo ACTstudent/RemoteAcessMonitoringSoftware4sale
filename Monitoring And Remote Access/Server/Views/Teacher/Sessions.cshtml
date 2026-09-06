@@ -124,7 +124,7 @@
                                     <form method="post" action="/Teacher/TogglePause" class="form-inline-action">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@s.Id" />
-                                        <button class="btn btn-sm @(s.Status == "Paused" ? "btn-emerald" : "btn-outline-warning") rounded-pill px-3 me-1">
+                                        <button class="btn btn-sm @(s.Status == "Paused" ? "btn-outline-emerald" : "btn-outline-warning") rounded-pill px-3 me-1">
                                             @(s.Status == "Paused" ? "Resume" : "Pause")
                                         </button>
                                     </form>

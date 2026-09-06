@@ -1,0 +1,62 @@
+@{
+    ViewData["Title"] = "Access denied";
+    var role = ViewBag.Role as string ?? "";
+    var displayName = ViewBag.DisplayName as string;
+    var attempted = ViewBag.AttemptedPath as string;
+
+    // The shell for whichever portal this person actually belongs to, so they
+    // keep their own navigation instead of being stranded. The controller sends
+    // anyone with no session to the sign-in form, so there is always a role here.
+    Layout = role switch
+    {
+        "Admin" => "~/Views/Admin/_Layout.cshtml",
+        "Student" => "~/Views/Student/_StudentLayout.cshtml",
+        _ => "~/Views/Teacher/_TeacherLayout.cshtml"
+    };
+
+    var (homeAction, homeController, homeLabel) = role switch
+    {
+        "Admin" => ("Index", "Admin", "Go to the admin dashboard"),
+        "Student" => ("Index", "Student", "Go to your session"),
+        _ => ("Dashboard", "Teacher", "Go to your dashboard")
+    };
+}
+
+<div class="card border-0 shadow-sm rounded-4 mx-auto" style="max-width: 40rem;">
+    <div class="card-body p-4 p-md-5 text-center">
+        <i class="bi bi-shield-lock empty-state-icon" aria-hidden="true"></i>
+        <h1 class="page-title h3 mb-2">You do not have access to this page</h1>
+
+        @if (!string.IsNullOrWhiteSpace(displayName))
+        {
+            <p class="page-subtitle mb-3">
+                You are signed in as <strong>@displayName</strong> (@role). This page is for a
+                different role, so signing in again will not open it.
+            </p>
+        }
+        else
+        {
+            <p class="page-subtitle mb-3">
+                Your account does not have permission for this page.
+            </p>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(attempted))
+        {
+            <p class="text-muted small mb-4">Requested: <code>@attempted</code></p>
+        }
+
+        <div class="d-flex gap-2 justify-content-center flex-wrap">
+            <a href="@Url.Action(homeAction, homeController)" class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold">
+                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>@homeLabel
+            </a>
+            <a href="@Url.Action("Logout", "Account")" class="btn btn-outline-secondary rounded-pill px-4 py-2">
+                Sign in as someone else
+            </a>
+        </div>
+
+        <p class="text-muted small mt-4 mb-0">
+            If you believe you should have access, ask an administrator to check your role.
+        </p>
+    </div>
+</div>
