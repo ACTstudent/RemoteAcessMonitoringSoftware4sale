@@ -3,7 +3,7 @@
 CAMS is a local-first classroom monitoring and computer laboratory management system for Windows networks. It combines an ASP.NET Core server, authenticated browser portals, a Windows student client, SignalR monitoring and control, and a local SQLite database. CAMS is designed for supervised classroom use on a trusted private LAN; it does not require a CAMS cloud service.
 
 [![Build Status](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/actions/workflows/ci-full.yml/badge.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/actions/workflows/ci-full.yml)
-[![Release](https://img.shields.io/badge/Release-v2.12.0-emerald.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest)
+[![Release](https://img.shields.io/badge/Release-v2.13.0-emerald.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest)
 [![.NET](https://img.shields.io/badge/.NET-8.0-blueviolet)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
