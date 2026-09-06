@@ -166,6 +166,29 @@
     --text-main: #1C1917;
     --text-muted: #6F6861;
     --font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+    /* Radius scale. The stylesheet had eight ad-hoc values - 7, 8, 12, 14, 16,
+       18, 20px and 999px - chosen a rule at a time. Four steps and a pill
+       cover every case. */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-pill: 999px;
+
+    /* Spacing scale, for the same reason. */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.5rem;
+    --space-6: 2rem;
+
+    /* Focus ring. One definition, applied to everything focusable, so a
+       keyboard user sees the same indicator wherever they are. */
+    --focus-ring-color: #1D5C2E;
+    --focus-ring-width: 3px;
+    --focus-ring-offset: 2px;
 }
 
 body {
@@ -264,7 +287,7 @@ body {
 
 .sidebar-nav::-webkit-scrollbar-thumb {
     background: rgba(167, 243, 208, 0.42);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
 }
 
 .sidebar-label {
@@ -283,7 +306,7 @@ body {
     padding: 0.7rem 0.9rem;
     color: rgba(255, 255, 255, 0.82);
     text-decoration: none;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     font-size: 0.92rem;
     font-weight: 500;
     margin-bottom: 0.35rem;
@@ -339,7 +362,7 @@ body {
     color: var(--primary-dark);
     cursor: pointer;
     padding: 4px 8px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     transition: background-color 0.2s;
 }
 
@@ -418,7 +441,7 @@ body {
 
 .modal-content {
     border: 0;
-    border-radius: 18px;
+    border-radius: var(--radius-lg);
     box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
     overflow: hidden;
 }
@@ -457,7 +480,7 @@ body {
 .modal .form-control,
 .modal .form-select {
     border-color: #DAD4C9;
-    border-radius: 11px;
+    border-radius: var(--radius-md);
     min-height: 44px;
 }
 
@@ -471,7 +494,7 @@ body {
     padding: 1rem;
     background: #FAF8F3;
     border: 1px solid #E7E2D9;
-    border-radius: 14px;
+    border-radius: var(--radius-md);
 }
 
 /* Height is applied only to grid-column action cards (below) so they match each
@@ -564,7 +587,7 @@ body {
 .metric-icon-box {
     width: 46px;
     height: 46px;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     background-color: #f4f4f5;
     color: var(--sidebar-bg);
     display: flex;
@@ -583,7 +606,7 @@ body {
     height: 48px;
     background-color: var(--sidebar-bg);
     color: #ffffff;
-    border-radius: 14px;
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -594,7 +617,7 @@ body {
 .filter-control {
     background-color: #f4f4f5;
     border: 1px solid var(--card-border);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     padding: 0.65rem 1rem;
     font-size: 0.9rem;
     color: var(--text-main);
@@ -643,7 +666,7 @@ body {
     font-weight: 600;
     font-size: 0.8rem;
     padding: 0.35em 0.7em;
-    border-radius: 20px;
+    border-radius: var(--radius-xl);
 }
 
 .badge-emerald {
@@ -652,7 +675,7 @@ body {
     font-weight: 600;
     font-size: 0.8rem;
     padding: 0.35em 0.7em;
-    border-radius: 20px;
+    border-radius: var(--radius-xl);
 }
 
 .border-bottom-subtle {
@@ -663,7 +686,7 @@ body {
     background-color: var(--sidebar-bg);
     color: #ffffff;
     border: none;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     font-size: 0.95rem;
     transition: background-color 0.2s ease;
 }
@@ -933,7 +956,7 @@ body {
     padding: 0.3rem;
     background: #F1EDE5;
     border: 1px solid var(--card-border);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     flex-wrap: nowrap;
 }
 
@@ -945,7 +968,7 @@ body {
 .segmented-tabs .nav-link {
     width: 100%;
     border: 0;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     padding: 0.55rem 1rem;
     font-size: 0.88rem;
     font-weight: 700;
@@ -1063,7 +1086,7 @@ body {
     gap: 0.5rem;
     padding: 0.6rem 1.1rem;
     font-weight: 700;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: rgba(255, 255, 255, 0.14);
     border: 1px solid rgba(255, 255, 255, 0.22);
 }
@@ -1091,7 +1114,7 @@ body {
 .notice-card {
     border: 1px solid var(--card-border);
     border-left: 4px solid var(--accent-emerald);
-    border-radius: 14px;
+    border-radius: var(--radius-md);
     background: #fff;
     padding: 1rem 1.15rem;
     height: 100%;
@@ -1131,7 +1154,7 @@ body {
     background: transparent;
     color: var(--text-muted);
     padding: 0.35rem 0.55rem;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     line-height: 1;
     cursor: pointer;
 }
@@ -1229,7 +1252,7 @@ body {
     gap: 0.7rem;
     padding: 0.9rem 1rem;
     overflow: hidden;
-    border-radius: 14px;
+    border-radius: var(--radius-md);
     border: 1px solid var(--card-border);
     border-left: 4px solid var(--cams-success);
     background: #fff;
@@ -1277,7 +1300,7 @@ body {
     font-size: 0.75rem;
     line-height: 1;
     padding: 0.3rem;
-    border-radius: 7px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
 }
 
@@ -1440,7 +1463,7 @@ body {
     align-items: center;
     gap: 0.4rem;
     padding: 0.3rem 0.75rem;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     font-size: 0.8125rem;
     font-weight: 600;
     white-space: nowrap;
@@ -1462,4 +1485,47 @@ body {
 .connection-status-lost {
     background: #FEE2E2;
     color: #991B1B;          /* 6.80:1 on #FEE2E2 */
+}
+
+/* ---------------------------------------------------------------------------
+   Focus
+
+   The stylesheet had exactly one :focus-visible rule, on the segmented tabs.
+   Everything else fell back to whatever Bootstrap or the browser supplied, and
+   the custom button styles override Bootstrap's shadow-based ring — so on the
+   pill buttons that make up most of the interface there was little to see.
+
+   One ring, on anything focusable, and only for keyboard focus: :focus-visible
+   leaves a mouse click alone.
+   --------------------------------------------------------------------------- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible,
+.btn:focus-visible,
+.nav-item-custom:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+    box-shadow: none;
+}
+
+/* On the dark sidebar the forest-green ring disappears into the background. */
+.app-sidebar a:focus-visible,
+.app-sidebar button:focus-visible,
+.nav-item-custom:focus-visible {
+    outline-color: #BBF3C6;
+}
+
+/* The sidebar links carry a transition on all properties, which made the focus
+   ring fade in rather than appear. A keyboard user should see where they are
+   the moment they arrive, so the outline is excluded from the animation. */
+a:focus-visible,
+button:focus-visible,
+.nav-item-custom:focus-visible {
+    transition-property: background-color, color, border-color;
 }
