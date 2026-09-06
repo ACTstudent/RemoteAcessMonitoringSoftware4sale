@@ -48,7 +48,7 @@ UX-06 was VERIFIED and a later, wider sweep still found four more problems.
 | UX-01 | Consolidate design tokens | VERIFIED | `f15fece`, `3d2e552`, `8a7f000` |
 | UX-02 | Shared shell with role-aware navigation | VERIFIED | `0485327` |
 | UX-04 | Standardize states; no duplicate submit | VERIFIED | `c00cc27`, `90fc671`, `abecf7b`, `860e200`, `dcd6d72`, `0a82e92`, `0769992` |
-| UX-05 | Branding, favicon, titles, copy, offline assets | VERIFIED | `b9c0e63`, `3d2e552`, `a83a15e` |
+| UX-05 | Branding, favicon, titles, copy, offline assets | VERIFIED | `b9c0e63`, `3d2e552`, `014eb78` |
 | UX-06 | Accessibility pass (names, ids, landmarks) | VERIFIED (web) | `f7b97f4`, `1d46c9c` |
 | FLOW-02 | Keep list filters, page and return location across actions | VERIFIED | `395abe9`, `8d1328c`, `dea6dae` |
 | FLOW-01, 03, 04, 05, 06 | Setup checklist, connection state, command feedback, interruption, collector states | NOT STARTED | — |
