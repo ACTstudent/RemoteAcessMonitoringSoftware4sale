@@ -26,7 +26,7 @@
         <span class="badge bg-light text-dark font-monospace fs-6">@(((IEnumerable<Server.Models.WebsiteUsageLog>)(ViewBag.WebsiteUsage ?? new List<Server.Models.WebsiteUsageLog>())).Count()) Events</span>
     </div>
     <div class="table-responsive">
-        <table class="table custom-table mb-0">
+        <table class="table custom-table align-middle mb-0">
             <thead><tr><th>Student</th><th>Domain</th><th>Browser</th><th>Recorded At</th></tr></thead>
             <tbody>
                 @foreach (var log in (IEnumerable<Server.Models.WebsiteUsageLog>)(ViewBag.WebsiteUsage ?? new List<Server.Models.WebsiteUsageLog>()))
@@ -48,7 +48,7 @@
         <span class="badge bg-light text-dark font-monospace fs-6">@(((IEnumerable<Server.Models.UsageLog>)(ViewBag.ApplicationUsage ?? new List<Server.Models.UsageLog>())).Count()) Events</span>
     </div>
     <div class="table-responsive">
-        <table class="table custom-table mb-0">
+        <table class="table custom-table align-middle mb-0">
             <thead><tr><th>Student</th><th>Application</th><th>Station</th><th>Recorded At</th></tr></thead>
             <tbody>
                 @foreach (var log in (IEnumerable<Server.Models.UsageLog>)(ViewBag.ApplicationUsage ?? new List<Server.Models.UsageLog>()))
@@ -102,7 +102,7 @@
         <span class="badge bg-light text-dark font-monospace fs-6">@Model.Count() Logs</span>
     </div>
     <div class="table-responsive">
-        <table class="table custom-table mb-0">
+        <table class="table custom-table align-middle mb-0">
             <thead>
                 <tr>
                     <th>Student Username</th>

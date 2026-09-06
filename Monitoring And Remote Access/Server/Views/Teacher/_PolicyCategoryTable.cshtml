@@ -7,7 +7,7 @@
 }
 <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
     <div class="d-flex justify-content-between align-items-center mb-3"><h5 class="fw-bold mb-0">@Model.Item2 Categories</h5><button class="btn btn-sm btn-emerald rounded-pill" data-bs-toggle="modal" data-bs-target="#category-@Model.Item2">Add</button></div>
-    <div class="table-responsive"><table class="table custom-table"><thead><tr><th>Name / Pattern</th><th>Mode</th><th>State</th><th></th></tr></thead><tbody>
+    <div class="table-responsive"><table class="table custom-table align-middle mb-0"><thead><tr><th>Name / Pattern</th><th>Mode</th><th>State</th><th></th></tr></thead><tbody>
     @foreach (var item in Model.Item1)
     {
         var app = item as Server.Models.ApplicationCategory;

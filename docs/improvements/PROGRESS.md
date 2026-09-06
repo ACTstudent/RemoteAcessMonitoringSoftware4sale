@@ -19,11 +19,11 @@ Owner for every item below: implementation agent, unless a person is named.
 
 ## Summary
 
-**37 work items. 11 VERIFIED (30%), 7 IN PROGRESS, 5 BLOCKED, 14 NOT STARTED.**
+**37 work items. 13 VERIFIED (35%), 5 IN PROGRESS, 5 BLOCKED, 14 NOT STARTED.**
 
 Counting only what can be finished on this machine — that is, setting aside the
 5 items blocked on a second Windows client, a disposable network and snapshot
-VMs — it is 11 of 32, or 34%.
+VMs — it is 13 of 32, or 41%.
 
 Two caveats on reading that number. It counts items, not effort: the 14 not-started
 items include the largest single pieces of work in the plan (`AdminController` at
@@ -44,10 +44,10 @@ UX-06 was VERIFIED and a later, wider sweep still found four more problems.
 | OPS-06 | Upload test results and failure logs in CI | BLOCKED | branch `ci-test-results` |
 | OPS-08 | One documentation index | VERIFIED | `ab6fe95` |
 | OPS-09 | Delete proven-unused code after reference checks | IN PROGRESS | `6fcf499` |
-| UX-03 | Standardize table density, row actions and pagination | IN PROGRESS | `8d1328c`, `860e200` |
+| UX-03 | Standardize table density, row actions and pagination | VERIFIED | `8d1328c`, `860e200`, `0769992` |
 | UX-01 | Consolidate design tokens | VERIFIED | `f15fece`, `3d2e552`, `8a7f000` |
 | UX-02 | Shared shell with role-aware navigation | VERIFIED | `0485327` |
-| UX-04 | Standardize states; no duplicate submit | IN PROGRESS | `c00cc27`, `90fc671`, `abecf7b`, `860e200`, `dcd6d72` |
+| UX-04 | Standardize states; no duplicate submit | VERIFIED | `c00cc27`, `90fc671`, `abecf7b`, `860e200`, `dcd6d72`, `0a82e92`, `0769992` |
 | UX-05 | Branding, favicon, titles, copy, offline assets | IN PROGRESS | `b9c0e63`, `3d2e552` |
 | UX-06 | Accessibility pass (names, ids, landmarks) | VERIFIED (web) | `f7b97f4`, `1d46c9c` |
 | FLOW-02 | Keep list filters, page and return location across actions | VERIFIED | `395abe9`, `8d1328c`, `dea6dae` |
@@ -292,14 +292,14 @@ made.
   plan asks for. Migrations, backups, databases, certificate stores and archived test
   evidence are explicitly out of scope for deletion.
 
-### UX-04, UX-05 — partially delivered
+### UX-05 — partially delivered
 
-Recorded for accuracy. Neither meets the plan's acceptance criteria yet.
-UX-01 and UX-02 have since been finished and moved to the verified section.
+Recorded for accuracy. It does not meet the plan's acceptance criteria yet.
+UX-01, UX-02, UX-03 and UX-04 have since been finished and moved to the
+verified section.
 
 | Item | Delivered | Not yet done |
 | --- | --- | --- |
-| UX-04 | Toasts for anything that needs no answer; `window.camsConfirm` for anything destructive; repeat-submit guard in `site.js`. 28 empty tables now share one treatment (`860e200`). **Offline state closed**: one indicator in the shared header, hidden while healthy, wired through `CamsConnection`; detection cut from 25s to 11s by tightening the SignalR keep-alive; 12 of 12 checks across both portals (`dcd6d72`) | Loading and forbidden states are still not standardized — there is no shared spinner or skeleton, and a refused action shows a toast rather than a designed state. "Keep user input after validation failure" is unverified |
 | UX-05 | Fonts self-hosted as subsetted woff2 with CSP updated so they load offline (`b9c0e63`, closes DEF-001). 16 action labels normalised to sentence case, so "Create class" no longer sits beside "Add more rows"; page names and acronyms deliberately keep their Title Case. A favicon exists at last — 708 bytes of SVG rather than the 825 KB school logo, ending a 404 on every page load (`3d2e552`) | Helper text and error copy still unaudited. The public portal under `portal/` and the WinForms dialogs were not part of this pass |
 
 ### LIVE-01 / LIVE-02 — Test suites and decision-branch coverage
@@ -513,3 +513,63 @@ browser - so there is no server-held filter state anywhere else to lose.
 - **Not covered:** narrow viewports and 200% zoom, which belong to UX-06's remaining
   half; and the WinForms client's own control set, whose palette matches but whose
   layout is its own.
+
+### UX-03 — Page headers, primary actions, table density and filter placement
+
+- **Observed problem:** the pagination half was done earlier. The rest was not. Three
+  pages had **two emerald buttons competing** for the eye — Reports made an export as
+  prominent as the filter that drives the page, and Students and Sessions gave a
+  per-row action the weight of the page primary. Table density came in five spellings.
+  **One table sat outside `.table-responsive`** and so pushed the whole page sideways
+  on a narrow screen instead of scrolling inside its card. Four of seven filter forms
+  had no way to clear the filter.
+- **User outcome:** the same interaction pattern transfers between lists — one obvious
+  primary action, the same row density, filters that can always be cleared.
+- **Change:** the three competing primaries are now outline; Settings keeps its two
+  because they sit in separate cards and are separate task areas, which is what the
+  rule allows. All 41 tables are inside a responsive wrapper and share one density,
+  except the three compact bulk-entry grids which are meant to be denser. Every filter
+  form has the same labelled Reset. `ClassAnalytics`, the least finished page, gained
+  the standard header treatment.
+- **Evidence after:** an audit script reports **0 tables outside a wrapper**, two
+  densities where there were five, and every filter form carrying a reset. 44 pages
+  render with no console errors or accessibility findings; the 19 navigation checks
+  still pass.
+- **Test results:** server 460/460, client 43/43.
+- **Rollout/rollback:** revert `0769992` and `860e200`. Markup and CSS only.
+- **Status:** VERIFIED.
+
+### UX-04 — Loading, empty, error, forbidden and offline states
+
+- **Observed problem:** the states were unevenly handled and two were missing outright.
+  **A dropped connection was silent** — the teacher's alert badge stopped counting and
+  a student stopped receiving warnings while the page looked live. **A refused request
+  landed on the sign-in form**, telling someone already signed in to sign in, with a
+  200 status and no way onward but the Back button. Twenty-eight empty tables were
+  written six different ways. And **53 validation failures redirected without the
+  submission**, so a duplicate username emptied the whole dialog.
+- **User outcome:** every state says what happened and what to do next.
+- **Change:** one connection indicator in the shared header, hidden while healthy;
+  an AccessDenied page inside the user's own portal shell answering 403; one empty-state
+  treatment; and `PreserveSubmissionFilter`, which carries a rejected submission back
+  across the redirect and reopens the dialog it came from.
+- **Evidence after:** connection state 12 of 12, cutting the page off at the browser and
+  restoring it — including that detection fell from 25s to 11s once the SignalR
+  keep-alive was tightened. Refused request 8 of 8. Preserved submission 9 of 9 plus 18
+  unit tests. In-flight submit state 3 of 3: `aria-busy`, a disabled button, and release
+  after 20s so a submission that never completes cannot lock the form.
+- **Loading states:** there is no spinner anywhere and none is wanted. Every
+  user-initiated action is a full navigation or a form post, and the only async fetches
+  are three background polls that update in place. The in-flight form state above is the
+  loading state.
+- **Two mistakes worth recording.** The sensitive-field exclusion in the preserve filter
+  matched by suffix, and the bulk roster form posts `bulkPasswords`, plural, which went
+  straight through — passwords would have been written into the page. Found by writing
+  the test, fixed to match by substring, and pinned. Separately, a first attempt at the
+  in-flight test registered its listener on the form, whose `preventDefault` runs before
+  the document-level guard and makes it skip: correct behaviour reported as a failure.
+- **Test results:** server 460/460, client 43/43.
+- **Rollout/rollback:** revert `0769992`, `0a82e92`, `dcd6d72`.
+- **Status:** VERIFIED.
+- **Not covered:** the WinForms client's own dialogs have not been reviewed for these
+  states.

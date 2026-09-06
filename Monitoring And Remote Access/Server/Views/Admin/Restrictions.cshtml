@@ -41,7 +41,7 @@
         <span class="badge bg-light text-dark font-monospace fs-6">@Model.Restrictions.Count Rules</span>
     </div>
     <div class="table-responsive">
-        <table class="table custom-table mb-0">
+        <table class="table custom-table align-middle mb-0">
             <thead>
                 <tr>
                     <th>Rule Type</th>
@@ -104,7 +104,7 @@
 <div class="row g-4 mb-4">
     @foreach (var categorySet in new[] { (Name: "Application", Items: Model.ApplicationCategories.Cast<object>()), (Name: "Website", Items: Model.WebsiteCategories.Cast<object>()) })
     {
-        <div class="col-lg-6"><div class="card border-0 shadow-sm rounded-4 overflow-hidden"><div class="card-header bg-white py-3 d-flex justify-content-between"><h5 class="fw-bold mb-0">@categorySet.Name Categories</h5><button class="btn btn-sm btn-emerald rounded-pill" data-bs-toggle="modal" data-bs-target="#create-@categorySet.Name">Add</button></div><div class="table-responsive"><table class="table custom-table mb-0"><thead><tr><th>Name / Pattern</th><th>Mode</th><th>Active</th><th></th></tr></thead><tbody>
+        <div class="col-lg-6"><div class="card border-0 shadow-sm rounded-4 overflow-hidden"><div class="card-header bg-white py-3 d-flex justify-content-between"><h5 class="fw-bold mb-0">@categorySet.Name Categories</h5><button class="btn btn-sm btn-emerald rounded-pill" data-bs-toggle="modal" data-bs-target="#create-@categorySet.Name">Add</button></div><div class="table-responsive"><table class="table custom-table align-middle mb-0"><thead><tr><th>Name / Pattern</th><th>Mode</th><th>Active</th><th></th></tr></thead><tbody>
         @foreach (var raw in categorySet.Items)
         {
             var app = raw as Server.Models.ApplicationCategory; var web = raw as Server.Models.WebsiteCategory;
