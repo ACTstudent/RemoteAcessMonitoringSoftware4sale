@@ -19,11 +19,11 @@ Owner for every item below: implementation agent, unless a person is named.
 
 ## Summary
 
-**37 work items. 10 VERIFIED (27%), 8 IN PROGRESS, 5 BLOCKED, 14 NOT STARTED.**
+**37 work items. 11 VERIFIED (30%), 7 IN PROGRESS, 5 BLOCKED, 14 NOT STARTED.**
 
 Counting only what can be finished on this machine — that is, setting aside the
 5 items blocked on a second Windows client, a disposable network and snapshot
-VMs — it is 10 of 32, or 31%.
+VMs — it is 11 of 32, or 34%.
 
 Two caveats on reading that number. It counts items, not effort: the 14 not-started
 items include the largest single pieces of work in the plan (`AdminController` at
@@ -45,9 +45,9 @@ UX-06 was VERIFIED and a later, wider sweep still found four more problems.
 | OPS-08 | One documentation index | VERIFIED | `ab6fe95` |
 | OPS-09 | Delete proven-unused code after reference checks | IN PROGRESS | `6fcf499` |
 | UX-03 | Standardize table density, row actions and pagination | IN PROGRESS | `8d1328c`, `860e200` |
-| UX-01 | Consolidate design tokens | IN PROGRESS | `f15fece`, `3d2e552` |
+| UX-01 | Consolidate design tokens | VERIFIED | `f15fece`, `3d2e552`, `8a7f000` |
 | UX-02 | Shared shell with role-aware navigation | VERIFIED | `0485327` |
-| UX-04 | Standardize states; no duplicate submit | IN PROGRESS | `c00cc27`, `90fc671`, `abecf7b`, `860e200` |
+| UX-04 | Standardize states; no duplicate submit | IN PROGRESS | `c00cc27`, `90fc671`, `abecf7b`, `860e200`, `dcd6d72` |
 | UX-05 | Branding, favicon, titles, copy, offline assets | IN PROGRESS | `b9c0e63`, `3d2e552` |
 | UX-06 | Accessibility pass (names, ids, landmarks) | VERIFIED (web) | `f7b97f4`, `1d46c9c` |
 | FLOW-02 | Keep list filters, page and return location across actions | VERIFIED | `395abe9`, `8d1328c`, `dea6dae` |
@@ -292,15 +292,14 @@ made.
   plan asks for. Migrations, backups, databases, certificate stores and archived test
   evidence are explicitly out of scope for deletion.
 
-### UX-01, UX-04, UX-05 — partially delivered
+### UX-04, UX-05 — partially delivered
 
-Recorded for accuracy. None of these meet the plan's acceptance criteria yet.
-UX-02 has since been finished and moved to the verified section below.
+Recorded for accuracy. Neither meets the plan's acceptance criteria yet.
+UX-01 and UX-02 have since been finished and moved to the verified section.
 
 | Item | Delivered | Not yet done |
 | --- | --- | --- |
-| UX-01 | Warm green palette as CSS custom properties; Bootstrap utilities rethemed; all 10 foreground/background pairs at WCAG AA. 57 repeated inline styles moved into `.page-title`, `.surface-brand` and `.form-inline-action`, with the computed styles read back from the running page to confirm nothing shifted (`f15fece`). `Client/MainForm` palette now names the token each colour corresponds to and carries its measured contrast; `StatusOk` realigned from #157A3D to the web success token #17803A, 5.02:1 on white (`3d2e552`) | Spacing, radius and focus tokens are still ad hoc — only `--card-border-radius` and `--font-family` exist. Variants for buttons, forms, tables, status badges, toasts and dialogs are still undocumented, which is half the item |
-| UX-04 | Inline flash alerts replaced with auto-fading toasts; shared `window.CamsToast`; repeat-submit guard in `site.js`. 28 empty tables, written six different ways, now share one treatment — an icon above the sentence, with the icon chosen from what is missing (`860e200`) | Loading, forbidden and offline states are still not standardized. There is no shared spinner or skeleton, and a page that cannot reach the hub shows nothing to say so |
+| UX-04 | Toasts for anything that needs no answer; `window.camsConfirm` for anything destructive; repeat-submit guard in `site.js`. 28 empty tables now share one treatment (`860e200`). **Offline state closed**: one indicator in the shared header, hidden while healthy, wired through `CamsConnection`; detection cut from 25s to 11s by tightening the SignalR keep-alive; 12 of 12 checks across both portals (`dcd6d72`) | Loading and forbidden states are still not standardized — there is no shared spinner or skeleton, and a refused action shows a toast rather than a designed state. "Keep user input after validation failure" is unverified |
 | UX-05 | Fonts self-hosted as subsetted woff2 with CSP updated so they load offline (`b9c0e63`, closes DEF-001). 16 action labels normalised to sentence case, so "Create class" no longer sits beside "Add more rows"; page names and acronyms deliberately keep their Title Case. A favicon exists at last — 708 bytes of SVG rather than the 825 KB school logo, ending a 404 on every page load (`3d2e552`) | Helper text and error copy still unaudited. The public portal under `portal/` and the WinForms dialogs were not part of this pass |
 
 ### LIVE-01 / LIVE-02 — Test suites and decision-branch coverage
@@ -472,3 +471,45 @@ browser - so there is no server-held filter state anywhere else to lose.
 - **Status:** VERIFIED.
 - **Not covered:** responsive behaviour at narrow widths and 200% zoom is UX-06's
   remaining half and was not re-checked here.
+
+### UX-01 — Design tokens, control variants and the client palette
+
+- **Observed problem:** the colour palette existed as tokens but nothing else did.
+  Corner radii were **ten ad-hoc values** — 7, 8, 10, 11, 12, 14, 16, 18, 20 and 999px —
+  picked a rule at a time; there was no spacing scale; and the stylesheet held **one
+  `:focus-visible` rule in 1,400 lines**. Because the custom pill buttons override
+  Bootstrap's shadow-based focus ring, a keyboard user had little or nothing showing
+  them where they were across most of the interface. Fifty-seven inline style
+  declarations repeated three rules across twenty views.
+- **User outcome:** a keyboard user can always see where they are, and equivalent
+  controls look the same in all three portals because they are drawn from one set of
+  values.
+- **Source files:** `Server/wwwroot/css/site.css`, twenty views,
+  `Client/MainForm.cs`, `docs/DESIGN-SYSTEM.md` (new).
+- **Change:** radius, spacing and focus scales added as tokens; 20 radius declarations
+  snapped to the four-step scale, none moving by more than 2px; 57 inline styles
+  replaced by `.page-title`, `.surface-brand` and `.form-inline-action`; one focus ring
+  applied to everything focusable through `:focus-visible`, switching to `#BBF3C6` on
+  the dark sidebar.
+- **Evidence after:** tabbing three real pages, **22 of 22 stops on each** show a 3px
+  ring; the sidebar ring resolves to `rgb(187, 243, 198)`; the skip link is still the
+  first stop and still moves on screen. The computed styles behind the inline-style
+  swap were read back from the running page — letter-spacing `-0.5px`, weight 800,
+  colour `rgb(33,37,41)`, brand surface `#16401F` — all unchanged. 9 of 9 checks.
+- **Client palette:** every entry now names the web token it corresponds to and carries
+  its measured contrast. One real divergence closed: `StatusOk` was `#157A3D` where the
+  web success token is `#17803A`; both pass AA on white, 5.41:1 against 5.02:1, so the
+  alignment costs a little contrast and stays well clear of the 4.5:1 bar.
+- **Variants documented:** [DESIGN-SYSTEM.md](../DESIGN-SYSTEM.md) covers buttons,
+  forms, tables, status badges, toasts, dialogs and the shell, written from what the
+  code does rather than from what it ought to. Every token name and file path in it was
+  checked to resolve.
+- **One thing found while measuring:** the sidebar links carry a transition on all
+  properties, so the ring faded in rather than appearing. The outline is now excluded
+  from that animation.
+- **Test results:** server 442/442, client 43/43; 44 pages render clean.
+- **Rollout/rollback:** revert `8a7f000`, `f15fece` and `3d2e552`. CSS and markup only.
+- **Status:** VERIFIED.
+- **Not covered:** narrow viewports and 200% zoom, which belong to UX-06's remaining
+  half; and the WinForms client's own control set, whose palette matches but whose
+  layout is its own.

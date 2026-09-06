@@ -33,6 +33,7 @@ both points.
 | [Menu Structure](../DIAGRAMS/Menu-Structure-Diagram.md) | Navigation across the three roles |
 | [Use Cases](../DIAGRAMS/Use-Case-Diagram.md) | Actors and their tasks |
 | [Source inventory](testing/SOURCE-INVENTORY.md) | Every source file, what it does and which tests touch it |
+| [Design system](DESIGN-SYSTEM.md) | Tokens, control variants and the shared page shell — what the interface is made of |
 
 ## Running the tests
 
