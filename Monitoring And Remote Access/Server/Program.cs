@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Concurrent;
 using Server.Authorization;
 using Server.Data;
 using Server.Services;
@@ -142,12 +141,11 @@ builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddSingleton<CategoryPolicyEngine>();
 
 var app = builder.Build();
-// Throttling state, keyed by client address and path. Entries must be swept:
-// each unseen address adds one, so without pruning a caller rotating source
-// addresses could grow this until the process runs out of memory.
-var requestWindows = new ConcurrentDictionary<string, (DateTime Started, int Count)>();
-var lastWindowSweepTicks = DateTime.UtcNow.Ticks;
-const int MaxTrackedRequestWindows = 20_000;
+// Throttling state, keyed by client address and path. See RequestThrottle for
+// the window, sweep and key-ceiling behaviour.
+var requestThrottle = new RequestThrottle();
+const int LoginAttemptsPerMinute = 10;
+const int ApiRequestsPerMinute = 120;
 
 if (!app.Environment.IsDevelopment())
 {
@@ -179,37 +177,20 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.Use(async (context, next) =>
 {
-    if (context.Request.Path.StartsWithSegments("/Account/Login") ||
-        context.Request.Path.StartsWithSegments("/api"))
+    // The login ceiling is here to slow credential guessing, and guessing happens
+    // on the POST. Counting form loads as well spent the same budget on ordinary
+    // use: a sign-in costs one GET and one POST, so an address was refused after
+    // five correct sign-ins in a minute, and eleven page loads with nothing
+    // submitted at all was enough to lock it out. Only submissions count now.
+    var isLoginAttempt = context.Request.Path.StartsWithSegments("/Account/Login") &&
+        HttpMethods.IsPost(context.Request.Method);
+    var isApiRequest = context.Request.Path.StartsWithSegments("/api");
+
+    if (isLoginAttempt || isApiRequest)
     {
         var key = $"{context.Connection.RemoteIpAddress}:{context.Request.Path}";
-        var now = DateTime.UtcNow;
-        var limit = context.Request.Path.StartsWithSegments("/Account/Login") ? 10 : 120;
-
-        // Drop expired windows periodically so the map cannot grow without bound.
-        // One thread wins the exchange and sweeps; the rest carry on unblocked.
-        var previousSweep = Interlocked.Read(ref lastWindowSweepTicks);
-        if (now.Ticks - previousSweep > TimeSpan.FromMinutes(5).Ticks &&
-            Interlocked.CompareExchange(ref lastWindowSweepTicks, now.Ticks, previousSweep) == previousSweep)
-        {
-            foreach (var tracked in requestWindows)
-            {
-                if (now - tracked.Value.Started > TimeSpan.FromMinutes(2))
-                    requestWindows.TryRemove(tracked.Key, out _);
-            }
-        }
-
-        // Hard ceiling in case a burst outruns the sweep interval. Refusing a new
-        // key throttles the request rather than letting the map expand further.
-        if (requestWindows.Count >= MaxTrackedRequestWindows && !requestWindows.ContainsKey(key))
-        {
-            context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-            return;
-        }
-
-        var window = requestWindows.AddOrUpdate(key, (now, 1), (_, current) =>
-            now - current.Started >= TimeSpan.FromMinutes(1) ? (now, 1) : (current.Started, current.Count + 1));
-        if (window.Count > limit)
+        var limit = isLoginAttempt ? LoginAttemptsPerMinute : ApiRequestsPerMinute;
+        if (requestThrottle.ShouldRefuse(key, limit))
         {
             context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
             return;

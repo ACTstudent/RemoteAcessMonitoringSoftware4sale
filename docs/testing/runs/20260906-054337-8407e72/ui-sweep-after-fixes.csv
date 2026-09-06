@@ -1,0 +1,60 @@
+Role,Controller,Action,Url,Status,FinalUrl,ConsoleErrors,FailedRequests,A11yProblems,Verdict,Note
+admin,Admin,AuditLogs,/Admin/AuditLogs,200,https://localhost:5100/Admin/AuditLogs,0,0,0,PASS,Audit Trail - CAMS Admin | Pardo Elementary School
+admin,Admin,Blacklists,/Admin/Blacklists,200,https://localhost:5100/Admin/Blacklists,0,0,0,PASS,Blacklists - CAMS Admin | Pardo Elementary School
+admin,Admin,ClassDetails,/Admin/ClassDetails/1,200,https://localhost:5100/Admin/ClassDetails/1,0,0,0,PASS,Class Details - Class R0906 - CAMS Admin | Pardo Elementary School
+admin,Admin,Classes,/Admin/Classes,200,https://localhost:5100/Admin/Classes,0,0,0,PASS,Class Management - CAMS Admin | Pardo Elementary School
+admin,Admin,ComputerHistory,/Admin/ComputerHistory/1,200,https://localhost:5100/Admin/ComputerHistory/1,0,0,0,PASS,Computer Status History - CAMS Admin | Pardo Elementary School
+admin,Admin,Computers,/Admin/Computers,200,https://localhost:5100/Admin/Computers,0,0,0,PASS,Computer Profiles - CAMS Admin | Pardo Elementary School
+admin,AdminDatabase,Index,/AdminDatabase/Index,200,https://localhost:5100/AdminDatabase/Index,0,0,0,PASS,Database Maintenance - CAMS Admin | Pardo Elementary School
+admin,AdminDeployment,Index,/Admin/Deployment,200,https://localhost:5100/Admin/Deployment,0,0,0,PASS,Deployment Hub - CAMS Admin | Pardo Elementary School
+admin,AdminDeployment,Installer,/Admin/Deployment/installer,,,,,,N/A,"file download, covered separately"
+admin,AdminDeployment,Manifest,/Admin/Deployment/manifest,,,,,,N/A,"file download, covered separately"
+admin,AdminDeployment,RootCertificate,/Admin/Deployment/root-certificate,,,,,,N/A,"file download, covered separately"
+admin,Admin,ExportAttendanceCsv,/Admin/ExportAttendanceCsv,,,,,,N/A,"file download, covered separately"
+admin,Admin,ExportAuditCsv,/Admin/ExportAuditCsv,,,,,,N/A,"file download, covered separately"
+admin,Admin,ExportRemoteCommandsCsv,/Admin/ExportRemoteCommandsCsv,,,,,,N/A,"file download, covered separately"
+admin,Admin,ExportReportsCsv,/Admin/ExportReportsCsv,,,,,,N/A,"file download, covered separately"
+admin,Admin,ExportSystemLogsCsv,/Admin/ExportSystemLogsCsv,,,,,,N/A,"file download, covered separately"
+admin,Admin,ExportUsageCsv,/Admin/ExportUsageCsv,,,,,,N/A,"file download, covered separately"
+admin,Admin,Index,/Admin/Index,200,https://localhost:5100/Admin/Index,0,0,0,PASS,Global Operations Dashboard - CAMS Admin | Pardo Elementary School
+admin,Admin,LanConfig,/Admin/LanConfig,200,https://localhost:5100/Admin/LanConfig,0,0,0,PASS,LAN Status - CAMS Admin | Pardo Elementary School
+admin,Admin,Reports,/Admin/Reports,200,https://localhost:5100/Admin/Reports,0,0,0,PASS,Reports - CAMS Admin | Pardo Elementary School
+admin,Admin,Restrictions,/Admin/Restrictions,200,https://localhost:5100/Admin/Restrictions,0,0,0,PASS,Restriction Rules - CAMS Admin | Pardo Elementary School
+admin,Admin,Roles,/Admin/Roles,200,https://localhost:5100/Admin/Roles,0,0,0,PASS,Roles & Permissions - CAMS Admin | Pardo Elementary School
+admin,Admin,SessionRules,/Admin/SessionRules,200,https://localhost:5100/Admin/SessionRules,0,0,0,PASS,Session Rules - CAMS Admin | Pardo Elementary School
+admin,Admin,Settings,/Admin/Settings,200,https://localhost:5100/Admin/Settings,0,0,0,PASS,Account Security - CAMS Admin | Pardo Elementary School
+admin,Admin,Students,/Admin/Students,200,https://localhost:5100/Admin/Students,0,0,0,PASS,Student Management - CAMS Admin | Pardo Elementary School
+admin,Admin,SystemLogs,/Admin/SystemLogs,200,https://localhost:5100/Admin/SystemLogs,0,0,0,PASS,System Logs - CAMS Admin | Pardo Elementary School
+admin,Admin,Teachers,/Admin/Teachers,200,https://localhost:5100/Admin/Teachers,0,0,0,PASS,Teacher Management - CAMS Admin | Pardo Elementary School
+admin,Admin,Whitelists,/Admin/Whitelists,200,https://localhost:5100/Admin/Whitelists,0,0,0,PASS,Whitelists - CAMS Admin | Pardo Elementary School
+teacher,Teacher,ActivityTimeline,/Teacher/ActivityTimeline,200,https://localhost:5100/Teacher/ActivityTimeline,0,0,0,PASS,(application/json)
+teacher,Teacher,AlertHistory,/Teacher/AlertHistory/1,404,chrome-error://chromewebdata/,1,2,0,N/A,no fixture row for this id
+teacher,Teacher,Alerts,/Teacher/Alerts,200,https://localhost:5100/Teacher/Alerts,0,0,0,PASS,Monitoring Alerts - CAMS Teacher | Pardo Elementary School
+teacher,Teacher,BrowserMonitoringHistory,/Teacher/BrowserMonitoringHistory/1,200,https://localhost:5100/Teacher/BrowserMonitoringHistory/1,0,0,0,PASS,Browser Monitoring History - CAMS Teacher | Pardo Elementary School
+teacher,Teacher,ClassAnalytics,/Teacher/ClassAnalytics/1,200,https://localhost:5100/Teacher/ClassAnalytics/1,0,0,0,PASS,Class Analytics - CAMS Teacher | Pardo Elementary School
+teacher,Teacher,ClassDetails,/Teacher/ClassDetails/1,200,https://localhost:5100/Teacher/ClassDetails/1,0,0,0,PASS,Class Details - Class R0906 - CAMS Teacher | Pardo Elementary School
+teacher,Teacher,Classes,/Teacher/Classes,200,https://localhost:5100/Teacher/Classes,0,0,0,PASS,Class Management - CAMS Teacher | Pardo Elementary School
+teacher,Teacher,Computers,/Teacher/Computers,200,https://localhost:5100/Teacher/Computers,0,0,0,PASS,Workstation Profiles - CAMS Teacher | Pardo Elementary School
+teacher,Teacher,Dashboard,/Teacher/Dashboard,200,https://localhost:5100/Teacher/Dashboard,0,0,0,PASS,Teacher Dashboard - CAMS Teacher | Pardo Elementary School
+teacher,Teacher,ExportAlertsCsv,/Teacher/ExportAlertsCsv,,,,,,N/A,"file download, covered separately"
+teacher,Teacher,ExportBrowserMonitoringCsv,/Teacher/ExportBrowserMonitoringCsv,,,,,,N/A,"file download, covered separately"
+teacher,Teacher,ExportRecordsCsv,/Teacher/ExportRecordsCsv,,,,,,N/A,"file download, covered separately"
+teacher,Teacher,ExportRemoteHistoryCsv,/Teacher/ExportRemoteHistoryCsv,,,,,,N/A,"file download, covered separately"
+teacher,Teacher,ExportStudentAnalyticsCsv,/Teacher/ExportStudentAnalyticsCsv,,,,,,N/A,"file download, covered separately"
+teacher,Teacher,GlobalSessionState,/Teacher/GlobalSessionState,200,https://localhost:5100/Teacher/GlobalSessionState,0,0,0,PASS,(application/json)
+teacher,Teacher,LabUtilization,/Teacher/LabUtilization,200,https://localhost:5100/Teacher/LabUtilization,0,0,0,PASS,Lab Utilization - CAMS Teacher | Pardo Elementary School
+teacher,Teacher,LiveState,/Teacher/LiveState,200,https://localhost:5100/Teacher/LiveState,0,0,0,PASS,(application/json)
+teacher,Teacher,Monitoring,/Teacher/Monitoring,200,https://localhost:5100/Teacher/Monitoring,0,0,0,PASS,Live Monitoring Grid - CAMS Teacher | Pardo Elementary School
+teacher,Teacher,OpenAlertCount,/Teacher/OpenAlertCount,200,https://localhost:5100/Teacher/OpenAlertCount,0,0,0,PASS,(application/json)
+teacher,Teacher,Records,/Teacher/Records,200,https://localhost:5100/Teacher/Records,0,0,0,PASS,Classroom Records - CAMS Teacher | Pardo Elementary School
+teacher,Teacher,RemoteHistory,/Teacher/RemoteHistory/1,200,https://localhost:5100/Teacher/RemoteHistory/1,0,0,0,PASS,Remote-Control History - CAMS Teacher | Pardo Elementary School
+teacher,Teacher,Restrictions,/Teacher/Restrictions,200,https://localhost:5100/Teacher/Restrictions,0,0,0,PASS,Access Restrictions - CAMS Teacher | Pardo Elementary School
+teacher,Teacher,Sessions,/Teacher/Sessions,200,https://localhost:5100/Teacher/Sessions,0,0,0,PASS,Session Control - CAMS Teacher | Pardo Elementary School
+teacher,Teacher,Settings,/Teacher/Settings,200,https://localhost:5100/Teacher/Settings,0,0,0,PASS,Account Settings - CAMS Teacher | Pardo Elementary School
+teacher,Teacher,StudentDetails,/Teacher/StudentDetails/1,200,https://localhost:5100/Teacher/StudentDetails/1,0,0,0,PASS,Student Activity - CAMS Teacher | Pardo Elementary School
+teacher,Teacher,Students,/Teacher/Students,200,https://localhost:5100/Teacher/Students,0,0,0,PASS,Student Profiles - CAMS Teacher | Pardo Elementary School
+teacher,Teacher,UnifiedTimeline,/Teacher/UnifiedTimeline,200,https://localhost:5100/Teacher/UnifiedTimeline,0,0,0,PASS,Unified Timeline - CAMS Teacher | Pardo Elementary School
+student,Student,_SessionStatusJson,/Student/_SessionStatusJson,200,https://localhost:5100/Student/_SessionStatusJson,0,0,0,PASS,(application/json)
+student,Student,Alerts,/Student/Alerts,200,https://localhost:5100/Student/Alerts,0,0,0,PASS,Alert Center - CAMS Student | Pardo Elementary School
+student,Student,Index,/Student/Index,200,https://localhost:5100/Student/Index,0,0,0,PASS,Session Information - CAMS Student | Pardo Elementary School
+student,Student,Settings,/Student/Settings,200,https://localhost:5100/Student/Settings,0,0,0,PASS,Account Settings - CAMS Student | Pardo Elementary School

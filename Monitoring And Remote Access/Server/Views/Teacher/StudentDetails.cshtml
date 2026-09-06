@@ -21,7 +21,7 @@
     @if (!Model.Timeline.Any()) { <tr><td colspan="5" class="text-center text-muted py-4">No activity recorded in this period.</td></tr> }
     </tbody></table></div>
 </div>
-<div class="card border-0 shadow-sm rounded-4 overflow-hidden"><div class="card-header bg-white py-3"><h5 class="mb-0 fw-bold">Alerts</h5></div><div class="table-responsive"><table class="table custom-table mb-0"><tbody>
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden"><div class="card-header bg-white py-3"><h5 class="mb-0 fw-bold">Alerts</h5></div><div class="table-responsive"><table class="table custom-table mb-0"><thead><tr><th scope="col">Alert</th><th scope="col">Severity</th><th scope="col">Status</th></tr></thead><tbody>
 @foreach (var alert in Model.Alerts) { <tr><td><strong>@alert.Title</strong><br /><small>@alert.Message</small></td><td>@alert.Severity</td><td>@(alert.IsAcknowledged ? "Acknowledged" : "Open")</td></tr> }
-@if (!Model.Alerts.Any()) { <tr><td class="text-center text-muted py-4">No alerts recorded.</td></tr> }
+@if (!Model.Alerts.Any()) { <tr><td colspan="3" class="text-center text-muted py-4">No alerts recorded.</td></tr> }
 </tbody></table></div></div>

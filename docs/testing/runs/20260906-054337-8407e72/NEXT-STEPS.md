@@ -8,7 +8,11 @@ automated tests pass.
 
 ## 1. Defects to decide on
 
-Neither defect was fixed — this run changed test code only.
+> **Closed 2026-09-06.** All three were fixed with regression tests and
+> re-verified; see [ADDENDUM-defect-fixes.md](ADDENDUM-defect-fixes.md).
+> Sections 2 onward are unchanged.
+
+None of these was fixed during the run itself, which changed test code only.
 
 | ID | Severity | Decision needed |
 | --- | --- | --- |

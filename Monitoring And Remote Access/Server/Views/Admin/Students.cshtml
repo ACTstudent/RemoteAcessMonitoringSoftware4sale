@@ -163,7 +163,7 @@
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="accountRole" value="Student" />
                                     <input type="hidden" name="id" value="@s.Id" />
-                                    <input type="hidden" name="isActive" value="@(!isActive)" />
+                                    <input type="hidden" name="isActive" value="@((!isActive).ToString())" />
                                     <button class="btn btn-sm @(isActive ? "btn-outline-secondary" : "btn-outline-success") rounded-pill px-3">
                                         <i class="bi @(isActive ? "bi-person-dash" : "bi-person-check") me-1"></i>@(isActive ? "Deactivate" : "Activate")
                                     </button>

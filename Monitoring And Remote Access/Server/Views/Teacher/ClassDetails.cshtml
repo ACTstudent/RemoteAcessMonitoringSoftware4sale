@@ -105,20 +105,20 @@
                             <p class="text-muted small">The new account joins @Model.ClassName immediately.</p>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">First name</label>
-                                    <input name="firstName" class="form-control" required />
+                                    <label class="form-label" for="teacher-classdetails-first-name">First name</label>
+                                    <input id="teacher-classdetails-first-name" name="firstName" class="form-control" required />
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Last name</label>
-                                    <input name="lastName" class="form-control" required />
+                                    <label class="form-label" for="teacher-classdetails-last-name">Last name</label>
+                                    <input id="teacher-classdetails-last-name" name="lastName" class="form-control" required />
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Username <span class="text-muted">(optional)</span></label>
-                                    <input name="username" class="form-control" />
+                                    <label class="form-label" for="teacher-classdetails-username">Username <span class="text-muted">(optional)</span></label>
+                                    <input id="teacher-classdetails-username" name="username" class="form-control" />
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Password</label>
-                                    <input name="password" type="password" minlength="8" class="form-control" required />
+                                    <label class="form-label" for="teacher-classdetails-password">Password</label>
+                                    <input id="teacher-classdetails-password" name="password" type="password" minlength="8" class="form-control" required />
                                 </div>
                             </div>
                             <div class="d-flex justify-content-end gap-2 mt-4">
@@ -137,10 +137,10 @@
                                     <thead><tr><th>First</th><th>Last</th><th>Username</th><th>Password</th></tr></thead>
                                     <tbody id="teacherClassBulkRows">
                                         <tr>
-                                            <td><input name="bulkFirstNames" class="form-control form-control-sm" /></td>
-                                            <td><input name="bulkLastNames" class="form-control form-control-sm" /></td>
-                                            <td><input name="bulkUserNames" class="form-control form-control-sm" /></td>
-                                            <td><input name="bulkPasswords" type="password" minlength="8" class="form-control form-control-sm" /></td>
+                                            <td><input aria-label="First name" name="bulkFirstNames" class="form-control form-control-sm" /></td>
+                                            <td><input aria-label="Last name" name="bulkLastNames" class="form-control form-control-sm" /></td>
+                                            <td><input aria-label="Username (optional)" name="bulkUserNames" class="form-control form-control-sm" /></td>
+                                            <td><input aria-label="Password" name="bulkPasswords" type="password" minlength="8" class="form-control form-control-sm" /></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -181,7 +181,7 @@
                             <input type="hidden" name="classId" value="@Model.ClassId" />
                             <input type="hidden" name="moveStudent" id="moveStudent" value="false" />
                             <p class="text-muted small">Moving a student from another class requires confirmation.</p>
-                            <label class="form-label">Registered student</label>
+                            <label class="form-label" for="existingStudentSelect">Registered student</label>
                             <select name="studentId" id="existingStudentSelect" class="form-select" required>
                                 <option value="">Select a student</option>
                                 @foreach (var student in availableStudents)
@@ -209,7 +209,7 @@
                                     <label class="form-label mb-0">Select students to enroll</label>
                                     <button type="button" class="btn btn-sm btn-outline-emerald rounded-pill px-3" data-check-all="#enrollBulkList">Select all</button>
                                 </div>
-                                <input type="search" class="form-control mb-3" placeholder="Search by name, ID, or username" data-filter-list="#enrollBulkList" />
+                                <input aria-label="Search by name, ID, or username" type="search" class="form-control mb-3" placeholder="Search by name, ID, or username" data-filter-list="#enrollBulkList" />
                                 <div id="enrollBulkList" class="border rounded-3 p-2 bulk-select-list">
                                     @foreach (var student in availableStudents)
                                     {
@@ -252,8 +252,8 @@
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="classId" value="@Model.ClassId" />
                 <div class="modal-body">
-                    <label class="form-label">Roster file</label>
-                    <input type="file" name="file" accept=".csv,text/csv" class="form-control" required />
+                    <label class="form-label" for="teacher-classdetails-roster-file">Roster file</label>
+                    <input id="teacher-classdetails-roster-file" type="file" name="file" accept=".csv,text/csv" class="form-control" required />
                     <div class="form-text">Columns: student number, first name, last name, full name, username, password.</div>
                 </div>
                 <div class="modal-footer">

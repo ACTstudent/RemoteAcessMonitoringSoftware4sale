@@ -1778,9 +1778,12 @@ namespace Server.Controllers
             foreach (var l in logs)
                 csv.AppendLine($"{l.Timestamp:yyyy-MM-dd HH:mm:ss},{l.StudentId},{Csv(l.PcName)},{Csv(l.AppName)}");
 
+            // UTC, like the other three exports. This one used DateTime.Now, so
+            // files downloaded seconds apart carried timestamps hours apart and
+            // no longer sorted together.
             return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()),
                 "text/csv; charset=utf-8",
-                $"CAMS-UsageLog-{DateTime.Now:yyyyMMdd-HHmm}.csv");
+                $"CAMS-UsageLog-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv");
         }
 
         private static string Csv(string? value)

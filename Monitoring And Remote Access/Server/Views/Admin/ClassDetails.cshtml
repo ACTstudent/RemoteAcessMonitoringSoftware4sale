@@ -146,10 +146,10 @@
                                     <thead><tr><th>First</th><th>Last</th><th>Username</th><th>Password</th></tr></thead>
                                     <tbody id="adminClassBulkRows">
                                         <tr>
-                                            <td><input name="bulkFirstNames" class="form-control form-control-sm" /></td>
-                                            <td><input name="bulkLastNames" class="form-control form-control-sm" /></td>
-                                            <td><input name="bulkUserNames" class="form-control form-control-sm" /></td>
-                                            <td><input name="bulkPasswords" type="password" minlength="8" class="form-control form-control-sm" /></td>
+                                            <td><input aria-label="First name" name="bulkFirstNames" class="form-control form-control-sm" /></td>
+                                            <td><input aria-label="Last name" name="bulkLastNames" class="form-control form-control-sm" /></td>
+                                            <td><input aria-label="Username (optional)" name="bulkUserNames" class="form-control form-control-sm" /></td>
+                                            <td><input aria-label="Password" name="bulkPasswords" type="password" minlength="8" class="form-control form-control-sm" /></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -190,7 +190,7 @@
                             <input type="hidden" name="classId" value="@Model.ClassId" />
                             <input type="hidden" name="moveStudent" id="moveStudent" value="false" />
                             <p class="text-muted small">Moving a student from another class requires confirmation.</p>
-                            <label class="form-label">Registered student</label>
+                            <label class="form-label" for="existingStudentSelect">Registered student</label>
                             <select name="studentId" id="existingStudentSelect" class="form-select" required>
                                 <option value="">Select a student</option>
                                 @foreach (var student in availableStudents)

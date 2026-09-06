@@ -109,7 +109,7 @@
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="accountRole" value="Admin" />
                                             <input type="hidden" name="id" value="@admin.Id" />
-                                            <input type="hidden" name="isActive" value="@(!admin.IsActive)" />
+                                            <input type="hidden" name="isActive" value="@((!admin.IsActive).ToString())" />
                                             <button class="btn btn-sm @(admin.IsActive ? "btn-outline-secondary" : "btn-outline-success") rounded-pill px-3" disabled="@(isLastActive ? "disabled" : null)" title="@(isLastActive ? "The last active administrator cannot be deactivated." : null)">
                                                 @(admin.IsActive ? "Deactivate" : "Activate")
                                             </button>

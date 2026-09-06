@@ -1,5 +1,9 @@
 @model IReadOnlyList<Server.Models.ComputerStatusHistory>
 @{
+    // There is no _ViewStart, so a view that names no layout renders bare. This
+    // was the only admin view that named none, so the status history came back
+    // without the navigation, styling or main landmark every other page has.
+    Layout = "_Layout";
     ViewData["Title"] = "Computer Status History";
     var computer = (Server.Models.Computer)ViewBag.Computer;
 }

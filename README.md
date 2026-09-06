@@ -107,7 +107,7 @@ The ones reached for most often:
 
 - [CAMS Guide](CAMS-Guide.md) — the product and its three roles
 - [Deployment Guide](DEPLOYMENT.md) — trust bootstrap, offline bundle, validation
-- [Running the tests](docs/README.md#running-the-tests) — one command for all 378
+- [Running the tests](docs/README.md#running-the-tests) — one command for all 475
 - [Improvement progress](docs/improvements/PROGRESS.md) — what is done, what is blocked
 
 ## License

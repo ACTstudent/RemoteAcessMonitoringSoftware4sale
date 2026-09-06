@@ -1,5 +1,11 @@
 # Run summary — 20260906-054337-8407e72
 
+> **2026-09-06:** every defect below has since been fixed and re-verified, and two
+> findings were withdrawn as harness faults. This report is left as written; see
+> [ADDENDUM-defect-fixes.md](ADDENDUM-defect-fixes.md) for what changed and the
+> re-verification results. The release decision is unchanged — the blocked
+> hardware cases still block acceptance.
+
 **Outcome: not ready for release acceptance.** Every automated test passes and
 the authorization surface came back clean, but 12 required cases remain BLOCKED
 on hardware and three defects are open — two Medium, one Low — alongside two
