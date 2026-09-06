@@ -73,6 +73,17 @@ if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
     throw ".NET 8 SDK was not found."
 }
 
+# `dotnet` existing is not the same as the right SDK being selectable. global.json
+# pins the band to 8.0.x, so a machine with only a 9.x SDK fails here with a
+# reason rather than part-way through a build with a target-framework error.
+$sdkVersion = & dotnet --version 2>&1
+if ($LASTEXITCODE -ne 0) {
+    throw "No .NET SDK satisfies global.json. Install a .NET 8 SDK. dotnet reported: $sdkVersion"
+}
+if ([string]$sdkVersion -notmatch '^8\.') {
+    throw "global.json requires a .NET 8 SDK but '$sdkVersion' was selected."
+}
+
 $iscc = $null
 foreach ($candidate in @(
     "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",

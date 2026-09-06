@@ -19,13 +19,17 @@ Owner for every item below: implementation agent, unless a person is named.
 
 ## Summary
 
-**37 work items. 14 VERIFIED (38%), 4 IN PROGRESS, 5 BLOCKED, 14 NOT STARTED.**
+**37 work items. 19 VERIFIED (51%), 3 IN PROGRESS, 5 BLOCKED, 10 NOT STARTED.**
 
 Counting only what can be finished on this machine — that is, setting aside the
 5 items blocked on a second Windows client, a disposable network and snapshot
-VMs — it is 14 of 32, or 44%.
+VMs — it is 19 of 32, or 59%.
 
-Two caveats on reading that number. It counts items, not effort: the 14 not-started
+Phase 4 is complete except OPS-06, which is blocked on a token scope rather than
+on work: pushing to `.github/workflows/` needs the `workflow` OAuth scope, and
+the change is ready on branch `ci-test-results`.
+
+Two caveats on reading that number. It counts items, not effort: the 10 not-started
 items include the largest single pieces of work in the plan (`AdminController` at
 1072 lines, `TeacherController` at 847, `MainForm` at 1178), so the share of
 *effort* completed is lower than the share of items. And VERIFIED here means
@@ -43,7 +47,7 @@ UX-06 was VERIFIED and a later, wider sweep still found four more problems.
 | OPS-04 | Make the test entry point obvious | VERIFIED | `37e91b5` |
 | OPS-06 | Upload test results and failure logs in CI | BLOCKED | branch `ci-test-results` |
 | OPS-08 | One documentation index | VERIFIED | `ab6fe95` |
-| OPS-09 | Delete proven-unused code after reference checks | IN PROGRESS | `6fcf499` |
+| OPS-09 | Delete proven-unused code after reference checks | VERIFIED | `6fcf499`, and the sweep below |
 | UX-03 | Standardize table density, row actions and pagination | VERIFIED | `8d1328c`, `860e200`, `0769992` |
 | UX-01 | Consolidate design tokens | VERIFIED | `f15fece`, `3d2e552`, `8a7f000` |
 | UX-02 | Shared shell with role-aware navigation | VERIFIED | `0485327` |
@@ -53,7 +57,10 @@ UX-06 was VERIFIED and a later, wider sweep still found four more problems.
 | FLOW-02 | Keep list filters, page and return location across actions | VERIFIED | `395abe9`, `8d1328c`, `dea6dae` |
 | FLOW-01, 03, 04, 05, 06 | Setup checklist, connection state, command feedback, interruption, collector states | NOT STARTED | — |
 | CODE-01, 03, 05, 06, 07 | Controller/client/constant/CSS/diagnostics work | NOT STARTED | — |
-| OPS-02, 03, 05, 07 | Generated-file inventory, version input, prerequisite checks, evidence retention | NOT STARTED | — |
+| OPS-02 | Generated-file and release-artifact inventory | VERIFIED | see [inventory](REPOSITORY-INVENTORY.md) |
+| OPS-03 | Centralized version input, propagation validated | VERIFIED | `b4134fd`, `18f51bd` |
+| OPS-05 | Deterministic SDK and restore policy | VERIFIED | `global.json`, `NuGet.config` |
+| OPS-07 | Evidence and harness retention | VERIFIED | `296ae19`, `18f51bd` |
 | LIVE-01, LIVE-02 | Test suites and decision-branch coverage | IN PROGRESS | see below |
 | LIVE-03…06 | Operator journeys, two-client LAN, install rehearsal, capacity | BLOCKED | needs environment |
 
@@ -288,9 +295,32 @@ made.
   select it implicitly; all 18 teacher views use `_TeacherLayout`.
 - **Why it mattered:** UX-02 asks for one shared shell. Two candidate layouts, one of
   them dead, is the ambiguity that item exists to remove.
-- **Status:** IN PROGRESS — this is one evidenced removal, not the full inventory the
-  plan asks for. Migrations, backups, databases, certificate stores and archived test
-  evidence are explicitly out of scope for deletion.
+- **The full sweep, 2026-09-06.** Three passes over `Monitoring And Remote Access`:
+  every `wwwroot` asset outside `lib/` checked for a reference by filename; every
+  view checked for a reference by name; all 236 declared C# types checked for a
+  mention outside their own file.
+- **Assets:** none unreferenced. **Views:** one — see below. **Types:** 59
+  candidates, all false positives on inspection, none removed.
+- **Second removal:** `Server/Views/Teacher/_PolicyCategoryTable.cshtml`. Nothing
+  names it; every partial in the codebase is invoked by a string literal, so no
+  runtime-built name could reach it; and the live implementation of the same
+  tables is inline in `Views/Admin/Restrictions.cshtml`. It sat under
+  `Views/Teacher` while posting to `AdminController` actions. It was also being
+  edited as recently as `6d39f34` — dead code being maintained.
+- **Why the 59 type candidates were kept.** A text search cannot see these, and
+  deleting on its say-so would have broken the build or the product:
+  xUnit classes are found by reflection; `SessionHelper` is a static extension
+  class whose methods are called as `HttpContext.IsAdmin()` in five controllers,
+  so its name never appears; `OpenAlertCountViewComponent` is invoked as
+  `Component.InvokeAsync(item.BadgeViewComponent)` with the name supplied by
+  `NavigationBuilder`; `ApplicationDbContextFactory` is resolved by EF tooling;
+  and records returned into `var` never name their own type at the call site.
+- **A note on the sweep itself.** Its first run reported all 236 types dead. The
+  word-boundary escape had collapsed in transit and the pattern was matching a
+  backspace character. The rerun checks a known-used type first and refuses to
+  report if that comes back dead.
+- **Status:** VERIFIED. Migrations, backups, databases, certificate stores and
+  archived test evidence remain explicitly out of scope for deletion.
 
 ### Phase 1 and 2 items are complete
 

@@ -92,6 +92,7 @@ above did the latter and needed an addendum for it.
 | [Professionalization plan](improvements/PROFESSIONALIZATION-PLAN.md) | The phased plan being worked through |
 | [Progress](improvements/PROGRESS.md) | Per-item status and evidence. VERIFIED requires evidence; blocked items say what they are blocked on |
 | [Decisions](improvements/DECISIONS.md) | Choices made along the way, each with the alternative that was rejected |
+| [Repository inventory](improvements/REPOSITORY-INVENTORY.md) | What is tracked, sorted into source and release artifacts — including which vendored assets carry a licence and which do not |
 | [Journey results](improvements/JOURNEY-RESULTS.md) | The Phase 0 journey baseline, and which journeys cannot be observed on one machine |
 
 ## What is not written down
