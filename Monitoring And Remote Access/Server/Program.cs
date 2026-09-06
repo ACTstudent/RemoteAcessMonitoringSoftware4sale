@@ -162,9 +162,16 @@ var requestThrottle = new RequestThrottle();
 const int LoginAttemptsPerMinute = 10;
 const int ApiRequestsPerMinute = 120;
 
+// Keeps a fault storm from writing one database row per failed request.
+var failureLog = new RequestFailureLog();
+
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Account/Login");
+    // Was /Account/Login, which bounced the user to a sign-in form with no
+    // indication that anything had gone wrong - indistinguishable from being
+    // signed out. The error page says what happened and shows the correlation
+    // id that identifies the log entry.
+    app.UseExceptionHandler("/Account/Error");
     app.UseHsts();
 }
 
@@ -230,14 +237,43 @@ app.Use(async (context, next) =>
     try { await next(context); }
     catch (Exception ex)
     {
-        try
+        // The id the user is shown on the error page, so a report of "it broke"
+        // can be tied to a row in SystemLogs.
+        var correlationId = context.TraceIdentifier;
+        var path = context.Request.Path.Value ?? "/";
+        var method = context.Request.Method;
+
+        var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("UnhandledRequest");
+
+        if (failureLog.ShouldWrite(ex, path, out var suppressed))
         {
-            using var scope = app.Services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            db.SystemLogs.Add(new Server.Models.SystemLog { Level = "Error", Message = "An unexpected server error occurred.", StackTrace = app.Environment.IsDevelopment() ? ex.ToString() : null, Timestamp = DateTime.UtcNow });
-            db.SaveChanges();
+            var message = RequestFailureLog.Describe(ex, method, path, correlationId, suppressed);
+            try
+            {
+                using var scope = app.Services.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                db.SystemLogs.Add(new Server.Models.SystemLog
+                {
+                    Level = "Error",
+                    Message = message,
+                    // Only in Development. A stack trace, and the exception
+                    // message inside it, can quote the data being written.
+                    StackTrace = app.Environment.IsDevelopment() ? ex.ToString() : null,
+                    Timestamp = DateTime.UtcNow
+                });
+                db.SaveChanges();
+            }
+            catch (Exception logFailure)
+            {
+                // Previously swallowed. If the database is the thing that is
+                // broken, this is the only place the failure can still be seen.
+                logger.LogError(logFailure,
+                    "Could not record an unhandled request failure. Original: {Message}", message);
+            }
+
+            logger.LogError(ex, "{Message}", message);
         }
-        catch { }
+
         throw;
     }
 });

@@ -1,0 +1,50 @@
+@{
+    ViewData["Title"] = "Something went wrong";
+    var correlationId = ViewBag.CorrelationId as string ?? "";
+
+    // No layout on purpose. This page is reached when something already failed,
+    // and a shell that queries the database for an alert badge is one more thing
+    // that can fail on the way to telling the user what happened.
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - CAMS</title>
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <link href="~/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+</head>
+<body class="d-flex align-items-center justify-content-center min-vh-100 p-4">
+    <main class="card border-0 shadow-sm rounded-4 p-4 p-md-5" style="max-width: 34rem;">
+        <h1 class="h4 fw-bold mb-3">Something went wrong</h1>
+
+        <p class="mb-3">
+            CAMS could not finish what you asked for. Nothing you were working on
+            has been changed by this error.
+        </p>
+
+        <p class="mb-4">
+            Try again. If it keeps happening, give your administrator the
+            reference below &mdash; it identifies this exact failure in the
+            server log.
+        </p>
+
+        @if (!string.IsNullOrEmpty(correlationId))
+        {
+            <div class="mb-4">
+                <span class="form-label small text-muted d-block mb-1">Reference</span>
+                <code class="user-select-all fs-6">@correlationId</code>
+            </div>
+        }
+
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-emerald rounded-pill px-4" asp-controller="Account" asp-action="Login">
+                Back to sign in
+            </a>
+        </div>
+    </main>
+</body>
+</html>

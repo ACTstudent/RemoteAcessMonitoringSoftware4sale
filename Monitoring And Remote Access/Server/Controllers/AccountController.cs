@@ -33,6 +33,19 @@ namespace Server.Controllers
         /// browser's Back button.
         /// </summary>
         [HttpGet]
+        /// <summary>
+        /// Where an unhandled failure lands. Shows the correlation identifier
+        /// so a report can be matched to the log entry, and nothing else about
+        /// the failure - a stack trace on a classroom screen tells an attacker
+        /// more than it tells the teacher.
+        /// </summary>
+        public IActionResult Error()
+        {
+            Response.StatusCode = StatusCodes.Status500InternalServerError;
+            ViewBag.CorrelationId = HttpContext.TraceIdentifier;
+            return View();
+        }
+
         public IActionResult AccessDenied(string? returnUrl = null)
         {
             // Someone with no session at all belongs on the sign-in form; this
