@@ -11,7 +11,7 @@
             <i class="bi bi-ban fs-3"></i>
         </div>
         <div>
-            <h2 class="fw-extrabold mb-0 text-dark" style="letter-spacing: -0.5px;">Blacklist Directory</h2>
+            <h2 class="page-title">Blacklist Directory</h2>
             <p class="text-muted mb-0 small">Enforce forbidden website domains and prohibited application executables</p>
         </div>
     </div>
@@ -53,7 +53,7 @@
                         </td>
                         <td class="text-end">
                             <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editBlacklist-@b.BlacklistItemId">Edit</button>
-                            <form method="post" action="/Admin/DeleteBlacklist" style="margin:0;" data-confirm="Remove this item from the blacklist?" data-confirm-title="Remove blacklist item" data-confirm-label="Remove">
+                            <form method="post" action="/Admin/DeleteBlacklist" class="form-inline-action" data-confirm="Remove this item from the blacklist?" data-confirm-title="Remove blacklist item" data-confirm-label="Remove">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@b.BlacklistItemId" />
                                 <button class="btn btn-sm btn-outline-danger rounded-pill px-3">
@@ -83,7 +83,7 @@
 <div class="modal fade" id="createBlacklistModal" tabindex="-1" aria-labelledby="createBlacklistModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 text-white" style="background-color: var(--sidebar-bg);">
+            <div class="modal-header border-0 text-white surface-brand">
                 <h5 class="modal-title fw-bold" id="createBlacklistModalLabel">
                     <i class="bi bi-ban me-2"></i> Add Blacklist Item
                 </h5>

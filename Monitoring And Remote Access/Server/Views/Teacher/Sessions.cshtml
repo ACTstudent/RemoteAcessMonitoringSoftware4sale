@@ -15,7 +15,7 @@
             <i class="bi bi-play-circle-fill fs-3"></i>
         </div>
         <div>
-            <h2 class="fw-extrabold mb-0 text-dark" style="letter-spacing: -0.5px;">Session Control</h2>
+            <h2 class="page-title">Session Control</h2>
             <p class="text-muted mb-0 small">Manage timed 45-minute laboratory sessions, pause/resume, and attendance</p>
         </div>
     </div>
@@ -121,14 +121,14 @@
                             <div class="d-flex justify-content-end gap-1">
                                 @if (s.Status != "Ended")
                                 {
-                                    <form method="post" action="/Teacher/TogglePause" style="margin:0;">
+                                    <form method="post" action="/Teacher/TogglePause" class="form-inline-action">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@s.Id" />
                                         <button class="btn btn-sm @(s.Status == "Paused" ? "btn-emerald" : "btn-outline-warning") rounded-pill px-3 me-1">
                                             @(s.Status == "Paused" ? "Resume" : "Pause")
                                         </button>
                                     </form>
-                                    <form method="post" action="/Teacher/EndSession" style="margin:0;" data-confirm="End this student session? It cannot be resumed." data-confirm-title="End session" data-confirm-label="End session">
+                                    <form method="post" action="/Teacher/EndSession" class="form-inline-action" data-confirm="End this student session? It cannot be resumed." data-confirm-title="End session" data-confirm-label="End session">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@s.Id" />
                                         <button class="btn btn-sm btn-outline-danger rounded-pill px-3">End</button>
@@ -153,7 +153,7 @@
 <div class="modal fade" id="startSessionModal" tabindex="-1" aria-labelledby="startSessionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 text-white" style="background-color: var(--sidebar-bg);">
+            <div class="modal-header border-0 text-white surface-brand">
                 <h5 class="modal-title fw-bold" id="startSessionModalLabel">
                     <i class="bi bi-play-circle me-2"></i> Start Laboratory Session
                 </h5>

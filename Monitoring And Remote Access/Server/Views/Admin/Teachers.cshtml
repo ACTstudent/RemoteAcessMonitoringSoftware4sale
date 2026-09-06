@@ -17,7 +17,7 @@
             <i class="bi bi-person-badge-fill fs-3"></i>
         </div>
         <div>
-            <h2 class="fw-extrabold mb-0 text-dark" style="letter-spacing: -0.5px;">Teacher Management</h2>
+            <h2 class="page-title">Teacher Management</h2>
             <p class="text-muted mb-0 small">Manage faculty, advisers, and instructor accounts</p>
         </div>
     </div>
@@ -122,7 +122,7 @@
                             <div class="d-flex justify-content-end gap-1 flex-wrap">
                                 @if (isLocked || t.FailedLoginAttempts > 0)
                                 {
-                                    <form method="post" action="/Admin/UnlockAccount" style="margin:0;">
+                                    <form method="post" action="/Admin/UnlockAccount" class="form-inline-action">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="accountRole" value="Teacher" />
                                         <input type="hidden" name="id" value="@t.TeacherId" />
@@ -135,7 +135,7 @@
                                 }
                                 else
                                 {
-                                    <form method="post" action="/Admin/SetAccountActive" style="margin:0;" data-confirm="@(isActive ? "Deactivate" : "Activate") this teacher account across CAMS?" data-confirm-title="@(isActive ? "Deactivate" : "Activate") teacher" data-confirm-label="@(isActive ? "Deactivate" : "Activate")" data-confirm-variant="@(isActive ? "danger" : "success")">
+                                    <form method="post" action="/Admin/SetAccountActive" class="form-inline-action" data-confirm="@(isActive ? "Deactivate" : "Activate") this teacher account across CAMS?" data-confirm-title="@(isActive ? "Deactivate" : "Activate") teacher" data-confirm-label="@(isActive ? "Deactivate" : "Activate")" data-confirm-variant="@(isActive ? "danger" : "success")">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="accountRole" value="Teacher" />
                                         <input type="hidden" name="id" value="@t.TeacherId" />
@@ -143,7 +143,7 @@
                                         <button class="btn btn-sm @(isActive ? "btn-outline-secondary" : "btn-outline-success") rounded-pill px-3"><i class="bi @(isActive ? "bi-person-dash" : "bi-person-check") me-1"></i>@(isActive ? "Deactivate" : "Activate")</button>
                                     </form>
                                     <button type="button" class="btn btn-sm btn-outline-emerald rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editTeacherModal-@t.TeacherId"><i class="bi bi-pencil me-1"></i> Edit</button>
-                                    <form method="post" action="/Admin/DeleteTeacher" style="margin: 0;" data-confirm="Deactivate this teacher across CAMS while retaining historical records?" data-confirm-title="Deactivate teacher" data-confirm-label="Deactivate">
+                                    <form method="post" action="/Admin/DeleteTeacher" class="form-inline-action" data-confirm="Deactivate this teacher across CAMS while retaining historical records?" data-confirm-title="Deactivate teacher" data-confirm-label="Deactivate">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@t.TeacherId" />
                                         <button class="btn btn-sm btn-outline-danger rounded-pill px-3"><i class="bi bi-archive me-1"></i> Archive</button>
@@ -168,7 +168,7 @@
 <div class="modal fade" id="createTeacherModal" tabindex="-1" aria-labelledby="createTeacherModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 text-white" style="background-color: var(--sidebar-bg);">
+            <div class="modal-header border-0 text-white surface-brand">
                 <h5 class="modal-title fw-bold" id="createTeacherModalLabel">
                     <i class="bi bi-person-plus me-2"></i> Register New Teacher
                 </h5>
@@ -233,7 +233,7 @@
     <div class="modal fade" id="editTeacherModal-@t.TeacherId" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                <div class="modal-header border-0 text-white" style="background-color: var(--sidebar-bg);">
+                <div class="modal-header border-0 text-white surface-brand">
                     <h5 class="modal-title fw-bold">
                         <i class="bi bi-pencil-square me-2"></i> Edit Teacher - @t.FirstName @t.LastName
                     </h5>

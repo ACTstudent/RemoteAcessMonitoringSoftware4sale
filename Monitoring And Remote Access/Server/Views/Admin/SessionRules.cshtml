@@ -11,7 +11,7 @@
             <i class="bi bi-hourglass-split fs-3"></i>
         </div>
         <div>
-            <h2 class="fw-extrabold mb-0 text-dark" style="letter-spacing: -0.5px;">Session Policy Rules</h2>
+            <h2 class="page-title">Session Policy Rules</h2>
             <p class="text-muted mb-0 small">Configure timed 45-minute lab session rules, remote control, and pause limits</p>
         </div>
     </div>
@@ -64,7 +64,7 @@
                         </td>
                         <td class="text-end">
                             <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editSessionRule-@r.SessionRuleId">Edit</button>
-                            <form method="post" action="/Admin/DeleteSessionRule" style="margin:0;" data-confirm="Deactivate this rule while retaining historical sessions?" data-confirm-title="Deactivate session rule" data-confirm-label="Deactivate">
+                            <form method="post" action="/Admin/DeleteSessionRule" class="form-inline-action" data-confirm="Deactivate this rule while retaining historical sessions?" data-confirm-title="Deactivate session rule" data-confirm-label="Deactivate">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@r.SessionRuleId" />
                                 <button class="btn btn-sm btn-outline-danger rounded-pill px-3">
@@ -106,7 +106,7 @@
 <div class="modal fade" id="createSessionRuleModal" tabindex="-1" aria-labelledby="createSessionRuleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 text-white" style="background-color: var(--sidebar-bg);">
+            <div class="modal-header border-0 text-white surface-brand">
                 <h5 class="modal-title fw-bold" id="createSessionRuleModalLabel">
                     <i class="bi bi-hourglass-top me-2"></i> Create Session Policy Rule
                 </h5>

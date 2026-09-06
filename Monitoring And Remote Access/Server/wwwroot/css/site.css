@@ -1376,3 +1376,37 @@ body {
     outline: 3px solid #fff;
     outline-offset: -3px;
 }
+
+/* ---------------------------------------------------------------------------
+   Page header
+
+   Every page opens with the same block: an icon, a title, a one-line
+   description, and the actions for that page on the right. It was written out
+   in full on each of the 36 views, with the title's letter-spacing as an inline
+   style repeated seventeen times and three slightly different sets of utility
+   classes. These are the tokens for it, so the treatment is defined once.
+   --------------------------------------------------------------------------- */
+.page-title {
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #212529;
+    margin-bottom: 0;
+}
+
+.page-subtitle {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-bottom: 0;
+}
+
+/* Modal headers and other surfaces that sit on the sidebar colour. Replaces
+   `style="background-color: var(--sidebar-bg);"` repeated twenty-two times. */
+.surface-brand {
+    background-color: var(--sidebar-bg);
+}
+
+/* A form that is only there to carry a button, and must not add layout of its
+   own. Replaces `style="margin:0;"` on inline action forms. */
+.form-inline-action {
+    margin: 0;
+}

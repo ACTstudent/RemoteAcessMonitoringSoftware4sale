@@ -11,7 +11,7 @@
             <i class="bi bi-key-fill fs-3"></i>
         </div>
         <div>
-            <h2 class="fw-extrabold mb-0 text-dark" style="letter-spacing: -0.5px;">Roles & Permissions</h2>
+            <h2 class="page-title">Roles & Permissions</h2>
             <p class="text-muted mb-0 small">Manage role-based access control (RBAC) privileges for Administrators, Teachers, and Students</p>
         </div>
     </div>
@@ -60,7 +60,7 @@
                             }
                         </td>
                         <td class="text-end">
-                            <form method="post" action="/Admin/DeleteRole" style="margin:0;" data-confirm="Delete this role?" data-confirm-title="Delete role" data-confirm-label="Delete">
+                            <form method="post" action="/Admin/DeleteRole" class="form-inline-action" data-confirm="Delete this role?" data-confirm-title="Delete role" data-confirm-label="Delete">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@r.RoleId" />
                                 <button class="btn btn-sm btn-outline-danger rounded-pill px-3">
@@ -85,7 +85,7 @@
 <div class="modal fade" id="createRoleModal" tabindex="-1" aria-labelledby="createRoleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 text-white" style="background-color: var(--sidebar-bg);">
+            <div class="modal-header border-0 text-white surface-brand">
                 <h5 class="modal-title fw-bold" id="createRoleModalLabel">
                     <i class="bi bi-key me-2"></i> Add Custom Role
                 </h5>

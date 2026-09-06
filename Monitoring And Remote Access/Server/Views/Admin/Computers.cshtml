@@ -16,7 +16,7 @@
             <i class="bi bi-pc-display fs-3"></i>
         </div>
         <div>
-            <h2 class="fw-extrabold mb-0 text-dark" style="letter-spacing: -0.5px;">Computer Profiles</h2>
+            <h2 class="page-title">Computer Profiles</h2>
             <p class="text-muted mb-0 small">Manage laboratory workstations, status, and unit mapping</p>
         </div>
     </div>
@@ -126,7 +126,7 @@
                                     <button type="button" class="btn btn-sm btn-outline-emerald rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editComputerModal-@c.ComputerId">
                                         <i class="bi bi-pencil me-1"></i> Edit
                                     </button>
-                                    <form method="post" action="/Admin/DeleteComputer" style="margin:0;" data-confirm="Archive this workstation globally while retaining historical records?" data-confirm-title="Archive workstation" data-confirm-label="Archive">
+                                    <form method="post" action="/Admin/DeleteComputer" class="form-inline-action" data-confirm="Archive this workstation globally while retaining historical records?" data-confirm-title="Archive workstation" data-confirm-label="Archive">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@c.ComputerId" />
                                         <button class="btn btn-sm btn-outline-danger rounded-pill px-3">
@@ -153,7 +153,7 @@
 <div class="modal fade" id="createComputerModal" tabindex="-1" aria-labelledby="createComputerModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 text-white" style="background-color: var(--sidebar-bg);">
+            <div class="modal-header border-0 text-white surface-brand">
                 <h5 class="modal-title fw-bold" id="createComputerModalLabel">
                     <i class="bi bi-pc-display me-2"></i> Register Workstation
                 </h5>
@@ -197,7 +197,7 @@
     <div class="modal fade" id="editComputerModal-@c.ComputerId" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                <div class="modal-header border-0 text-white" style="background-color: var(--sidebar-bg);">
+                <div class="modal-header border-0 text-white surface-brand">
                     <h5 class="modal-title fw-bold">
                         <i class="bi bi-pencil-square me-2"></i> Edit Workstation - @c.LaboratoryStation
                     </h5>
