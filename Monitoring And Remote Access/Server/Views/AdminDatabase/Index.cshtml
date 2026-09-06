@@ -272,7 +272,7 @@
                 @if (Model.Backups.Count == 0)
                 {
                     <tr>
-                        <td colspan="5" class="text-center text-muted py-4">No managed backups found.</td>
+                        <td colspan="5" class="text-center empty-state"><i class="bi bi-database empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No managed backups found.</span></td>
                     </tr>
                 }
             </tbody>

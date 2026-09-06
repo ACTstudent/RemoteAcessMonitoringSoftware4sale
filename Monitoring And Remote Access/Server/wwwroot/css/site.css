@@ -503,9 +503,25 @@ body {
     white-space: nowrap;
 }
 
+/* Empty state: shown wherever a list has nothing in it. An icon, then the
+   sentence, so a table with no rows reads as deliberate rather than broken.
+   There were 31 of these written six different ways. */
 .empty-state {
     padding: 2.5rem 1rem !important;
     color: var(--text-muted) !important;
+}
+
+.empty-state-icon {
+    display: block;
+    font-size: 2rem;
+    line-height: 1;
+    margin-bottom: 0.65rem;
+    opacity: 0.45;
+}
+
+.empty-state-message {
+    display: block;
+    font-size: 0.9375rem;
 }
 
 /* Metric Cards (from pro) */

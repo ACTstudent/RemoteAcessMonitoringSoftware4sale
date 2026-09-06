@@ -12,5 +12,5 @@
 </div>
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden"><div class="table-responsive"><table class="table custom-table mb-0"><thead><tr><th>Changed at</th><th>Status</th><th>Changed by</th><th>User ID</th></tr></thead><tbody>
 @foreach (var item in Model) { <tr><td>@item.ChangedAt.ToDisplayLocal().ToString("yyyy-MM-dd HH:mm")</td><td>@item.Status</td><td>@item.ChangedByType</td><td>@(item.ChangedById?.ToString() ?? "System")</td></tr> }
-@if (Model.Count == 0) { <tr><td colspan="4" class="text-center text-muted py-4">No status changes recorded.</td></tr> }
+@if (Model.Count == 0) { <tr><td colspan="4" class="text-center empty-state"><i class="bi bi-inbox empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No status changes recorded.</span></td></tr> }
 </tbody></table></div></div>

@@ -38,7 +38,7 @@
                     </td>
                 </tr>
             }
-            @if (!Model.Restrictions.Any()) { <tr><td colspan="5" class="text-muted text-center">No rules configured.</td></tr> }
+            @if (!Model.Restrictions.Any()) { <tr><td colspan="5" class="text-center empty-state"><i class="bi bi-shield-check empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No rules configured.</span></td></tr> }
             </tbody>
         </table>
     </div>

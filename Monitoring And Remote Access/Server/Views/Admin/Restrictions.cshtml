@@ -93,7 +93,7 @@
                 @if (!Model.Restrictions.Any())
                 {
                     <tr>
-                        <td colspan="7" class="text-center py-4 text-muted">No security rules configured. Click "Add Restriction Rule" above.</td>
+                        <td colspan="7" class="text-center empty-state"><i class="bi bi-shield-check empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No security rules configured. Click "Add Restriction Rule" above.</span></td>
                     </tr>
                 }
             </tbody>
@@ -111,7 +111,7 @@
             var id = app?.ApplicationCategoryId ?? web?.WebsiteCategoryId ?? 0; var name = app?.Name ?? web?.Name ?? ""; var pattern = app?.Pattern ?? web?.DomainPattern ?? ""; var mode = app?.Mode ?? web?.Mode ?? "Block"; var active = app?.IsActive ?? web?.IsActive ?? false;
             <tr><td><strong>@name</strong><br /><code>@pattern</code></td><td>@mode</td><td>@(active ? "Enabled" : "Disabled")</td><td class="text-end"><button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#edit-@categorySet.Name-@id">Edit</button><form class="d-inline" method="post" action="/Admin/Delete@(categorySet.Name)Category" data-confirm="Delete this category?" data-confirm-title="Delete category" data-confirm-label="Delete">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@id" /><button class="btn btn-sm btn-outline-danger">Delete</button></form></td></tr>
         }
-        @if (!categorySet.Items.Any()) { <tr><td colspan="4" class="text-center text-muted py-3">No categories configured.</td></tr> }
+        @if (!categorySet.Items.Any()) { <tr><td colspan="4" class="text-center empty-state"><i class="bi bi-tags empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No categories configured.</span></td></tr> }
         </tbody></table></div></div></div>
     }
 </div>

@@ -36,10 +36,11 @@
             <label class="form-label fw-semibold text-muted small mb-1" for="reports-to-date">To Date</label>
             <input id="reports-to-date" type="date" name="to" class="form-control filter-control" value="@ViewBag.ToDate" />
         </div>
-        <div class="col-md-4 mt-4">
-            <button class="btn btn-emerald w-100 py-2 fw-bold text-white rounded-pill">
+        <div class="col-md-4 mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-emerald flex-grow-1 py-2 fw-bold text-white rounded-pill">
                 <i class="bi bi-funnel me-1"></i> Filter Analytics
             </button>
+            <a class="btn btn-outline-secondary rounded-pill px-3" href="@Url.Action("Reports", "Admin")" title="Clear all filters">Reset</a>
         </div>
          <div class="col-md-4"><label class="form-label fw-semibold text-muted small mb-1" for="reports-class">Class</label><select id="reports-class" name="classId" class="form-select"><option value="">All classes</option>@foreach (var cls in (IEnumerable<Server.Models.Class>)(ViewBag.Classes ?? Array.Empty<Server.Models.Class>())) { <option value="@cls.ClassId" selected="@(Context.Request.Query["classId"] == cls.ClassId.ToString() ? "selected" : null)">@cls.ClassName</option> }</select></div>
          <div class="col-md-4"><label class="form-label fw-semibold text-muted small mb-1" for="reports-laboratory-station">Laboratory station</label><select id="reports-laboratory-station" name="station" class="form-select"><option value="">All stations</option>@foreach (var computer in (IEnumerable<Server.Models.Computer>)(ViewBag.Stations ?? Array.Empty<Server.Models.Computer>())) { <option value="@computer.LaboratoryStation" selected="@(ViewBag.SelectedStation == computer.LaboratoryStation ? "selected" : null)">@computer.LaboratoryStation</option> }</select></div>
@@ -121,7 +122,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="2" class="text-center py-4 text-muted">No application usage data in selected range.</td>
+                                <td colspan="2" class="text-center empty-state"><i class="bi bi-bar-chart empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No application usage data in selected range.</span></td>
                             </tr>
                         }
                     </tbody>

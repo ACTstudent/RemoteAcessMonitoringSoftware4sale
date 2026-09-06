@@ -38,7 +38,7 @@
                 }
             </select>
         </div>
-        <div class="col-lg-2 d-flex gap-2"><button type="submit" class="btn btn-emerald flex-grow-1">Apply</button><a class="btn btn-outline-secondary" href="@Url.Action("LabUtilization", "Teacher")" title="Reset filters"><i class="bi bi-arrow-counterclockwise"></i></a></div>
+        <div class="col-lg-2 d-flex gap-2"><button type="submit" class="btn btn-emerald flex-grow-1">Apply</button><a class="btn btn-outline-secondary" href="@Url.Action("LabUtilization", "Teacher")" title="Clear all filters">Reset</a></div>
     </div>
 </form>
 
@@ -69,7 +69,7 @@
                     }
                     @if (!Model.Stations.Any())
                     {
-                        <tr><td colspan="5" class="text-center text-muted py-5">No workstation matches this filter.</td></tr>
+                        <tr><td colspan="5" class="text-center empty-state"><i class="bi bi-pc-display empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No workstation matches this filter.</span></td></tr>
                     }
                     </tbody>
                 </table>

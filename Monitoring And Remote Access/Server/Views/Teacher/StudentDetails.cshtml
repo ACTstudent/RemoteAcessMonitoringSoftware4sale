@@ -18,10 +18,10 @@
     <div class="card-header bg-white py-3"><h5 class="mb-0 fw-bold">Activity Timeline</h5></div>
     <div class="table-responsive"><table class="table custom-table mb-0"><thead><tr><th>Time</th><th>Event</th><th>Application</th><th>Details</th><th>Station</th></tr></thead><tbody>
     @foreach (var item in Model.Timeline) { <tr><td>@item.Timestamp.ToLocalTime().ToString("MMM dd, HH:mm:ss")</td><td>@item.EventType</td><td>@item.ApplicationName</td><td>@item.Details</td><td>@item.PcName</td></tr> }
-    @if (!Model.Timeline.Any()) { <tr><td colspan="5" class="text-center text-muted py-4">No activity recorded in this period.</td></tr> }
+    @if (!Model.Timeline.Any()) { <tr><td colspan="5" class="text-center empty-state"><i class="bi bi-bar-chart empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No activity recorded in this period.</span></td></tr> }
     </tbody></table></div>
 </div>
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden"><div class="card-header bg-white py-3"><h5 class="mb-0 fw-bold">Alerts</h5></div><div class="table-responsive"><table class="table custom-table mb-0"><thead><tr><th scope="col">Alert</th><th scope="col">Severity</th><th scope="col">Status</th></tr></thead><tbody>
 @foreach (var alert in Model.Alerts) { <tr><td><strong>@alert.Title</strong><br /><small>@alert.Message</small></td><td>@alert.Severity</td><td>@(alert.IsAcknowledged ? "Acknowledged" : "Open")</td></tr> }
-@if (!Model.Alerts.Any()) { <tr><td colspan="3" class="text-center text-muted py-4">No alerts recorded.</td></tr> }
+@if (!Model.Alerts.Any()) { <tr><td colspan="3" class="text-center empty-state"><i class="bi bi-bell empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No alerts recorded.</span></td></tr> }
 </tbody></table></div></div>

@@ -22,7 +22,7 @@
         <div class="col-sm-6 col-lg-2"><label class="form-label small text-muted" for="browser-to">To</label><input id="browser-to" type="date" name="to" value="@ViewBag.To" class="form-control" /></div>
         <div class="col-sm-6 col-lg-3"><label class="form-label small text-muted" for="browser-name">Browser</label><select id="browser-name" name="browser" class="form-select"><option value="">Chrome and Brave</option><option value="chrome" selected="@(ViewBag.Browser == "chrome")">Chrome</option><option value="brave" selected="@(ViewBag.Browser == "brave")">Brave</option></select></div>
         <div class="col-sm-6 col-lg-3"><label class="form-label small text-muted" for="browser-mode">Mode</label><select id="browser-mode" name="mode" class="form-select"><option value="">All modes</option>@foreach (var option in Enum.GetValues<BrowserMonitoringMode>()) { <option value="@option" selected="@(ViewBag.Mode?.ToString() == option.ToString())">@option</option> }</select></div>
-        <div class="col-lg-2"><button class="btn btn-emerald w-100" type="submit"><i class="bi bi-funnel me-1"></i>Apply</button></div>
+        <div class="col-lg-2 d-flex gap-2"><button class="btn btn-emerald flex-grow-1" type="submit"><i class="bi bi-funnel me-1"></i>Apply</button><a class="btn btn-outline-secondary" href="@Url.Action("BrowserMonitoringHistory", "Teacher")" title="Clear all filters">Reset</a></div>
     </div>
 </form>
 
@@ -36,7 +36,7 @@
                 var modeClass = record.Mode switch { BrowserMonitoringMode.ManagedProtocol => "text-bg-success", BrowserMonitoringMode.WindowTitleFallback => "text-bg-warning", _ => "text-bg-secondary" };
                 <tr><td class="text-nowrap">@record.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td><td class="font-monospace">@record.StudentId</td><td>@record.PcName</td><td class="text-capitalize">@record.Browser</td><td><span class="badge rounded-pill @modeClass">@record.Mode</span></td><td class="text-muted">@(record.Detail ?? "-")</td></tr>
             }
-            @if (!Model.Any()) { <tr><td colspan="6" class="text-center text-muted py-5">No browser monitoring records match these filters.</td></tr> }
+            @if (!Model.Any()) { <tr><td colspan="6" class="text-center empty-state"><i class="bi bi-globe2 empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No browser monitoring records match these filters.</span></td></tr> }
             </tbody>
         </table>
     </div>
