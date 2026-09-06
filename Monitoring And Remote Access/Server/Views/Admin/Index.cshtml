@@ -22,15 +22,15 @@
         <div class="d-flex flex-wrap gap-2">
             <form method="post" action="/Admin/PauseAllSessions" data-confirm="Pause every school session that permits pausing?" data-confirm-title="Pause all sessions" data-confirm-label="Pause" data-confirm-variant="warning">
                 @Html.AntiForgeryToken()
-                <button class="btn btn-outline-warning rounded-pill px-3"><i class="bi bi-pause-fill me-1"></i>Pause All</button>
+                <button class="btn btn-outline-warning rounded-pill px-3"><i class="bi bi-pause-fill me-1"></i>Pause all</button>
             </form>
             <form method="post" action="/Admin/ResumeAllSessions" data-confirm="Resume every paused school session?" data-confirm-title="Resume paused sessions" data-confirm-label="Resume" data-confirm-variant="success">
                 @Html.AntiForgeryToken()
-                <button class="btn btn-outline-success rounded-pill px-3"><i class="bi bi-play-fill me-1"></i>Resume Paused</button>
+                <button class="btn btn-outline-success rounded-pill px-3"><i class="bi bi-play-fill me-1"></i>Resume paused</button>
             </form>
             <form method="post" action="/Admin/EndAllSessions" data-confirm="End every active school lab session? Ended sessions cannot be resumed." data-confirm-title="End all sessions" data-confirm-label="End sessions">
                 @Html.AntiForgeryToken()
-                <button class="btn btn-outline-danger rounded-pill px-3"><i class="bi bi-stop-fill me-1"></i>End All</button>
+                <button class="btn btn-outline-danger rounded-pill px-3"><i class="bi bi-stop-fill me-1"></i>End all</button>
             </form>
         </div>
     </div>

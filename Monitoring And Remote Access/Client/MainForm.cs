@@ -51,26 +51,33 @@ namespace Client
         private int _sessionElapsed = 0;
 
         // CAMS palette, mirroring the design tokens used by the web portal so the
-        // agent and the browser experience read as one product.
-        private static readonly Color BrandDark = Color.FromArgb(22, 64, 31);      // --sidebar-bg
-        private static readonly Color BrandDarker = Color.FromArgb(17, 50, 24);
-        private static readonly Color BrandEmerald = Color.FromArgb(23, 128, 58);  // --accent-emerald
-        private static readonly Color BrandMint = Color.FromArgb(187, 243, 198);
-        private static readonly Color SurfaceBody = Color.FromArgb(250, 248, 243); // --body-bg
-        private static readonly Color SurfaceCard = Color.White;
-        private static readonly Color BorderSubtle = Color.FromArgb(231, 226, 217);// --card-border
-        private static readonly Color TextMain = Color.FromArgb(28, 25, 23);       // --text-main
-        private static readonly Color TextMuted = Color.FromArgb(111, 104, 97);    // --text-muted
-        private static readonly Color StatusOk = Color.FromArgb(21, 128, 61);      // readable green on white
-        private static readonly Color StatusWarn = Color.FromArgb(180, 83, 9);
-        private static readonly Color StatusDanger = Color.FromArgb(185, 28, 28);
+        // agent and the browser read as one product. Every entry names the token
+        // it corresponds to, and carries its measured contrast against the
+        // surface it is used on. WCAG AA for body text is 4.5:1.
+        //
+        // Entries with no token are agent-only: the desktop client has a dark
+        // brand bar and a compact status line that the portal has no equivalent
+        // for, and the on-white status colours would be unreadable there.
+        private static readonly Color BrandDark = Color.FromArgb(22, 64, 31);      // --sidebar-bg      #16401F
+        private static readonly Color BrandDarker = Color.FromArgb(17, 50, 24);    // agent only        #113218, the bar's shadowed edge
+        private static readonly Color BrandEmerald = Color.FromArgb(23, 128, 58);  // --accent-emerald  #17803A
+        private static readonly Color BrandMint = Color.FromArgb(187, 243, 198);   // agent only        #BBF3C6, 9.37:1 on the brand bar
+        private static readonly Color SurfaceBody = Color.FromArgb(250, 248, 243); // --body-bg         #FAF8F3
+        private static readonly Color SurfaceCard = Color.White;                   // --card-bg         #FFFFFF
+        private static readonly Color BorderSubtle = Color.FromArgb(231, 226, 217);// --card-border     #E7E2D9
+        private static readonly Color TextMain = Color.FromArgb(28, 25, 23);       // --text-main       #1C1917
+        private static readonly Color TextMuted = Color.FromArgb(111, 104, 97);    // --text-muted      #6F6861
+        private static readonly Color StatusOk = Color.FromArgb(23, 128, 58);      // --cams-success    #17803A, 5.02:1 on white
+        private static readonly Color StatusWarn = Color.FromArgb(180, 83, 9);     // --cams-warning    #B45309, 5.02:1 on white
+        private static readonly Color StatusDanger = Color.FromArgb(185, 28, 28);  // --cams-danger     #B91C1C, 6.47:1 on white
 
         // Variants for text sitting on the dark brand bar, where the on-white
-        // status colours above would not meet a readable contrast.
-        private static readonly Color OnDarkStrong = Color.White;
-        private static readonly Color OnDarkMuted = Color.FromArgb(150, 178, 152);
-        private static readonly Color OnDarkWarn = Color.FromArgb(252, 211, 77);
-        private static readonly Color OnDarkDanger = Color.FromArgb(252, 165, 165);
+        // status colours above would not meet a readable contrast. Agent only;
+        // the portal has no dark surface carrying status text.
+        private static readonly Color OnDarkStrong = Color.White;                  //                   #FFFFFF, 13.4:1 on the brand bar
+        private static readonly Color OnDarkMuted = Color.FromArgb(150, 178, 152); //                   #96B298, 5.10:1
+        private static readonly Color OnDarkWarn = Color.FromArgb(252, 211, 77);   //                   #FCD34D, 8.15:1
+        private static readonly Color OnDarkDanger = Color.FromArgb(252, 165, 165);//                   #FCA5A5, 6.19:1
 
         private TextBox txtStudentId = new();
         private TextBox txtPassword = new();
