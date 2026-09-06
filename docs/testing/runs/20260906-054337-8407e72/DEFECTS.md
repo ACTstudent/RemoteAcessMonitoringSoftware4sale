@@ -1,8 +1,20 @@
 # Defects — run 20260906-054337-8407e72
 
 Commit under test: `8407e72`. Every entry below was reproduced against a running
-server, not inferred from reading code. Nothing here was fixed during this run;
-the run changed test code only.
+server, or — for DEF-0906-006 and the observations under it — found by reading
+the code and then confirmed.
+
+**Nothing was fixed during the run itself**, which changed test code only. They
+were fixed afterwards, in the commits each entry names, and every entry carries a
+status saying how it ended. `ADDENDUM-defect-fixes.md` records the re-verification.
+
+Run reports in this repository are kept as written and corrected by addendum.
+This file is the exception, and deliberately so: a defect register that does not
+track its entries to closure is worse than none. Five entries here read
+"Not applied" for twenty-one commits after they were fixed, so a reader
+checking whether the login throttle was still broken would have concluded it was.
+The observed behaviour, reproduction and impact of each entry are untouched — only
+a status line is added.
 
 Severity uses the plan's scale: **Critical** blocks release, **High** blocks a
 core classroom workflow, **Medium** degrades a workflow with a workaround,
@@ -57,8 +69,9 @@ It also distorts testing: the `Status` column of `authz-anonymous.csv` shows
 `429` on many rows because the sweep's own redirects to `/Account/Login`
 exhausted the window. Those rows still passed, on the redirect target.
 
-**Suggested follow-up.** Count only the POST, or track failures rather than
-requests. Not applied — this run does not change production code.
+**Status: Fixed** in `ec2d3f8`. The ceiling now counts only the POST. Measured
+afterwards: twenty plain page loads all served, ten guesses then refused as
+before, and eight of eight correct sign-ins accepted where five used to be.
 
 ---
 
@@ -95,7 +108,10 @@ An eight-hour spread between files produced at the same moment.
 **Impact.** Files saved together sort apart and appear to come from different
 sessions. No data is wrong inside the files; only the filename misleads.
 
-**Suggested follow-up.** Use one clock for all four. Not applied.
+**Status: Fixed** in `ec2d3f8`. All four exports stamp their filename in UTC.
+`ExportFilenameTests` pins it, and was confirmed to fail without the fix rather
+than assumed to catch it — reverting the one word produced "exports disagreed by
+08:00:00".
 
 ---
 
@@ -128,8 +144,9 @@ renders `value="True"` and binds normally.
 deactivated a teacher through the real control and confirmed the database row
 moved to `Inactive`, so no user-visible defect exists at this commit.
 
-**Suggested follow-up.** Render the value explicitly, e.g.
-`value="@((!isActive).ToString())"`. Not applied.
+**Status: Fixed** in `ec2d3f8`. All three occurrences render
+`@((!isActive).ToString())`, so deactivation no longer depends on a failed model
+bind falling back to the value it happened to need.
 
 ---
 
@@ -164,8 +181,11 @@ them, on a form that creates accounts. An earlier accessibility pass connected
 labels across 28 pages; `ClassDetails` was not one of them, which is why this
 survived.
 
-**Suggested follow-up.** Connect each control with `label[for]`/`id`, as the
-other admin views already do. Not applied — this run changes test code only.
+**Status: Fixed** in `ec2d3f8`. Both class pages now name every control — and
+the teacher's copy turned out to be worse than the admin's and had been missed
+entirely, because the sweep could not reach it while the fixture teacher did not
+own the class. The bulk rows use `aria-label` rather than an `id`, because "Add
+more rows" clones the row and an id would be duplicated.
 
 ---
 
@@ -179,9 +199,17 @@ other admin views already do. Not applied — this run changes test code only.
 | --- | --- |
 | `/Admin/ComputerHistory/{id}` | no `main` landmark |
 | `/Teacher/StudentDetails/{id}` | one table renders without header cells |
-| the shared 404 page | two inline images without `alt`, and no `main` landmark |
+| the shared 404 page | two inline images without `alt` — **withdrawn, see below** |
 
-Not applied.
+**Status: Fixed** in `ec2d3f8`, except one item withdrawn. `ComputerHistory`
+turned out to be worse than a missing landmark: it was the only view in the
+application naming no layout, so with no `_ViewStart` it rendered with no
+navigation or styling at all. It now sets `Layout = "_Layout"`. The alerts table
+on `StudentDetails` gained a `thead`.
+
+The 404-page images were **withdrawn**: all five `<img>` tags in the application
+already carry `alt`, and no view emits a `data:` image. Those two belonged to
+Chrome's own error page, rendered because the URL 404'd — not CAMS markup.
 
 **Audit false positives, recorded so they are not re-raised.** The sweep also
 flagged "no main landmark" and "no page heading" on `/Teacher/ActivityTimeline`,
@@ -215,7 +243,7 @@ behaviour. They are recorded so a later run does not re-raise them.
 - **Case:** WIN-02, HUB-02
 - **Source:** `Client/Services/ScreenCaptureService.cs:9` and `Client/InputSimulator.cs:32`
 - **Found by:** reading the two ends together, not by a test
-- **Status:** **Fixed**, commit below
+- **Status: Fixed** in `856fada`
 
 **Expected.** A teacher clicking a point on the streamed image moves the student's
 cursor to that same point.
