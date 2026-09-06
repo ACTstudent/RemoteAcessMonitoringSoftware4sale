@@ -1506,7 +1506,7 @@ namespace Server.Controllers
             using var reader = new StreamReader(file.OpenReadStream());
             var parsed = _classManagement.ParseBulkStudentsCsv(await reader.ReadToEndAsync());
             var import = await _classManagement.ValidateBulkStudentsAsync(classId, parsed.Rows);
-            if (import.Errors.Count > 0) return File(BulkErrorCsv(import.Errors), "text/csv; charset=utf-8", $"CAMS-Student-Import-Errors-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv");
+            if (import.Errors.Count > 0) return CsvExport.Result("Student-Import-Errors", BulkErrorCsv(import.Errors));
             var result = await _classManagement.BulkCreateStudentsInClassAsync(classId, import.Rows);
             TempData[result.Success ? "Message" : "ErrorMessage"] = result.Success ? $"Successfully added {result.Count} student(s) to the class." : result.Error;
             return RedirectToAction("ClassDetails", new { id = classId });
@@ -1680,9 +1680,7 @@ namespace Server.Controllers
             var csv = new System.Text.StringBuilder("Timestamp,Level,Message,Stack Trace\n");
             foreach (var log in logs)
                 csv.AppendLine($"{log.Timestamp:O},{Csv(log.Level)},{Csv(log.Message)},{Csv(log.StackTrace)}");
-            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()),
-                "text/csv; charset=utf-8",
-                $"CAMS-SystemLogs-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv");
+            return CsvExport.Result("SystemLogs", csv.ToString());
         }
 
         // ---------- Export audit trail as CSV ----------
@@ -1698,9 +1696,7 @@ namespace Server.Controllers
                 csv.AppendLine($"{l.Timestamp:yyyy-MM-dd HH:mm:ss},{Csv(l.UserType)},{l.UserId},{Csv(l.Action)},{Csv(l.Details)},{Csv(l.IpAddress)}");
             }
 
-            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()),
-                "text/csv; charset=utf-8",
-                $"CAMS-AuditLog-{DateTime.Now:yyyyMMdd-HHmm}.csv");
+            return CsvExport.Result("AuditLog", csv.ToString());
         }
 
         // ---------- Export usage report as CSV ----------
@@ -1728,9 +1724,7 @@ namespace Server.Controllers
                 csv.AppendLine($"{Csv(s.Student?.FullName)},{Csv(s.Student?.Class?.ClassName ?? "Unassigned")},{Csv(s.Teacher?.Username ?? "System")},{Csv(s.Computer?.LaboratoryStation ?? s.PCName)},{s.StartTime:yyyy-MM-dd HH:mm},{s.EndTime?.ToString("yyyy-MM-dd HH:mm")},{duration},{(s.StartTime < toDate && (s.EndTime ?? DateTime.UtcNow) > fromDate ? "Present" : "Absent")},{s.Status}");
             }
 
-            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()),
-                "text/csv; charset=utf-8",
-                $"CAMS-UsageReport-{DateTime.Now:yyyyMMdd-HHmm}.csv");
+            return CsvExport.Result("UsageReport", csv.ToString());
         }
 
         [HttpGet]
@@ -1745,7 +1739,7 @@ namespace Server.Controllers
             var rows = await query.OrderByDescending(s => s.StartTime).Take(5000).ToListAsync();
             var csv = new System.Text.StringBuilder("Student Number,Student Name,Class,Station,Date,Attendance\n");
             foreach (var s in rows) csv.AppendLine($"{Csv(s.Student?.StudentNumber)},{Csv(s.Student?.FullName)},{Csv(s.Student?.Class?.ClassName ?? "Unassigned")},{Csv(s.Computer?.LaboratoryStation ?? s.PCName)},{s.StartTime:yyyy-MM-dd},Present");
-            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv; charset=utf-8", $"CAMS-Attendance-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv");
+            return CsvExport.Result("Attendance", csv.ToString());
         }
 
         [HttpGet]
@@ -1759,7 +1753,7 @@ namespace Server.Controllers
             var rows = await query.OrderByDescending(l => l.Timestamp).Take(5000).ToListAsync();
             var csv = new System.Text.StringBuilder("Timestamp,Teacher ID,Command,Details,Session ID\n");
             foreach (var l in rows) csv.AppendLine($"{l.Timestamp:O},{l.TeacherId},{Csv(l.Command)},{Csv(l.Details)},{l.RemoteControlSessionId}");
-            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv; charset=utf-8", $"CAMS-RemoteCommands-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv");
+            return CsvExport.Result("RemoteCommands", csv.ToString());
         }
 
         [HttpGet]
@@ -1782,15 +1776,11 @@ namespace Server.Controllers
             // UTC, like the other three exports. This one used DateTime.Now, so
             // files downloaded seconds apart carried timestamps hours apart and
             // no longer sorted together.
-            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()),
-                "text/csv; charset=utf-8",
-                $"CAMS-UsageLog-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv");
+            return CsvExport.Result("UsageLog", csv.ToString());
         }
 
-        private static string Csv(string? value)
-        {
-            var v = value ?? "";
-            return "\"" + v.Replace("\"", "\"\"") + "\"";
-        }
+        // One implementation, in CsvExport. Kept as a local name because 58
+        // call sites read better with it.
+        private static string Csv(string? value) => CsvExport.Escape(value);
     }
 }

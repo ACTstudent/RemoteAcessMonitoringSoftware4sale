@@ -381,7 +381,7 @@ namespace Server.Controllers
             var result = await _analytics.GetRemoteHistoryAsync(teacherId.Value, from, to, command, studentId, 1, 500);
             var csv = new System.Text.StringBuilder("Timestamp,Student,Command,Details,Session\n");
             foreach (var item in result.Items) csv.AppendLine($"{item.Timestamp:O},{Csv(item.StudentId)},{Csv(item.Command)},{Csv(item.Details)},{item.SessionId?.ToString() ?? ""}");
-            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv; charset=utf-8", $"CAMS-Remote-History-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv");
+            return CsvExport.Result("Remote-History", csv.ToString());
         }
 
         // ---------- Restrictions ----------
@@ -509,16 +509,12 @@ namespace Server.Controllers
                 csv.AppendLine($"{Csv(s.Student?.StudentNumber)},{Csv(s.Student?.FullName)},{Csv(s.Computer?.LaboratoryStation ?? s.PCName)},{s.StartTime:yyyy-MM-dd HH:mm},{s.EndTime?.ToString("yyyy-MM-dd HH:mm")},{duration},{s.Status}");
             }
 
-            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()),
-                "text/csv; charset=utf-8",
-                $"CAMS-Classroom-Records-{DateTime.Now:yyyyMMdd-HHmm}.csv");
+            return CsvExport.Result("Classroom-Records", csv.ToString());
         }
 
-        private static string Csv(string? value)
-        {
-            var v = value ?? "";
-            return "\"" + v.Replace("\"", "\"\"") + "\"";
-        }
+        // One implementation, in CsvExport. Kept as a local name because 58
+        // call sites read better with it.
+        private static string Csv(string? value) => CsvExport.Escape(value);
 
         // ---------- Analytics and activity reporting ----------
         public async Task<IActionResult> StudentDetails(int id, DateTime? from = null, DateTime? to = null)
@@ -644,8 +640,7 @@ namespace Server.Controllers
             var csv = new System.Text.StringBuilder("Timestamp,Student ID,Station,Browser,Mode,Detail\n");
             foreach (var record in records)
                 csv.AppendLine($"{record.Timestamp:O},{Csv(record.StudentId)},{Csv(record.PcName)},{Csv(record.Browser)},{record.Mode},{Csv(record.Detail)}");
-            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv; charset=utf-8",
-                $"CAMS-Browser-Monitoring-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv");
+            return CsvExport.Result("Browser-Monitoring", csv.ToString());
         }
 
         public async Task<IActionResult> ExportStudentAnalyticsCsv(int id, DateTime? from = null, DateTime? to = null)
@@ -660,8 +655,7 @@ namespace Server.Controllers
             csv.AppendLine("Timestamp,Event,Application,Details,Station");
             foreach (var item in report.Timeline)
                 csv.AppendLine($"{item.Timestamp:O},{Csv(item.EventType)},{Csv(item.ApplicationName)},{Csv(item.Details)},{Csv(item.PcName)}");
-            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv; charset=utf-8",
-                $"CAMS-Student-{report.Student.StudentNumber}-Activity-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv");
+            return CsvExport.Result($"Student-{report.Student.StudentNumber}-Activity", csv.ToString());
         }
 
         [HttpGet]
@@ -755,7 +749,7 @@ namespace Server.Controllers
             var csv = new System.Text.StringBuilder("First Seen,Last Seen,Student ID,Station,Severity,Title,Message,Occurrences,Status\n");
             foreach (var alert in alerts)
                 csv.AppendLine($"{alert.FirstSeenAt:O},{alert.LastSeenAt:O},{Csv(alert.StudentId)},{Csv(alert.PcName)},{Csv(alert.Severity)},{Csv(alert.Title)},{Csv(alert.Message)},{alert.OccurrenceCount},{alert.Status}");
-            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv; charset=utf-8", $"CAMS-Alerts-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv");
+            return CsvExport.Result("Alerts", csv.ToString());
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -1245,7 +1239,7 @@ namespace Server.Controllers
             using var reader = new StreamReader(file.OpenReadStream());
             var parsed = _classManagement.ParseBulkStudentsCsv(await reader.ReadToEndAsync());
             var import = await _classManagement.ValidateBulkStudentsAsync(classId, parsed.Rows, teacherId.Value);
-            if (import.Errors.Count > 0) return File(BulkErrorCsv(import.Errors), "text/csv; charset=utf-8", $"CAMS-Student-Import-Errors-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv");
+            if (import.Errors.Count > 0) return CsvExport.Result("Student-Import-Errors", BulkErrorCsv(import.Errors));
             var result = await _classManagement.BulkCreateStudentsInClassAsync(classId, import.Rows, teacherId.Value);
             TempData[result.Success ? "Message" : "ErrorMessage"] = result.Success ? $"Successfully added {result.Count} student(s) to the class." : result.Error;
             return RedirectToAction("ClassDetails", new { id = classId });
