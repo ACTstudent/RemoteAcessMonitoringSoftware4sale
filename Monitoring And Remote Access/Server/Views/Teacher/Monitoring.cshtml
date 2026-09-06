@@ -1,3 +1,4 @@
+@using Server.Extensions
 @{
     ViewData["Title"] = "Live Monitoring Grid";
     Layout = "_TeacherLayout";
@@ -93,5 +94,8 @@
 </div>
 
 @section Scripts {
+    @* How each collector mode should read to a teacher. Server-owned so the
+       live tiles and the history page describe a state the same way. *@
+    <script type="application/json" id="browserModeLabels">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(BrowserMonitoringDisplay.ForScript()))</script>
     <script src="~/js/teacher-monitoring.js" asp-append-version="true"></script>
 }

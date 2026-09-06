@@ -326,17 +326,51 @@ function updateActivity(connectionId, applicationName, isIdle) {
     if (activity) activity.textContent = unit.isIdle ? "Idle" : unit.applicationName || "Active";
 }
 
+// Plain labels for the collector modes, rendered by the server from
+// BrowserMonitoringDisplay so the tiles and the history page cannot drift into
+// describing the same state differently.
+const BROWSER_MODES = (() => {
+    try {
+        return JSON.parse(document.getElementById("browserModeLabels")?.textContent || "{}");
+    } catch {
+        return {};
+    }
+})();
+
+// The hub sends the mode as either the enum name or its ordinal, depending on
+// the serializer in play, so both are accepted.
+const MODE_NAMES = ["ManagedProtocol", "WindowTitleFallback", "Unavailable"];
+
+function modeNameOf(rawMode) {
+    if (typeof rawMode === "number" || /^\d+$/.test(String(rawMode ?? ""))) {
+        return MODE_NAMES[Number(rawMode)] ?? "Unavailable";
+    }
+    return MODE_NAMES.includes(rawMode) ? rawMode : "Unavailable";
+}
+
 function updateBrowserStatus(status) {
     const connectionId = valueOf(status, "connectionId", "ConnectionId");
     const unit = activeUnits.get(connectionId);
     if (!unit) return;
     const browserName = valueOf(status, "browser", "Browser") || "browser";
-    const rawMode = valueOf(status, "mode", "Mode");
-    const mode = Number(rawMode) === 0 || rawMode === "ManagedProtocol" ? "managed" :
-        Number(rawMode) === 1 || rawMode === "WindowTitleFallback" ? "fallback" : "unavailable";
-    unit.browsers[browserName] = mode;
+    const modeName = modeNameOf(valueOf(status, "mode", "Mode"));
+    unit.browsers[browserName] = modeName;
+
     const label = document.getElementById(`browser-${connectionId}`);
-    if (label) label.textContent = Object.entries(unit.browsers).map(([name, value]) => `${name}: ${value}`).join(" | ");
+    if (!label) return;
+
+    const described = Object.entries(unit.browsers).map(([name, value]) => {
+        const shown = BROWSER_MODES[value]?.label || value;
+        return `${name}: ${shown}`;
+    });
+    label.textContent = described.join(" | ");
+
+    // The difference between "titles only" and "not recorded" changes what a
+    // teacher should do, so the reason is available on hover rather than lost.
+    const explanations = Object.values(unit.browsers)
+        .map(value => BROWSER_MODES[value]?.explanation)
+        .filter(Boolean);
+    label.title = Array.from(new Set(explanations)).join(" ");
 }
 
 async function loadLiveState() {
