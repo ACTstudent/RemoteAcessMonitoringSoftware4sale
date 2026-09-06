@@ -62,14 +62,21 @@ rule at a time.
 
 | Token | Value |
 | --- | --- |
-| `--focus-ring-color` | `#1D5C2E` |
-| `--focus-ring-width` | `2px` |
-| `--focus-ring-offset` | `2px` |
+| `--focus-ring-color` | `rgba(29, 92, 46, 0.38)` |
+| `--focus-ring-color-on-dark` | `rgba(187, 243, 198, 0.45)` |
+| `--focus-ring-width` | `4px` |
 
-One ring on everything focusable, via `:focus-visible` so a mouse click is left
-alone. On the dark sidebar it switches to `#BBF3C6`, because forest green on
-forest green is not an indicator. The outline is excluded from the sidebar's
-transition so it appears immediately rather than fading in.
+A soft halo rather than a hard outline: a translucent `box-shadow` spread reads
+as a highlight around the control instead of a border drawn on top of it. On the
+dark sidebar it switches to the light mint, because forest green on forest green
+is not an indicator.
+
+Two details that are not decoration. The rule also sets a **transparent 2px
+outline**, because Windows High Contrast Mode discards `box-shadow` and would
+otherwise leave a keyboard user with no indicator at all; a `forced-colors`
+block repaints it in the system highlight colour. And `.nav-item-custom`
+transitions only `background-color` and `color` rather than `all`, so the halo
+appears the moment focus arrives instead of fading in.
 
 ## Buttons
 

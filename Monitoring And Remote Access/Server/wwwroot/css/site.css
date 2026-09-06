@@ -185,10 +185,13 @@
     --space-6: 2rem;
 
     /* Focus ring. One definition, applied to everything focusable, so a
-       keyboard user sees the same indicator wherever they are. */
-    --focus-ring-color: #1D5C2E;
-    --focus-ring-width: 2px;
-    --focus-ring-offset: 2px;
+       keyboard user sees the same indicator wherever they are.
+
+       A soft halo rather than a hard outline: a translucent spread reads as a
+       highlight around the control instead of a border drawn on top of it. */
+    --focus-ring-color: rgba(29, 92, 46, 0.38);
+    --focus-ring-color-on-dark: rgba(187, 243, 198, 0.45);
+    --focus-ring-width: 4px;
 }
 
 body {
@@ -310,7 +313,7 @@ body {
     font-size: 0.92rem;
     font-weight: 500;
     margin-bottom: 0.35rem;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .nav-item-custom:hover {
@@ -1412,8 +1415,8 @@ body {
 
 .skip-to-content:focus {
     left: 0;
-    outline: var(--focus-ring-width) solid #fff;
-    outline-offset: calc(var(--focus-ring-width) * -1);
+    outline: 2px solid transparent;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.7);
 }
 
 /* ---------------------------------------------------------------------------
@@ -1509,23 +1512,39 @@ summary:focus-visible,
 .nav-item-custom:focus-visible,
 .form-control:focus-visible,
 .form-select:focus-visible {
-    outline: var(--focus-ring-width) solid var(--focus-ring-color);
-    outline-offset: var(--focus-ring-offset);
-    box-shadow: none;
+    /* The halo. The transparent outline is not decoration: Windows High
+       Contrast Mode drops box-shadow entirely, and without it a keyboard user
+       there would have no focus indicator at all. */
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
 }
 
 /* On the dark sidebar the forest-green ring disappears into the background. */
 .app-sidebar a:focus-visible,
 .app-sidebar button:focus-visible,
 .nav-item-custom:focus-visible {
-    outline-color: #BBF3C6;
+    box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color-on-dark);
 }
 
-/* The sidebar links carry a transition on all properties, which made the focus
-   ring fade in rather than appear. A keyboard user should see where they are
-   the moment they arrive, so the outline is excluded from the animation. */
-a:focus-visible,
-button:focus-visible,
-.nav-item-custom:focus-visible {
-    transition-property: background-color, color, border-color;
+
+/* Windows High Contrast Mode discards box-shadow, so the soft halo disappears
+   there. The transparent outline above is repainted in the system highlight
+   colour, which restores a visible indicator; this states it rather than
+   leaving it to be inferred. */
+@media (forced-colors: active) {
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    summary:focus-visible,
+    [tabindex]:focus-visible,
+    .btn:focus-visible,
+    .nav-item-custom:focus-visible,
+    .form-control:focus-visible,
+    .form-select:focus-visible {
+        outline: 2px solid Highlight;
+        outline-offset: 2px;
+    }
 }
