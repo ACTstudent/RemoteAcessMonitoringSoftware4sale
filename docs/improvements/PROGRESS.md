@@ -19,6 +19,19 @@ Owner for every item below: implementation agent, unless a person is named.
 
 ## Summary
 
+**37 work items. 9 VERIFIED (24%), 9 IN PROGRESS, 5 BLOCKED, 14 NOT STARTED.**
+
+Counting only what can be finished on this machine — that is, setting aside the
+5 items blocked on a second Windows client, a disposable network and snapshot
+VMs — it is 9 of 32, or 28%.
+
+Two caveats on reading that number. It counts items, not effort: the 14 not-started
+items include the largest single pieces of work in the plan (`AdminController` at
+1072 lines, `TeacherController` at 847, `MainForm` at 1178), so the share of
+*effort* completed is lower than the share of items. And VERIFIED here means
+evidence is recorded below, not that the item is beyond further improvement —
+UX-06 was VERIFIED and a later, wider sweep still found four more problems.
+
 | ID | Item | Status | Commit |
 | --- | --- | --- | --- |
 | P0 | Baseline capture and reconciliation | VERIFIED | `acc8761`, `e477560` |
@@ -292,12 +305,28 @@ Recorded for accuracy. None of these meet the plan's acceptance criteria yet.
 
 ### LIVE-01 / LIVE-02 — Test suites and decision-branch coverage
 
-- Server **320/320** and client **33/33** pass at `fb590c7`, and were run after each
-  behavioral change in this batch.
+- Server **442/442** and client **33/33** pass at `ec2d3f8`, and were run after each
+  behavioral change. The suite has grown from 320 to 442 over the plan.
 - The plan asks for focused tests on the authorization, session expiry, reconnect and
-  command acknowledgement branches. Session expiry now has direct coverage (CODE-09);
-  reconnect and command acknowledgement do not.
-- **Status:** IN PROGRESS.
+  command acknowledgement branches. **Two of the four are now covered:** session expiry
+  (CODE-09) and authorization. Reconnect and command acknowledgement are not, and both
+  need a real SignalR client harness rather than the mocked hub tests that exist.
+- **Authorization, added in run 20260906-054337-8407e72.** The test plan had flagged
+  that no test file existed for `StudentController`, `ClientAuthController` or
+  `MonitoringController` and asked whether indirect coverage made up for it. Measured:
+  it did not — all three were at **0.0%**. They are now at 96%, 100% and 100%, and the
+  authorization surface was checked three ways against a running server: all **153**
+  controller actions refuse an anonymous caller, all **23** `AdminController` GET
+  actions match their `[TeacherSharedAction]` attribute, and deactivating a teacher
+  ends access on the session already signed in.
+- **Coverage:** 69.3% → 71.3% of lines across 89 non-view, non-migration files
+  (branches 51.3% → 53.6%). Largest remaining gaps are `Program.cs` (0%, exercised
+  live but never unit tested), `ServerDiscoveryService` (0%, blocked on a disposable
+  network) and `RemoteMonitoringHub` (56%, mocked only).
+- **Evidence:** [run 20260906-054337-8407e72](../testing/runs/20260906-054337-8407e72/SUMMARY.md)
+  and its [addendum](../testing/runs/20260906-054337-8407e72/ADDENDUM-defect-fixes.md).
+- **Status:** IN PROGRESS. Closing this needs the SignalR harness, which is the same
+  prerequisite as HUB-01 to HUB-03 in the test plan.
 
 ## Blocked items
 
@@ -370,9 +399,26 @@ waived, and a polished interface alone does not establish release readiness.
   whole ids including the Razor expression, renaming the property being read. Loop
   extents are now found by matching the `@foreach` header's parentheses and then the
   body's braces, and only the static half of an id is lowercased.
+- **Second pass, run 20260906-054337-8407e72.** The first pass covered 28 pages. A
+  wider sweep of 45 pages found four more problems on pages it had not reached, and one
+  it could not reach: `/Teacher/ClassDetails` was skipped because the fixture teacher
+  did not own the class, and once assigned it turned out to have **more** unnamed
+  controls than its admin twin — the single add-student form, the roster file input and
+  the search box, on top of the bulk grid. Also fixed: five unnamed controls on
+  `/Admin/ClassDetails` including a password field, and a table with no header cells on
+  `/Teacher/StudentDetails`. `/Admin/ComputerHistory` turned out to be worse than an
+  accessibility problem — it was the only view in the application naming no layout, and
+  with no `_ViewStart` it rendered with no navigation or styling at all.
+- **Evidence after the second pass:** **0 problems across all 45 pages**, in
+  [ui-sweep-after-fixes.csv](../testing/runs/20260906-054337-8407e72/ui-sweep-after-fixes.csv).
+  Commit `ec2d3f8`.
+- **One finding withdrawn:** "images without alt on the 404 page" was wrong. All five
+  `<img>` tags in the application already carry `alt`; those images belonged to
+  Chrome's own error page. The sweep now audits only `text/html` responses, so JSON
+  endpoints no longer report a missing landmark either.
 - **Status:** VERIFIED for the browser portals. The WinForms client has not been
-  audited, and UX-06 also asks for zoom, scaling and narrow-layout checks, which this
-  did not cover.
+  audited, and UX-06 also asks for zoom, scaling and narrow-layout checks, which
+  neither pass covered.
 
 ### FLOW-02 — extended to the student roster
 
