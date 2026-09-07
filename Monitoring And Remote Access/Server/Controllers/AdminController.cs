@@ -1569,7 +1569,7 @@ namespace Server.Controllers
         }
 
         // ---------- Reports ----------
-        public async Task<IActionResult> Reports(DateTime? from, DateTime? to, int? classId = null, string? station = null, int page = 1, int pageSize = 50)
+        public async Task<IActionResult> Reports(DateTime? from, DateTime? to, int? classId = null, string? station = null, int page = 1, int pageSize = 15)
         {
             if (!CheckAccess()) return Denied();
 

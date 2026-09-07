@@ -13,7 +13,7 @@ CAMS is a local-first classroom monitoring and computer laboratory management sy
 - Timed student lab sessions with persisted running, paused, resumed, ended, and expiration state.
 - Lab-wide live monitoring, warnings, screen broadcast, remote input and bulk session controls; teacher/adviser-class checks still apply to individual session actions, records, alerts and exports.
 - Workstation lock, release of CAMS lock state, logout, restart, shutdown, and remote input commands. Releasing CAMS state cannot unlock the Windows secure desktop; Windows credentials are still required after `LockWorkStation`.
-- Application and normalized-domain policies. Blocked applications can be terminated; website violations display CAMS-owned topmost dialogs and are recorded, but CAMS does not close the browser.
+- Application and normalized-domain policies. Blocked applications can be terminated; blocked tabs in browsers launched and managed by CAMS receive tab-close requests on the enforcement loop. Ordinary browser windows remain warning-only. This is detection-based enforcement, not network filtering: a page can load before it is detected. Website violations are recorded with CAMS-owned notices.
 - Account, class, roster, workstation, session-rule, global-policy, report, audit, database-maintenance, LAN-status, and Deployment Hub administration.
 - Durable bounded client telemetry for temporary disconnections, browser status history without credentials or page content, grouped alert lifecycle, and command auditing.
 

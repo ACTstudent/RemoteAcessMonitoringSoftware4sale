@@ -2,6 +2,31 @@
 (() => {
     'use strict';
     const normalize = value => String(value ?? '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase();
+    // Explicitly marked history tables use the same pager as the directories, but
+    // page at 15 rows: a log is read by scanning, and 6 makes that mostly paging.
+    // Tables with server paging, editable rows or bulk-entry forms are not opted in.
+    document.querySelectorAll('table[data-crud-table]').forEach(table => {
+        if (table.closest('[data-crud-list]')) return;
+        const region = table.closest('.table-responsive') || table;
+        const panel = document.createElement('div');
+        panel.className = 'crud-panel crud-table-panel';
+        panel.setAttribute('data-crud-list', '');
+        panel.dataset.crudLabel = table.dataset.crudTable || 'records';
+        panel.dataset.crudPageSize = '15';
+        const rows = Array.from(table.tBodies).flatMap(body => Array.from(body.rows));
+        const placeholder = rows.find(row => row.querySelector('td[colspan]'));
+        rows.filter(row => row !== placeholder).forEach(row => row.setAttribute('data-crud-item', ''));
+        const empty = document.createElement('div');
+        empty.className = 'crud-no-results';
+        empty.setAttribute('data-crud-empty', '');
+        empty.hidden = true;
+        empty.textContent = placeholder?.textContent.trim() || 'No records available.';
+        const footer = document.createElement('div');
+        footer.className = 'crud-footer';
+        footer.setAttribute('data-crud-pagination', '');
+        region.before(panel);
+        panel.append(region, empty, footer);
+    });
     document.querySelectorAll('[data-crud-list]').forEach((panel, index) => {
         const own = selector => Array.from(panel.querySelectorAll(selector)).filter(el => el.closest('[data-crud-list]') === panel);
         const items = own('[data-crud-item]');
@@ -15,6 +40,7 @@
         const storageKey = `cams.directory:${location.pathname}${location.search}:${index}`;
         const initialEmptyMessage = empty?.textContent.trim();
         let page = 1;
+        let matchingItems = items;
         // Only visible record text is indexed; field values, credentials and action labels are excluded.
         const records = items.map(item => {
             const clone = item.cloneNode(true);
@@ -50,6 +76,7 @@
             const matches = records.filter(record => words.every(word => record.text.includes(word)) &&
                 filters.every(filter => !filter.value || normalize(record.element.getAttribute(`data-${filter.dataset.crudFilter}`)) === normalize(filter.value)));
             const pages = Math.max(1, Math.ceil(matches.length / pageSize));
+            matchingItems = matches.map(record => record.element);
             page = Math.min(Math.max(page, 1), pages);
             items.forEach(item => { item.hidden = true; });
             const start = (page - 1) * pageSize;
@@ -91,6 +118,9 @@
         }
         search?.addEventListener('input', () => { page = 1; render(); });
         filters.forEach(filter => filter.addEventListener('change', () => { page = 1; render(); }));
+        // Printing retains the full loaded report, not just the rows on screen.
+        window.addEventListener('beforeprint', () => matchingItems.forEach(item => { item.hidden = false; }));
+        window.addEventListener('afterprint', render);
         render();
     });
 })();

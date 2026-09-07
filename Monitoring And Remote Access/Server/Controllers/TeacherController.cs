@@ -358,7 +358,7 @@ namespace Server.Controllers
                 .OrderByDescending(s => s.StartedAt).Take(100).ToListAsync();
             ViewBag.From = from?.ToString("yyyy-MM-dd"); ViewBag.To = to?.ToString("yyyy-MM-dd");
             ViewBag.Command = command; ViewBag.StudentId = studentId;
-            var result = await _analytics.GetRemoteHistoryAsync(teacherId.Value, from, to, command, studentId, page);
+            var result = await _analytics.GetRemoteHistoryAsync(teacherId.Value, from, to, command, studentId, page, pageSize: 15);
             return View(result);
         }
 
@@ -547,7 +547,7 @@ namespace Server.Controllers
             string? source = null,
             string? eventType = null,
             int page = 1,
-            int pageSize = 100)
+            int pageSize = 15)
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
@@ -567,7 +567,7 @@ namespace Server.Controllers
             string? browser = null,
             string? mode = null,
             int page = 1,
-            int pageSize = 100)
+            int pageSize = 15)
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
@@ -646,7 +646,7 @@ namespace Server.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ActivityTimeline(int id, DateTime? from = null, DateTime? to = null, int page = 1, int pageSize = 100, string? eventType = null)
+        public async Task<IActionResult> ActivityTimeline(int id, DateTime? from = null, DateTime? to = null, int page = 1, int pageSize = 15, string? eventType = null)
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");

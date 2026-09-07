@@ -78,6 +78,8 @@ body.crud-page {
 .crud-pagination .btn[aria-current=page] { color: #185c3c; border-color: #cfe0d5; background: #e1ede5; }
 .crud-pagination .btn:disabled { opacity: .4; }
 .crud-no-results { padding: 38px 20px; color: #68716d; text-align: center; font-size: .9rem; }
+.crud-page .crud-table-panel { margin-bottom: 0; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+@media print { .crud-footer, .crud-pagination { display: none !important; } }
 .crud-page [data-crud-item][hidden], .crud-page [data-crud-empty][hidden] { display: none !important; }
 .crud-page .modal-content { border: 1px solid #d5ddd8; border-radius: 14px !important; }
 .crud-page .modal-header { padding: 18px 22px; }
@@ -89,7 +91,7 @@ body.crud-page {
     .crud-page.sidebar-collapsed .app-sidebar { width: 68px; margin-left: 0; box-shadow: none; }
     .crud-page.sidebar-collapsed .app-sidebar * { visibility: visible; }
     .crud-page.sidebar-collapsed .sidebar-header { padding: 16px 8px; border: 0; }
-    .crud-page.sidebar-collapsed .school-logo-img { width: 42px; height: 42px; margin: 0; }
+    .crud-page.sidebar-collapsed .school-logo-img { width: 46px; height: 46px; padding: 3px; margin: 0; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12); }
     .crud-page.sidebar-collapsed .sidebar-brand-text,
     .crud-page.sidebar-collapsed .sidebar-brand-sub,
     .crud-page.sidebar-collapsed .sidebar-label,

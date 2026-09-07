@@ -424,6 +424,32 @@ window.CamsToast = (function () {
         var isDesktop = function () { return desktop.matches; };
         var compactNavigation = document.body.classList.contains('crud-page');
         var storageKey = compactNavigation ? 'cams.crud.navigation.compact' : STORAGE_KEY;
+        var menu = sidebar.querySelector('.sidebar-nav');
+        // Keep each role's menu position across full-page navigation, per tab.
+        var scrollStorageKey = 'cams.sidebar.scroll:' + (sidebar.getAttribute('aria-label') || 'default');
+        var savedScrollTop = 0;
+        var menuInteracted = false;
+        try {
+            var storedScrollTop = Number(window.sessionStorage.getItem(scrollStorageKey));
+            if (Number.isFinite(storedScrollTop) && storedScrollTop >= 0) {
+                savedScrollTop = storedScrollTop;
+            }
+        } catch (error) {
+            // Navigation still works when browser storage is unavailable.
+        }
+
+        function saveMenuPosition() {
+            if (!menu) return;
+            try {
+                window.sessionStorage.setItem(scrollStorageKey, String(menu.scrollTop));
+            } catch (error) {
+                // Remembering the position is optional.
+            }
+        }
+
+        function restoreMenuPosition() {
+            if (menu && !menuInteracted) menu.scrollTop = savedScrollTop;
+        }
 
         function readStored() {
             try {
@@ -463,7 +489,24 @@ window.CamsToast = (function () {
             setCollapsed(readStored(), false);
         }
 
+        restoreMenuPosition();
+        window.requestAnimationFrame(restoreMenuPosition);
+        // Fonts and the initial sidebar transition can change the scroll range.
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(restoreMenuPosition);
+        }
+        sidebar.addEventListener('transitionend', function (event) {
+            if (event.target === sidebar) restoreMenuPosition();
+        });
+        if (menu) {
+            ['wheel', 'touchstart', 'pointerdown', 'keydown'].forEach(function (eventName) {
+                menu.addEventListener(eventName, function () { menuInteracted = true; }, { passive: true });
+            });
+        }
+        window.addEventListener('pagehide', saveMenuPosition);
+
         toggle.addEventListener('click', function () {
+            menuInteracted = true;
             if (isDesktop()) {
                 setCollapsed(!document.body.classList.contains('sidebar-collapsed'));
             } else {
@@ -479,6 +522,7 @@ window.CamsToast = (function () {
         // sidebar, or it would vanish on every navigation.
         sidebar.querySelectorAll('a').forEach(function (link) {
             link.addEventListener('click', function () {
+                saveMenuPosition();
                 if (!isDesktop()) {
                     setDrawerOpen(false);
                 }

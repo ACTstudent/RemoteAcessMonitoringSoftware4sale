@@ -15,7 +15,7 @@
 </form>
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
     <div class="card-header bg-white py-3"><h5 class="fw-bold mb-0">Remote Sessions</h5></div>
-    <div class="table-responsive"><table class="table custom-table align-middle mb-0"><thead><tr><th>Workstation</th><th>Student</th><th>Started</th><th>Ended</th><th>Status</th></tr></thead><tbody>
+    <div class="table-responsive"><table data-crud-table="remote sessions" class="table custom-table align-middle mb-0"><thead><tr><th>Workstation</th><th>Student</th><th>Started</th><th>Ended</th><th>Status</th></tr></thead><tbody>
     @foreach (var session in sessions) { <tr><td class="font-monospace">@session.PcName</td><td>@session.StudentId</td><td>@session.StartedAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td><td>@session.EndedAt?.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td><td>@(session.IsActive ? "Active" : "Ended")</td></tr> }
     @if (!sessions.Any()) { <tr><td colspan="5" class="text-center empty-state"><i class="bi bi-play-circle empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No remote-support sessions recorded.</span></td></tr> }
     </tbody></table></div>

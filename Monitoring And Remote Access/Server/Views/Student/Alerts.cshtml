@@ -29,10 +29,11 @@
 }
 else
 {
+    <section data-crud-list data-crud-label="notifications" data-crud-page-size="15">
     <div class="row g-3">
         @foreach (var notice in notices.OrderByDescending(n => n.CreatedAt))
         {
-            <div class="col-lg-6">
+            <div class="col-lg-6" data-crud-item>
                 <div class="notice-card @(notice.IsRead ? "is-read" : "")">
                     <div class="d-flex justify-content-between align-items-start gap-2">
                         <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -56,4 +57,6 @@ else
             </div>
         }
     </div>
+    <div class="crud-footer" data-crud-pagination></div>
+    </section>
 }

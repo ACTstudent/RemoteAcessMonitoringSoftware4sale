@@ -118,7 +118,7 @@ Teachers can create and edit global block/allow rules, blacklists, whitelists, a
 
 - Application block violations may terminate the matching process and report an infraction.
 - Website telemetry stores normalized domains, not browser credentials, cookies, page content, full paths, queries, or fragments. Live screen frames can still show any content visible on the display.
-- A website violation does not close the browser. It shows a CAMS-owned, topmost WinForms dialog, not a browser popup.
+- Website rules close restricted tabs in browsers launched and managed by CAMS; they do not terminate the whole browser. The enforcement loop runs approximately every four seconds, so this is not a network-level block and a page may load before detection. Ordinary browser windows remain warning-only. Notices are CAMS-owned WinForms dialogs.
 - Teacher warnings also appear as CAMS topmost dialogs.
 - Alerts can be grouped, filtered, acknowledged, dismissed with a reason, reopened, and exported where supported.
 

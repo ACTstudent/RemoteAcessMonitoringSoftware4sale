@@ -101,7 +101,7 @@
                 <i class="bi bi-window-stack text-muted"></i>
             </div>
             <div class="table-responsive">
-                <table class="table custom-table align-middle mb-0">
+                <table data-crud-table="applications" class="table custom-table align-middle mb-0">
                     <thead>
                         <tr>
                             <th>Application Name</th>
@@ -139,7 +139,7 @@
                 <i class="bi bi-pc-display text-muted"></i>
             </div>
             <div class="table-responsive">
-                <table class="table custom-table align-middle mb-0">
+                <table data-crud-table="stations" class="table custom-table align-middle mb-0">
                     <thead>
                         <tr>
                             <th>Laboratory Station</th>
@@ -199,4 +199,4 @@
         </table>
     </div>
 </div>
-@if (ViewBag.Paging is Server.Models.PagedResult<Server.Models.LabSession> p && p.PageCount > 1) { <nav class="mb-4"><a class="btn btn-sm btn-outline-secondary @(p.Page == 1 ? "disabled" : "")" href="@Url.Action("Reports", new { from = ViewBag.FromDate, to = ViewBag.ToDate, classId = Context.Request.Query["classId"], page = p.Page - 1 })">Previous</a> <span class="mx-2">Page @p.Page of @p.PageCount</span><a class="btn btn-sm btn-outline-secondary @(p.Page == p.PageCount ? "disabled" : "")" href="@Url.Action("Reports", new { from = ViewBag.FromDate, to = ViewBag.ToDate, classId = Context.Request.Query["classId"], page = p.Page + 1 })">Next</a></nav> }
+@if (ViewBag.Paging is Server.Models.PagedResult<Server.Models.LabSession> p && p.PageCount > 1) { <nav class="mb-4"><a class="btn btn-sm btn-outline-secondary @(p.Page == 1 ? "disabled" : "")" href="@Url.Action("Reports", new { from = ViewBag.FromDate, to = ViewBag.ToDate, classId = Context.Request.Query["classId"], station = Context.Request.Query["station"], pageSize = p.PageSize, page = p.Page - 1 })">Previous</a> <span class="mx-2">Page @p.Page of @p.PageCount</span><a class="btn btn-sm btn-outline-secondary @(p.Page == p.PageCount ? "disabled" : "")" href="@Url.Action("Reports", new { from = ViewBag.FromDate, to = ViewBag.ToDate, classId = Context.Request.Query["classId"], station = Context.Request.Query["station"], pageSize = p.PageSize, page = p.Page + 1 })">Next</a></nav> }

@@ -16,7 +16,7 @@ namespace Server.Models;
 /// </summary>
 public sealed class AlertListFilter
 {
-    public const int DefaultPageSize = 100;
+    public const int DefaultPageSize = 15;
     public const int MaxPageSize = 500;
 
     /// <summary>Shows every status rather than open alerts only. Ignored when <see cref="Status"/> is set.</summary>

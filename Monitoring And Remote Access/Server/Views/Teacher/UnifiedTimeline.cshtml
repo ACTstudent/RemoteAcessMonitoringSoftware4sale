@@ -66,7 +66,7 @@
                 }
             </select>
         </div>
-        <div class="col-sm-6 col-xl-2"><label class="form-label small text-muted" for="timeline-page-size">Rows</label><select id="timeline-page-size" name="pageSize" class="form-select"><option value="25" selected="@(filter.PageSize == 25)">25</option><option value="50" selected="@(filter.PageSize == 50)">50</option><option value="100" selected="@(filter.PageSize == 100)">100</option><option value="250" selected="@(filter.PageSize == 250)">250</option></select></div>
+        <div class="col-sm-6 col-xl-2"><label class="form-label small text-muted" for="timeline-page-size">Rows</label><select id="timeline-page-size" name="pageSize" class="form-select"><option value="15" selected="@(filter.PageSize == 15)">15</option><option value="25" selected="@(filter.PageSize == 25)">25</option><option value="50" selected="@(filter.PageSize == 50)">50</option><option value="100" selected="@(filter.PageSize == 100)">100</option><option value="250" selected="@(filter.PageSize == 250)">250</option></select></div>
         <div class="col-xl-3 d-flex gap-2"><button class="btn btn-emerald flex-grow-1" type="submit"><i class="bi bi-funnel me-1"></i>Apply filters</button><a class="btn btn-outline-secondary" href="@Url.Action("UnifiedTimeline", "Teacher")">Reset</a></div>
     </div>
 </form>

@@ -81,6 +81,73 @@ public sealed class ManagedBrowserCollector : IDisposable
         return null;
     }
 
+    public async Task<IReadOnlyList<BrowserWebsiteObservation>> EnforceWebsiteRulesAsync(
+        IReadOnlyList<RestrictionRuleMessage> rules,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var closedWebsites = new List<BrowserWebsiteObservation>();
+        if (!_options.Enabled) return closedWebsites;
+
+        var websiteRules = rules
+            .Where(rule => rule.RuleType == "Website")
+            .Select(rule => (Rule: rule, Pattern: PolicyPatternMatcher.NormalizeDomainPattern(rule.Target)))
+            .Where(item => !string.IsNullOrWhiteSpace(item.Pattern))
+            .OrderByDescending(item => item.Pattern!.Count(character => character != '*'))
+            .ThenByDescending(item => item.Rule.Mode == "Allow")
+            .ToArray();
+        if (websiteRules.Length == 0) return closedWebsites;
+        var hasAllowlist = websiteRules.Any(item => item.Rule.Mode == "Allow");
+
+        foreach (var definition in Definitions())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!IsManagedProcessRunning(definition.Identity)) continue;
+            try
+            {
+                var endpoint = $"http://127.0.0.1:{definition.Port}";
+                using var metadataResponse = await _httpClient.GetAsync($"{endpoint}/json/version", cancellationToken);
+                if (!metadataResponse.IsSuccessStatusCode) continue;
+                var metadata = await metadataResponse.Content.ReadFromJsonAsync<DevToolsMetadata>(cancellationToken: cancellationToken);
+                if (!IsExpectedIdentity(metadata?.Browser, definition.Identity)) continue;
+
+                using var tabsResponse = await _httpClient.GetAsync($"{endpoint}/json/list", cancellationToken);
+                if (!tabsResponse.IsSuccessStatusCode) continue;
+                var tabs = await tabsResponse.Content.ReadFromJsonAsync<List<DevToolsTab>>(cancellationToken: cancellationToken);
+                if (tabs is null) continue;
+
+                foreach (var tab in tabs)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (tab.Type != "page" || string.IsNullOrWhiteSpace(tab.Id) ||
+                        !WebsiteDomainNormalizer.TryNormalize(tab.Url, out var domain)) continue;
+
+                    var matchingRule = websiteRules.FirstOrDefault(item =>
+                        PolicyPatternMatcher.MatchesDomain(domain, item.Pattern)).Rule;
+                    if (matchingRule?.Mode == "Allow" || (matchingRule is null && !hasAllowlist)) continue;
+
+                    // Only close tabs in a browser launched and still owned by CAMS.
+                    // Checking again avoids using the endpoint after that process exits.
+                    if (!IsManagedProcessRunning(definition.Identity)) break;
+                    try
+                    {
+                        using var closeResponse = await _httpClient.GetAsync(
+                            $"{endpoint}/json/close/{Uri.EscapeDataString(tab.Id)}", cancellationToken);
+                        if (closeResponse.IsSuccessStatusCode)
+                            closedWebsites.Add(new BrowserWebsiteObservation(domain, definition.Identity,
+                                BrowserMonitoringStatus.Captured, BrowserMonitoringMode.ManagedProtocol));
+                    }
+                    catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) { }
+                    catch (HttpRequestException) { }
+                }
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) { }
+            catch (HttpRequestException) { }
+            catch (JsonException) { }
+        }
+        return closedWebsites;
+    }
+
     private async Task<DevToolsTab?> SelectForegroundTabAsync(
         IReadOnlyList<DevToolsTab>? tabs,
         string? foregroundWindowTitle,
@@ -251,5 +318,5 @@ public sealed class ManagedBrowserCollector : IDisposable
     }
 
     private sealed record DevToolsMetadata(string? Browser);
-    private sealed record DevToolsTab(string? Type, string? Url, string? Title, string? WebSocketDebuggerUrl);
+    private sealed record DevToolsTab(string? Type, string? Url, string? Title, string? WebSocketDebuggerUrl, string? Id = null);
 }

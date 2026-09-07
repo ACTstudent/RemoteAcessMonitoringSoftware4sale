@@ -42,8 +42,7 @@ namespace Client
         private string _studentName = "";
 
         // Restriction rules fetched from the server after login
-        private readonly List<RestrictionRuleMessage> _blockRules = new();
-        private readonly List<RestrictionRuleMessage> _allowRules = new();
+        private RestrictionRuleMessage[] _restrictionRules = Array.Empty<RestrictionRuleMessage>();
 
         // Global session state
         // Owns every "should this be sent" decision the status loop makes.
@@ -395,7 +394,7 @@ namespace Client
                 Padding = new Padding(0, 14, 0, 10),
                 Text = "This workstation is monitored by your teacher." + Environment.NewLine +
                        "Restricted applications may be closed automatically." + Environment.NewLine +
-                       "Restricted websites will trigger a warning." + Environment.NewLine +
+                       "Restricted tabs in CAMS-managed browsers will be closed." + Environment.NewLine +
                        "Your session timer is shown above."
             };
 
@@ -687,13 +686,25 @@ namespace Client
 
         private void OnRestrictionsReceived(List<RestrictionRuleMessage> rules)
         {
-            _blockRules.Clear();
-            _allowRules.Clear();
-            foreach (var r in rules)
+            var snapshot = new List<RestrictionRuleMessage>();
+            foreach (var rule in rules)
             {
-                if (r.Mode == "Allow") _allowRules.Add(r);
-                else _blockRules.Add(r);
+                var type = rule.RuleType?.Trim().ToLowerInvariant() switch
+                {
+                    "application" or "blockapplication" or "process" => "Application",
+                    "website" or "blockwebsite" or "domain" => "Website",
+                    _ => null
+                };
+                if (type is null) continue;
+                var target = type == "Application"
+                    ? PolicyPatternMatcher.NormalizeApplication(rule.Target)
+                    : PolicyPatternMatcher.NormalizeDomainPattern(rule.Target);
+                if (string.IsNullOrWhiteSpace(target)) continue;
+                snapshot.Add(rule with { RuleType = type, Target = target,
+                    Mode = string.Equals(rule.Mode?.Trim(), "Allow", StringComparison.OrdinalIgnoreCase) ? "Allow" : "Block" });
             }
+            // Publish the entire update at once; enforcement runs on another thread.
+            Volatile.Write(ref _restrictionRules, snapshot.ToArray());
         }
 
         private async Task RestrictionEnforcementLoop(CancellationToken token)
@@ -717,14 +728,13 @@ namespace Client
         {
             if (_hubClient == null || _isLocked) return;
 
-            var app = ActiveAppInfo.Get(); // e.g. "chrome - Facebook - Google Chrome" or "game.exe"
-            var processName = string.IsNullOrWhiteSpace(app)
-                ? string.Empty
-                : app.Split(" - ")[0].Trim().ToLowerInvariant();
-            var appRules = _blockRules.Concat(_allowRules).Where(r => r.RuleType == "Application").ToList();
+            var rules = Volatile.Read(ref _restrictionRules);
+            var appRules = rules.Where(r => r.RuleType == "Application").ToList();
             var hasApplicationAllowlist = appRules.Any(rule => rule.Mode == "Allow");
             foreach (var running in GetRunningApplications())
             {
+                token.ThrowIfCancellationRequested();
+                if (IsRequiredProcess(running.Name)) continue;
                 var matchingApp = appRules.Where(rule => PolicyPatternMatcher.MatchesApplication(running.Name, rule.Target))
                     .OrderByDescending(rule => rule.Target.Count(c => c != '*'))
                     .ThenByDescending(rule => rule.Mode == "Allow")
@@ -735,15 +745,23 @@ namespace Client
                     await ReportViolation("Application", running.Name, running.Name, kill: true, token, reportedTarget: running.Name);
             }
 
-            var website = _lastForegroundWebsite;
+            var websiteRules = rules.Where(r => r.RuleType == "Website").ToList();
+            // Enforcement is independent of telemetry timing and its alert cooldown.
+            var closedTabs = await _managedBrowserCollector.EnforceWebsiteRulesAsync(websiteRules, token);
+            foreach (var closed in closedTabs)
+                await ReportViolation("Website", closed.Domain!, closed.Browser, kill: false, token,
+                    reportedTarget: closed.Domain, outcome: "The restricted tab was closed in your CAMS-managed browser.");
+
+            // Ordinary browsers can be observed but are not controlled by CAMS.
+            // Read the current foreground domain rather than an old telemetry sample.
+            var website = BrowserUrlCollector.TryGetForegroundWebsite();
             if (website is not { Status: BrowserMonitoringStatus.Captured, Domain: not null }) return;
-            var websiteRules = _blockRules.Concat(_allowRules).Where(r => r.RuleType == "Website").ToList();
             var matchingWebsite = websiteRules.Where(r => PolicyPatternMatcher.MatchesDomain(website.Domain, r.Target))
                 .OrderByDescending(r => r.Target.Count(c => c != '*')).ThenByDescending(r => r.Mode == "Allow").FirstOrDefault();
             if (matchingWebsite is not null && matchingWebsite.Mode != "Allow")
-                await ReportViolation("Website", website.Domain, processName, kill: false, token, reportedTarget: website.Domain);
+                await ReportViolation("Website", website.Domain, website.Browser, kill: false, token, reportedTarget: website.Domain);
             else if (websiteRules.Any(rule => rule.Mode == "Allow") && matchingWebsite is null)
-                await ReportViolation("Website", website.Domain, processName, kill: false, token, reportedTarget: website.Domain);
+                await ReportViolation("Website", website.Domain, website.Browser, kill: false, token, reportedTarget: website.Domain);
         }
 
         private async Task HandleViolation(RestrictionRuleMessage rule, string app, string processName, CancellationToken token)
@@ -755,26 +773,34 @@ namespace Client
             await ReportViolation(rule.RuleType, app, processName, kill, token, reportedTarget);
         }
 
-        private async Task ReportViolation(string targetType, string app, string processName, bool kill, CancellationToken token, string? reportedTarget = null)
+        private async Task ReportViolation(string targetType, string app, string processName, bool kill, CancellationToken token, string? reportedTarget = null, string? outcome = null)
         {
-            // One alert per target per cooldown. A student parked on a blocked
-            // page would otherwise fill the teacher's list on every pass.
-            if (!_telemetry.ShouldReportInfraction(targetType, app, DateTime.UtcNow)) return;
-
             if (kill)
             {
-                try
+                var closed = false;
+                var failed = false;
+                foreach (var process in Process.GetProcessesByName(processName))
                 {
-                    foreach (var p in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(processName)))
+                    using (process)
                     {
-                        p.Kill();
+                        try
+                        {
+                            token.ThrowIfCancellationRequested();
+                            if (process.HasExited) continue;
+                            process.Kill();
+                            closed = true;
+                        }
+                        catch (InvalidOperationException) { /* Process already exited. */ }
+                        catch (System.ComponentModel.Win32Exception) { failed = true; }
                     }
                 }
-                catch
-                {
-                    // process may already be gone
-                }
+                outcome = failed ? "Windows did not allow CAMS to close every matching process. Ask your teacher for help."
+                    : closed ? "The restricted application was closed." : "The restricted application is no longer running.";
             }
+
+            // Throttle alerts only. Reopened apps/tabs must still be closed every pass.
+            if (!_telemetry.ShouldReportInfraction(targetType, app, DateTime.UtcNow)) return;
+            outcome ??= "Use the CAMS-managed browser for enforced website restrictions. This browser tab was not closed.";
 
             var hub = _hubClient;
             if (hub != null)
@@ -789,8 +815,8 @@ namespace Client
                 }
             }
 
-            this.Invoke(() => ShowPopup("Restricted Activity Detected", "Blocked by CAMS",
-                $"'{app}' is restricted during laboratory sessions. This incident has been reported to your teacher.",
+            this.Invoke(() => ShowPopup("Restricted Activity Detected", "Restricted activity",
+                $"'{app}' is restricted during laboratory sessions. {outcome}",
                 true));
         }
 
