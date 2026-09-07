@@ -43,6 +43,10 @@ namespace Client
         private TrayIconController? _tray;
         private bool _exitRequested;
         private bool _trayNoticeShown;
+
+        // Set while the tray's own menu is open, so the sign-in guard lets go of
+        // the foreground long enough for someone to reach Exit.
+        private bool _trayMenuOpen;
         private Form? _broadcastForm;
         private PictureBox? _broadcastPicture;
         private string _studentId = "";
@@ -112,6 +116,10 @@ namespace Client
             _tray.RestoreRequested += RestoreFromTray;
             _tray.StatusRequested += ShowTrayStatus;
             _tray.ExitRequested += ExitFromTray;
+            _tray.MenuOpened += () => _trayMenuOpen = true;
+            _tray.MenuClosed += () => _trayMenuOpen = false;
+
+            TopMost = true;   // released once a student signs in
         }
 
         /// <summary>Hides the window into the tray, leaving the agent running.</summary>
@@ -136,6 +144,7 @@ namespace Client
             Show();
             ShowInTaskbar = true;
             WindowState = FormWindowState.Normal;
+            CentreOnScreen();   // comes back to the middle, not wherever it was
             Activate();
             BringToFront();
         }
@@ -177,10 +186,181 @@ namespace Client
         protected override void OnResize(EventArgs e)
         {
             base.OnResize(e);
+            // Minimising before signing in would be a way past the guard, so it is
+            // refused. After signing in it goes to the tray as usual.
+            if (WindowState == FormWindowState.Minimized && _hubClient is null && !_isClosing)
+            {
+                WindowState = FormWindowState.Normal;
+                return;
+            }
             if (WindowState == FormWindowState.Minimized && _tray is not null && !_isClosing)
             {
                 HideToTray();
             }
+        }
+
+        // --- Fixed position ---------------------------------------------------
+        // On a shared lab machine the client should always be where the student
+        // expects it, and should not be draggable off the edge of the screen.
+        // Windows routes every way of moving a window - the title-bar drag, the
+        // system menu's Move, Alt+Space then M - through one WM_SYSCOMMAND, so
+        // refusing that single message covers all of them.
+        private const int WM_SYSCOMMAND = 0x0112;
+        private const int SC_MOVE = 0xF010;
+        private const int WM_NCHITTEST = 0x0084;
+        private const int HTCLIENT = 1;
+        private const int HTCAPTION = 2;
+
+        protected override void WndProc(ref Message m)
+        {
+            if (m.Msg == WM_SYSCOMMAND && (m.WParam.ToInt32() & 0xFFF0) == SC_MOVE)
+                return;   // swallow the move; the close and minimise buttons are untouched
+
+            base.WndProc(ref m);
+
+            // A caption that reports itself as client area cannot begin a drag at
+            // all, so the window does not even twitch when a student tries.
+            if (m.Msg == WM_NCHITTEST && m.Result == (IntPtr)HTCAPTION)
+                m.Result = (IntPtr)HTCLIENT;
+        }
+
+        // --- Sign-in guard ----------------------------------------------------
+        // Until a student signs in, the client keeps the foreground: clicking another
+        // window hands focus straight back. Combined with TopMost this stops the
+        // machine being used without signing in, without covering the whole screen.
+        //
+        // Three deliberate ways it stands down, or the machine would be unusable:
+        //   - once signed in (_hubClient is set), it never fires again;
+        //   - while any window of ours is active, including our own dialogs, because
+        //     ActiveForm is then non-null;
+        //   - while the tray menu is open, which is the one route out - the menu is
+        //     not a Form, so it needs its own flag.
+        //
+        // This is a deterrent, not a security boundary. Ctrl+Alt+Del and Task Manager
+        // belong to Windows and still work. The intended exit is the tray's Exit.
+        private bool ShouldHoldForeground() =>
+            _hubClient is null && !_isClosing && !IsDisposed && Visible && !_trayMenuOpen;
+
+        protected override void OnDeactivate(EventArgs e)
+        {
+            base.OnDeactivate(e);
+            if (!ShouldHoldForeground()) return;
+            // Deferred: taking the foreground back inside the deactivate handler
+            // fights Windows mid-switch and the click is lost either way.
+            BeginInvoke(() =>
+            {
+                if (ShouldHoldForeground()) ReclaimForeground();
+            });
+        }
+
+        /// <summary>
+        /// Takes the foreground back from another application.
+        ///
+        /// Form.Activate is not enough: Windows refuses to hand the foreground to a
+        /// process that did not receive the last input event, so the call silently
+        /// does nothing and the student keeps whatever they clicked. Attaching to
+        /// the input queue of the thread that currently owns the foreground lifts
+        /// that refusal for the moment it takes to ask.
+        /// </summary>
+        private void ReclaimForeground()
+        {
+            if (!IsHandleCreated) return;
+            var foreground = NativeMethods.GetForegroundWindow();
+            if (foreground == IntPtr.Zero || foreground == Handle) return;
+
+            // A window of our own - a dialog, or the tray menu - is not an escape.
+            var ownerThread = NativeMethods.GetWindowThreadProcessId(foreground, out var ownerPid);
+            if (ownerPid == (uint)Environment.ProcessId) return;
+
+            var self = NativeMethods.GetCurrentThreadId();
+            var attached = ownerThread != self && NativeMethods.AttachThreadInput(self, ownerThread, true);
+            try
+            {
+                NativeMethods.BringWindowToTop(Handle);
+                NativeMethods.SetForegroundWindow(Handle);
+                Activate();
+            }
+            finally
+            {
+                if (attached) NativeMethods.AttachThreadInput(self, ownerThread, false);
+            }
+        }
+
+        // --- Desktop shield ---------------------------------------------------
+        // The focus guard only reacts once a click has already landed somewhere.
+        // The shield stops the click itself: a dim, top-most window over each
+        // screen, so the desktop and every window behind it are unreachable until
+        // a student signs in.
+        //
+        // It stops at the working area rather than covering the whole screen on
+        // purpose. The taskbar carries the notification area, and the tray icon's
+        // Exit is the one way out of the gate - covering it would seal the machine
+        // with no exit at all. The focus guard covers what the shield leaves.
+        private readonly List<Form> _shields = new();
+
+        private void ShowDesktopShield()
+        {
+            if (_shields.Count > 0 || _hubClient is not null || _isClosing) return;
+            foreach (var screen in Screen.AllScreens)
+            {
+                var shield = new Form
+                {
+                    FormBorderStyle = FormBorderStyle.None,
+                    StartPosition = FormStartPosition.Manual,
+                    Bounds = screen.WorkingArea,
+                    BackColor = Color.Black,
+                    Opacity = 0.55,
+                    ShowInTaskbar = false,
+                    TopMost = true,
+                    ControlBox = false,
+                    Cursor = Cursors.No
+                };
+                // A click on the shield leads back to the sign-in window rather
+                // than leaving the student tapping a dimmed screen that ignores them.
+                shield.Activated += (_, _) => { if (ShouldHoldForeground()) ReclaimForeground(); };
+                shield.Click += (_, _) => { if (ShouldHoldForeground()) ReclaimForeground(); };
+                _shields.Add(shield);
+                shield.Show();
+            }
+            BringToFront();
+            Activate();
+        }
+
+        private void HideDesktopShield()
+        {
+            foreach (var shield in _shields)
+            {
+                shield.Hide();
+                shield.Dispose();
+            }
+            _shields.Clear();
+        }
+
+        /// <summary>Puts the window in the middle of the screen it is on.</summary>
+        private void CentreOnScreen()
+        {
+            var area = Screen.FromControl(this).WorkingArea;
+            Location = new Point(
+                area.Left + Math.Max(0, (area.Width - Width) / 2),
+                area.Top + Math.Max(0, (area.Height - Height) / 2));
+        }
+
+        /// <summary>
+        /// Re-centres whenever the layout changes size - signing in swaps the 440
+        /// wide login for the 660 wide session view, and without this the window
+        /// would grow from its top-left corner and sit off-centre afterwards.
+        /// </summary>
+        protected override void OnClientSizeChanged(EventArgs e)
+        {
+            base.OnClientSizeChanged(e);
+            if (IsHandleCreated && WindowState == FormWindowState.Normal) CentreOnScreen();
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            CentreOnScreen();
+            ShowDesktopShield();
         }
 
         /// <summary>Applies the shared CAMS field styling to a text box.</summary>
@@ -352,6 +532,11 @@ namespace Client
         // Builds the session view shown after a successful login.
         private void BuildToolbar()
         {
+            // Signed in: the machine is released. The guard already stopped firing
+            // the moment _hubClient was set; this drops the always-on-top with it,
+            // so the session window behaves like any other window.
+            TopMost = false;
+            HideDesktopShield();
             Controls.Clear();
             ClientSize = new Size(660, 430);
             BackColor = SurfaceBody;
@@ -521,7 +706,7 @@ namespace Client
 
             if (string.IsNullOrEmpty(studentId) || string.IsNullOrEmpty(password))
             {
-                MessageBox.Show("Please enter your Student ID and Password.", "Login", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ShowMessage("Sign in", "Please enter your Student ID and Password.", DialogTone.Warning);
                 return;
             }
 
@@ -577,9 +762,11 @@ namespace Client
                 lblStatus.Text = "Status: Server not found";
                 lblStatus.ForeColor = StatusDanger;
                 btnLogin.Enabled = true;
-                var choice = MessageBox.Show(
-                    "Cannot reach the server.\n\nMake sure the teacher has started CAMS Server and you are on the same network.\n\nWould you like to enter the server IP manually?",
-                    "Connection Failed", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                var choice = ShowMessage(
+                    "Cannot reach the server",
+                    "Make sure the teacher has started CAMS Server and that this computer is on the same network.\n\nYou can enter the server address yourself if you know it.",
+                    DialogTone.Danger, MessageBoxButtons.YesNo,
+                    affirmative: "Enter address", dismissive: "Not now");
                 if (choice == DialogResult.Yes)
                     ShowServerUrlDialog();
             }
@@ -590,18 +777,20 @@ namespace Client
                 lblStatus.Text = "Status: Login rejected";
                 lblStatus.ForeColor = StatusDanger;
                 btnLogin.Enabled = true;
-                MessageBox.Show(
-                    "The server rejected this student login.\n\nCheck the Student ID and password. The student must be active, and the workstation must be available without a conflicting active session.",
-                    "Student Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ShowMessage(
+                    "Sign in was refused",
+                    "Check the Student ID and password.\n\nThe account must be active, and this workstation must be free of another session.",
+                    DialogTone.Danger, affirmative: "Try again");
             }
             catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
             {
                 lblStatus.Text = "Status: Login temporarily blocked";
                 lblStatus.ForeColor = StatusDanger;
                 btnLogin.Enabled = true;
-                MessageBox.Show(
-                    "Too many failed login attempts were received. Wait one minute and try again.",
-                    "Login Temporarily Blocked", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ShowMessage(
+                    "Too many attempts",
+                    "Too many sign-in attempts were made from this computer.\n\nWait one minute, then try again. Ask your teacher if you are not sure of your password.",
+                    DialogTone.Warning);
             }
             catch (HttpRequestException ex)
             {
@@ -612,9 +801,11 @@ namespace Client
                     ? "The server was discovered, but its HTTPS certificate is not trusted by this PC.\n\nCopy CAMS-Server-Root.cer from the teacher PC and run the client installer again, selecting that certificate. Do not copy the private .pfx file."
                     : "The server was discovered, but HTTPS port 5000 could not complete the connection.\n\nMake sure the server is running, both PCs are on the same Wi-Fi or hotspot, Windows Firewall allows TCP port 5000, and the configured address uses https://.";
                 message += $"\n\nTarget: {serverUrl ?? "unknown"}\nDetails: {ex.Message}";
-                var choice = MessageBox.Show(
-                    message + "\n\nRetry to discover the server again, or choose Cancel to enter the server IP manually.",
-                    "Connection Failed", MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning);
+                var choice = ShowMessage(
+                    "Cannot reach the server",
+                    message,
+                    DialogTone.Danger, MessageBoxButtons.RetryCancel,
+                    affirmative: "Search again", dismissive: "Enter address");
                 if (choice == DialogResult.Retry)
                 {
                     ServerDiscoveryClient.ResetCache();
@@ -630,9 +821,11 @@ namespace Client
                 lblStatus.Text = "Status: Connection failed";
                 lblStatus.ForeColor = StatusDanger;
                 btnLogin.Enabled = true;
-                var choice = MessageBox.Show(
-                    $"Connection error:\n\n{ex.Message}\n\nWould you like to enter the server IP manually?",
-                    "Error", MessageBoxButtons.YesNo, MessageBoxIcon.Error);
+                var choice = ShowMessage(
+                    "Connection failed",
+                    $"{ex.Message}\n\nYou can enter the server address yourself if you know it.",
+                    DialogTone.Danger, MessageBoxButtons.YesNo,
+                    affirmative: "Enter address", dismissive: "Not now");
                 if (choice == DialogResult.Yes)
                     ShowServerUrlDialog();
             }
@@ -665,43 +858,60 @@ namespace Client
 
         private void ShowServerUrlDialog()
         {
+            // Same chrome as ShowMessage: a brand header band over a light body.
             var prompt = new Form
             {
-                Text = "Enter Server Address",
-                Width = 450,
-                Height = 180,
+                Text = "Server address",
+                ClientSize = new Size(470, 224),
                 StartPosition = FormStartPosition.CenterParent,
                 FormBorderStyle = FormBorderStyle.FixedDialog,
                 MaximizeBox = false,
                 MinimizeBox = false,
-                ShowInTaskbar = false
+                ShowInTaskbar = false,
+                BackColor = SurfaceCard,
+                Font = new Font("Segoe UI", 9.75f),
+                TopMost = this.TopMost   // else the top-most gate covers it
             };
+            var promptHeader = new Panel { Dock = DockStyle.Top, Height = 62, BackColor = BrandDark };
+            promptHeader.Controls.Add(new Label
+            {
+                Text = "Server address",
+                Font = new Font("Segoe UI", 13, FontStyle.Bold),
+                ForeColor = Color.White,
+                AutoSize = true,
+                Location = new Point(22, 17)
+            });
+            prompt.Controls.Add(promptHeader);
+
             var lbl = new Label
             {
-                Text = "Server URL (e.g. https://192.168.1.100:5000/remoteMonitoringHub):",
-                Location = new Point(14, 18),
+                Text = "Ask your teacher for this address. It looks like:\nhttps://192.168.1.100:5000/remoteMonitoringHub",
+                Location = new Point(22, 80),
+                MaximumSize = new Size(426, 0),
+                ForeColor = TextMuted,
+                Font = new Font("Segoe UI", 9.5f),
                 AutoSize = true
             };
             var txt = new TextBox
             {
                 Text = "https://localhost:5000/remoteMonitoringHub",
-                Location = new Point(14, 45),
-                Width = 400
+                Location = new Point(22, 126),
+                Width = 426,
+                Height = 30,
+                BorderStyle = BorderStyle.FixedSingle,
+                BackColor = SurfaceCard,
+                ForeColor = TextMain,
+                Font = new Font("Segoe UI", 10)
             };
-            var btnOk = new Button
-            {
-                Text = "Save and retry",
-                Location = new Point(250, 80),
-                Size = new Size(100, 30),
-                BackColor = Color.FromArgb(13, 110, 253),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
+            var btnOk = BrandButton("Save and retry", BrandEmerald);
+            btnOk.Location = new Point(298, 170);
+            btnOk.Size = new Size(150, 38);
+            btnOk.FlatAppearance.BorderSize = 0;
             btnOk.Click += (_, _) =>
             {
                 if (!ClientSettingsStore.TryNormalizeServerUrl(txt.Text.Trim(), out var serverUrl, out var error))
                 {
-                    MessageBox.Show(error, "Invalid Server URL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    ShowMessage("That address is not valid", error, DialogTone.Warning);
                     return;
                 }
 
@@ -712,7 +922,7 @@ namespace Client
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"The server URL could not be saved.\n\n{ex.Message}", "Settings Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    ShowMessage("The address could not be saved", ex.Message, DialogTone.Danger);
                     return;
                 }
                 prompt.Close();
@@ -1178,7 +1388,10 @@ namespace Client
             }
             if (!manual)
             {
-                MessageBox.Show("Your session was ended by the teacher.", "Session Ended", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ShowMessage(
+                    "Session ended",
+                    "Your teacher ended this session.\n\nCAMS will close now. Sign in again when your teacher starts the next session.",
+                    DialogTone.Info);
             }
             Application.Exit();
         }
@@ -1224,68 +1437,243 @@ namespace Client
             if (_broadcastForm is { IsDisposed: false }) _broadcastForm.Close();
         }
 
-        private void ShowPopup(string title, string heading, string message, bool warning)
-        {
-            // Mirrors the portal's themed dialog: a coloured header band above a light body.
-            var accent = warning ? StatusDanger : BrandDark;
+        /// <summary>How serious a client message is.</summary>
+        private enum DialogTone { Info, Warning, Danger }
 
-            var popup = new Form
+        /// <summary>
+        /// Rounds a control's corners. --radius-lg is 16px for cards and modals in
+        /// the design system; WinForms has no radius property, so the shape is a
+        /// clipping region.
+        /// </summary>
+        private static void RoundCorners(Control control, int radius)
+        {
+            var r = radius * 2;
+            var path = new System.Drawing.Drawing2D.GraphicsPath();
+            var w = control.Width;
+            var h = control.Height;
+            path.AddArc(0, 0, r, r, 180, 90);
+            path.AddArc(w - r - 1, 0, r, r, 270, 90);
+            path.AddArc(w - r - 1, h - r - 1, r, r, 0, 90);
+            path.AddArc(0, h - r - 1, r, r, 90, 90);
+            path.CloseFigure();
+            control.Region = new Region(path);
+        }
+
+        /// <summary>
+        /// A pill button, the shape the design system uses everywhere outside compact
+        /// table rows. Primary is always emerald: "one primary action per task area -
+        /// if two things are emerald, one of them is wrong". Secondary is the neutral
+        /// outline used for cancel and back.
+        /// </summary>
+        private static Button PillButton(string text, bool primary)
+        {
+            var button = new Button
             {
-                Text = title,
-                ClientSize = new Size(440, 236),
-                StartPosition = FormStartPosition.CenterScreen,
-                TopMost = true,
+                Text = text,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                AutoSize = false,
+                Height = 40,
+                Margin = new Padding(8, 0, 0, 0),
+                BackColor = primary ? BrandEmerald : SurfaceCard,
+                ForeColor = primary ? Color.White : Color.FromArgb(68, 64, 60)
+            };
+            button.Width = Math.Max(116, TextRenderer.MeasureText(text, button.Font).Width + 40);
+            button.FlatAppearance.BorderSize = primary ? 0 : 1;
+            button.FlatAppearance.BorderColor = primary ? BrandEmerald : Color.FromArgb(218, 212, 201);
+            button.FlatAppearance.MouseOverBackColor = primary
+                ? Color.FromArgb(19, 107, 49)      // --accent-emerald-hover
+                : Color.FromArgb(246, 243, 237);
+            button.HandleCreated += (_, _) => RoundCorners(button, button.Height / 2);
+            return button;
+        }
+
+        /// <summary>
+        /// The chrome every CAMS client dialog shares, built to match the portal's
+        /// themed modal: a brand gradient header, a body that opens with a severity
+        /// pill, and a footer divided by a hairline.
+        ///
+        /// The header is the brand gradient whatever the severity. That is the
+        /// portal's rule and it matters: severity travels in the pill, which carries
+        /// a word as well as a colour, because "status is never carried by colour
+        /// alone" - a red header alone says nothing to someone who cannot see red.
+        /// </summary>
+        private Form BuildDialogShell(string heading, string message, DialogTone tone, out FlowLayoutPanel footer)
+        {
+            const int width = 470;
+            const int pad = 22;          // --space-5, the modal body padding
+            const int headerHeight = 64;
+
+            var (pillText, pillInk, pillBack) = tone switch
+            {
+                DialogTone.Danger => ("Problem", Color.FromArgb(185, 28, 28), Color.FromArgb(253, 236, 236)),
+                DialogTone.Warning => ("Check this", Color.FromArgb(180, 83, 9), Color.FromArgb(253, 243, 231)),
+                _ => ("Information", Color.FromArgb(138, 97, 23), Color.FromArgb(251, 243, 227))
+            };
+
+            var dialog = new Form
+            {
+                Text = heading,
+                StartPosition = FormStartPosition.CenterParent,
                 ShowInTaskbar = false,
-                FormBorderStyle = FormBorderStyle.FixedDialog,
+                FormBorderStyle = FormBorderStyle.None,   // the header below is the title bar
                 MaximizeBox = false,
                 MinimizeBox = false,
                 BackColor = SurfaceCard,
-                Font = new Font("Segoe UI", 9.75f)
+                Font = new Font("Segoe UI", 9.75f),
+                // Must match the owner. A top-most window outranks every ordinary
+                // one - including its own modal child - so while the sign-in guard
+                // holds the main window top-most, a plain dialog is drawn behind it
+                // and the student sees a frozen screen with the message hidden.
+                TopMost = this.TopMost
             };
 
-            var header = new Panel { Dock = DockStyle.Top, Height = 62, BackColor = accent };
-            var head = new Label
+            // Header: linear-gradient(135deg, --sidebar-bg, --sidebar-active-bg)
+            var header = new Panel { Dock = DockStyle.Top, Height = headerHeight };
+            header.Paint += (_, pe) =>
+            {
+                using var brush = new System.Drawing.Drawing2D.LinearGradientBrush(
+                    header.ClientRectangle, BrandDark, Color.FromArgb(29, 92, 46), 135f);
+                pe.Graphics.FillRectangle(brush, header.ClientRectangle);
+            };
+            header.Controls.Add(new Label
             {
                 Text = heading,
-                Font = new Font("Segoe UI", 13, FontStyle.Bold),
+                Font = new Font("Segoe UI", 13.5f, FontStyle.Bold),
                 ForeColor = Color.White,
+                BackColor = Color.Transparent,
                 AutoSize = true,
-                MaximumSize = new Size(400, 0),
-                Location = new Point(20, 17)
+                MaximumSize = new Size(width - (pad * 2), 0),
+                Location = new Point(pad, 19)
+            });
+
+            // Severity pill: colour and a word, never colour on its own.
+            var pill = new Label
+            {
+                Text = pillText,
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+                ForeColor = pillInk,
+                BackColor = pillBack,
+                AutoSize = false,
+                Height = 24,
+                Width = TextRenderer.MeasureText(pillText, new Font("Segoe UI", 8.5f, FontStyle.Bold)).Width + 26,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Location = new Point(pad, headerHeight + pad)
             };
-            header.Controls.Add(head);
+            pill.HandleCreated += (_, _) => RoundCorners(pill, pill.Height / 2);
 
             var body = new Label
             {
                 Text = message,
-                Font = new Font("Segoe UI", 10),
+                Font = new Font("Segoe UI", 10.5f),
                 ForeColor = TextMain,
-                Dock = DockStyle.Fill,
-                Padding = new Padding(20, 18, 20, 8)
+                AutoSize = true,
+                MaximumSize = new Size(width - (pad * 2), 0),
+                Location = new Point(pad, headerHeight + pad + 24 + 14)
             };
 
-            var ok = BrandButton("I understand", accent);
-            ok.Width = 150;
-            ok.Height = 38;
-            ok.FlatAppearance.BorderSize = 0;
-            ok.Click += (_, _) => popup.Close();
+            var divider = new Panel { Dock = DockStyle.Bottom, Height = 1, BackColor = Color.FromArgb(243, 239, 232) };
+            footer = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 68,
+                FlowDirection = FlowDirection.RightToLeft,   // first added sits rightmost
+                BackColor = SurfaceCard,
+                Padding = new Padding(pad, 14, pad, 16)
+            };
 
-            var footer = new Panel { Dock = DockStyle.Bottom, Height = 58, BackColor = SurfaceCard, Padding = new Padding(20, 0, 20, 16) };
-            ok.Dock = DockStyle.Right;
-            footer.Controls.Add(ok);
-
-            popup.Controls.Add(body);
-            popup.Controls.Add(footer);
-            popup.Controls.Add(header);
-            popup.AcceptButton = ok;
-            popup.Show(this);
+            dialog.Controls.Add(pill);
+            dialog.Controls.Add(body);
+            dialog.Controls.Add(footer);
+            dialog.Controls.Add(divider);
+            dialog.Controls.Add(header);
+            dialog.ClientSize = new Size(
+                width,
+                headerHeight + pad + 24 + 14 + Math.Max(40, body.Height) + 18 + 1 + 68);
+            dialog.HandleCreated += (_, _) => RoundCorners(dialog, 16);   // --radius-lg
+            return dialog;
         }
+
+        /// <summary>
+        /// The client's message dialog, in place of the system MessageBox. Returns
+        /// the same DialogResult values a MessageBox would, so call sites keep their
+        /// logic and only gain buttons that say what they actually do.
+        /// </summary>
+        private DialogResult ShowMessage(
+            string heading,
+            string message,
+            DialogTone tone = DialogTone.Info,
+            MessageBoxButtons buttons = MessageBoxButtons.OK,
+            string? affirmative = null,
+            string? dismissive = null)
+        {
+            var dialog = BuildDialogShell(heading, message, tone, out var footer);
+
+            Button Action(string text, DialogResult value, bool primary)
+            {
+                var button = PillButton(text, primary);
+                button.Click += (_, _) => { dialog.DialogResult = value; };
+                return button;
+            }
+
+            Button accept, cancel;
+            switch (buttons)
+            {
+                case MessageBoxButtons.YesNo:
+                    accept = Action(affirmative ?? "Yes", DialogResult.Yes, primary: true);
+                    cancel = Action(dismissive ?? "No", DialogResult.No, primary: false);
+                    break;
+                case MessageBoxButtons.RetryCancel:
+                    accept = Action(affirmative ?? "Retry", DialogResult.Retry, primary: true);
+                    cancel = Action(dismissive ?? "Cancel", DialogResult.Cancel, primary: false);
+                    break;
+                default:
+                    accept = Action(affirmative ?? "OK", DialogResult.OK, primary: true);
+                    cancel = accept;
+                    break;
+            }
+
+            footer.Controls.Add(accept);
+            if (!ReferenceEquals(cancel, accept)) footer.Controls.Add(cancel);
+            dialog.AcceptButton = accept;
+            dialog.CancelButton = cancel;   // Esc does the safe thing
+
+            // A dialog of ours holding focus is not the student escaping the gate,
+            // so the focus guard stands down while this is up.
+            using (dialog)
+                return dialog.ShowDialog(IsDisposed ? null : this);
+        }
+
+        private void ShowPopup(string title, string heading, string message, bool warning)
+        {
+            var dialog = BuildDialogShell(heading, message, warning ? DialogTone.Danger : DialogTone.Info, out var footer);
+            dialog.Text = title;
+            dialog.TopMost = true;
+
+            var ok = PillButton("I understand", primary: true);
+            ok.Click += (_, _) => dialog.Close();
+            footer.Controls.Add(ok);
+            dialog.AcceptButton = ok;
+            dialog.Show(this);
+        }
+
 
         protected override async void OnFormClosing(FormClosingEventArgs e)
         {
-            // Closing the window with the X (or Alt+F4) hides to the tray and
-            // keeps the session running. A real quit comes only from the tray's
-            // Exit (which sets _exitRequested) or from Windows shutting down.
+            // Before sign-in the window cannot be dismissed at all: no close, no
+            // tray. The only way out is the tray icon's Exit, which sets
+            // _exitRequested and so falls through to the teardown below.
+            if (!_exitRequested && !_isClosing && _hubClient is null &&
+                e.CloseReason == CloseReason.UserClosing)
+            {
+                e.Cancel = true;
+                return;
+            }
+
+            // Once signed in, closing the window with the X (or Alt+F4) hides to
+            // the tray and keeps the session running. A real quit comes only from
+            // the tray's Exit, or from Windows shutting down.
             if (!_exitRequested && !_isClosing && e.CloseReason == CloseReason.UserClosing)
             {
                 e.Cancel = true;
@@ -1304,6 +1692,7 @@ namespace Client
             _countdownTimer.Stop();
             _managedBrowserCollector.Dispose();
             CloseBroadcast();
+            HideDesktopShield();
             _tray?.Dispose();
             _ = _hubClient?.DisposeAsync();
             base.OnFormClosing(e);
@@ -1362,5 +1751,21 @@ namespace Client
 
         [DllImport("user32.dll")]
         public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
+        [DllImport("user32.dll")]
+        public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        public static extern bool BringWindowToTop(IntPtr hWnd);
+
+        // Windows refuses SetForegroundWindow from a process that did not receive
+        // the last input, which is exactly our situation. Briefly sharing an input
+        // queue with the thread that owns the foreground lifts that refusal - the
+        // long-standing way to do this, and the only one that works.
+        [DllImport("user32.dll")]
+        public static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+
+        [DllImport("kernel32.dll")]
+        public static extern uint GetCurrentThreadId();
     }
 }

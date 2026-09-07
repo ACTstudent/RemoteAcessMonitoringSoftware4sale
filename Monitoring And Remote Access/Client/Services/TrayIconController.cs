@@ -40,6 +40,14 @@ namespace Client.Services
         /// <summary>The user asked to quit for real, not just hide.</summary>
         public event Action? ExitRequested;
 
+        /// <summary>
+        /// The tray menu opened or closed. The sign-in gate holds the foreground
+        /// while nobody is signed in, and it has to stand down for this menu -
+        /// otherwise the one way out of the gate would slam shut as it opened.
+        /// </summary>
+        public event Action? MenuOpened;
+        public event Action? MenuClosed;
+
         /// <param name="appName">Shown as the icon's hover tooltip and menu header.</param>
         /// <param name="icon">An icon to use; when null a branded one is drawn at runtime.</param>
         public TrayIconController(string appName, Icon? icon = null)
@@ -55,6 +63,8 @@ namespace Client.Services
             var exit = new ToolStripMenuItem("Exit", null, (_, _) => ExitRequested?.Invoke());
 
             _menu = new ContextMenuStrip();
+            _menu.Opened += (_, _) => MenuOpened?.Invoke();
+            _menu.Closed += (_, _) => MenuClosed?.Invoke();
             _menu.Items.Add(restore);
             _menu.Items.Add(status);
             _menu.Items.Add(new ToolStripSeparator());
