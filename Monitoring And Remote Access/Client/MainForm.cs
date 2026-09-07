@@ -36,6 +36,13 @@ namespace Client
         private CancellationTokenSource? _streamCts;
         private bool _isLocked = false;
         private bool _isClosing;
+
+        // Tray presence. The window hides into the notification area instead of
+        // terminating; the icon stays visible and its Exit item is the only way
+        // out, so the agent is tucked away, never concealed.
+        private TrayIconController? _tray;
+        private bool _exitRequested;
+        private bool _trayNoticeShown;
         private Form? _broadcastForm;
         private PictureBox? _broadcastPicture;
         private string _studentId = "";
@@ -100,6 +107,80 @@ namespace Client
             {
                 if (_session.Tick()) RenderTimer();
             };
+
+            _tray = new TrayIconController("CAMS Student Client");
+            _tray.RestoreRequested += RestoreFromTray;
+            _tray.StatusRequested += ShowTrayStatus;
+            _tray.ExitRequested += ExitFromTray;
+        }
+
+        /// <summary>Hides the window into the tray, leaving the agent running.</summary>
+        private void HideToTray()
+        {
+            Hide();
+            ShowInTaskbar = false;
+            if (!_trayNoticeShown)
+            {
+                _trayNoticeShown = true;
+                _tray?.ShowBalloon(
+                    "CAMS is still running",
+                    "The window is in the notification area. Double-click the icon to open it, or right-click for Exit.",
+                    ToolTipIcon.Info);
+            }
+        }
+
+        /// <summary>Brings the window back from the tray and gives it focus.</summary>
+        private void RestoreFromTray()
+        {
+            if (IsDisposed) return;
+            Show();
+            ShowInTaskbar = true;
+            WindowState = FormWindowState.Normal;
+            Activate();
+            BringToFront();
+        }
+
+        /// <summary>Answers "Check Status" from the tray with what the agent is doing now.</summary>
+        private void ShowTrayStatus()
+        {
+            string body;
+            if (_hubClient is null)
+            {
+                body = "Not signed in.";
+            }
+            else
+            {
+                var who = string.IsNullOrWhiteSpace(_studentName) ? _studentId : $"{_studentName} ({_studentId})";
+                var line = string.IsNullOrWhiteSpace(lblStatus.Text) ? "Connected" : lblStatus.Text.Replace("Status: ", "");
+                var timer = _session.IsRunning ? $"\nSession: {_session.Display()}" : "";
+                body = $"{who}\n{line}{timer}";
+            }
+            _tray?.SetTooltip(_hubClient is null ? "CAMS Student Client — signed out" : $"CAMS — {_studentId}");
+            _tray?.ShowBalloon("CAMS status", body, ToolTipIcon.Info);
+        }
+
+        /// <summary>The tray's Exit: a real quit, logging out first if a session is live.</summary>
+        private void ExitFromTray()
+        {
+            _exitRequested = true;
+            if (_hubClient is not null)
+            {
+                _ = ForceLogout(true); // logs the session out, then Application.Exit()
+            }
+            else
+            {
+                Close();
+            }
+        }
+
+        /// <summary>Minimising the window sends it to the tray rather than the taskbar.</summary>
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            if (WindowState == FormWindowState.Minimized && _tray is not null && !_isClosing)
+            {
+                HideToTray();
+            }
         }
 
         /// <summary>Applies the shared CAMS field styling to a text box.</summary>
@@ -1202,6 +1283,16 @@ namespace Client
 
         protected override async void OnFormClosing(FormClosingEventArgs e)
         {
+            // Closing the window with the X (or Alt+F4) hides to the tray and
+            // keeps the session running. A real quit comes only from the tray's
+            // Exit (which sets _exitRequested) or from Windows shutting down.
+            if (!_exitRequested && !_isClosing && e.CloseReason == CloseReason.UserClosing)
+            {
+                e.Cancel = true;
+                HideToTray();
+                return;
+            }
+
             if (!_isClosing && _hubClient is not null)
             {
                 e.Cancel = true;
@@ -1213,6 +1304,7 @@ namespace Client
             _countdownTimer.Stop();
             _managedBrowserCollector.Dispose();
             CloseBroadcast();
+            _tray?.Dispose();
             _ = _hubClient?.DisposeAsync();
             base.OnFormClosing(e);
         }

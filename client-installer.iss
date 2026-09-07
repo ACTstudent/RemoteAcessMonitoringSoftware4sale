@@ -52,7 +52,19 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "cleaninstall"; Description: "Clean installation (remove all old binary files before installing)"; GroupDescription: "Installation Options:"; Flags: checkedonce
+; Auto-start at logon. Per-user (HKCU Run) because this installs with lowest
+; privileges under {localappdata}, so it starts for whoever installed it, every
+; time that user signs in. Checked by default: a lab agent is meant to be running.
+Name: "startuprun"; Description: "Start CAMS automatically when Windows starts"; GroupDescription: "Installation Options:"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+
+[Registry]
+; The value is the bare exe path, deliberately with no arguments: Client.exe
+; treats any argument as --configure-server mode, so passing one here would put
+; every logon into configuration instead of running the agent. Removed on uninstall.
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "CAMS Student Client"; ValueData: """{app}\{#MyAppExeName}"""; Flags: uninsdeletevalue; Tasks: startuprun
+; If the box is cleared on a reinstall, remove any auto-start left by an earlier run.
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "CAMS Student Client"; Flags: deletevalue; Check: not WizardIsTaskSelected('startuprun')
 
 [InstallDelete]
 Type: filesandordirs; Name: "{app}\runtimes"; Tasks: cleaninstall
