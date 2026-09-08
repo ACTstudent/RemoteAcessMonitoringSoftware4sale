@@ -120,6 +120,7 @@ namespace Client
             _tray = new TrayIconController("CAMS Student Client");
             _tray.RestoreRequested += RestoreFromTray;
             _tray.StatusRequested += ShowTrayStatus;
+            _tray.LogoutRequested += LogoutFromTray;
             _tray.ExitRequested += ExitFromTray;
             _tray.MenuOpened += () => _trayMenuOpen = true;
             _tray.MenuClosed += () => _trayMenuOpen = false;
@@ -128,18 +129,15 @@ namespace Client
         }
 
         /// <summary>Hides the window into the tray, leaving the agent running.</summary>
-        private void HideToTray()
+        private void HideToTray(
+            string title = "CAMS is still running",
+            string text = "The window is in the notification area. Double-click the icon to open it, or right-click for Exit.")
         {
             Hide();
             ShowInTaskbar = false;
-            if (!_trayNoticeShown)
-            {
-                _trayNoticeShown = true;
-                _tray?.ShowBalloon(
-                    "CAMS is still running",
-                    "The window is in the notification area. Double-click the icon to open it, or right-click for Exit.",
-                    ToolTipIcon.Info);
-            }
+            if (_trayNoticeShown) return;
+            _trayNoticeShown = true;
+            _tray?.ShowBalloon(title, text, ToolTipIcon.Info);
         }
 
         /// <summary>Brings the window back from the tray and gives it focus.</summary>
@@ -171,6 +169,16 @@ namespace Client
             }
             _tray?.SetTooltip(_hubClient is null ? "CAMS Student Client — signed out" : $"CAMS — {_studentId}");
             _tray?.ShowBalloon("CAMS status", body, ToolTipIcon.Info);
+        }
+
+        /// <summary>
+        /// The tray's Log out: ends the student's session, exactly as the Log out
+        /// button in the session view does. Offered only while signed in.
+        /// </summary>
+        private void LogoutFromTray()
+        {
+            if (_hubClient is null) return;
+            _ = ForceLogout(true, quit: false);
         }
 
         /// <summary>The tray's Exit: a real quit, logging out first if a session is live.</summary>
@@ -675,7 +683,7 @@ namespace Client
             btnLogout.Height = 38;
             btnLogout.FlatAppearance.BorderSize = 0;
             btnLogout.FlatAppearance.MouseOverBackColor = BrandDarker;
-            btnLogout.Click += async (_, _) => await ForceLogout(true);
+            btnLogout.Click += async (_, _) => await ForceLogout(true, quit: false);
 
             var logoutHost = new Panel { Dock = DockStyle.Bottom, Height = 46, BackColor = SurfaceBody };
             btnLogout.Dock = DockStyle.Left;
@@ -770,6 +778,17 @@ namespace Client
                 _ = Task.Run(() => ScreenCaptureLoop(_streamCts.Token));
                 _ = Task.Run(() => StatusReportLoop(_streamCts.Token));
                 _ = Task.Run(() => RestrictionEnforcementLoop(_streamCts.Token));
+
+                // Log out becomes reachable from the tray now there is a session
+                // to end - the window it used to live in is about to disappear.
+                if (_tray is not null) _tray.CanLogOut = true;
+
+                // The session is live, so the window goes away. A student has no
+                // reason to keep the session view on screen while they work; the
+                // tray icon brings it back when they want to check the timer.
+                // Hidden last, so everything above is wired before it disappears.
+                HideToTray("Signed in",
+                    "Your session has started. Double-click the CAMS icon here to see it, or right-click for Exit.");
             }
             catch (SocketException)
             {
@@ -1228,7 +1247,8 @@ namespace Client
         }
 
         private BrowserWebsiteObservation? _lastForegroundWebsite;
-        private readonly ManagedBrowserCollector _managedBrowserCollector = CreateManagedBrowserCollector();
+        // Not readonly: logging out disposes it, and the next student needs a live one.
+        private ManagedBrowserCollector _managedBrowserCollector = CreateManagedBrowserCollector();
         private WebsiteRestrictionProxy? _websiteProxy;
         private WindowsSessionProxy? _windowsProxy;
 
@@ -1529,7 +1549,15 @@ namespace Client
             }
         }
 
-        private async Task ForceLogout(bool manual)
+        /// <param name="manual">The student ended it, rather than the teacher.</param>
+        /// <param name="quit">
+        /// Whether to close the application afterwards. A student logging out goes
+        /// back to the sign-in gate instead: quitting would take the gate, the
+        /// desktop shield and the website filter down with it and leave the
+        /// workstation open until the next logon. Teacher-driven ends still quit,
+        /// because they are followed by a restart that brings the gate back.
+        /// </param>
+        private async Task ForceLogout(bool manual, bool quit = true)
         {
             _isClosing = true;
             _sessionPaused = false;
@@ -1556,7 +1584,61 @@ namespace Client
                     "Your teacher ended this session.\n\nCAMS will close now. Sign in again when your teacher starts the next session.",
                     DialogTone.Info);
             }
-            Application.Exit();
+
+            if (quit)
+            {
+                Application.Exit();
+                return;
+            }
+
+            // The callers are fire-and-forget, so a throw here would be swallowed
+            // and leave the client hidden in the tray with no gate and no shield -
+            // an unguarded machine with an invisible client, the worst state this
+            // could fail into. Quitting instead is recoverable: the installer's
+            // auto-start brings the gate back at the next logon.
+            try
+            {
+                ReturnToSignIn();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[CAMS] Could not return to the sign-in gate: {ex.Message}");
+                Application.Exit();
+            }
+        }
+
+        /// <summary>
+        /// Puts the client back where it started: the sign-in gate, top-most and
+        /// centred, with the desktop shield up again. Everything the session owned
+        /// is reset here, because the next student signs in through the same
+        /// instance rather than a fresh process.
+        /// </summary>
+        private void ReturnToSignIn()
+        {
+            if (IsDisposed) return;      // the window went away mid-logout
+            _isClosing = false;          // the teardown is over, guards are live again
+            _streamCts = null;
+            _studentId = "";
+            _studentName = "";
+            _session.End();
+            _telemetry.Reset();
+            _sessionPaused = false;
+            _restartRequested = false;
+            _trayNoticeShown = false;    // the next student gets the notice too
+            if (_tray is not null) _tray.CanLogOut = false;
+
+            // Disposed with the session above; the next one needs a live collector.
+            _managedBrowserCollector = CreateManagedBrowserCollector();
+
+            BuildUi();
+            TopMost = true;
+            Show();
+            ShowInTaskbar = true;
+            WindowState = FormWindowState.Normal;
+            CentreOnScreen();
+            ShowDesktopShield();
+            Activate();
+            BringToFront();
         }
 
         private void ShowBroadcast(BroadcastMessage msg)

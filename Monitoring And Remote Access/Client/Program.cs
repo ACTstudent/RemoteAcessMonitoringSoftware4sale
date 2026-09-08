@@ -6,7 +6,11 @@ static class Program
     static int Main(string[] args)
     {
         if (args.Length > 0)
+        {
+            if (string.Equals(args[0], "--restore-proxy", StringComparison.OrdinalIgnoreCase))
+                return RestoreProxyWatchdog(args);
             return Configure(args);
+        }
 
         ApplicationConfiguration.Initialize();
         using var instance = new Mutex(true,
@@ -38,6 +42,49 @@ static class Program
             }
         }
         return 0;
+    }
+
+    /// <summary>
+    /// Waits for the client to exit by any means - a clean shutdown, a crash, or
+    /// End task from Task Manager - and then puts the Windows proxy settings back.
+    ///
+    /// Without this, a client that dies without unwinding leaves the machine's
+    /// browsers pointed at a listener that no longer exists, which to a student
+    /// looks exactly like the internet being broken, and the only fix is turning
+    /// the proxy off by hand in Windows Settings. That is not a state a lab
+    /// machine should ever be left in.
+    ///
+    /// Restoring is idempotent: a client that exited cleanly has already restored
+    /// and deleted the backup, so this finds nothing to do and stops.
+    /// </summary>
+    private static int RestoreProxyWatchdog(string[] args)
+    {
+        if (args.Length != 2 || !int.TryParse(args[1], out var clientProcessId))
+        {
+            Console.Error.WriteLine("Usage: Client.exe --restore-proxy <process id>");
+            return 2;
+        }
+
+        try
+        {
+            using var client = System.Diagnostics.Process.GetProcessById(clientProcessId);
+            client.WaitForExit();
+        }
+        catch (ArgumentException)
+        {
+            // Already gone. Restore anyway - that is the case this exists for.
+        }
+
+        try
+        {
+            Services.WindowsSessionProxy.RestorePreviousSession();
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Could not restore the Windows proxy settings: {ex.Message}");
+            return 4;
+        }
     }
 
     private static int Configure(string[] args)

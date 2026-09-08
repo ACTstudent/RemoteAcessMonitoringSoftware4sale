@@ -1,6 +1,8 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using Microsoft.Win32;
 
 namespace Client.Services;
 
@@ -43,6 +45,40 @@ public sealed class WindowsSessionProxy : IDisposable
             File.Delete(BackupPath);
             throw;
         }
+
+        // Two safety nets, because Dispose only runs when we unwind normally.
+        // Logging off or shutting down restores before Windows tears us down;
+        // the watchdog restores if we are killed or crash instead.
+        SystemEvents.SessionEnding += OnSessionEnding;
+        StartRestoreWatchdog();
+    }
+
+    private void OnSessionEnding(object sender, SessionEndingEventArgs e) => Dispose();
+
+    /// <summary>
+    /// Launches a second copy of this executable that does nothing but wait for
+    /// this process to end and then put the proxy settings back. It covers the
+    /// deaths Dispose cannot: End task, a crash, a killed process tree.
+    /// </summary>
+    private static void StartRestoreWatchdog()
+    {
+        try
+        {
+            var executable = Environment.ProcessPath;
+            if (string.IsNullOrEmpty(executable)) return;
+            Process.Start(new ProcessStartInfo(executable, $"--restore-proxy {Environment.ProcessId}")
+            {
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                WorkingDirectory = Path.GetDirectoryName(executable)!
+            });
+        }
+        catch (Exception)
+        {
+            // A watchdog is a safety net, not the mechanism. If it cannot start,
+            // Dispose still restores on a normal exit and the client restores at
+            // the next start before it connects.
+        }
     }
 
     public void EnsureApplied()
@@ -75,6 +111,7 @@ public sealed class WindowsSessionProxy : IDisposable
         {
             if (_disposed) return;
             _disposed = true;
+            SystemEvents.SessionEnding -= OnSessionEnding;
             RestorePreviousSession();
         }
     }

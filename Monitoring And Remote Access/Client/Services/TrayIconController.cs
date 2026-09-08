@@ -28,6 +28,7 @@ namespace Client.Services
     {
         private readonly NotifyIcon _notifyIcon;
         private readonly ContextMenuStrip _menu;
+        private readonly ToolStripMenuItem _logout;
         private readonly Icon _icon;
         private bool _disposed;
 
@@ -37,8 +38,18 @@ namespace Client.Services
         /// <summary>The user asked what the agent is currently doing.</summary>
         public event Action? StatusRequested;
 
+        /// <summary>The user asked to end their session from the tray.</summary>
+        public event Action? LogoutRequested;
+
         /// <summary>The user asked to quit for real, not just hide.</summary>
         public event Action? ExitRequested;
+
+        /// <summary>Offers Log out only once a student is actually signed in.</summary>
+        public bool CanLogOut
+        {
+            get => _logout.Enabled;
+            set => _logout.Enabled = value;
+        }
 
         /// <summary>
         /// The tray menu opened or closed. The sign-in gate holds the foreground
@@ -60,6 +71,9 @@ namespace Client.Services
                 Font = new Font(SystemFonts.MenuFont ?? new Font("Segoe UI", 9f), FontStyle.Bold)
             };
             var status = new ToolStripMenuItem("Check Status", null, (_, _) => StatusRequested?.Invoke());
+            // Greyed out until a student signs in - there is nothing to log out of
+            // before that, and an item that does nothing is worse than no item.
+            _logout = new ToolStripMenuItem("Log out", null, (_, _) => LogoutRequested?.Invoke()) { Enabled = false };
             var exit = new ToolStripMenuItem("Exit", null, (_, _) => ExitRequested?.Invoke());
 
             _menu = new ContextMenuStrip();
@@ -67,6 +81,7 @@ namespace Client.Services
             _menu.Closed += (_, _) => MenuClosed?.Invoke();
             _menu.Items.Add(restore);
             _menu.Items.Add(status);
+            _menu.Items.Add(_logout);
             _menu.Items.Add(new ToolStripSeparator());
             _menu.Items.Add(exit);
 
