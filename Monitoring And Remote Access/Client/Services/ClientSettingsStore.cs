@@ -12,6 +12,8 @@ public sealed class ClientSettings
     public bool ManageBrave { get; set; } = true;
     public int ChromePort { get; set; } = 9222;
     public int BravePort { get; set; } = 9223;
+    public bool ManageEdge { get; set; } = true;
+    public int EdgePort { get; set; } = 9224;
     public int RestartDelayMilliseconds { get; set; } = 1000;
     public int PolicyRefreshIntervalSeconds { get; set; } = 30;
     public TelemetryQueueOptions TelemetryQueue { get; set; } = new();
@@ -20,7 +22,7 @@ public sealed class ClientSettings
     public Dictionary<string, JsonElement>? AdditionalSettings { get; set; }
 
     public ManagedBrowserOptions ToManagedBrowserOptions() => new(
-        Enabled, ManageChrome, ManageBrave, ChromePort, BravePort, RestartDelayMilliseconds);
+        Enabled, ManageChrome, ManageBrave, ChromePort, BravePort, RestartDelayMilliseconds, ManageEdge, EdgePort);
 }
 
 public sealed class ClientSettingsStore

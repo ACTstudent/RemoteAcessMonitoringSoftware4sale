@@ -8,7 +8,7 @@ using Shared.Contracts;
 
 namespace Client.Services;
 
-public sealed record ManagedBrowserOptions(bool Enabled = true, bool ManageChrome = true, bool ManageBrave = true, int ChromePort = 9222, int BravePort = 9223, int RestartDelayMilliseconds = 1000);
+public sealed record ManagedBrowserOptions(bool Enabled = true, bool ManageChrome = true, bool ManageBrave = true, int ChromePort = 9222, int BravePort = 9223, int RestartDelayMilliseconds = 1000, bool ManageEdge = true, int EdgePort = 9224);
 public sealed record ManagedBrowserDefinition(string Identity, string ExecutableName, int Port);
 public sealed record ManagedBrowserStatus(string Identity, bool Running, bool EndpointAvailable, string Message);
 
@@ -254,18 +254,33 @@ public sealed class ManagedBrowserCollector : IDisposable
         var value = browser.ToLowerInvariant();
         // Brave can identify its Chromium engine as Chrome in DevTools metadata.
         // This is checked only after confirming CAMS owns the launched process.
+        // Edge reports itself as "Edg/<version>", not "Chrome", so it needs its own
+        // arm; and because it never says "chrome", it cannot be mistaken for one.
         return identity.Equals("chrome", StringComparison.OrdinalIgnoreCase) ? value.Contains("chrome") && !value.Contains("brave")
-            : identity.Equals("brave", StringComparison.OrdinalIgnoreCase) && (value.Contains("brave") || value.Contains("chrome"));
+            : identity.Equals("brave", StringComparison.OrdinalIgnoreCase) ? value.Contains("brave") || value.Contains("chrome")
+            : identity.Equals("edge", StringComparison.OrdinalIgnoreCase) && value.Contains("edg");
     }
 
     public static string? FindExecutable(string executableName)
     {
+        // A table rather than a ternary: with three browsers the old
+        // "chrome or else brave" test had no room for a third answer, and Edge
+        // installs under Program Files (x86) rather than Program Files.
+        string[] vendorFolders = executableName switch
+        {
+            "chrome.exe" => new[] { "Google", "Chrome", "Application" },
+            "brave.exe" => new[] { "BraveSoftware", "Brave-Browser", "Application" },
+            "msedge.exe" => new[] { "Microsoft", "Edge", "Application" },
+            _ => Array.Empty<string>()
+        };
+        if (vendorFolders.Length == 0) return null;
+
+        var relative = Path.Combine(Path.Combine(vendorFolders), executableName);
         var candidates = new[]
         {
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), executableName == "chrome.exe" ? "Google\\Chrome\\Application\\chrome.exe" : "BraveSoftware\\Brave-Browser\\Application\\brave.exe"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), executableName == "chrome.exe" ? "Google\\Chrome\\Application\\chrome.exe" : "BraveSoftware\\Brave-Browser\\Application\\brave.exe"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Google", "Chrome", "Application", executableName),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BraveSoftware", "Brave-Browser", "Application", executableName)
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), relative),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), relative),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), relative)
         };
         return candidates.FirstOrDefault(File.Exists);
     }
@@ -274,6 +289,9 @@ public sealed class ManagedBrowserCollector : IDisposable
     {
         if (_options.ManageChrome) yield return new("chrome", "chrome.exe", _options.ChromePort);
         if (_options.ManageBrave) yield return new("brave", "brave.exe", _options.BravePort);
+        // Edge ships with Windows and cannot be uninstalled, so leaving it out is a
+        // hole rather than a choice - a student is one click from an unmanaged browser.
+        if (_options.ManageEdge) yield return new("edge", "msedge.exe", _options.EdgePort);
     }
 
     private async Task MaintainBrowsersAsync(CancellationToken token)
