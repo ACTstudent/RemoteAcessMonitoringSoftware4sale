@@ -3,7 +3,7 @@
 CAMS is a local-first classroom monitoring and computer laboratory management system for Windows networks. It combines an ASP.NET Core server, authenticated browser portals, a Windows student client, SignalR monitoring and control, and a local SQLite database. CAMS is designed for supervised classroom use on a trusted private LAN; it does not require a CAMS cloud service.
 
 [![Build Status](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/actions/workflows/ci-full.yml/badge.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/actions/workflows/ci-full.yml)
-[![Release](https://img.shields.io/badge/Release-v2.15.0-emerald.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest)
+[![Release](https://img.shields.io/badge/Release-v2.16.0-emerald.svg)](https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest)
 [![.NET](https://img.shields.io/badge/.NET-8.0-blueviolet)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -13,7 +13,7 @@ CAMS is a local-first classroom monitoring and computer laboratory management sy
 - Timed student lab sessions with persisted running, paused, resumed, ended, and expiration state.
 - Lab-wide live monitoring, warnings, screen broadcast, remote input and bulk session controls; teacher/adviser-class checks still apply to individual session actions, records, alerts and exports.
 - Workstation lock, release of CAMS lock state, logout, restart, shutdown, and remote input commands. Releasing CAMS state cannot unlock the Windows secure desktop; Windows credentials are still required after `LockWorkStation`.
-- Application and normalized-domain policies. Blocked applications can be terminated; blocked tabs in browsers launched and managed by CAMS receive tab-close requests on the enforcement loop. Ordinary browser windows remain warning-only. This is detection-based enforcement, not network filtering: a page can load before it is detected. Website violations are recorded with CAMS-owned notices.
+- Application and normalized-domain policies. Blocked applications can be terminated. A session HTTP/HTTPS proxy rejects blocked website connections in CAMS-managed browsers and ordinary browsers using Windows proxy settings; policy refresh also disconnects matching filtered connections. Managed tabs still receive close requests for already loaded pages. Previous Windows proxy settings are restored at logout and recovered on the next launch after a crash. The updated student client must be deployed; custom proxies/VPNs and cached content require deployment controls. See [website enforcement and rollout](docs/improvements/BLOCKING-FIX.md).
 - Account, class, roster, workstation, session-rule, global-policy, report, audit, database-maintenance, LAN-status, and Deployment Hub administration.
 - Durable bounded client telemetry for temporary disconnections, browser status history without credentials or page content, grouped alert lifecycle, and command auditing.
 
