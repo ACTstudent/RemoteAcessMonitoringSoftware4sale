@@ -30,6 +30,11 @@ DisableDirPage=no
 ; releases/latest/download/, and those links must keep working across releases.
 ; The version lives in the metadata below instead.
 OutputBaseFilename=CAMS-Client-Setup
+; The CAMS mark on the setup file itself, and in Apps & features afterwards.
+; The uninstall entry points at the installed exe, which carries the same icon
+; embedded, so the two can never drift apart.
+SetupIconFile=Monitoring And Remote Access\Client\cams.ico
+UninstallDisplayIcon={app}\{#MyAppExeName}
 ; Windows reads these, not AppVersion, for the Details tab and Explorer's
 ; "File version" column. Without VersionInfoVersion the setup file shows no
 ; version at all, and one release looks identical to the last.

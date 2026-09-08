@@ -117,7 +117,11 @@ namespace Client
                 if (_session.Tick()) RenderTimer();
             };
 
-            _tray = new TrayIconController("CAMS Student Client");
+            // The window, the taskbar and Alt+Tab all take this one.
+            var windowIcon = LoadBrandIcon();
+            if (windowIcon is not null) Icon = windowIcon;
+
+            _tray = new TrayIconController("CAMS Student Client", LoadBrandIcon(SystemInformation.SmallIconSize));
             _tray.RestoreRequested += RestoreFromTray;
             _tray.StatusRequested += ShowTrayStatus;
             _tray.LogoutRequested += LogoutFromTray;
@@ -126,6 +130,26 @@ namespace Client
             _tray.MenuClosed += () => _trayMenuOpen = false;
 
             TopMost = true;   // released once a student signs in
+        }
+
+        /// <summary>
+        /// The CAMS mark, at the size Windows asked for rather than one bitmap
+        /// rescaled. Returns null if the file is missing, so the tray falls back
+        /// to the icon it draws itself - a missing icon must never be the reason
+        /// a lab machine has no agent.
+        /// </summary>
+        private static Icon? LoadBrandIcon(Size? size = null)
+        {
+            try
+            {
+                var path = Path.Combine(AppContext.BaseDirectory, "cams.ico");
+                if (!File.Exists(path)) return null;
+                return size is Size wanted ? new Icon(path, wanted) : new Icon(path);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         /// <summary>Hides the window into the tray, leaving the agent running.</summary>

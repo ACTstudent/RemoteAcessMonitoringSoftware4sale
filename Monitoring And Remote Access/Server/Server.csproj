@@ -3,6 +3,9 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
+    <!-- The server executable carries the CAMS mark too, so it is recognisable
+         in Explorer, the taskbar and Task Manager on the teacher's PC. -->
+    <ApplicationIcon>cams.ico</ApplicationIcon>
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- Nullable warnings are no longer suppressed: the hub dereferences that
          triggered them now go through a checked property. The project-wide

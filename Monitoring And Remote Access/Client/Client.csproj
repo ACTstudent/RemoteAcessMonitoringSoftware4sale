@@ -6,6 +6,9 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Gives the executable itself the CAMS mark, so it carries the product
+         icon in Explorer, the taskbar and Task Manager, not just at runtime. -->
+    <ApplicationIcon>cams.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,6 +21,9 @@
 
   <ItemGroup>
     <Content Include="client-settings.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Also copied out, so the tray and window can load a crisp entry for the
+         size Windows actually asks for rather than rescaling one bitmap. -->
+    <Content Include="cams.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
