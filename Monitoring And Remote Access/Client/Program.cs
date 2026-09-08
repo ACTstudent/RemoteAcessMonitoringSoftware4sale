@@ -9,7 +9,34 @@ static class Program
             return Configure(args);
 
         ApplicationConfiguration.Initialize();
-        Application.Run(new MainForm());
+        using var instance = new Mutex(true,
+            @"Local\CAMS.StudentClient." + System.Security.Principal.WindowsIdentity.GetCurrent().User?.Value,
+            out var firstInstance);
+        if (!firstInstance)
+        {
+            MainForm.ShowStartupMessage("CAMS is already running. Open it from the notification area.");
+            return 1;
+        }
+        try
+        {
+            // Recover the previous configuration after a crash before connecting
+            // to the server, which might otherwise inherit a dead local proxy.
+            Services.WindowsSessionProxy.RestorePreviousSession();
+            Application.Run(new MainForm());
+        }
+        catch (Exception ex)
+        {
+            MainForm.ShowStartupMessage($"CAMS could not start or restore browser settings.\n\n{ex.Message}", error: true);
+            return 1;
+        }
+        finally
+        {
+            try { Services.WindowsSessionProxy.RestorePreviousSession(); }
+            catch (Exception ex)
+            {
+                MainForm.ShowStartupMessage($"Restart CAMS to restore the previous Windows proxy settings.\n\n{ex.Message}", error: true);
+            }
+        }
         return 0;
     }
 

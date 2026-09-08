@@ -24,6 +24,7 @@
 
     let status = 'None';
     let elapsedSeconds = 0;
+    let restartRequested = false;
 
     const format = seconds => {
         const m = Math.floor(seconds / 60);
@@ -52,9 +53,11 @@
 
     connection.on('GlobalSessionState', state => {
         status = state.status;
-        if (state.status === 'Running') elapsedSeconds = state.elapsedSeconds;
+        elapsedSeconds = state.elapsedSeconds;
         render();
     });
+
+    connection.on('RestartStudent', () => { restartRequested = true; });
 
     connection.on('SessionEnded', () => {
         status = 'Ended';
@@ -63,8 +66,9 @@
         if (!alertModalEl) return;
         document.getElementById('alertModalHeader').style.backgroundColor = 'var(--cams-danger)';
         document.getElementById('alertModalTitle').textContent = 'Session ended';
-        document.getElementById('alertModalBody').textContent =
-            'The laboratory session has been ended by the teacher. You will now be logged out.';
+        document.getElementById('alertModalBody').textContent = restartRequested
+            ? 'The session has ended and a restart was requested for this student PC. You will now be logged out.'
+            : 'The laboratory session has ended. You will now be logged out.';
         alertModalEl.addEventListener('hidden.bs.modal', () => { location.href = '/Account/Logout'; }, { once: true });
         bootstrap.Modal.getOrCreateInstance(alertModalEl).show();
     });

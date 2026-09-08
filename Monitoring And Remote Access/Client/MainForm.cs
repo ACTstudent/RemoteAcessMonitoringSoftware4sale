@@ -36,6 +36,11 @@ namespace Client
         private CancellationTokenSource? _streamCts;
         private bool _isLocked = false;
         private bool _isClosing;
+        private volatile bool _sessionPaused;
+        private volatile bool _restartRequested;
+        private bool _restartScheduling;
+        private bool _restartScheduled;
+        private readonly SessionScreenGuard _sessionScreen = new();
 
         // Tray presence. The window hides into the notification area instead of
         // terminating; the icon stays visible and its Exit item is the only way
@@ -660,7 +665,7 @@ namespace Client
                 Padding = new Padding(0, 14, 0, 10),
                 Text = "This workstation is monitored by your teacher." + Environment.NewLine +
                        "Restricted applications may be closed automatically." + Environment.NewLine +
-                       "Restricted tabs in CAMS-managed browsers will be closed." + Environment.NewLine +
+                       "Blocked websites are denied in CAMS browsers and browsers using Windows proxy settings." + Environment.NewLine +
                        "Your session timer is shown above."
             };
 
@@ -723,7 +728,10 @@ namespace Client
 
                 var hubClient = new MonitoringHubClient();
                 pendingClient = hubClient;
-                hubClient.RemoteInputReceived += InputSimulator.ProcessRemoteInput;
+                hubClient.RemoteInputReceived += message =>
+                {
+                    if (!_sessionPaused && !_restartRequested) InputSimulator.ProcessRemoteInput(message);
+                };
                  hubClient.RemoteControlStateReceived += state => this.Invoke(() => OnRemoteControlStateChanged(state));
                 hubClient.Locked += () => this.Invoke(() => SetLocked(true));
                 hubClient.Unlocked += () => this.Invoke(() => SetLocked(false));
@@ -735,22 +743,28 @@ namespace Client
                 hubClient.GlobalSessionStateReceived += state => this.Invoke(() => OnSessionStateChanged(state));
                 hubClient.SessionEnded += () => this.Invoke(async () => await OnSessionEnded());
                 hubClient.ShutdownRequested += () => this.Invoke(OnShutdownRequested);
-                hubClient.RestartRequested += () => this.Invoke(OnRestartRequested);
+                hubClient.RestartRequested += () => this.Invoke(async () => await OnRestartRequested());
                 hubClient.RestrictionsReceived += rules => this.Invoke(() => OnRestrictionsReceived(rules));
 
                 var login = await hubClient.LoginAsync(serverUrl, studentId, password, Environment.MachineName);
                 await hubClient.StartAsync(serverUrl);
                 await hubClient.FetchRestrictionsAsync();
+                if (_restartRequested) return;
+
+                StartWebsiteFiltering(new Uri(serverUrl));
+                await _managedBrowserCollector.StartAsync();
 
                 _hubClient = hubClient;
                 _studentId = login.StudentId;
                 _studentName = login.DisplayName;
 
-                await _managedBrowserCollector.StartAsync();
                 _isStreaming = true;
                 _streamCts = new CancellationTokenSource();
 
                 BuildToolbar();
+                // The initial persisted state can arrive before toolbar controls
+                // exist, including a reconnect into an already paused session.
+                OnSessionStateChanged(new GlobalSessionMessage(_session.Status, _session.ElapsedSeconds, null));
                 _countdownTimer.Start();
 
                 _ = Task.Run(() => ScreenCaptureLoop(_streamCts.Token));
@@ -833,6 +847,7 @@ namespace Client
             {
                 if (pendingClient is not null && !ReferenceEquals(_hubClient, pendingClient))
                 {
+                    StopWebsiteFiltering();
                     try { await pendingClient.LogoutAsync(); } catch { }
                     try { await pendingClient.DisposeAsync(); } catch { }
                 }
@@ -863,7 +878,7 @@ namespace Client
             {
                 Text = "Server address",
                 ClientSize = new Size(470, 224),
-                StartPosition = FormStartPosition.CenterParent,
+                StartPosition = FormStartPosition.Manual,
                 FormBorderStyle = FormBorderStyle.FixedDialog,
                 MaximizeBox = false,
                 MinimizeBox = false,
@@ -929,12 +944,32 @@ namespace Client
                 BtnLogin_Click(null, EventArgs.Empty);
             };
             prompt.Controls.AddRange(new Control[] { lbl, txt, btnOk });
+            CenterDialogOnScreen(prompt);
             prompt.ShowDialog(this);
         }
 
         private void OnSessionStateChanged(GlobalSessionMessage state)
         {
+            if (_restartRequested || _isClosing) return;
             _session.Apply(state.Status, state.ElapsedSeconds);
+            _sessionPaused = state.Status == LabSessionStatus.Paused;
+            if (_sessionPaused)
+            {
+                CloseBroadcast();
+                _sessionScreen.Show("Session paused",
+                    "Please wait for your teacher to continue the session.",
+                    $"Session time: {_session.Display()}  •  Your computer is temporarily paused");
+                lblStatus.Text = _sessionScreen.InputGuardError is null
+                    ? "Status: Session paused by teacher"
+                    : "Status: Pause screen active; Windows input guard needs attention";
+                lblStatus.ForeColor = StatusWarn;
+            }
+            else
+            {
+                _sessionScreen.Hide();
+                lblStatus.Text = _isLocked ? "Status: Locked by teacher" : "Status: Connected & Streaming";
+                lblStatus.ForeColor = _isLocked ? StatusWarn : StatusOk;
+            }
             lblState.Text = state.Status;
             lblState.ForeColor = state.Status == LabSessionStatus.Running ? BrandMint
                 : state.Status == LabSessionStatus.Paused ? OnDarkWarn
@@ -944,7 +979,12 @@ namespace Client
 
         private async Task OnSessionEnded()
         {
+            // Explicit End sends RestartStudent first. Do not replace its screen
+            // or race its restart request with the ordinary logout/expiry path.
+            if (_restartRequested || _isClosing) return;
             _session.End();
+            _sessionPaused = false;
+            _sessionScreen.Hide();
             RenderTimer();
             ShowPopup("Session Ended", "",
                 "Your laboratory session has ended by the teacher. The workstation is being locked.", true);
@@ -967,10 +1007,69 @@ namespace Client
             lblStatus.Text = state.IsActive ? "Status: Connected & Streaming" : lblStatus.Text;
         }
 
-        private void OnRestartRequested()
+        private async Task OnRestartRequested()
         {
-            ShowPopup("Teacher Command", "Restart", "The teacher has restarted this workstation.", false);
-            Process.Start(new ProcessStartInfo("shutdown", "/r /t 15") { CreateNoWindow = true, UseShellExecute = false });
+            if (_restartScheduling || _restartScheduled || _isClosing) return;
+            _restartRequested = true;
+            _restartScheduling = true;
+            _sessionPaused = false;
+            _session.End();
+            lblState.Text = LabSessionStatus.Ended;
+            lblState.ForeColor = OnDarkDanger;
+            RenderTimer();
+            CloseBroadcast();
+            _sessionScreen.Show("Restarting this computer",
+                "Your teacher requested a restart. Please wait.",
+                "CAMS is preparing the workstation to restart");
+            try
+            {
+                // Restore networking before Windows terminates the client. Keep
+                // the full-screen UI and hub alive until Windows shuts down.
+                StopWebsiteFiltering(notifyStudent: false);
+                using var process = Process.Start(new ProcessStartInfo(
+                    Path.Combine(Environment.SystemDirectory, "shutdown.exe"), "/r /f /t 10")
+                {
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    RedirectStandardError = true
+                }) ?? throw new InvalidOperationException("Windows did not start the restart command.");
+                var error = await process.StandardError.ReadToEndAsync();
+                await process.WaitForExitAsync();
+                if (process.ExitCode != 0)
+                    throw new InvalidOperationException(string.IsNullOrWhiteSpace(error)
+                        ? $"Windows rejected the restart (code {process.ExitCode})." : error.Trim());
+
+                _restartScheduled = true;
+                _sessionScreen.Show("Restarting this computer",
+                    "This computer will restart automatically in a few seconds.",
+                    "Session ended  •  Please wait for the next class");
+                _managedBrowserCollector.Dispose();
+                lblStatus.Text = "Status: Restart scheduled by teacher";
+                lblStatus.ForeColor = StatusWarn;
+                _isStreaming = false;
+                _streamCts?.Cancel();
+                _countdownTimer.Stop();
+                var hub = _hubClient;
+                _hubClient = null;
+                // End has already persisted on the server. Stop reconnecting so
+                // this old client cannot create a new session during the countdown.
+                if (hub is not null) await hub.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                if (_restartScheduled)
+                {
+                    _sessionScreen.ShowNotice($"Restart scheduled. CAMS cleanup needs attention: {ex.Message}");
+                    return;
+                }
+                lblStatus.Text = $"Restart failed: {ex.Message}";
+                lblStatus.ForeColor = StatusDanger;
+                _sessionScreen.Show("Restart needs attention",
+                    "Windows could not restart this computer. Please ask your teacher for help.",
+                    "Your teacher can retry Restart from the monitoring screen");
+                _sessionScreen.ShowNotice(ex.Message);
+            }
+            finally { _restartScheduling = false; }
         }
 
         // ---------- Restriction enforcement ----------
@@ -996,6 +1095,7 @@ namespace Client
             }
             // Publish the entire update at once; enforcement runs on another thread.
             Volatile.Write(ref _restrictionRules, snapshot.ToArray());
+            _websiteProxy?.UpdateRules(snapshot);
         }
 
         private async Task RestrictionEnforcementLoop(CancellationToken token)
@@ -1006,9 +1106,14 @@ namespace Client
                 {
                     await EnforceOnce(token);
                 }
-                catch
+                catch (Exception ex) when (!token.IsCancellationRequested)
                 {
-                    // telemetry/enforcement errors never kill the loop
+                    if (!IsDisposed && IsHandleCreated)
+                        BeginInvoke(() =>
+                        {
+                            lblStatus.Text = $"Restriction enforcement needs attention: {ex.Message}";
+                            lblStatus.ForeColor = StatusDanger;
+                        });
                 }
 
                 await Task.Delay(4000, token);
@@ -1017,7 +1122,15 @@ namespace Client
 
         private async Task EnforceOnce(CancellationToken token)
         {
-            if (_hubClient == null || _isLocked) return;
+            if (_hubClient == null || _restartRequested) return;
+            _windowsProxy?.EnsureApplied();
+            if (_websiteProxy is not { IsRunning: true })
+                throw new InvalidOperationException("The website filter stopped. Restart CAMS before browsing.");
+
+            foreach (var domain in _websiteProxy.DrainBlockedDomains())
+                await ReportViolation("Website", domain, "browser", kill: false, token,
+                    reportedTarget: domain, outcome: "CAMS denied the website connection.", notifyStudent: false);
+            if (_isLocked) return;
 
             var rules = Volatile.Read(ref _restrictionRules);
             var appRules = rules.Where(r => r.RuleType == "Application").ToList();
@@ -1043,8 +1156,8 @@ namespace Client
                 await ReportViolation("Website", closed.Domain!, closed.Browser, kill: false, token,
                     reportedTarget: closed.Domain, outcome: "The restricted tab was closed in your CAMS-managed browser.");
 
-            // Ordinary browsers can be observed but are not controlled by CAMS.
-            // Read the current foreground domain rather than an old telemetry sample.
+            // Foreground observations supplement request-filter alerts for cached
+            // pages and browsers that override the Windows proxy configuration.
             var website = BrowserUrlCollector.TryGetForegroundWebsite();
             if (website is not { Status: BrowserMonitoringStatus.Captured, Domain: not null }) return;
             var matchingWebsite = websiteRules.Where(r => PolicyPatternMatcher.MatchesDomain(website.Domain, r.Target))
@@ -1064,7 +1177,7 @@ namespace Client
             await ReportViolation(rule.RuleType, app, processName, kill, token, reportedTarget);
         }
 
-        private async Task ReportViolation(string targetType, string app, string processName, bool kill, CancellationToken token, string? reportedTarget = null, string? outcome = null)
+        private async Task ReportViolation(string targetType, string app, string processName, bool kill, CancellationToken token, string? reportedTarget = null, string? outcome = null, bool notifyStudent = true)
         {
             if (kill)
             {
@@ -1091,7 +1204,7 @@ namespace Client
 
             // Throttle alerts only. Reopened apps/tabs must still be closed every pass.
             if (!_telemetry.ShouldReportInfraction(targetType, app, DateTime.UtcNow)) return;
-            outcome ??= "Use the CAMS-managed browser for enforced website restrictions. This browser tab was not closed.";
+            outcome ??= "This address is restricted. If it is still visible, restart your browser using Windows proxy settings or use the CAMS browser.";
 
             var hub = _hubClient;
             if (hub != null)
@@ -1106,13 +1219,60 @@ namespace Client
                 }
             }
 
-            this.Invoke(() => ShowPopup("Restricted Activity Detected", "Restricted activity",
-                $"'{app}' is restricted during laboratory sessions. {outcome}",
-                true));
+            // Denied background resources are recorded without opening a popup
+            // per resource. The browser already displays the connection denial.
+            if (notifyStudent)
+                this.Invoke(() => ShowPopup("Restricted Activity Detected", "Restricted activity",
+                    $"'{app}' is restricted during laboratory sessions. {outcome}",
+                    true));
         }
 
         private BrowserWebsiteObservation? _lastForegroundWebsite;
         private readonly ManagedBrowserCollector _managedBrowserCollector = CreateManagedBrowserCollector();
+        private WebsiteRestrictionProxy? _websiteProxy;
+        private WindowsSessionProxy? _windowsProxy;
+
+        private void StartWebsiteFiltering(Uri server)
+        {
+            var proxy = new WebsiteRestrictionProxy();
+            WindowsSessionProxy? windowsProxy = null;
+            try
+            {
+                proxy.UpdateRules(Volatile.Read(ref _restrictionRules));
+                proxy.Start();
+                windowsProxy = new WindowsSessionProxy(proxy.Port, server);
+                _managedBrowserCollector.ConfigureWebsiteProxy(proxy.Port);
+                _websiteProxy = proxy;
+                _windowsProxy = windowsProxy;
+            }
+            catch
+            {
+                try { windowsProxy?.Dispose(); }
+                finally { proxy.Dispose(); }
+                throw;
+            }
+        }
+
+        private void StopWebsiteFiltering(bool notifyStudent = true)
+        {
+            try
+            {
+                _windowsProxy?.Dispose();
+                _windowsProxy = null;
+            }
+            catch (Exception ex)
+            {
+                if (notifyStudent)
+                    ShowMessage("Restore browser connection settings",
+                        $"CAMS could not restore the previous Windows proxy settings. Restart CAMS to retry recovery.\n\n{ex.Message}",
+                        DialogTone.Danger);
+            }
+            finally
+            {
+                _websiteProxy?.Dispose();
+                _websiteProxy = null;
+            }
+        }
 
         private static ManagedBrowserCollector CreateManagedBrowserCollector()
         {
@@ -1372,10 +1532,13 @@ namespace Client
         private async Task ForceLogout(bool manual)
         {
             _isClosing = true;
+            _sessionPaused = false;
+            _sessionScreen.Hide();
             _isStreaming = false;
             _streamCts?.Cancel();
             _countdownTimer.Stop();
             _managedBrowserCollector.Dispose();
+            StopWebsiteFiltering();
             if (_hubClient != null)
             {
                 if (manual)
@@ -1398,6 +1561,7 @@ namespace Client
 
         private void ShowBroadcast(BroadcastMessage msg)
         {
+            if (_sessionPaused || _restartRequested) return;
             try
             {
                 using var ms = new MemoryStream(Convert.FromBase64String(msg.FrameBase64));
@@ -1499,7 +1663,7 @@ namespace Client
         /// a word as well as a colour, because "status is never carried by colour
         /// alone" - a red header alone says nothing to someone who cannot see red.
         /// </summary>
-        private Form BuildDialogShell(string heading, string message, DialogTone tone, out FlowLayoutPanel footer)
+        private static Form BuildDialogShell(string heading, string message, DialogTone tone, out FlowLayoutPanel footer, bool topMost = false)
         {
             const int width = 470;
             const int pad = 22;          // --space-5, the modal body padding
@@ -1515,7 +1679,7 @@ namespace Client
             var dialog = new Form
             {
                 Text = heading,
-                StartPosition = FormStartPosition.CenterParent,
+                StartPosition = FormStartPosition.Manual,
                 ShowInTaskbar = false,
                 FormBorderStyle = FormBorderStyle.None,   // the header below is the title bar
                 MaximizeBox = false,
@@ -1526,7 +1690,7 @@ namespace Client
                 // one - including its own modal child - so while the sign-in guard
                 // holds the main window top-most, a plain dialog is drawn behind it
                 // and the student sees a frozen screen with the message hidden.
-                TopMost = this.TopMost
+                TopMost = topMost
             };
 
             // Header: linear-gradient(135deg, --sidebar-bg, --sidebar-active-bg)
@@ -1592,7 +1756,44 @@ namespace Client
                 width,
                 headerHeight + pad + 24 + 14 + Math.Max(40, body.Height) + 18 + 1 + 68);
             dialog.HandleCreated += (_, _) => RoundCorners(dialog, 16);   // --radius-lg
+            CenterDialogOnScreen(dialog);
             return dialog;
+        }
+
+        private static void CenterDialogOnScreen(Form dialog)
+        {
+            // Capture the active monitor before the dialog takes focus. This also
+            // works for modeless alerts while the main client is hidden in the tray.
+            var foreground = NativeMethods.GetForegroundWindow();
+            var screen = foreground == IntPtr.Zero
+                ? Screen.FromPoint(Cursor.Position)
+                : Screen.FromHandle(foreground);
+            dialog.StartPosition = FormStartPosition.Manual;
+
+            void Center()
+            {
+                var area = screen.WorkingArea;
+                dialog.Location = new Point(
+                    area.Left + Math.Max(0, (area.Width - dialog.Width) / 2),
+                    area.Top + Math.Max(0, (area.Height - dialog.Height) / 2));
+            }
+
+            Center();
+            // Repeat after Windows has applied the monitor's DPI and final layout.
+            dialog.Load += (_, _) => Center();
+            dialog.Shown += (_, _) => Center();
+        }
+
+        internal static void ShowStartupMessage(string message, bool error = false)
+        {
+            using var dialog = BuildDialogShell("CAMS", message,
+                error ? DialogTone.Danger : DialogTone.Info, out var footer, topMost: true);
+            var ok = PillButton("OK", primary: true);
+            ok.DialogResult = DialogResult.OK;
+            footer.Controls.Add(ok);
+            dialog.AcceptButton = ok;
+            dialog.CancelButton = ok;
+            dialog.ShowDialog();
         }
 
         /// <summary>
@@ -1608,7 +1809,7 @@ namespace Client
             string? affirmative = null,
             string? dismissive = null)
         {
-            var dialog = BuildDialogShell(heading, message, tone, out var footer);
+            var dialog = BuildDialogShell(heading, message, tone, out var footer, topMost: this.TopMost);
 
             Button Action(string text, DialogResult value, bool primary)
             {
@@ -1647,6 +1848,11 @@ namespace Client
 
         private void ShowPopup(string title, string heading, string message, bool warning)
         {
+            if (_sessionScreen.IsVisible)
+            {
+                _sessionScreen.ShowNotice($"{(string.IsNullOrWhiteSpace(heading) ? title : heading)}: {message}");
+                return;
+            }
             var dialog = BuildDialogShell(heading, message, warning ? DialogTone.Danger : DialogTone.Info, out var footer);
             dialog.Text = title;
             dialog.TopMost = true;
@@ -1661,6 +1867,13 @@ namespace Client
 
         protected override async void OnFormClosing(FormClosingEventArgs e)
         {
+            // Do not delay a Windows restart with an asynchronous logout dialog.
+            if (e.CloseReason == CloseReason.WindowsShutDown) _isClosing = true;
+            if (!_isClosing && (_sessionPaused || _restartRequested) && e.CloseReason == CloseReason.UserClosing)
+            {
+                e.Cancel = true;
+                return;
+            }
             // Before sign-in the window cannot be dismissed at all: no close, no
             // tray. The only way out is the tray icon's Exit, which sets
             // _exitRequested and so falls through to the teardown below.
@@ -1691,6 +1904,8 @@ namespace Client
             _streamCts?.Cancel();
             _countdownTimer.Stop();
             _managedBrowserCollector.Dispose();
+            StopWebsiteFiltering(notifyStudent: e.CloseReason != CloseReason.WindowsShutDown);
+            _sessionScreen.Dispose();
             CloseBroadcast();
             HideDesktopShield();
             _tray?.Dispose();

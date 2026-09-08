@@ -417,7 +417,7 @@ namespace Server.Controllers
             if (!CheckAccess()) return Denied();
             var changed = await _sessionLifecycle.PauseAllSessionsAsync();
             await AuditAsync("GlobalPauseSession", $"Paused {changed} active lab session(s)");
-            TempData["Message"] = $"Paused {changed} lab session(s).";
+            TempData["Message"] = $"Paused {changed} lab session(s). Connected student PCs now show the full-screen pause screen.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -428,7 +428,7 @@ namespace Server.Controllers
             if (!CheckAccess()) return Denied();
             var changed = await _sessionLifecycle.ResumeAllSessionsAsync();
             await AuditAsync("GlobalResumeSession", $"Resumed {changed} paused lab session(s)");
-            TempData["Message"] = $"Resumed {changed} lab session(s).";
+            TempData["Message"] = $"Resumed {changed} lab session(s). Student PCs can be used again.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -438,8 +438,8 @@ namespace Server.Controllers
         {
             if (!CheckAccess()) return Denied();
             var changed = await _sessionLifecycle.EndAllSessionsAsync();
-            await AuditAsync("GlobalEndSession", $"Ended {changed} active lab session(s)");
-            TempData["Message"] = $"Ended {changed} lab session(s).";
+            await AuditAsync("GlobalEndSession", $"Ended {changed} active lab session(s) and requested restart of connected student PCs");
+            TempData["Message"] = $"Ended {changed} lab session(s). Restart commands were sent to connected student PCs.";
             return RedirectToAction(nameof(Index));
         }
 

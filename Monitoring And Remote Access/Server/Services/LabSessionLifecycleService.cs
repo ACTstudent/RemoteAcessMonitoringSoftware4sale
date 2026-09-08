@@ -49,6 +49,9 @@ public sealed class LabSessionLifecycleService
         var closedRemoteSessions = await CloseRemoteSessionsAsync(new[] { session }, cancellationToken);
         await _db.SaveChangesAsync(cancellationToken);
         await NotifyRemoteSessionsClosedAsync(closedRemoteSessions, cancellationToken);
+        // Explicit teacher End requests a restart. Ordinary logout, account
+        // deactivation and timeout notifications retain their separate behavior.
+        await _hub.Clients.User(session.StudentId.ToString()).SendAsync(HubEventNames.RestartStudent, cancellationToken);
         await _hub.Clients.User(session.StudentId.ToString()).SendAsync(HubEventNames.SessionEnded, cancellationToken);
     }
 
@@ -83,9 +86,12 @@ public sealed class LabSessionLifecycleService
 
     public static int GetElapsedSeconds(Server.Models.LabSession session, DateTime now)
     {
-        var effectiveNow = session.Status == LabSessionStatus.Paused && session.PauseTime.HasValue
-            ? ToUtc(session.PauseTime.Value)
-            : ToUtc(now);
+        var effectiveNow = session.Status switch
+        {
+            LabSessionStatus.Paused when session.PauseTime.HasValue => ToUtc(session.PauseTime.Value),
+            LabSessionStatus.Ended when session.EndTime.HasValue => ToUtc(session.EndTime.Value),
+            _ => ToUtc(now)
+        };
         return Math.Max(0, (int)(effectiveNow - ToUtc(session.StartTime)).TotalSeconds - session.AccumulatedPauseSeconds);
     }
 
@@ -148,9 +154,10 @@ public sealed class LabSessionLifecycleService
 
     public async Task<int> PauseAllSessionsAsync(CancellationToken cancellationToken = default)
     {
-        var sessions = await _db.LabSessions.Include(s => s.SessionRule)
-            .Where(s => s.IsActive && s.Status == LabSessionStatus.Running &&
-                (s.SessionRule == null || s.SessionRule.AllowPause))
+        // The lab-wide teacher pause freezes every active session. Per-session
+        // AllowPause rules still govern the individual pause action.
+        var sessions = await _db.LabSessions
+            .Where(s => s.IsActive && s.Status == LabSessionStatus.Running)
             .ToListAsync(cancellationToken);
         var now = DateTime.UtcNow;
         foreach (var session in sessions)
@@ -198,8 +205,19 @@ public sealed class LabSessionLifecycleService
             var closedRemoteSessions = await CloseRemoteSessionsAsync(sessions, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
             await NotifyRemoteSessionsClosedAsync(closedRemoteSessions, cancellationToken);
-            await _hub.Clients.Users(sessions.Select(s => s.StudentId.ToString()).Distinct().ToList())
-                .SendAsync(HubEventNames.SessionEnded, cancellationToken);
+
+            // Only the students whose sessions actually ended, and only when there
+            // were any. RestartStudent reboots with /r /f and takes unsaved work
+            // with it, so the audience has to be exactly right: broadcasting to the
+            // whole student group would also reboot a student who had just signed
+            // in with no session, and sending outside this guard would reboot the
+            // room when "End all" was pressed with nothing running. Addressing the
+            // users rather than the group already excludes teacher and admin PCs.
+            // Restart goes first so the client can suppress the generic logout
+            // dialog that follows.
+            var endedStudents = sessions.Select(s => s.StudentId.ToString()).Distinct().ToList();
+            await _hub.Clients.Users(endedStudents).SendAsync(HubEventNames.RestartStudent, cancellationToken);
+            await _hub.Clients.Users(endedStudents).SendAsync(HubEventNames.SessionEnded, cancellationToken);
         }
         return sessions.Count;
     }
@@ -252,6 +270,9 @@ public sealed class LabSessionLifecycleService
 
     private static void End(Server.Models.LabSession session, DateTime endedAt)
     {
+        if (session.Status == LabSessionStatus.Paused && session.PauseTime.HasValue)
+            session.AccumulatedPauseSeconds += Math.Max(0, (int)(ToUtc(endedAt) - ToUtc(session.PauseTime.Value)).TotalSeconds);
+        session.PauseTime = null;
         session.IsActive = false; session.Status = LabSessionStatus.Ended; session.EndTime ??= endedAt;
         if (session.Computer is not null)
             session.Computer.Status = string.IsNullOrWhiteSpace(session.Computer.AssignedTo) ? "Available" : "Assigned";

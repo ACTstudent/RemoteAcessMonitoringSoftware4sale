@@ -14,13 +14,14 @@ public sealed record ManagedBrowserStatus(string Identity, bool Running, bool En
 
 public sealed class ManagedBrowserCollector : IDisposable
 {
-    private readonly HttpClient _httpClient = new() { Timeout = TimeSpan.FromMilliseconds(350) };
+    private readonly HttpClient _httpClient = new(new HttpClientHandler { UseProxy = false }) { Timeout = TimeSpan.FromMilliseconds(350) };
     private readonly ManagedBrowserOptions _options;
     private readonly string _profileRoot;
     private readonly Func<string, string?> _findExecutable;
     private readonly Dictionary<string, Process> _processes = new(StringComparer.OrdinalIgnoreCase);
     private readonly object _processLock = new();
     private CancellationTokenSource? _lifecycleCts;
+    private int? _websiteProxyPort;
     private bool _disposed;
 
     public ManagedBrowserCollector(ManagedBrowserOptions? options = null, string? profileRoot = null, Func<string, string?>? findExecutable = null)
@@ -32,10 +33,19 @@ public sealed class ManagedBrowserCollector : IDisposable
 
     public Task StartAsync(CancellationToken cancellationToken = default)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         if (!_options.Enabled || _lifecycleCts != null) return Task.CompletedTask;
         _lifecycleCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         _ = MaintainBrowsersAsync(_lifecycleCts.Token);
         return Task.CompletedTask;
+    }
+
+    public void ConfigureWebsiteProxy(int port)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (port is < 1 or > 65535) throw new ArgumentOutOfRangeException(nameof(port));
+        if (_lifecycleCts is not null) throw new InvalidOperationException("Configure filtering before starting managed browsers.");
+        _websiteProxyPort = port;
     }
 
     public IReadOnlyList<ManagedBrowserStatus> GetStatus() => Definitions().Select(definition =>
@@ -232,14 +242,20 @@ public sealed class ManagedBrowserCollector : IDisposable
         !string.IsNullOrWhiteSpace(foregroundWindowTitle) &&
         foregroundWindowTitle.Contains(tabTitle, StringComparison.OrdinalIgnoreCase);
 
-    public static string BuildArguments(ManagedBrowserDefinition definition, string profileRoot) =>
-        $"--remote-debugging-address=127.0.0.1 --remote-debugging-port={definition.Port} --user-data-dir=\"{Path.Combine(profileRoot, definition.Identity)}\" --no-first-run --no-default-browser-check";
+    public static string BuildArguments(ManagedBrowserDefinition definition, string profileRoot, int? websiteProxyPort = null) =>
+        $"--remote-debugging-address=127.0.0.1 --remote-debugging-port={definition.Port} --user-data-dir=\"{Path.Combine(profileRoot, definition.Identity)}\" --no-first-run --no-default-browser-check" +
+        (websiteProxyPort is int port
+            ? $" --proxy-server=\"http://127.0.0.1:{port}\" --proxy-bypass-list=\"<-loopback>\" --disable-quic"
+            : "");
 
     public static bool IsExpectedIdentity(string? browser, string identity)
     {
         if (string.IsNullOrWhiteSpace(browser)) return false;
         var value = browser.ToLowerInvariant();
-        return identity.Equals("chrome", StringComparison.OrdinalIgnoreCase) ? value.Contains("chrome") && !value.Contains("brave") : identity.Equals("brave", StringComparison.OrdinalIgnoreCase) && value.Contains("brave");
+        // Brave can identify its Chromium engine as Chrome in DevTools metadata.
+        // This is checked only after confirming CAMS owns the launched process.
+        return identity.Equals("chrome", StringComparison.OrdinalIgnoreCase) ? value.Contains("chrome") && !value.Contains("brave")
+            : identity.Equals("brave", StringComparison.OrdinalIgnoreCase) && (value.Contains("brave") || value.Contains("chrome"));
     }
 
     public static string? FindExecutable(string executableName)
@@ -267,8 +283,10 @@ public sealed class ManagedBrowserCollector : IDisposable
         {
             foreach (var definition in Definitions())
             {
+                if (token.IsCancellationRequested) return;
                 lock (_processLock)
                 {
+                    if (_disposed) return;
                     if (_processes.TryGetValue(definition.Identity, out var running) && !running.HasExited) continue;
                     running?.Dispose();
                     _processes.Remove(definition.Identity);
@@ -278,8 +296,12 @@ public sealed class ManagedBrowserCollector : IDisposable
                 if (IsEndpointAvailable(definition.Port)) continue;
                 var executable = _findExecutable(definition.ExecutableName);
                 if (executable == null) continue;
-                var process = Process.Start(new ProcessStartInfo(executable, BuildArguments(definition, _profileRoot)) { UseShellExecute = false, CreateNoWindow = true });
-                if (process != null) lock (_processLock) _processes[definition.Identity] = process;
+                lock (_processLock)
+                {
+                    if (_disposed || token.IsCancellationRequested) return;
+                    var process = Process.Start(new ProcessStartInfo(executable, BuildArguments(definition, _profileRoot, _websiteProxyPort)) { UseShellExecute = false, CreateNoWindow = true });
+                    if (process != null) _processes[definition.Identity] = process;
+                }
             }
             try { await Task.Delay(_options.RestartDelayMilliseconds, token); } catch (OperationCanceledException) { }
         }

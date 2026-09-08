@@ -101,10 +101,10 @@ Active teachers can monitor and control all connected student clients and use la
 ### Sessions and monitoring
 
 1. On `/Teacher/Sessions`, start a session for a student in one of your active classes, optionally selecting an available workstation and active session rule.
-2. Individual pause/resume/end actions apply to your own sessions. The global buttons affect eligible sessions across all teachers; pause still requires a permitting session rule.
-3. Monitor every connected Student client, including screen frames, connectivity, active application, browser status, and idle state.
-4. Globally use lock, release CAMS lock state, force logout, restart, shutdown, warning, notification, broadcast, and remote support/input commands.
-5. End the session to persist its end state, notify the connected client, release the workstation, and log out the client.
+2. Pause displays a full-screen waiting screen on every monitor of the affected student PC and stops its session timer. Resume removes the screen, releases keyboard/mouse input, and continues the timer. The global Pause button freezes all active sessions across teachers; the individual Pause action still respects its session rule.
+3. End closes the affected session records and requests a restart of the connected student PCs after 10 seconds. The global End button targets every connected student client. Open applications are forced closed, so the confirmation warns that unsaved work can be lost. Ordinary logout, account deactivation, and automatic timeout keep their existing logout/lock behavior. See [session control details](docs/improvements/SESSION-CONTROLS.md).
+4. Monitor every connected Student client, including screen frames, connectivity, active application, browser status, and idle state.
+5. Globally use lock, release CAMS lock state, force logout, restart, shutdown, warning, notification, broadcast, and remote support/input commands.
 
 The capture loop targets a 50 ms delay with one frame in flight. This is not a 20 FPS guarantee; capture and network conditions determine observed updates.
 
@@ -118,7 +118,8 @@ Teachers can create and edit global block/allow rules, blacklists, whitelists, a
 
 - Application block violations may terminate the matching process and report an infraction.
 - Website telemetry stores normalized domains, not browser credentials, cookies, page content, full paths, queries, or fragments. Live screen frames can still show any content visible on the display.
-- Website rules close restricted tabs in browsers launched and managed by CAMS; they do not terminate the whole browser. The enforcement loop runs approximately every four seconds, so this is not a network-level block and a page may load before detection. Ordinary browser windows remain warning-only. Notices are CAMS-owned WinForms dialogs.
+- Website rules deny new HTTP/HTTPS connections through the CAMS session filter, including ordinary browsers configured to use Windows proxy settings. Rule refresh disconnects filtered connections to newly blocked domains. CAMS-managed tabs are also closed on the approximately four-second enforcement loop. HTTPS denial appears as a browser connection error; HTTP denial displays a school-policy message. Notices are CAMS-owned WinForms dialogs.
+- Install the rebuilt student client and restart ordinary browsers after sign-in to pick up the proxy configuration. Browsers with their own proxy/VPN settings and previously cached pages are outside this connection filter's guarantees. Windows proxy settings are restored at logout; after a crash, restart CAMS to recover the saved settings. For rollout requirements and remaining validation, see [website enforcement](docs/improvements/BLOCKING-FIX.md).
 - Teacher warnings also appear as CAMS topmost dialogs.
 - Alerts can be grouped, filtered, acknowledged, dismissed with a reason, reopened, and exported where supported.
 
@@ -144,7 +145,7 @@ stateDiagram-v2
     [*] --> ClientValidation: CLIENT login with PC name
     ClientValidation --> Rejected: Invalid credentials or conflicting/unavailable station
     ClientValidation --> Running: Workstation created, safely assigned, or resumed
-    Running --> Paused: Authorized pause and rule allows it
+    Running --> Paused: Teacher pause (individual pause respects its rule)
     Paused --> Running: Authorized resume
     Running --> Reconnecting: Temporary SignalR loss
     Paused --> Reconnecting: Temporary SignalR loss

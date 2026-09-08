@@ -285,8 +285,8 @@ namespace Server.Controllers
             if (session != null)
             {
                 await _sessionLifecycle.EndAsync(session);
-                await AuditAsync("EndSession", $"Ended session {id}");
-                TempData["Message"] = "Lab Session ended successfully!";
+                await AuditAsync("EndSession", $"Ended session {id} and requested a student workstation restart");
+                TempData["Message"] = "Session ended. A restart command was sent to the student's connected PC.";
             }
             return RedirectToAction("Sessions");
         }
@@ -299,6 +299,7 @@ namespace Server.Controllers
             if (!teacherId.HasValue) return Denied();
             var resumed = await _sessionLifecycle.ResumeAllSessionsAsync();
             await AuditAsync("GlobalStartSession", $"Started or resumed {resumed} paused sessions");
+            TempData["Message"] = $"Resumed {resumed} session(s). Student PCs can be used again.";
             return RedirectToAction(nameof(Sessions));
         }
 
@@ -310,6 +311,7 @@ namespace Server.Controllers
             if (!teacherId.HasValue) return Denied();
             var paused = await _sessionLifecycle.PauseAllSessionsAsync();
             await AuditAsync("GlobalPauseSession", $"Paused {paused} sessions");
+            TempData["Message"] = $"Paused {paused} session(s). Connected student PCs now show the full-screen pause screen.";
             return RedirectToAction(nameof(Sessions));
         }
 
@@ -320,7 +322,8 @@ namespace Server.Controllers
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
             var ended = await _sessionLifecycle.EndAllSessionsAsync();
-            await AuditAsync("GlobalEndSession", $"Ended {ended} sessions");
+            await AuditAsync("GlobalEndSession", $"Ended {ended} sessions and requested restart of connected student PCs");
+            TempData["Message"] = $"Ended {ended} session(s). Restart commands were sent to connected student PCs.";
             return RedirectToAction(nameof(Sessions));
         }
 
