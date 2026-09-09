@@ -1750,7 +1750,7 @@ summary:focus-visible,
    happen to be stacked. The second selector outruns the CRUD page rule, which
    is more specific than a plain class on its own would be. */
 .log-group-events .custom-table thead th,
-.crud-page .crud-panel .log-group-events .custom-table thead th {
+.crud-page .log-group-events .custom-table thead th {
     background: #1e6f49;
     color: #ffffff;
     text-transform: none;

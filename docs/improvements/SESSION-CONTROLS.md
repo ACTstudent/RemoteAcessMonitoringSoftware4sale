@@ -1,6 +1,6 @@
 # Session controls — 2026-09-08
 
-Source changes only. No tests, builds, live input blocking, or workstation restarts were run. Rebuild and deploy both server and student client to activate the complete behavior.
+Update (2026-09-09): the implementation is included in the local 2.17.0 build artifacts. The server was republished and its installer refreshed; server and client program files were updated in this computer's existing installation folders, preserving settings, database, and certificates. Other student PCs still need the updated client installer. No behavior tests, live input blocking, or workstation restarts were run. See [local update details](LOCAL-UPDATE-2026-09-09.md).
 
 ## Teacher actions
 

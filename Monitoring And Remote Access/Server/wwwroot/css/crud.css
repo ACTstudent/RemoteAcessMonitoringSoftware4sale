@@ -35,6 +35,12 @@ body.crud-page {
 .crud-page .btn-emerald, .crud-page .btn-view-class { background: #185c3c; border-color: #185c3c; color: #fff; }
 .crud-page .btn-emerald:hover, .crud-page .btn-view-class:hover { background: #124a30; border-color: #124a30; }
 .crud-page .form-control, .crud-page .form-select { font-size: .82rem; border-radius: 6px; border-color: #dce0e3; }
+.crud-page .form-check-input { accent-color: var(--accent-emerald); }
+.crud-page .form-check-input:checked,
+.crud-page .form-check-input:indeterminate { background-color: var(--accent-emerald); border-color: var(--accent-emerald); }
+.crud-page .form-check-input:focus { border-color: var(--accent-emerald); box-shadow: 0 0 0 .25rem rgb(24 92 60 / 20%); }
+.crud-page .empty-state a:not(.btn), .crud-page .empty-state-link { color: var(--accent-emerald); }
+.crud-page .empty-state a:not(.btn):hover, .crud-page .empty-state-link:hover { color: var(--accent-emerald-hover); }
 .crud-page .crud-panel {
     display: block; background: #fff; border: 1px solid #d2d7da !important;
     border-radius: 14px !important; padding: 18px 18px 0;
@@ -51,7 +57,7 @@ body.crud-page {
 .crud-toolbar > .form-select ~ .btn:last-child { margin-left: 0; }
 .crud-page .crud-panel .table-responsive { border: 1px solid #dce2de; border-radius: 12px; }
 .crud-page .crud-panel .custom-table { --bs-table-bg: transparent; font-size: .79rem; }
-.crud-page .crud-panel .custom-table thead th { background: #185c3c; color: #fff; font-size: .73rem; font-weight: 500; text-transform: none; letter-spacing: 0; padding: 13px 12px; border: 0; white-space: nowrap; }
+.crud-page .custom-table thead th { background: var(--accent-emerald); color: #fff; font-size: .73rem; font-weight: 500; text-transform: none; letter-spacing: 0; padding: 13px 12px; border: 0; white-space: nowrap; }
 .crud-page .crud-panel .custom-table tbody td { padding: 12px; border-bottom: 1px solid #edf0ed; vertical-align: middle; }
 .crud-page .crud-panel .custom-table tbody tr:last-child td { border-bottom: 0; }
 .crud-page .crud-panel .custom-table tbody tr:hover { background: #f0f7f2; }
@@ -79,6 +85,21 @@ body.crud-page {
 .crud-pagination .btn:disabled { opacity: .4; }
 .crud-no-results { padding: 38px 20px; color: #68716d; text-align: center; font-size: .9rem; }
 .crud-page .crud-table-panel { margin-bottom: 0; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+.crud-page .log-toolbar { align-items: flex-end; }
+.crud-page .log-toolbar .log-filter-field { flex: 1 1 135px; min-width: 135px; }
+.crud-page .log-toolbar .log-filter-wide { flex-basis: 165px; }
+.crud-page .log-toolbar .form-label { display: block; margin-bottom: 5px; color: var(--text-muted); font-size: .75rem; }
+.crud-page .log-toolbar .form-control,
+.crud-page .log-toolbar .form-select { min-height: 36px; }
+.crud-page .log-toolbar .crud-search { max-width: none; }
+.crud-page .log-toolbar-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.crud-page .log-toolbar-actions .btn { min-height: 36px; white-space: nowrap; padding: 7px 12px; }
+.crud-page .log-filter-options { padding-top: 4px; }
+.crud-page .log-filter-options .log-filter-field { max-width: 220px; }
+.crud-page .log-bulk-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; padding: 0 0 16px; }
+.crud-page .log-directory-panel .custom-table tbody td.log-empty-state { padding: 28px 12px; }
+.crud-page .log-directory-panel .empty-state-icon { font-size: 1.7rem; margin-bottom: 8px; }
+.crud-page .log-directory-panel .empty-state-message { font-size: .82rem; }
 @media print { .crud-footer, .crud-pagination { display: none !important; } }
 .crud-page [data-crud-item][hidden], .crud-page [data-crud-empty][hidden] { display: none !important; }
 .crud-page .modal-content { border: 1px solid #d5ddd8; border-radius: 14px !important; }

@@ -6,17 +6,12 @@
     var filter = Model.Filter;
     var paging = Model.Alerts;
     var selectedStatus = filter.ResolvedStatusName;
+    var showMoreFilters = filter.From.HasValue || filter.To.HasValue || !string.IsNullOrWhiteSpace(filter.StudentId);
 }
 
-<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
-    <div>
-        <h2 class="fw-extrabold mb-1">Monitoring Alerts</h2>
-        <p class="text-muted mb-0">Related occurrences stay grouped while each group moves through a clear alert lifecycle.</p>
-    </div>
-    @* The export carries the same filter as the list, so the file matches the screen. *@
-    <a class="btn btn-outline-emerald rounded-pill align-self-start" href="@Url.Action("ExportAlertsCsv", filter.ToRouteValues())">
-        <i class="bi bi-download me-1"></i>Export CSV
-    </a>
+<div class="mb-4">
+    <h2 class="fw-extrabold mb-1">Monitoring Alerts</h2>
+    <p class="text-muted mb-0">Related occurrences stay grouped while each group moves through a clear alert lifecycle.</p>
 </div>
 
 @if (!string.IsNullOrEmpty(Model.FilterWarning))
@@ -27,18 +22,19 @@
     </div>
 }
 
-<form method="get" class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+<div class="card crud-panel log-directory-panel">
+<form method="get">
     @*
         The status dropdown is the single control for which alerts are listed.
         includeAcknowledged rides along so that choosing "All statuses" actually
         widens the list instead of falling back to open alerts only.
     *@
     <input type="hidden" name="includeAcknowledged" value="true" />
-    <div class="row g-3 align-items-end">
-        <div class="col-sm-6 col-xl-2"><label class="form-label small text-muted" for="alert-from">From</label><input id="alert-from" type="date" name="from" class="form-control" value="@filter.From?.ToString("yyyy-MM-dd")" /></div>
-        <div class="col-sm-6 col-xl-2"><label class="form-label small text-muted" for="alert-to">To</label><input id="alert-to" type="date" name="to" class="form-control" value="@filter.To?.ToString("yyyy-MM-dd")" /></div>
-        <div class="col-sm-6 col-xl-2">
-            <label class="form-label small text-muted" for="alert-severity">Severity</label>
+    <div class="crud-toolbar log-toolbar">
+        <label class="visually-hidden" for="alert-station">Station</label>
+        <input id="alert-station" type="search" name="station" class="form-control crud-search" value="@filter.Station" placeholder="Search station..." />
+        <div class="log-filter-field">
+            <label class="visually-hidden" for="alert-severity">Severity</label>
             <select id="alert-severity" name="severity" class="form-select">
                 <option value="">All severities</option>
                 <option value="Critical" selected="@(filter.Severity == "Critical")">Critical</option>
@@ -46,8 +42,8 @@
                 <option value="Information" selected="@(filter.Severity == "Information")">Information</option>
             </select>
         </div>
-        <div class="col-sm-6 col-xl-2">
-            <label class="form-label small text-muted" for="alert-status">Status</label>
+        <div class="log-filter-field">
+            <label class="visually-hidden" for="alert-status">Status</label>
             <select id="alert-status" name="status" class="form-select">
                 <option value="" selected="@(selectedStatus.Length == 0)">All statuses</option>
                 @foreach (var status in Enum.GetValues<MonitoringAlertStatus>())
@@ -56,11 +52,19 @@
                 }
             </select>
         </div>
-        <div class="col-sm-6 col-xl-2"><label class="form-label small text-muted" for="alert-student">Student ID</label><input id="alert-student" name="studentId" class="form-control" value="@filter.StudentId" /></div>
-        <div class="col-sm-6 col-xl-2"><label class="form-label small text-muted" for="alert-station">Station</label><input id="alert-station" name="station" class="form-control" value="@filter.Station" /></div>
-        <div class="col-sm-6 col-xl-2 d-flex gap-2">
-            <button class="btn btn-emerald flex-grow-1" type="submit"><i class="bi bi-funnel me-1"></i>Apply filters</button>
+        <div class="log-toolbar-actions">
+            <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#alert-more-filters" aria-controls="alert-more-filters" aria-expanded="@(showMoreFilters ? "true" : "false")"><i class="bi bi-sliders me-1" aria-hidden="true"></i>More filters</button>
+            <button class="btn btn-emerald" type="submit"><i class="bi bi-funnel me-1" aria-hidden="true"></i>Apply</button>
             <a class="btn btn-outline-secondary" href="@Url.Action("Alerts")" title="Clear all filters">Reset</a>
+            @* The export carries the same filter as the list, so the file matches the screen. *@
+            <a class="btn btn-outline-emerald" href="@Url.Action("ExportAlertsCsv", filter.ToRouteValues())"><i class="bi bi-download me-1" aria-hidden="true"></i>Export CSV</a>
+        </div>
+    </div>
+    <div id="alert-more-filters" class="collapse @(showMoreFilters ? "show" : "")">
+        <div class="crud-toolbar log-toolbar log-filter-options">
+            <div class="log-filter-field"><label class="form-label" for="alert-from">From</label><input id="alert-from" type="date" name="from" class="form-control" value="@filter.From?.ToString("yyyy-MM-dd")" /></div>
+            <div class="log-filter-field"><label class="form-label" for="alert-to">To</label><input id="alert-to" type="date" name="to" class="form-control" value="@filter.To?.ToString("yyyy-MM-dd")" /></div>
+            <div class="log-filter-field"><label class="form-label" for="alert-student">Student ID</label><input id="alert-student" name="studentId" class="form-control" value="@filter.StudentId" /></div>
         </div>
     </div>
 </form>
@@ -69,24 +73,24 @@
     @Html.AntiForgeryToken()
     <partial name="_AlertFilterFields" model="filter" />
 </form>
-<div class="card border-0 shadow-sm rounded-4 mb-3">
-    <div class="card-body d-flex flex-column flex-lg-row align-items-lg-end gap-3">
+@if (paging.Items.Count > 0)
+{
+    <div class="log-bulk-toolbar">
         <div class="flex-grow-1">
             <label for="dismissal-reason" class="form-label small text-muted mb-1">Dismissal reason (applies only to Dismiss)</label>
             <input id="dismissal-reason" name="reason" form="bulk-alert-form" maxlength="500" class="form-control" placeholder="Optional operational note" />
         </div>
         <div class="d-flex flex-wrap gap-2">
-            <button type="submit" form="bulk-alert-form" formaction="@Url.Action("BulkAcknowledgeAlerts", "Teacher")" class="btn btn-success rounded-pill"><i class="bi bi-check2-circle me-1"></i>Acknowledge</button>
+            <button type="submit" form="bulk-alert-form" formaction="@Url.Action("BulkAcknowledgeAlerts", "Teacher")" class="btn btn-emerald"><i class="bi bi-check2-circle me-1"></i>Acknowledge</button>
             <button type="submit" form="bulk-alert-form" formaction="@Url.Action("BulkDismissAlerts", "Teacher")" class="btn btn-outline-secondary rounded-pill"><i class="bi bi-archive me-1"></i>Dismiss</button>
             <button type="submit" form="bulk-alert-form" formaction="@Url.Action("BulkReopenAlerts", "Teacher")" class="btn btn-outline-warning rounded-pill"><i class="bi bi-arrow-counterclockwise me-1"></i>Reopen</button>
         </div>
     </div>
-</div>
+}
 
-<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
     <div class="table-responsive">
         <table class="table custom-table align-middle mb-0">
-            <thead><tr><th class="ps-3"><input id="select-all-alerts" class="form-check-input" type="checkbox" data-alert-select-all aria-label="Select all alerts" /></th><th scope="col" class="log-group-toggle-cell"><span class="visually-hidden">Expand</span></th><th scope="col">Student / station</th><th scope="col">Alert groups</th><th scope="col">Occurrences</th><th scope="col">Open</th><th scope="col">Last seen</th></tr></thead>
+            <thead><tr><th class="ps-3"><input id="select-all-alerts" class="form-check-input" type="checkbox" data-alert-select-all aria-label="Select all alerts" disabled="@(paging.Items.Count == 0)" /></th><th scope="col" class="log-group-toggle-cell"><span class="visually-hidden">Expand</span></th><th scope="col">Student / station</th><th scope="col">Alert groups</th><th scope="col">Occurrences</th><th scope="col">Open</th><th scope="col">Last seen</th></tr></thead>
             <tbody>
             @{
                 // One row per student, their alert groups folded inside. The list was
@@ -186,18 +190,17 @@
             }
             @if (paging.Items.Count == 0)
             {
-                <tr><td colspan="7" class="text-center text-muted py-5">
+                <tr><td colspan="7" class="text-center text-muted log-empty-state">
                     <i class="bi bi-check2-circle fs-3 d-block mb-2"></i>
                     No alert groups match these filters.
-                    <a class="d-block mt-2" href="@Url.Action("Alerts")">Clear the filters</a>
+                    <a class="d-block mt-2 empty-state-link" href="@Url.Action("Alerts")">Clear the filters</a>
                 </td></tr>
             }
             </tbody>
         </table>
     </div>
+    @await Html.PartialAsync("_CrudPager", PagerViewModel.For(paging, "alert groups", "Alerts", filter.ToRouteValues()))
 </div>
-
-@await Html.PartialAsync("_Pager", PagerViewModel.For(paging, "grouped alerts", "Alerts", filter.ToRouteValues()))
 
 @section Scripts {
     <script src="~/js/alert-bulk.js" asp-append-version="true"></script>

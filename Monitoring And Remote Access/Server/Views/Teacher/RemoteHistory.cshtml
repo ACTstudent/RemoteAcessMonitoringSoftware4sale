@@ -22,9 +22,17 @@
 </div>
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
     <div class="card-header bg-white py-3"><h5 class="fw-bold mb-0">Command Audit</h5></div>
-    <div class="table-responsive"><table class="table custom-table align-middle mb-0"><thead><tr><th>Time</th><th>Command</th><th>Details</th><th>Session</th></tr></thead><tbody>
-    @foreach (var log in Model.Items) { <tr><td>@log.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td><td>@log.Command</td><td>@log.Details</td><td>@(log.SessionId?.ToString() ?? "-")</td></tr> }
-    @if (!Model.Items.Any()) { <tr><td colspan="4" class="text-center empty-state"><i class="bi bi-terminal empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No remote commands recorded.</span></td></tr> }
-    </tbody></table></div>
+    @*
+        Remote Sessions above is opted into crud-list.js, which wraps its table in
+        this same panel. Command Audit pages on the server, so it gets the panel
+        and the matching footer as markup instead: opting it in would page the one
+        page it was already given, on top of the server's own paging.
+    *@
+    <div class="crud-panel crud-table-panel">
+        <div class="table-responsive"><table class="table custom-table align-middle mb-0"><thead><tr><th>Time</th><th>Command</th><th>Details</th><th>Session</th></tr></thead><tbody>
+        @foreach (var log in Model.Items) { <tr><td>@log.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td><td>@log.Command</td><td>@log.Details</td><td>@(log.SessionId?.ToString() ?? "-")</td></tr> }
+        @if (!Model.Items.Any()) { <tr><td colspan="4" class="text-center empty-state"><i class="bi bi-terminal empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No remote commands recorded.</span></td></tr> }
+        </tbody></table></div>
+        @await Html.PartialAsync("_CrudPager", Server.Models.PagerViewModel.For(Model, "commands", "RemoteHistory", historyFilter))
+    </div>
 </div>
-@await Html.PartialAsync("_Pager", Server.Models.PagerViewModel.For(Model, "commands", "RemoteHistory", historyFilter))

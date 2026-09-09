@@ -1,6 +1,6 @@
 # Website and application enforcement — 2026-09-08
 
-Status: source implemented; not built, tested, packaged, or deployed. No live browser, process, or Windows proxy settings were changed during this work, honoring the user's request to skip testing.
+Update (2026-09-09): the implementation is included in the local 2.17.0 build artifacts, and this computer's installed server and client program files have been updated. Other student PCs still need the updated client installer. No live blocking tests or Windows proxy changes were performed, honoring the user's request to skip testing. See [local update details](LOCAL-UPDATE-2026-09-09.md).
 
 ## Problem and resulting behavior
 

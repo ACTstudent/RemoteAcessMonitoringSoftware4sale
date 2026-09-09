@@ -1,0 +1,38 @@
+@using Microsoft.AspNetCore.Routing
+@model Server.Models.PagerViewModel
+@{
+    var pageCount = Math.Max(1, Model.PageCount);
+    var first = Model.TotalCount == 0 ? 0 : (Model.Page - 1) * Model.PageSize + 1;
+    var last = Math.Min(Model.Page * Model.PageSize, Model.TotalCount);
+    Func<int, RouteValueDictionary> pageLink = page =>
+    {
+        var values = Model.RouteValues is null ? new RouteValueDictionary() : new RouteValueDictionary(Model.RouteValues);
+        values["page"] = page;
+        if (Model.PageSize > 0) values["pageSize"] = Model.PageSize;
+        return values;
+    };
+}
+<nav class="crud-footer" aria-label="@Model.ItemNoun pages">
+    @* Worded exactly as the client-side pager in crud-list.js, so a server-paged
+       table and a locally paged one read the same in every state. *@
+    <span>@(Model.TotalCount == 0 ? $"Showing 0 of 0 {Model.ItemNoun}" : $"Showing {first}–{last} of {Model.TotalCount} {Model.ItemNoun}")</span>
+    <div class="crud-pagination">
+        @if (Model.Page <= 1)
+        {
+            <button type="button" class="btn" disabled aria-label="Previous page"><i class="bi bi-arrow-left" aria-hidden="true"></i></button>
+        }
+        else
+        {
+            <a class="btn" rel="prev" aria-label="Previous page" href="@Url.Action(Model.Action, pageLink(Model.Page - 1))"><i class="bi bi-arrow-left" aria-hidden="true"></i></a>
+        }
+        <span class="btn" aria-current="page" aria-label="Page @Model.Page of @pageCount">@Model.Page</span>
+        @if (Model.Page >= pageCount)
+        {
+            <button type="button" class="btn" disabled aria-label="Next page"><i class="bi bi-arrow-right" aria-hidden="true"></i></button>
+        }
+        else
+        {
+            <a class="btn" rel="next" aria-label="Next page" href="@Url.Action(Model.Action, pageLink(Model.Page + 1))"><i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+        }
+    </div>
+</nav>

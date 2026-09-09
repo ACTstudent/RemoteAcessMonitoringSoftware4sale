@@ -15,15 +15,17 @@ namespace Server.Models;
 /// <param name="ItemNoun">Plural noun for the items, used in the count and the landmark label.</param>
 /// <param name="Action">The action the page links point at.</param>
 /// <param name="RouteValues">The current filter, so paging does not drop it. Any <c>page</c> entry is replaced.</param>
+/// <param name="PageSize">Items per page, used by compact directory footers to show the visible range.</param>
 public sealed record PagerViewModel(
     int Page,
     int PageCount,
     int TotalCount,
     string ItemNoun,
     string Action,
-    object? RouteValues = null)
+    object? RouteValues = null,
+    int PageSize = 0)
 {
     public static PagerViewModel For<T>(
         PagedResult<T> result, string itemNoun, string action, object? routeValues = null) =>
-        new(result.Page, result.PageCount, result.TotalCount, itemNoun, action, routeValues);
+        new(result.Page, result.PageCount, result.TotalCount, itemNoun, action, routeValues, result.PageSize);
 }
