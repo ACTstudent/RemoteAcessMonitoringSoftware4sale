@@ -90,9 +90,14 @@ public class MonitoringHubClient : IMonitoringHubClient
         if (!string.Equals(hubUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("CAMS requires an HTTPS server URL.");
 
+        // Without these the client keeps SignalR's default 15s ping against the
+        // server's 15s client timeout: no margin, so one late ping reads as a
+        // dropped station and the student watches it reconnect for nothing.
         var connection = new HubConnectionBuilder()
             .WithUrl(serverUrl, options => options.Cookies = _cookies)
             .WithAutomaticReconnect(new PersistentRetryPolicy())
+            .WithKeepAliveInterval(HubHeartbeat.KeepAlive)
+            .WithServerTimeout(HubHeartbeat.ClientTimeout)
             .Build();
 
         connection.Reconnected += _connectionId => HandleReconnectedAsync();

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Server.Authorization;
 using Server.Data;
 using Server.Services;
+using Shared.Contracts;
 
 Directory.SetCurrentDirectory(AppContext.BaseDirectory);
 var initializeOnly = args.Any(argument => string.Equals(argument, "--initialize-only", StringComparison.OrdinalIgnoreCase));
@@ -94,11 +95,10 @@ builder.Services.AddSignalR(options =>
     // enough for a teacher to act on a monitoring view that had already stopped
     // updating. A 5s ping lets the browser notice within about 15s.
     //
-    // The browser sets its serverTimeout to three times this interval; the
-    // guidance is at least double, so a single missed ping on a busy Wi-Fi link
-    // does not read as a disconnection.
-    options.KeepAliveInterval = TimeSpan.FromSeconds(5);
-    options.ClientTimeoutInterval = TimeSpan.FromSeconds(15);
+    // Both ends read these from HubHeartbeat: a client that pings less often
+    // than this timeout is dropped while it is still perfectly healthy.
+    options.KeepAliveInterval = HubHeartbeat.KeepAlive;
+    options.ClientTimeoutInterval = HubHeartbeat.ClientTimeout;
 });
 
 var httpsPort = builder.Configuration.GetValue("Cams:HttpsPort", 5000);
