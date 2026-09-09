@@ -26,16 +26,57 @@
         <span class="badge bg-light text-dark font-monospace fs-6">@(((IEnumerable<Server.Models.WebsiteUsageLog>)(ViewBag.WebsiteUsage ?? new List<Server.Models.WebsiteUsageLog>())).Count()) Events</span>
     </div>
     <div class="table-responsive">
-        <table data-crud-table="website events" class="table custom-table align-middle mb-0">
-            <thead><tr><th>Student</th><th>Domain</th><th>Browser</th><th>Recorded At</th></tr></thead>
+        @{
+            // One row per student, their visits folded inside. A class of thirty
+            // browsing for an hour produces thousands of lines otherwise, and the
+            // student's name is repeated on every one of them.
+            var websiteByStudent = ((IEnumerable<Server.Models.WebsiteUsageLog>)(ViewBag.WebsiteUsage ?? new List<Server.Models.WebsiteUsageLog>()))
+                .GroupBy(log => log.Student?.Username ?? log.StudentId?.ToString() ?? "?")
+                .Select(group => new { Student = group.Key, Events = group.OrderByDescending(log => log.Timestamp).ToList() })
+                .OrderByDescending(group => group.Events[0].Timestamp)
+                .ToList();
+            var websiteIndex = 0;
+        }
+        <table data-crud-table="students" class="table custom-table align-middle mb-0 log-group-table">
+            <thead><tr><th scope="col" class="log-group-toggle-cell"><span class="visually-hidden">Expand</span></th><th scope="col">Student</th><th scope="col">Sites</th><th scope="col">Events</th><th scope="col">Last Recorded</th></tr></thead>
             <tbody>
-                @foreach (var log in (IEnumerable<Server.Models.WebsiteUsageLog>)(ViewBag.WebsiteUsage ?? new List<Server.Models.WebsiteUsageLog>()))
+                @foreach (var group in websiteByStudent)
                 {
-                    <tr><td class="fw-bold">@(log.Student?.Username ?? log.StudentId?.ToString() ?? "?")</td><td>@log.Domain</td><td>@log.Browser</td><td>@log.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td></tr>
+                    websiteIndex++;
+                    var panelId = $"records-website-{websiteIndex}";
+                    var searchText = $"{group.Student} " + string.Join(' ', group.Events.Select(log => $"{log.Domain} {log.Browser}"));
+
+                    <tr data-log-group data-crud-search-text="@searchText">
+                        <td class="log-group-toggle-cell">
+                            <button type="button" class="log-group-toggle" aria-expanded="false" aria-controls="@panelId">
+                                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                                <span class="visually-hidden">Show the @group.Events.Count website events for @group.Student</span>
+                            </button>
+                        </td>
+                        <td class="fw-bold">@group.Student</td>
+                        <td><span class="badge bg-light text-dark font-monospace">@group.Events.Select(log => log.Domain).Distinct().Count()</span></td>
+                        <td><span class="badge bg-light text-dark font-monospace">@group.Events.Count</span></td>
+                        <td>@group.Events[0].Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td>
+                    </tr>
+                    <tr class="log-group-detail" id="@panelId" data-log-detail hidden>
+                        <td colspan="5">
+                            <div class="log-group-events">
+                                <table class="table table-sm custom-table align-middle mb-0">
+                                    <thead><tr><th scope="col">Domain</th><th scope="col">Browser</th><th scope="col">Recorded At</th></tr></thead>
+                                    <tbody>
+                                        @foreach (var log in group.Events)
+                                        {
+                                            <tr><td>@log.Domain</td><td>@log.Browser</td><td class="font-monospace text-muted">@log.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td></tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
                 }
-                @if (!((IEnumerable<Server.Models.WebsiteUsageLog>)(ViewBag.WebsiteUsage ?? new List<Server.Models.WebsiteUsageLog>())).Any())
+                @if (!websiteByStudent.Any())
                 {
-                    <tr><td colspan="4" class="text-center empty-state"><i class="bi bi-globe2 empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No website activity recorded yet.</span></td></tr>
+                    <tr><td colspan="5" class="text-center empty-state"><i class="bi bi-globe2 empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No website activity recorded yet.</span></td></tr>
                 }
             </tbody>
         </table>
@@ -48,21 +89,54 @@
         <span class="badge bg-light text-dark font-monospace fs-6">@(((IEnumerable<Server.Models.UsageLog>)(ViewBag.ApplicationUsage ?? new List<Server.Models.UsageLog>())).Count()) Events</span>
     </div>
     <div class="table-responsive">
-        <table data-crud-table="application events" class="table custom-table align-middle mb-0">
-            <thead><tr><th>Student</th><th>Application</th><th>Station</th><th>Recorded At</th></tr></thead>
+        @{
+            var applicationByStudent = ((IEnumerable<Server.Models.UsageLog>)(ViewBag.ApplicationUsage ?? new List<Server.Models.UsageLog>()))
+                .GroupBy(log => log.Student?.Username ?? log.StudentId?.ToString() ?? "?")
+                .Select(group => new { Student = group.Key, Events = group.OrderByDescending(log => log.Timestamp).ToList() })
+                .OrderByDescending(group => group.Events[0].Timestamp)
+                .ToList();
+            var applicationIndex = 0;
+        }
+        <table data-crud-table="students" class="table custom-table align-middle mb-0 log-group-table">
+            <thead><tr><th scope="col" class="log-group-toggle-cell"><span class="visually-hidden">Expand</span></th><th scope="col">Student</th><th scope="col">Apps</th><th scope="col">Events</th><th scope="col">Last Recorded</th></tr></thead>
             <tbody>
-                @foreach (var log in (IEnumerable<Server.Models.UsageLog>)(ViewBag.ApplicationUsage ?? new List<Server.Models.UsageLog>()))
+                @foreach (var group in applicationByStudent)
                 {
-                    <tr>
-                        <td class="fw-bold">@(log.Student?.Username ?? log.StudentId?.ToString() ?? "?")</td>
-                        <td>@log.AppName</td>
-                        <td class="font-monospace">@log.PcName</td>
-                        <td>@log.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td>
+                    applicationIndex++;
+                    var panelId = $"records-application-{applicationIndex}";
+                    var searchText = $"{group.Student} " + string.Join(' ', group.Events.Select(log => $"{log.AppName} {log.PcName}"));
+
+                    <tr data-log-group data-crud-search-text="@searchText">
+                        <td class="log-group-toggle-cell">
+                            <button type="button" class="log-group-toggle" aria-expanded="false" aria-controls="@panelId">
+                                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                                <span class="visually-hidden">Show the @group.Events.Count application events for @group.Student</span>
+                            </button>
+                        </td>
+                        <td class="fw-bold">@group.Student</td>
+                        <td><span class="badge bg-light text-dark font-monospace">@group.Events.Select(log => log.AppName).Distinct().Count()</span></td>
+                        <td><span class="badge bg-light text-dark font-monospace">@group.Events.Count</span></td>
+                        <td>@group.Events[0].Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td>
+                    </tr>
+                    <tr class="log-group-detail" id="@panelId" data-log-detail hidden>
+                        <td colspan="5">
+                            <div class="log-group-events">
+                                <table class="table table-sm custom-table align-middle mb-0">
+                                    <thead><tr><th scope="col">Application</th><th scope="col">Station</th><th scope="col">Recorded At</th></tr></thead>
+                                    <tbody>
+                                        @foreach (var log in group.Events)
+                                        {
+                                            <tr><td>@log.AppName</td><td class="font-monospace">@log.PcName</td><td class="font-monospace text-muted">@log.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td></tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
                     </tr>
                 }
-                @if (!((IEnumerable<Server.Models.UsageLog>)(ViewBag.ApplicationUsage ?? new List<Server.Models.UsageLog>())).Any())
+                @if (!applicationByStudent.Any())
                 {
-                    <tr><td colspan="4" class="text-center empty-state"><i class="bi bi-bar-chart empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No application activity recorded yet.</span></td></tr>
+                    <tr><td colspan="5" class="text-center empty-state"><i class="bi bi-bar-chart empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No application activity recorded yet.</span></td></tr>
                 }
             </tbody>
         </table>
@@ -144,3 +218,7 @@
         </table>
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/log-groups.js" asp-append-version="true"></script>
+}

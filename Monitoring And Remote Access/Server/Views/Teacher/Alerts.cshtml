@@ -86,47 +86,101 @@
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
     <div class="table-responsive">
         <table class="table custom-table align-middle mb-0">
-            <thead><tr><th class="ps-3"><input id="select-all-alerts" class="form-check-input" type="checkbox" data-alert-select-all aria-label="Select all alerts" /></th><th>Alert group</th><th>Student / station</th><th>Occurrences</th><th>First / last seen</th><th>Status</th><th class="text-end pe-3">Actions</th></tr></thead>
+            <thead><tr><th class="ps-3"><input id="select-all-alerts" class="form-check-input" type="checkbox" data-alert-select-all aria-label="Select all alerts" /></th><th scope="col" class="log-group-toggle-cell"><span class="visually-hidden">Expand</span></th><th scope="col">Student / station</th><th scope="col">Alert groups</th><th scope="col">Occurrences</th><th scope="col">Open</th><th scope="col">Last seen</th></tr></thead>
             <tbody>
-            @foreach (var alert in paging.Items)
+            @{
+                // One row per student, their alert groups folded inside. The list was
+                // already deduplicated into groups with an occurrence count; this
+                // takes the second step, so a teacher reads the room by pupil rather
+                // than scrolling one student's twelve alerts to reach the next.
+                var alertsByStudent = paging.Items
+                    .GroupBy(alert => alert.StudentId)
+                    .Select(group => new { Student = group.Key, Alerts = group.OrderByDescending(alert => alert.LastSeenAt).ToList() })
+                    .OrderByDescending(group => group.Alerts[0].LastSeenAt)
+                    .ToList();
+                var alertIndex = 0;
+            }
+            @foreach (var group in alertsByStudent)
             {
-                var status = alert.Status;
-                var statusClass = status switch
-                {
-                    MonitoringAlertStatus.Open => "text-bg-danger",
-                    MonitoringAlertStatus.Acknowledged => "text-bg-success",
-                    _ => "text-bg-secondary"
-                };
-                <tr>
-                    <td class="ps-3"><input class="form-check-input alert-selector" type="checkbox" data-alert-select name="alertIds" value="@alert.MonitoringAlertId" form="bulk-alert-form" aria-label="Select @alert.Title" /></td>
-                    <td><span class="badge rounded-pill bg-light text-dark border mb-1">@alert.Severity</span><strong class="d-block">@alert.Title</strong><small class="text-muted">@alert.Message</small></td>
-                    <td><span class="font-monospace">@alert.StudentId</span><small class="d-block text-muted">@alert.PcName</small></td>
-                    <td><span class="fs-5 fw-bold">@alert.OccurrenceCount</span></td>
-                    <td><span class="d-block">@alert.FirstSeenAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</span><small class="text-muted">Last: @alert.LastSeenAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</small></td>
+                alertIndex++;
+                var panelId = $"alerts-student-{alertIndex}";
+                var newest = group.Alerts[0];
+                var openCount = group.Alerts.Count(alert => alert.Status == MonitoringAlertStatus.Open);
+                var stations = string.Join(", ", group.Alerts.Select(alert => alert.PcName).Where(name => !string.IsNullOrWhiteSpace(name)).Distinct());
+
+                <tr data-log-group>
+                    <td class="ps-3"></td>
+                    <td class="log-group-toggle-cell">
+                        <button type="button" class="log-group-toggle" aria-expanded="false" aria-controls="@panelId">
+                            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                            <span class="visually-hidden">Show the @group.Alerts.Count alert groups for student @group.Student</span>
+                        </button>
+                    </td>
+                    <td><span class="font-monospace fw-bold">@group.Student</span><small class="d-block text-muted">@stations</small></td>
+                    <td><span class="badge bg-light text-dark font-monospace">@group.Alerts.Count</span></td>
+                    <td><span class="fs-5 fw-bold">@group.Alerts.Sum(alert => alert.OccurrenceCount)</span></td>
                     <td>
-                        <span class="badge rounded-pill @statusClass">@status</span>
-                        @if (status == MonitoringAlertStatus.Dismissed && !string.IsNullOrWhiteSpace(alert.DismissalReason))
+                        @if (openCount > 0)
                         {
-                            <small class="d-block text-muted mt-1" title="@alert.DismissalReason">@alert.DismissalReason</small>
+                            <span class="badge rounded-pill text-bg-danger">@openCount open</span>
                         }
-                        @if (status == MonitoringAlertStatus.Dismissed && alert.DismissedAt.HasValue)
+                        else
                         {
-                            <small class="d-block text-muted mt-1">Teacher #@alert.DismissedByTeacherId, @alert.DismissedAt.Value.ToLocalTime().ToString("MMM dd HH:mm")</small>
-                        }
-                        else if (status == MonitoringAlertStatus.Acknowledged && alert.AcknowledgedAt.HasValue)
-                        {
-                            <small class="d-block text-muted mt-1">Teacher #@alert.AcknowledgedByTeacherId, @alert.AcknowledgedAt.Value.ToLocalTime().ToString("MMM dd HH:mm")</small>
+                            <span class="badge rounded-pill text-bg-success">All handled</span>
                         }
                     </td>
-                    <td class="text-end pe-3 text-nowrap">
-                        <a class="btn btn-sm btn-outline-secondary rounded-pill" href="@Url.Action("AlertHistory", new { id = alert.MonitoringAlertId })">History</a>
-                        <form class="d-inline" method="post" asp-action="AcknowledgeAlert">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="id" value="@alert.MonitoringAlertId" />
-                            <input type="hidden" name="acknowledged" value="@(status == MonitoringAlertStatus.Open ? "true" : "false")" />
-                            <partial name="_AlertFilterFields" model="filter" />
-                            <button class="btn btn-sm @(status == MonitoringAlertStatus.Open ? "btn-success" : "btn-outline-warning") rounded-pill" type="submit">@(status == MonitoringAlertStatus.Open ? "Acknowledge" : "Reopen")</button>
-                        </form>
+                    <td class="text-nowrap">@newest.LastSeenAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</td>
+                </tr>
+                <tr class="log-group-detail" id="@panelId" data-log-detail hidden>
+                    <td colspan="7">
+                        <div class="log-group-events">
+                            <table class="table table-sm custom-table align-middle mb-0">
+                                <thead><tr><th scope="col" class="ps-3"><span class="visually-hidden">Select</span></th><th scope="col">Alert group</th><th scope="col">Occurrences</th><th scope="col">First / last seen</th><th scope="col">Status</th><th scope="col" class="text-end pe-3">Actions</th></tr></thead>
+                                <tbody>
+                                @foreach (var alert in group.Alerts)
+                                {
+                                    var status = alert.Status;
+                                    var statusClass = status switch
+                                    {
+                                        MonitoringAlertStatus.Open => "text-bg-danger",
+                                        MonitoringAlertStatus.Acknowledged => "text-bg-success",
+                                        _ => "text-bg-secondary"
+                                    };
+                                    <tr>
+                                        <td class="ps-3"><input class="form-check-input alert-selector" type="checkbox" data-alert-select name="alertIds" value="@alert.MonitoringAlertId" form="bulk-alert-form" aria-label="Select @alert.Title" disabled /></td>
+                                        <td><span class="badge rounded-pill bg-light text-dark border mb-1">@alert.Severity</span><strong class="d-block">@alert.Title</strong><small class="text-muted">@alert.Message</small></td>
+                                        <td><span class="fs-5 fw-bold">@alert.OccurrenceCount</span></td>
+                                        <td><span class="d-block">@alert.FirstSeenAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</span><small class="text-muted">Last: @alert.LastSeenAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</small></td>
+                                        <td>
+                                            <span class="badge rounded-pill @statusClass">@status</span>
+                                            @if (status == MonitoringAlertStatus.Dismissed && !string.IsNullOrWhiteSpace(alert.DismissalReason))
+                                            {
+                                                <small class="d-block text-muted mt-1" title="@alert.DismissalReason">@alert.DismissalReason</small>
+                                            }
+                                            @if (status == MonitoringAlertStatus.Dismissed && alert.DismissedAt.HasValue)
+                                            {
+                                                <small class="d-block text-muted mt-1">Teacher #@alert.DismissedByTeacherId, @alert.DismissedAt.Value.ToLocalTime().ToString("MMM dd HH:mm")</small>
+                                            }
+                                            else if (status == MonitoringAlertStatus.Acknowledged && alert.AcknowledgedAt.HasValue)
+                                            {
+                                                <small class="d-block text-muted mt-1">Teacher #@alert.AcknowledgedByTeacherId, @alert.AcknowledgedAt.Value.ToLocalTime().ToString("MMM dd HH:mm")</small>
+                                            }
+                                        </td>
+                                        <td class="text-end pe-3 text-nowrap">
+                                            <a class="btn btn-sm btn-outline-secondary rounded-pill" href="@Url.Action("AlertHistory", new { id = alert.MonitoringAlertId })">History</a>
+                                            <form class="d-inline" method="post" asp-action="AcknowledgeAlert">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@alert.MonitoringAlertId" />
+                                                <input type="hidden" name="acknowledged" value="@(status == MonitoringAlertStatus.Open ? "true" : "false")" />
+                                                <partial name="_AlertFilterFields" model="filter" />
+                                                <button class="btn btn-sm @(status == MonitoringAlertStatus.Open ? "btn-success" : "btn-outline-warning") rounded-pill" type="submit">@(status == MonitoringAlertStatus.Open ? "Acknowledge" : "Reopen")</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
                     </td>
                 </tr>
             }
@@ -147,4 +201,5 @@
 
 @section Scripts {
     <script src="~/js/alert-bulk.js" asp-append-version="true"></script>
+    <script src="~/js/log-groups.js" asp-append-version="true"></script>
 }

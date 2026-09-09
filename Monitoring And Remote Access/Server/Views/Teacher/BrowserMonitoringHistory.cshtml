@@ -29,17 +29,62 @@
 
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
     <div class="table-responsive">
-        <table class="table custom-table align-middle mb-0">
-            <thead><tr><th>Time</th><th>Student</th><th>Station</th><th>Browser</th><th>Mode</th><th>Detail</th></tr></thead>
+        @{
+            // One row per student, their collector states folded inside. The mode
+            // is sampled repeatedly, so a flat list is mostly the same student
+            // saying the same thing.
+            var browserByStudent = Model
+                .GroupBy(record => record.StudentId)
+                .Select(group => new { Student = group.Key, Records = group.OrderByDescending(record => record.Timestamp).ToList() })
+                .OrderByDescending(group => group.Records[0].Timestamp)
+                .ToList();
+            var browserIndex = 0;
+        }
+        <table class="table custom-table align-middle mb-0 log-group-table">
+            <thead><tr><th scope="col" class="log-group-toggle-cell"><span class="visually-hidden">Expand</span></th><th scope="col">Student</th><th scope="col">Records</th><th scope="col">Last Seen</th><th scope="col">Latest Mode</th><th scope="col">Stations</th></tr></thead>
             <tbody>
-            @foreach (var record in Model)
+            @foreach (var group in browserByStudent)
             {
-                var modeClass = BrowserMonitoringDisplay.BadgeClass(record.Mode);
-                var modeLabel = BrowserMonitoringDisplay.Label(record.Mode);
-                var modeExplanation = BrowserMonitoringDisplay.Explanation(record.Mode);
-                <tr><td class="text-nowrap">@record.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td><td class="font-monospace">@record.StudentId</td><td>@record.PcName</td><td class="text-capitalize">@record.Browser</td><td><span class="badge rounded-pill @modeClass" title="@modeExplanation">@modeLabel</span></td><td class="text-muted">@(record.Detail ?? "-")</td></tr>
+                browserIndex++;
+                var panelId = $"browser-history-{browserIndex}";
+                var latest = group.Records[0];
+                var latestClass = BrowserMonitoringDisplay.BadgeClass(latest.Mode);
+                var latestLabel = BrowserMonitoringDisplay.Label(latest.Mode);
+                var latestExplanation = BrowserMonitoringDisplay.Explanation(latest.Mode);
+
+                <tr data-log-group>
+                    <td class="log-group-toggle-cell">
+                        <button type="button" class="log-group-toggle" aria-expanded="false" aria-controls="@panelId">
+                            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                            <span class="visually-hidden">Show the @group.Records.Count browser monitoring records for student @group.Student</span>
+                        </button>
+                    </td>
+                    <td class="font-monospace fw-bold">@group.Student</td>
+                    <td><span class="badge bg-light text-dark font-monospace">@group.Records.Count</span></td>
+                    <td class="text-nowrap">@latest.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td>
+                    <td><span class="badge rounded-pill @latestClass" title="@latestExplanation">@latestLabel</span></td>
+                    <td class="text-muted">@string.Join(", ", group.Records.Select(record => record.PcName).Distinct())</td>
+                </tr>
+                <tr class="log-group-detail" id="@panelId" data-log-detail hidden>
+                    <td colspan="6">
+                        <div class="log-group-events">
+                            <table class="table table-sm custom-table align-middle mb-0">
+                                <thead><tr><th scope="col">Time</th><th scope="col">Station</th><th scope="col">Browser</th><th scope="col">Mode</th><th scope="col">Detail</th></tr></thead>
+                                <tbody>
+                                @foreach (var record in group.Records)
+                                {
+                                    var modeClass = BrowserMonitoringDisplay.BadgeClass(record.Mode);
+                                    var modeLabel = BrowserMonitoringDisplay.Label(record.Mode);
+                                    var modeExplanation = BrowserMonitoringDisplay.Explanation(record.Mode);
+                                    <tr><td class="text-nowrap font-monospace text-muted">@record.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td><td>@record.PcName</td><td class="text-capitalize">@record.Browser</td><td><span class="badge rounded-pill @modeClass" title="@modeExplanation">@modeLabel</span></td><td class="text-muted">@(record.Detail ?? "-")</td></tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
             }
-            @if (!Model.Any()) { <tr><td colspan="6" class="text-center empty-state"><i class="bi bi-globe2 empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No browser monitoring records match these filters.</span></td></tr> }
+            @if (!browserByStudent.Any()) { <tr><td colspan="6" class="text-center empty-state"><i class="bi bi-globe2 empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No browser monitoring records match these filters.</span></td></tr> }
             </tbody>
         </table>
     </div>
@@ -48,4 +93,8 @@
 @if (paging is not null && paging.PageCount > 1)
 {
     <nav class="d-flex justify-content-between align-items-center mt-3"><span class="small text-muted">@paging.TotalCount records</span><div class="d-flex gap-2"><a class="btn btn-sm btn-outline-secondary @(paging.Page == 1 ? "disabled" : "")" href="@Url.Action("BrowserMonitoringHistory", new { from = ViewBag.From, to = ViewBag.To, browser = ViewBag.Browser, mode = ViewBag.Mode, page = paging.Page - 1, pageSize = paging.PageSize })">Previous</a><span class="small align-self-center">Page @paging.Page of @paging.PageCount</span><a class="btn btn-sm btn-outline-secondary @(paging.Page == paging.PageCount ? "disabled" : "")" href="@Url.Action("BrowserMonitoringHistory", new { from = ViewBag.From, to = ViewBag.To, browser = ViewBag.Browser, mode = ViewBag.Mode, page = paging.Page + 1, pageSize = paging.PageSize })">Next</a></div></nav>
+}
+
+@section Scripts {
+    <script src="~/js/log-groups.js" asp-append-version="true"></script>
 }

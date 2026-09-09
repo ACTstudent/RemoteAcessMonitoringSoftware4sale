@@ -1694,3 +1694,69 @@ summary:focus-visible,
     font-size: 0.875rem;
     font-weight: 600;
 }
+
+/* ---------------------------------------------------------------------------
+   Grouped log rows
+   One row per user, their events folded inside. The detail is a sibling row
+   rather than a nested table cell, because a table row is the only thing that
+   can span the full width without breaking column alignment above it.
+   --------------------------------------------------------------------------- */
+
+.log-group-table [data-log-group] { cursor: pointer; }
+.log-group-table [data-log-group]:hover { background: var(--body-bg); }
+
+.log-group-toggle-cell { width: 46px; padding-right: 0 !important; }
+
+.log-group-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    color: var(--text-muted);
+    background: transparent;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.log-group-toggle:hover {
+    color: var(--accent-emerald);
+    border-color: var(--accent-emerald);
+}
+
+/* Only the chevron turns; transitioning `all` would also animate the colour
+   change on hover and make the control feel laggy. */
+.log-group-toggle i { transition: transform .16s ease; }
+.log-group-open .log-group-toggle i { transform: rotate(90deg); }
+.log-group-open { background: var(--body-bg); }
+
+.log-group-detail > td {
+    padding: 0 !important;
+    background: var(--body-bg);
+    border-top: 0;
+}
+
+.log-group-events {
+    padding: var(--space-3) var(--space-4) var(--space-4) 3.1rem;
+}
+
+.log-group-events table { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-md); overflow: hidden; }
+
+/* The nested table carries .custom-table, so it inherits the house treatment
+   rather than inventing a second table style. Its header is one step lighter
+   than the outer one so the nesting reads as depth instead of two tables that
+   happen to be stacked. The second selector outruns the CRUD page rule, which
+   is more specific than a plain class on its own would be. */
+.log-group-events .custom-table thead th,
+.crud-page .crud-panel .log-group-events .custom-table thead th {
+    background: #1e6f49;
+    color: #ffffff;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+@media (max-width: 575.98px) {
+    .log-group-events { padding-left: var(--space-3); }
+}

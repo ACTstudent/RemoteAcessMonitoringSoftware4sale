@@ -13,7 +13,11 @@
         panel.setAttribute('data-crud-list', '');
         panel.dataset.crudLabel = table.dataset.crudTable || 'records';
         panel.dataset.crudPageSize = '15';
-        const rows = Array.from(table.tBodies).flatMap(body => Array.from(body.rows));
+        // A grouped table carries a hidden detail row after each summary row.
+        // Those are not records: counting them would page them as if they were,
+        // and the first one would be mistaken for the empty-state placeholder.
+        const rows = Array.from(table.tBodies).flatMap(body => Array.from(body.rows))
+            .filter(row => !row.hasAttribute('data-log-detail'));
         const placeholder = rows.find(row => row.querySelector('td[colspan]'));
         rows.filter(row => row !== placeholder).forEach(row => row.setAttribute('data-crud-item', ''));
         const empty = document.createElement('div');
