@@ -7,22 +7,14 @@ namespace Client.Services;
 public sealed class ClientSettings
 {
     public string ServerUrl { get; set; } = ClientSettingsStore.DefaultServerUrl;
-    public bool Enabled { get; set; } = true;
-    public bool ManageChrome { get; set; } = true;
-    public bool ManageBrave { get; set; } = true;
-    public int ChromePort { get; set; } = 9222;
-    public int BravePort { get; set; } = 9223;
-    public bool ManageEdge { get; set; } = true;
-    public int EdgePort { get; set; } = 9224;
-    public int RestartDelayMilliseconds { get; set; } = 1000;
     public int PolicyRefreshIntervalSeconds { get; set; } = 30;
     public TelemetryQueueOptions TelemetryQueue { get; set; } = new();
 
+    // Settings files written by earlier installers still carry the managed-browser
+    // keys (Enabled, ManageChrome, ChromePort...). They land here, unused, rather
+    // than failing to load: the installer never overwrites an existing file.
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? AdditionalSettings { get; set; }
-
-    public ManagedBrowserOptions ToManagedBrowserOptions() => new(
-        Enabled, ManageChrome, ManageBrave, ChromePort, BravePort, RestartDelayMilliseconds, ManageEdge, EdgePort);
 }
 
 public sealed class ClientSettingsStore

@@ -25,7 +25,6 @@ All rows start UNREVIEWED. Area assignments are based on paths and require behav
 | `Monitoring And Remote Access/Client.Tests/ClientSettingsStoreTests.cs` | BLD-01; review assertions and map domain cases | UNREVIEWED |
 | `Monitoring And Remote Access/Client.Tests/DurableTelemetryQueueTests.cs` | BLD-01; review assertions and map domain cases | UNREVIEWED |
 | `Monitoring And Remote Access/Client.Tests/InputSimulatorTests.cs` | BLD-01; review assertions and map domain cases | UNREVIEWED |
-| `Monitoring And Remote Access/Client.Tests/ManagedBrowserCollectorTests.cs` | BLD-01; review assertions and map domain cases | UNREVIEWED |
 | `Monitoring And Remote Access/Client.Tests/ServerDiscoveryClientTests.cs` | BLD-01; review assertions and map domain cases | UNREVIEWED |
 | `Monitoring And Remote Access/Client/Client.csproj` | WIN-01..02; HUB/TEL/POL/NET; AUTH/SES | UNREVIEWED |
 | `Monitoring And Remote Access/Client/InputSimulator.cs` | WIN-01..02; HUB/TEL/POL/NET; AUTH/SES | UNREVIEWED |

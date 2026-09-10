@@ -11,7 +11,7 @@ Both browser paths use the filter:
 - CAMS-launched Chrome and Brave receive an explicit proxy argument with no direct fallback; QUIC is disabled in these managed processes.
 - Windows' current-user LAN proxy is temporarily set to the same listener, covering ordinary browsers that use those settings. The monitoring server hostname remains exempt so classroom controls stay reachable.
 - Rule refresh publishes a complete snapshot and drops filtered connections to newly blocked destinations, including background downloads/tunnels. More-specific rules take priority; Allow wins specificity ties, and any website Allow rule enables allowlist behavior. Rules still apply to normalized domains, not URL paths.
-- Managed-browser tab closure remains an additional cleanup for loaded/cached pages. Brave DevTools metadata identifying its engine as Chrome is accepted only after CAMS verifies it owns the launched process.
+- Update (2026-09-10): CAMS no longer launches its own managed Chrome, Brave or Edge, because doing so opened browser windows nobody asked for. There is therefore no DevTools tab closure: a page loaded before a rule arrives stays on screen until it is reloaded, though the foreground address-bar check still reports it as a violation.
 - The proxy stores only bounded blocked-domain notifications, not page bodies, paths, credentials, or decrypted HTTPS contents. It uses raw outbound sockets, so it does not recursively inherit its own system proxy.
 
 The proxy approach follows [Chromium's HTTP/HTTPS proxy and CONNECT behavior](https://chromium.googlesource.com/chromium/src/+/HEAD/net/docs/proxy.md). Windows configuration uses [WinINet connection options](https://learn.microsoft.com/en-us/windows/win32/wininet/setting-and-retrieving-internet-options), with configured flags read using [FLAGS_UI](https://learn.microsoft.com/en-us/windows/win32/api/wininet/ns-wininet-internet_per_conn_optiona).
@@ -20,7 +20,7 @@ The proxy approach follows [Chromium's HTTP/HTTPS proxy and CONNECT behavior](ht
 
 `WindowsSessionProxy` saves the previous manual proxy, bypass list, auto-configuration URL, and configured flags to `%LOCALAPPDATA%\CAMS\session-proxy-backup.json` before changing Windows settings. Logout and normal exit restore that snapshot before stopping the filter. A startup recovery pass restores an interrupted session's settings if Windows still points to CAMS's previous listener. An administrator's subsequent replacement proxy is preserved. A single-instance guard prevents two clients in the same Windows session from taking ownership simultaneously.
 
-Proxy configuration failures stop sign-in instead of silently falling back to warnings. Runtime enforcement errors are displayed in the client status. While a session runs, the enforcement loop reapplies changed Windows proxy settings. A dead listener has no direct fallback in the managed browser. If the client is forcibly terminated, ordinary browsing can remain disconnected until CAMS is restarted and recovery runs.
+Proxy configuration failures stop sign-in instead of silently falling back to warnings. Runtime enforcement errors are displayed in the client status. While a session runs, the enforcement loop reapplies changed Windows proxy settings. If the client is forcibly terminated, ordinary browsing can remain disconnected until CAMS is restarted and recovery runs.
 
 ## Deployment requirements and limits
 
@@ -34,7 +34,7 @@ Proxy configuration failures stop sign-in instead of silently falling back to wa
 ## Pending validation for the next authorized test pass
 
 - Build the Windows client and verify HTTP, HTTPS, WebSocket, and download forwarding to allowed sites.
-- In both normal and CAMS-managed browsers, block a domain and its subdomains; verify no new destination connection occurs and reopening during the alert cooldown stays denied.
+- In Chrome, Brave and Edge, block a domain and its subdomains; verify no new destination connection occurs and reopening during the alert cooldown stays denied.
 - Add a block while a filtered download/tunnel is active; verify disconnection. Remove/deactivate the rule and verify access returns. Check wildcard, full-URL normalization, Allow exceptions, allowlist mode, and class/session scope.
 - Verify successful login, failed setup rollback, logout, teacher-forced session end, normal exit, crash recovery, and duplicate-instance handling. Compare the complete original/restored proxy settings, including PAC and auto-detect flags.
 - Verify monitoring-server connectivity, policy updates during reconnect, and a clear client status when Windows policy refuses the proxy setting. Check cached pages, custom proxies/VPNs, and upstream-proxy networks against the limits above.

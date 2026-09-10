@@ -1,13 +1,5 @@
 {
   "ServerUrl": "https://localhost:5000/remoteMonitoringHub",
-  "Enabled": true,
-  "ManageChrome": true,
-  "ManageBrave": true,
-  "ChromePort": 9222,
-  "BravePort": 9223,
-  "ManageEdge": true,
-  "EdgePort": 9224,
-  "RestartDelayMilliseconds": 1000,
   "PolicyRefreshIntervalSeconds": 30,
   "TelemetryQueue": {
     "MaxRecords": 1000,

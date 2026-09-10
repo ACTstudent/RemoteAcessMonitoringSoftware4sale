@@ -670,7 +670,7 @@ namespace Client
 
             lblStatus = new Label { Text = "Status: Connected & Streaming", ForeColor = StatusOk, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
             lblRemoteState = new Label { Text = "Remote support: inactive", ForeColor = TextMuted, Font = new Font("Segoe UI", 9.75f) };
-            lblBrowserState = new Label { Text = "Browser monitoring: starting", ForeColor = TextMuted, Font = new Font("Segoe UI", 9.75f) };
+            lblBrowserState = new Label { Text = "Browser monitoring: waiting for a browser", ForeColor = TextMuted, Font = new Font("Segoe UI", 9.75f) };
 
             var rows = new FlowLayoutPanel
             {
@@ -784,7 +784,6 @@ namespace Client
                 if (_restartRequested) return;
 
                 StartWebsiteFiltering(new Uri(serverUrl));
-                await _managedBrowserCollector.StartAsync();
 
                 _hubClient = hubClient;
                 _studentId = login.StudentId;
@@ -1086,7 +1085,6 @@ namespace Client
                 _sessionScreen.Show("Restarting this computer",
                     "This computer will restart automatically in a few seconds.",
                     "Session ended  •  Please wait for the next class");
-                _managedBrowserCollector.Dispose();
                 lblStatus.Text = "Status: Restart scheduled by teacher";
                 lblStatus.ForeColor = StatusWarn;
                 _isStreaming = false;
@@ -1193,11 +1191,6 @@ namespace Client
             }
 
             var websiteRules = rules.Where(r => r.RuleType == "Website").ToList();
-            // Enforcement is independent of telemetry timing and its alert cooldown.
-            var closedTabs = await _managedBrowserCollector.EnforceWebsiteRulesAsync(websiteRules, token);
-            foreach (var closed in closedTabs)
-                await ReportViolation("Website", closed.Domain!, closed.Browser, kill: false, token,
-                    reportedTarget: closed.Domain, outcome: "The restricted tab was closed in your CAMS-managed browser.");
 
             // Foreground observations supplement request-filter alerts for cached
             // pages and browsers that override the Windows proxy configuration.
@@ -1271,8 +1264,6 @@ namespace Client
         }
 
         private BrowserWebsiteObservation? _lastForegroundWebsite;
-        // Not readonly: logging out disposes it, and the next student needs a live one.
-        private ManagedBrowserCollector _managedBrowserCollector = CreateManagedBrowserCollector();
         private WebsiteRestrictionProxy? _websiteProxy;
         private WindowsSessionProxy? _windowsProxy;
 
@@ -1285,7 +1276,6 @@ namespace Client
                 proxy.UpdateRules(Volatile.Read(ref _restrictionRules));
                 proxy.Start();
                 windowsProxy = new WindowsSessionProxy(proxy.Port, server);
-                _managedBrowserCollector.ConfigureWebsiteProxy(proxy.Port);
                 _websiteProxy = proxy;
                 _windowsProxy = windowsProxy;
             }
@@ -1316,15 +1306,6 @@ namespace Client
                 _websiteProxy?.Dispose();
                 _websiteProxy = null;
             }
-        }
-
-        private static ManagedBrowserCollector CreateManagedBrowserCollector()
-        {
-            try
-            {
-                return new ManagedBrowserCollector(new ClientSettingsStore().Load().ToManagedBrowserOptions());
-            }
-            catch { return new ManagedBrowserCollector(); }
         }
 
         private static IEnumerable<(string Name, bool HasWindow)> GetRunningApplications()
@@ -1390,14 +1371,7 @@ namespace Client
                                     PcName: Environment.MachineName,
                                     ApplicationName: appName,
                                     Timestamp: DateTime.UtcNow));
-                                var foregroundBrowser = appName.Split(" - ")[0].Trim().ToLowerInvariant();
-                                var fallbackWebsite = BrowserUrlCollector.TryGetForegroundWebsite();
-                                var website = fallbackWebsite is { Status: BrowserMonitoringStatus.Captured }
-                                    ? fallbackWebsite
-                                    : null;
-                                if (website == null && foregroundBrowser is "chrome" or "brave")
-                                    website = await _managedBrowserCollector.TryGetActiveWebsiteAsync(foregroundBrowser, appName, token);
-                                website ??= fallbackWebsite;
+                                var website = BrowserUrlCollector.TryGetForegroundWebsite();
                                 _lastForegroundWebsite = website is { Status: BrowserMonitoringStatus.Captured, Domain: not null }
                                     ? website
                                     : null;
@@ -1426,27 +1400,20 @@ namespace Client
 
         private async Task ReportBrowserMonitoringStatusAsync(BrowserWebsiteObservation? observation)
         {
-            if (_hubClient == null) return;
+            if (_hubClient == null || observation is null) return;
 
-            var summaries = new List<string>();
-            foreach (var status in _managedBrowserCollector.GetStatus())
-            {
-                var foreground = observation != null && string.Equals(observation.Browser, status.Identity, StringComparison.OrdinalIgnoreCase);
-                var mode = foreground ? observation!.Mode : status.EndpointAvailable
-                    ? BrowserMonitoringMode.ManagedProtocol
-                    : BrowserMonitoringMode.Unavailable;
-                var detail = foreground && observation!.Mode == BrowserMonitoringMode.WindowTitleFallback
-                    ? observation.Status == BrowserMonitoringStatus.Captured ? "Foreground URL captured" : "Foreground browser detected; URL unavailable"
-                    : status.Message;
-                var signature = $"{mode}:{detail}";
-                summaries.Add($"{status.Identity}: {ModeLabel(mode)}");
-                if (!_telemetry.ShouldReportBrowserStatus(status.Identity, signature)) continue;
-                await _hubClient.ReportBrowserMonitoringStatusAsync(new BrowserMonitoringStatusMessage(
-                    "", "", Environment.MachineName, status.Identity, mode, DateTime.UtcNow, detail));
-            }
-
+            // Only the browser in front is observed. CAMS used to launch its own
+            // instrumented Chrome, Brave and Edge so it could read tabs in the
+            // background, which opened browser windows nobody asked for. The
+            // address bar of whichever browser the student chose is read instead.
+            var detail = observation.Status == BrowserMonitoringStatus.Captured
+                ? "Foreground URL captured"
+                : "Foreground browser detected; URL unavailable";
             if (!IsDisposed && IsHandleCreated)
-                BeginInvoke(() => lblBrowserState.Text = $"Browser monitoring: {string.Join(" | ", summaries)}");
+                BeginInvoke(() => lblBrowserState.Text = $"Browser monitoring: {observation.Browser}: {ModeLabel(observation.Mode)}");
+            if (!_telemetry.ShouldReportBrowserStatus(observation.Browser, $"{observation.Mode}:{detail}")) return;
+            await _hubClient.ReportBrowserMonitoringStatusAsync(new BrowserMonitoringStatusMessage(
+                "", "", Environment.MachineName, observation.Browser, observation.Mode, DateTime.UtcNow, detail));
         }
 
         // Was "managed"/"fallback"/"unavailable", which described the same
@@ -1589,7 +1556,6 @@ namespace Client
             _isStreaming = false;
             _streamCts?.Cancel();
             _countdownTimer.Stop();
-            _managedBrowserCollector.Dispose();
             StopWebsiteFiltering();
             if (_hubClient != null)
             {
@@ -1650,9 +1616,6 @@ namespace Client
             _restartRequested = false;
             _trayNoticeShown = false;    // the next student gets the notice too
             if (_tray is not null) _tray.CanLogOut = false;
-
-            // Disposed with the session above; the next one needs a live collector.
-            _managedBrowserCollector = CreateManagedBrowserCollector();
 
             BuildUi();
             TopMost = true;
@@ -2009,7 +1972,6 @@ namespace Client
             _isStreaming = false;
             _streamCts?.Cancel();
             _countdownTimer.Stop();
-            _managedBrowserCollector.Dispose();
             StopWebsiteFiltering(notifyStudent: e.CloseReason != CloseReason.WindowsShutDown);
             _sessionScreen.Dispose();
             CloseBroadcast();
