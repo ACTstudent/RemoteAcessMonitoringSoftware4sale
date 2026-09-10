@@ -101,6 +101,10 @@
         dismissBroadcastToast = null;
     });
 
+    // Ping every 5s: the server drops a page it has not heard from in 15s, and
+    // SignalR's default 15s ping left no margin. Mirrors HubHeartbeat; a server
+    // test holds both values to it.
+    connection.keepAliveIntervalInMilliseconds = 5000;
     // Three times the 5s server keep-alive.
     connection.serverTimeoutInMilliseconds = 15000;
 

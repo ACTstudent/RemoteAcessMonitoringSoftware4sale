@@ -12,8 +12,13 @@ namespace Shared.Contracts;
 /// They lived apart before: the server tightened its timeout to 15s while the
 /// desktop client kept the SignalR default 15s ping, leaving no margin at all
 /// for a GC pause, a screen-capture burst or one late Wi-Fi frame. The guidance
-/// is that the timeout should be at least double the ping; this is triple, and
-/// matches what the browser clients already set for themselves.
+/// is that the timeout should be at least double the ping; this is triple.
+///
+/// The browser pages had the same fault and were missed the first time: they
+/// set serverTimeoutInMilliseconds, which is how long a page waits for the
+/// server, and left the keep-alive the server actually times out on at the 15s
+/// default. JavaScript cannot read this class, so teacher-alert-badge.js and
+/// student-session.js carry both values as literals, and a test pins them here.
 ///
 /// Change these together or not at all.
 /// </remarks>

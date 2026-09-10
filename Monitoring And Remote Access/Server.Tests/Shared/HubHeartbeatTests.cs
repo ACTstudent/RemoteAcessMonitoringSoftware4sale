@@ -17,6 +17,30 @@ public class HubHeartbeatTests
             "the timeout must be at least double the keep-alive.");
     }
 
+    // The browser pages cannot read HubHeartbeat, so they carry the values as
+    // literals - and they were missed when the desktop client was fixed, still
+    // pinging at SignalR's 15s default against the server's 15s timeout.
+    [Theory]
+    [InlineData("teacher-alert-badge.js")]
+    [InlineData("student-session.js")]
+    public void BrowserHubConnections_UseTheSharedHeartbeat(string script)
+    {
+        var source = File.ReadAllText(Path.Combine(FindServerProject(), "wwwroot", "js", script));
+
+        Assert.Contains($"keepAliveIntervalInMilliseconds = {(int)HubHeartbeat.KeepAlive.TotalMilliseconds};", source);
+        Assert.Contains($"serverTimeoutInMilliseconds = {(int)HubHeartbeat.ClientTimeout.TotalMilliseconds};", source);
+    }
+
+    private static string FindServerProject()
+    {
+        for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
+        {
+            var server = Path.Combine(directory.FullName, "Server");
+            if (Directory.Exists(Path.Combine(server, "wwwroot", "js"))) return server;
+        }
+        throw new DirectoryNotFoundException("The Server project was not found above the test output directory.");
+    }
+
     [Fact]
     public void KeepAlive_IsFastEnoughToReportADropPromptly()
     {
