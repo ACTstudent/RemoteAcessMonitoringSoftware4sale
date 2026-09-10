@@ -1,0 +1,106 @@
+/* Short, shared motion for the portals and sign-in screen. Keep page entry
+   opacity-only so fixed dialogs and monitoring coordinates stay in place. */
+@keyframes cams-content-enter {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes cams-counter-enter {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .app-shell #main-content,
+    .login-page .login-card {
+        /* Runs on every navigation, pager clicks and saves included, so it has
+           to be quick enough not to read as the page being slow. */
+        animation: cams-content-enter 200ms ease-out;
+    }
+
+    /* Animate the small counters, not containers holding fixed dialogs. */
+    .app-shell .metric-card {
+        animation: cams-counter-enter 320ms cubic-bezier(.16, 1, .3, 1) backwards;
+    }
+
+    .app-shell .row > :nth-child(2) .metric-card { animation-delay: 40ms; }
+    .app-shell .row > :nth-child(3) .metric-card { animation-delay: 80ms; }
+    .app-shell .row > :nth-child(4) .metric-card { animation-delay: 120ms; }
+
+    .app-shell .nav-item-custom > i {
+        transition: transform 180ms ease;
+    }
+
+    .app-shell .app-sidebar {
+        transition: width 220ms ease, left 220ms ease, margin-left 220ms ease, box-shadow 220ms ease;
+    }
+
+    .app-shell .nav-item-custom,
+    .app-shell .btn-toggle-sidebar,
+    .app-shell .btn,
+    .login-page .btn {
+        transition: background-color 160ms ease, border-color 160ms ease,
+            color 160ms ease, box-shadow 160ms ease, transform 120ms ease;
+    }
+
+    /* Buttons press, they do not also lift on hover: lift-then-press made every
+       click a 3px jump, which is busy for a tool used all lesson. */
+    .app-shell .btn:not(:disabled):not(.disabled):active,
+    .login-page .btn:not(:disabled):not(.disabled):active {
+        transform: translateY(1px);
+    }
+
+    .app-shell .form-control,
+    .app-shell .form-select,
+    .app-shell .form-check-input,
+    .login-page .form-control {
+        transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .app-shell .metric-card,
+    .app-shell .class-card {
+        transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+
+    .app-shell .custom-table tbody td {
+        transition: background-color 140ms ease;
+    }
+
+    .app-shell .dropdown-menu.show,
+    .app-shell .log-group-detail:not([hidden]) .log-group-events {
+        animation: cams-content-enter 180ms ease-out;
+    }
+
+    .app-shell .modal.fade .modal-dialog,
+    .login-page .modal.fade .modal-dialog {
+        transition-duration: 180ms;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+        .app-shell .metric-card:hover,
+        .app-shell .class-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgb(24 92 60 / 13%);
+        }
+
+        .app-shell .nav-item-custom:hover > i {
+            transform: translateX(3px);
+        }
+    }
+}
+
+/* Also suppress existing Bootstrap and site motion when the OS requests it. */
+@media (prefers-reduced-motion: reduce) {
+    .app-shell *, .app-shell *::before, .app-shell *::after,
+    .login-page *, .login-page *::before, .login-page *::after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+    }
+
+    .app-shell .metric-card:hover,
+    .app-shell .class-card:hover,
+    .app-shell .workstation-card:hover {
+        transform: none !important;
+    }
+}
