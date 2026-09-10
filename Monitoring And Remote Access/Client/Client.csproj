@@ -21,9 +21,14 @@
 
   <ItemGroup>
     <Content Include="client-settings.json" CopyToOutputDirectory="PreserveNewest" />
-    <!-- Also copied out, so the tray and window can load a crisp entry for the
-         size Windows actually asks for rather than rescaling one bitmap. -->
-    <Content Include="cams.ico" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Embedded, not copied out: the release publish is single-file, which
+         never left a loose cams.ico on disk, so the tray fell back to its
+         placeholder on every installed machine. BrandIcon reads it from here
+         and picks the frame for the size Windows actually asks for. -->
+    <EmbeddedResource Include="cams.ico" LogicalName="cams.ico" />
   </ItemGroup>
 
   <ItemGroup>
