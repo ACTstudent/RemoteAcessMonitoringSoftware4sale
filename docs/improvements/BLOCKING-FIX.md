@@ -10,7 +10,7 @@ Both browser paths use the filter:
 
 - CAMS-launched Chrome and Brave receive an explicit proxy argument with no direct fallback; QUIC is disabled in these managed processes.
 - Windows' current-user LAN proxy is temporarily set to the same listener, covering ordinary browsers that use those settings. The monitoring server hostname remains exempt so classroom controls stay reachable.
-- Rule refresh publishes a complete snapshot and drops filtered connections to newly blocked destinations, including background downloads/tunnels. More-specific rules take priority; Allow wins specificity ties, and any website Allow rule enables allowlist behavior. Rules still apply to normalized domains, not URL paths.
+- Rule refresh publishes a complete snapshot and drops filtered connections to newly blocked destinations, including background downloads/tunnels. More-specific rules take priority and Allow wins specificity ties. Update (2026-09-16): a website Allow rule no longer switches the session into allowlist mode. Allow rules are exceptions, as the Whitelist page states; a destination no rule mentions is not blocked. The previous behaviour blocked the rest of the web as soon as one site was whitelisted, and the application half of it closed every unlisted window on the desktop. Rules still apply to normalized domains, not URL paths.
 - Update (2026-09-10): CAMS no longer launches its own managed Chrome, Brave or Edge, because doing so opened browser windows nobody asked for. There is therefore no DevTools tab closure: a page loaded before a rule arrives stays on screen until it is reloaded, though the foreground address-bar check still reports it as a violation.
 - The proxy stores only bounded blocked-domain notifications, not page bodies, paths, credentials, or decrypted HTTPS contents. It uses raw outbound sockets, so it does not recursively inherit its own system proxy.
 
@@ -35,10 +35,10 @@ Proxy configuration failures stop sign-in instead of silently falling back to wa
 
 - Build the Windows client and verify HTTP, HTTPS, WebSocket, and download forwarding to allowed sites.
 - In Chrome, Brave and Edge, block a domain and its subdomains; verify no new destination connection occurs and reopening during the alert cooldown stays denied.
-- Add a block while a filtered download/tunnel is active; verify disconnection. Remove/deactivate the rule and verify access returns. Check wildcard, full-URL normalization, Allow exceptions, allowlist mode, and class/session scope.
+- Add a block while a filtered download/tunnel is active; verify disconnection. Remove/deactivate the rule and verify access returns. Check wildcard, full-URL normalization, Allow exceptions, and class/session scope. With only Allow rules present, confirm unlisted sites still load and unlisted applications stay open.
 - Verify successful login, failed setup rollback, logout, teacher-forced session end, normal exit, crash recovery, and duplicate-instance handling. Compare the complete original/restored proxy settings, including PAC and auto-detect flags.
 - Verify monitoring-server connectivity, policy updates during reconnect, and a clear client status when Windows policy refuses the proxy setting. Check cached pages, custom proxies/VPNs, and upstream-proxy networks against the limits above.
 
 ## Earlier application corrections retained
 
-Application targets normalize executable paths and `.exe` suffixes to Windows process names. Immutable rule snapshots avoid concurrent mutation. Process termination occurs on every enforcement pass while notices remain throttled, and permission failures are reported accurately. Required Windows/client processes remain exempt. No application termination was performed during this source change.
+Update (2026-09-16): application enforcement is gone from the client. CAMS no longer closes processes, and application rules produce no violation or alert from the workstation; the desktop is left alone and only websites are enforced. Active-application monitoring is unchanged, so teachers still see what is in the foreground. Immutable rule snapshots still avoid concurrent mutation for website rules.

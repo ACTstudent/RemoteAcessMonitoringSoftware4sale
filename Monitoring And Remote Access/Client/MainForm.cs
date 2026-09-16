@@ -1152,76 +1152,31 @@ namespace Client
                 throw new InvalidOperationException("The website filter stopped. Restart CAMS before browsing.");
 
             foreach (var domain in _websiteProxy.DrainBlockedDomains())
-                await ReportViolation("Website", domain, "browser", kill: false, token,
+                await ReportViolation("Website", domain, token,
                     reportedTarget: domain, outcome: "CAMS denied the website connection.", notifyStudent: false);
             if (_isLocked) return;
 
             var rules = Volatile.Read(ref _restrictionRules);
-            var appRules = rules.Where(r => r.RuleType == "Application").ToList();
-            var hasApplicationAllowlist = appRules.Any(rule => rule.Mode == "Allow");
-            foreach (var running in GetRunningApplications())
-            {
-                token.ThrowIfCancellationRequested();
-                if (IsRequiredProcess(running.Name)) continue;
-                var matchingApp = appRules.Where(rule => PolicyPatternMatcher.MatchesApplication(running.Name, rule.Target))
-                    .OrderByDescending(rule => rule.Target.Count(c => c != '*'))
-                    .ThenByDescending(rule => rule.Mode == "Allow")
-                    .FirstOrDefault();
-                if (matchingApp is not null && matchingApp.Mode != "Allow")
-                    await HandleViolation(matchingApp, running.Name, running.Name, token);
-                else if (hasApplicationAllowlist && matchingApp is null && running.HasWindow && !IsRequiredProcess(running.Name))
-                    await ReportViolation("Application", running.Name, running.Name, kill: true, token, reportedTarget: running.Name);
-            }
-
+            // Applications are monitored, never policed: CAMS does not close
+            // anything on the desktop, and application rules raise no violation.
+            // Only websites are enforced, by the session proxy and the
+            // foreground check below.
             var websiteRules = rules.Where(r => r.RuleType == "Website").ToList();
 
             // Foreground observations supplement request-filter alerts for cached
             // pages and browsers that override the Windows proxy configuration.
             var website = BrowserUrlCollector.TryGetForegroundWebsite();
             if (website is not { Status: BrowserMonitoringStatus.Captured, Domain: not null }) return;
-            var matchingWebsite = websiteRules.Where(r => PolicyPatternMatcher.MatchesDomain(website.Domain, r.Target))
-                .OrderByDescending(r => r.Target.Count(c => c != '*')).ThenByDescending(r => r.Mode == "Allow").FirstOrDefault();
-            if (matchingWebsite is not null && matchingWebsite.Mode != "Allow")
-                await ReportViolation("Website", website.Domain, website.Browser, kill: false, token, reportedTarget: website.Domain);
-            else if (websiteRules.Any(rule => rule.Mode == "Allow") && matchingWebsite is null)
-                await ReportViolation("Website", website.Domain, website.Browser, kill: false, token, reportedTarget: website.Domain);
+            // Only a rule that blocks makes this a violation; a site nobody wrote a
+            // rule about is not one, even when allow rules exist.
+            if (PolicyDecision.FindMatch(websiteRules, website.Domain, isDomain: true) is { } matchingWebsite &&
+                matchingWebsite.Mode != "Allow")
+                await ReportViolation("Website", website.Domain, token, reportedTarget: website.Domain);
         }
 
-        private async Task HandleViolation(RestrictionRuleMessage rule, string app, string processName, CancellationToken token)
+        private async Task ReportViolation(string targetType, string app, CancellationToken token, string? reportedTarget = null, string? outcome = null, bool notifyStudent = true)
         {
-            // Kill the offending process for blocked applications/games
-            bool kill = rule.RuleType == "Application";
-            // Persist only a normalized process name or the matched rule target, never raw window titles.
-            var reportedTarget = rule.RuleType == "Website" ? rule.Target : processName;
-            await ReportViolation(rule.RuleType, app, processName, kill, token, reportedTarget);
-        }
-
-        private async Task ReportViolation(string targetType, string app, string processName, bool kill, CancellationToken token, string? reportedTarget = null, string? outcome = null, bool notifyStudent = true)
-        {
-            if (kill)
-            {
-                var closed = false;
-                var failed = false;
-                foreach (var process in Process.GetProcessesByName(processName))
-                {
-                    using (process)
-                    {
-                        try
-                        {
-                            token.ThrowIfCancellationRequested();
-                            if (process.HasExited) continue;
-                            process.Kill();
-                            closed = true;
-                        }
-                        catch (InvalidOperationException) { /* Process already exited. */ }
-                        catch (System.ComponentModel.Win32Exception) { failed = true; }
-                    }
-                }
-                outcome = failed ? "Windows did not allow CAMS to close every matching process. Ask your teacher for help."
-                    : closed ? "The restricted application was closed." : "The restricted application is no longer running.";
-            }
-
-            // Throttle alerts only. Reopened apps/tabs must still be closed every pass.
+            // Throttle alerts only. A reopened tab must still be reported each pass.
             if (!_telemetry.ShouldReportInfraction(targetType, app, DateTime.UtcNow)) return;
             outcome ??= "This address is restricted. If it is still visible, restart your browser using Windows proxy settings or use the CAMS browser.";
 
@@ -1289,36 +1244,6 @@ namespace Client
                 _websiteProxy?.Dispose();
                 _websiteProxy = null;
             }
-        }
-
-        private static IEnumerable<(string Name, bool HasWindow)> GetRunningApplications()
-        {
-            foreach (var process in Process.GetProcesses())
-            {
-                using (process)
-                {
-                    string name;
-                    bool hasWindow;
-                    try
-                    {
-                        name = process.ProcessName.Trim().ToLowerInvariant();
-                        hasWindow = process.MainWindowHandle != IntPtr.Zero;
-                    }
-                    catch
-                    {
-                        continue;
-                    }
-                    if (!string.IsNullOrWhiteSpace(name)) yield return (name, hasWindow);
-                }
-            }
-        }
-
-        private static bool IsRequiredProcess(string processName)
-        {
-            var clientName = Path.GetFileNameWithoutExtension(Environment.ProcessPath ?? "Client").ToLowerInvariant();
-            return processName == clientName || processName is "explorer" or "shellexperiencehost" or "searchapp" or
-                "searchhost" or "startmenuexperiencehost" or "textinputhost" or "dwm" or "winlogon" or "csrss" or
-                "services" or "lsass" or "svchost" or "system" or "idle";
         }
 
         // Reports idle/active status and the active foreground app periodically.

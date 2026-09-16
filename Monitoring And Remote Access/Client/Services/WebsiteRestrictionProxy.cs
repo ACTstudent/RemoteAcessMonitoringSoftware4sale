@@ -34,11 +34,12 @@ public sealed class WebsiteRestrictionProxy : IDisposable
 
     public void UpdateRules(IEnumerable<RestrictionRuleMessage> rules)
     {
+        // Precedence is PolicyDecision's job; this only normalises and drops
+        // targets that cannot be matched against.
         var snapshot = rules.Where(rule => rule.RuleType == "Website")
             .Select(rule => rule with { Target = PolicyPatternMatcher.NormalizeDomainPattern(rule.Target) ?? "" })
             .Where(rule => rule.Target.Length > 0)
-            .OrderByDescending(rule => rule.Target.Count(c => c != '*'))
-            .ThenByDescending(rule => rule.Mode == "Allow").ToArray();
+            .ToArray();
         Volatile.Write(ref _rules, snapshot);
         // Tear down established tunnels immediately when their destination becomes
         // blocked, including downloads and sockets in background tabs.
@@ -50,13 +51,10 @@ public sealed class WebsiteRestrictionProxy : IDisposable
         }
     }
 
-    public bool IsBlocked(string domain)
-    {
-        if (string.IsNullOrEmpty(domain)) return false;
-        var rules = Volatile.Read(ref _rules);
-        var match = rules.FirstOrDefault(rule => PolicyPatternMatcher.MatchesDomain(domain, rule.Target));
-        return match is not null ? match.Mode != "Allow" : rules.Any(rule => rule.Mode == "Allow");
-    }
+    // Was: an unmatched domain counted as blocked whenever any allow rule
+    // existed, so whitelisting one site cut off the rest of the web.
+    public bool IsBlocked(string domain) =>
+        PolicyDecision.IsBlocked(Volatile.Read(ref _rules), domain, isDomain: true);
 
     public IReadOnlyList<string> DrainBlockedDomains()
     {

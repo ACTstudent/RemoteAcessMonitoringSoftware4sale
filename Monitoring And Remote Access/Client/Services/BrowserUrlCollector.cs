@@ -60,6 +60,13 @@ public static class BrowserUrlCollector
                 if (!IsAddressBar(processName, automationId, name))
                     continue;
 
+                // While the student is typing, the address bar holds whatever they
+                // have got to so far - "facebook.c", or a half-written search - and
+                // that is not a site they visited. Reading it raised violations for
+                // text nobody had navigated to, and recorded it as browsing history.
+                if (edit.Current.HasKeyboardFocus)
+                    return new BrowserWebsiteObservation(null, browser, BrowserMonitoringStatus.Fallback);
+
                 if (!edit.TryGetCurrentPattern(ValuePattern.Pattern, out var pattern))
                     continue;
 

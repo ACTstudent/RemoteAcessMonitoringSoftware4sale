@@ -12,11 +12,12 @@
         </div>
         <div>
             <h2 class="page-title">Whitelist & Blacklist Security Policies</h2>
-            <p class="text-muted mb-0 small">Enforce application & website domain rules across all student workstations</p>
+            <p class="text-muted mb-0 small">Enforce website domain rules across all student workstations</p>
         </div>
     </div>
 </div>
-<div class="alert alert-info">Allow rules are the whitelist. More-specific allow rules override broader matching blocks.</div>
+<div class="alert alert-info">Allow rules are the whitelist. More-specific allow rules override broader matching blocks, and nothing is blocked for being absent from these rules.</div>
+<div class="alert alert-warning">Application rules are kept here but are not enforced on workstations: CAMS does not close anything on the desktop. Application activity is still monitored, so teachers can see what was opened.</div>
 
 @foreach (var categoryType in new[] { "Application", "Website" })
 {
