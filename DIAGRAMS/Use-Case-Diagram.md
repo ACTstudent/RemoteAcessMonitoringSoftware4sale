@@ -1,10 +1,12 @@
 # CAMS Use Case Diagram
 
-An editable draw.io copy sits beside this file: [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio). It carries 122 use cases across nine pages - an overview, then one page per package - in proper UML: stick figures for the people, `«system»` boxes for the workstation agent and the background workers, a system boundary, and `«include»` and `«extend»` arrows. Open it at [app.diagrams.net](https://app.diagrams.net) with **File > Open From > Device**.
+An editable draw.io copy sits beside this file: [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio). It carries 120 use cases across nine pages - an overview, then one page per package - in proper UML: three actors, a system boundary, and `«include»` and `«extend»` arrows. Open it at [app.diagrams.net](https://app.diagrams.net) with **File > Open From > Device**.
 
 The actors use fixed roles. Every authenticated operation includes server-side role and object-scope validation; CAMS does not expose configurable RBAC.
 
-Administrator and Teacher are drawn as specialisations of an abstract **Staff** actor. That is taken from the code rather than assumed: `AdminController` is `[Authorize(Roles = AdminOrTeacher)]`, and its authorization filter admits a teacher only to actions marked `[TeacherSharedAction]`. Fifty-six of its actions carry that attribute, so nearly the whole administration surface is shared; what is not shared - administrator accounts, roles and permissions, LAN configuration, reports, audit and system logs, and everything in `AdminDatabaseController` and `AdminDeploymentController` - is attached to the Administrator actor alone.
+There are exactly three actors: **Administrator**, **Teacher** and **Student**. Administrator and Teacher share most of the administration surface, and that is read off the code rather than assumed: `AdminController` is `[Authorize(Roles = AdminOrTeacher)]`, and its authorization filter admits a teacher only to actions marked `[TeacherSharedAction]`. Fifty-six of its actions carry that attribute, so a shared case is drawn to both actors; what is not shared - administrator accounts, roles and permissions, LAN configuration, reports, audit and system logs, and everything in `AdminDatabaseController` and `AdminDeploymentController` - reaches the Administrator alone.
+
+The workstation client and the hosted background workers are **not** actors. They are parts of the system, so what they do is drawn as included behaviour of the case a person actually starts: capturing application, website and idle telemetry is included by the student's *Work at a monitored workstation*, discovering the server is included by *Log in at the workstation*, and ending a session that has run past its limit is included by *Apply the governing session rule*.
 
 ```mermaid
 flowchart LR
