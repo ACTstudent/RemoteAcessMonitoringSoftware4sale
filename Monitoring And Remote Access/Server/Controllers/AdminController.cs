@@ -73,10 +73,10 @@ namespace Server.Controllers
 
         // The admin portal is reachable by a teacher through
         // [TeacherSharedAction], so who is acting has to be worked out.
-        protected override (string UserType, int? UserId) Actor =>
+        protected override RecordActor Actor =>
             IsTeacherActor
-                ? (RoleNames.Teacher, ActorTeacherId)
-                : (RoleNames.Admin, HttpContext.Session.GetInt32("AdminId"));
+                ? RecordActor.Teacher(ActorTeacherId)
+                : RecordActor.Admin(HttpContext.Session.GetInt32("AdminId"));
 
         private async Task<bool> LoginIdentifierInUseAsync(string value, AccountRole? excludedRole = null, int? excludedId = null)
         {
@@ -480,6 +480,7 @@ namespace Server.Controllers
             teacher.Status = string.IsNullOrWhiteSpace(teacher.Status) ? "Active" : teacher.Status.Trim();
             teacher.PasswordHash = _hasher.HashPassword(new object(), teacher.PasswordHash.Trim());
             
+            (teacher.CreatedByType, teacher.CreatedById) = Actor;
             _context.Teachers.Add(teacher);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateTeacher", $"Created teacher {teacher.Username}");
@@ -651,6 +652,7 @@ namespace Server.Controllers
                 student.FullName = $"{student.FirstName} {student.LastName}".Trim();
             }
 
+            (student.CreatedByType, student.CreatedById) = Actor;
             _context.Students.Add(student);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateStudent", $"Created student {student.Username}");
@@ -1164,8 +1166,8 @@ namespace Server.Controllers
                     {
                         ComputerId = existing.ComputerId,
                         Status = existing.Status,
-                        ChangedByType = IsTeacherActor ? "Teacher" : "Admin",
-                        ChangedById = IsTeacherActor ? ActorTeacherId : HttpContext.Session.GetInt32("AdminId")
+                        ChangedByType = Actor.Type,
+                        ChangedById = Actor.Id
                     });
                 await _context.SaveChangesAsync();
                 await AuditAsync("UpdateComputer", $"Updated computer {existing.LaboratoryStation}");
@@ -1307,7 +1309,8 @@ namespace Server.Controllers
             var result = await _classManagement.CreateClassAsync(
                 new ClassInput(cls.ClassName, cls.Section, cls.Subject, cls.GradeLevel, cls.Schedule, cls.AcademicYear, cls.TeacherId),
                 actorTeacherId: null,
-                isAdmin: true);
+                isAdmin: true,
+                actor: Actor);
 
             if (!await RecordAsync(result, "ClassCreated", $"Created class '{result.Name}'",
                 $"Class '{result.Name}' created successfully!"))
@@ -1415,7 +1418,8 @@ namespace Server.Controllers
             if (!CheckAccess()) return Denied();
             var result = await _classManagement.CreateStudentInClassAsync(
                 classId,
-                new NewStudentInput(null, firstName, lastName, null, username, password));
+                new NewStudentInput(null, firstName, lastName, null, username, password),
+                Actor);
             if (!await RecordAsync(result, "AddStudentToClass", $"Added student {result.Name} to class {classId}",
                 $"Student '{result.Name}' added successfully!"))
             {
@@ -1448,7 +1452,7 @@ namespace Server.Controllers
                     i < (bulkPasswords?.Count ?? 0) ? bulkPasswords![i] : null))
                 .ToList();
 
-            var result = await _classManagement.BulkCreateStudentsAsync(rows);
+            var result = await _classManagement.BulkCreateStudentsAsync(rows, Actor);
             if (!await RecordAsync(result, "BulkCreateStudents", $"Bulk created {result.Count} unassigned student profiles",
                 $"Successfully created {result.Count} student profile(s)."))
             {
@@ -1481,7 +1485,7 @@ namespace Server.Controllers
                     i < (bulkPasswords?.Count ?? 0) ? bulkPasswords![i] : null))
                 .ToList();
 
-            var result = await _classManagement.BulkCreateStudentsInClassAsync(classId, rows);
+            var result = await _classManagement.BulkCreateStudentsInClassAsync(classId, rows, Actor);
             if (!await RecordAsync(result, "BulkAddStudents", $"Bulk added {result.Count} students to class {classId}",
                 $"Successfully added {result.Count} student(s) to the class."))
             {
@@ -1501,7 +1505,7 @@ namespace Server.Controllers
             var parsed = _classManagement.ParseBulkStudentsCsv(await reader.ReadToEndAsync());
             var import = await _classManagement.ValidateBulkStudentsAsync(classId, parsed.Rows);
             if (import.Errors.Count > 0) return CsvExport.Result("Student-Import-Errors", BulkErrorCsv(import.Errors));
-            var result = await _classManagement.BulkCreateStudentsInClassAsync(classId, import.Rows);
+            var result = await _classManagement.BulkCreateStudentsInClassAsync(classId, import.Rows, Actor);
             TempData[result.Success ? "Message" : "ErrorMessage"] = result.Success ? $"Successfully added {result.Count} student(s) to the class." : result.Error;
             return RedirectToAction("ClassDetails", new { id = classId });
         }

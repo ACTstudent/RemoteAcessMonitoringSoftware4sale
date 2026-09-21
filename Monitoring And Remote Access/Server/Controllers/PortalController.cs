@@ -24,10 +24,11 @@ public abstract class PortalController : Controller
     protected abstract ApplicationDbContext Db { get; }
 
     /// <summary>
-    /// Who is acting, for the audit trail. UserType uses the same role
-    /// vocabulary as the authentication cookie.
+    /// Who is acting: for the audit trail, and for the rows that record who
+    /// created them. The type uses the same vocabulary as the authentication
+    /// cookie, so an audit entry and a created account name the person alike.
     /// </summary>
-    protected abstract (string UserType, int? UserId) Actor { get; }
+    protected abstract RecordActor Actor { get; }
 
     /// <summary>
     /// Where a caller goes when the portal is not theirs. Identical in both

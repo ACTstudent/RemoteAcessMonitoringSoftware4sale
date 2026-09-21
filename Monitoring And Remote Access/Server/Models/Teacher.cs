@@ -39,5 +39,14 @@ namespace Server.Models
         public ICollection<Class> Classes { get; set; } = new List<Class>();
 
         public ICollection<LabSession> LabSessions { get; set; } = new List<LabSession>();
+
+        // Who created this teacher, as a type and an id rather than a foreign
+        // key: an administrator and a teacher can both do it, and they live in
+        // different tables. See RecordActor.
+        [Required]
+        [StringLength(20)]
+        public string CreatedByType { get; set; } = ActorTypes.System;
+
+        public int? CreatedById { get; set; }
     }
 }

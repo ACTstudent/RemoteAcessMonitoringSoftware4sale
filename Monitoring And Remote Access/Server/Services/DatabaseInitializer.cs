@@ -209,6 +209,14 @@ public static class DatabaseInitializer
         EnsureColumn(db, "Teachers", "LockoutEndUtc", "TEXT NULL");
         EnsureColumn(db, "Students", "FailedLoginAttempts", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumn(db, "Students", "LockoutEndUtc", "TEXT NULL");
+        // Rows that predate these columns keep 'System' rather than being
+        // attributed to whoever happened to run the upgrade.
+        EnsureColumn(db, "Teachers", "CreatedByType", "TEXT NOT NULL DEFAULT 'System'");
+        EnsureColumn(db, "Teachers", "CreatedById", "INTEGER NULL");
+        EnsureColumn(db, "Students", "CreatedByType", "TEXT NOT NULL DEFAULT 'System'");
+        EnsureColumn(db, "Students", "CreatedById", "INTEGER NULL");
+        EnsureColumn(db, "Classes", "CreatedByType", "TEXT NOT NULL DEFAULT 'System'");
+        EnsureColumn(db, "Classes", "CreatedById", "INTEGER NULL");
     }
 
     private static void EnsureRemoteCommandColumns(ApplicationDbContext db)

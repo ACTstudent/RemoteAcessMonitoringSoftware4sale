@@ -58,15 +58,15 @@ public interface IClassManagementService
     Task<IReadOnlyList<ClassStudent>> GetRosterAsync(int classId);
     Task<IReadOnlyList<Student>> GetStudentsForTeacherAsync(int teacherId);
     Task EnsureMembershipLinksAsync(int classId);
-    Task<ClassOperationResult> CreateClassAsync(ClassInput input, int? actorTeacherId, bool isAdmin);
+    Task<ClassOperationResult> CreateClassAsync(ClassInput input, int? actorTeacherId, bool isAdmin, RecordActor actor);
     Task<ClassOperationResult> UpdateClassAsync(int classId, ClassInput input, int? actorTeacherId, bool isAdmin);
     Task<ClassOperationResult> AssignTeacherAsync(int classId, int teacherId);
     Task<ClassOperationResult> SetArchiveStateAsync(int classId, bool archived, int? teacherId = null);
     Task<ClassOperationResult> DeleteClassAsync(int classId, int? teacherId = null);
     Task<ClassOperationResult> EnrollExistingStudentAsync(int classId, int studentId, bool moveStudent, int? teacherId = null);
-    Task<ClassOperationResult> CreateStudentInClassAsync(int classId, NewStudentInput input, int? teacherId = null);
-    Task<ClassOperationResult> BulkCreateStudentsAsync(IReadOnlyList<NewStudentInput> inputs);
-    Task<ClassOperationResult> BulkCreateStudentsInClassAsync(int classId, IReadOnlyList<NewStudentInput> inputs, int? teacherId = null);
+    Task<ClassOperationResult> CreateStudentInClassAsync(int classId, NewStudentInput input, RecordActor actor, int? teacherId = null);
+    Task<ClassOperationResult> BulkCreateStudentsAsync(IReadOnlyList<NewStudentInput> inputs, RecordActor actor);
+    Task<ClassOperationResult> BulkCreateStudentsInClassAsync(int classId, IReadOnlyList<NewStudentInput> inputs, RecordActor actor, int? teacherId = null);
     Task<BulkStudentPreview> PreviewBulkStudentsAsync(int classId, IReadOnlyList<NewStudentInput> inputs, int? teacherId = null);
     Task<BulkStudentImport> ValidateBulkStudentsAsync(int classId, IReadOnlyList<BulkStudentRow> rows, int? teacherId = null);
     BulkStudentPreview ParseBulkStudentsCsv(string csv);
@@ -223,7 +223,7 @@ public sealed class ClassManagementService : IClassManagementService
         }
     }
 
-    public async Task<ClassOperationResult> CreateClassAsync(ClassInput input, int? actorTeacherId, bool isAdmin)
+    public async Task<ClassOperationResult> CreateClassAsync(ClassInput input, int? actorTeacherId, bool isAdmin, RecordActor actor)
     {
         var validation = await ValidateClassInputAsync(input, actorTeacherId, isAdmin, null);
         if (!validation.Success)
@@ -254,7 +254,9 @@ public sealed class ClassManagementService : IClassManagementService
             Status = RecordStatus.Active,
             IsArchived = false,
             CreatedAt = DateTime.UtcNow,
-            TeacherId = teacherId
+            TeacherId = teacherId,
+            CreatedByType = actor.Type,
+            CreatedById = actor.Id
         };
 
         try
@@ -514,7 +516,7 @@ public sealed class ClassManagementService : IClassManagementService
         return ClassOperationResult.Ok(student.FullName);
     }
 
-    public Task<ClassOperationResult> CreateStudentInClassAsync(int classId, NewStudentInput input, int? teacherId = null)
+    public Task<ClassOperationResult> CreateStudentInClassAsync(int classId, NewStudentInput input, RecordActor actor, int? teacherId = null)
     {
         return InTransactionAsync(async () =>
         {
@@ -535,7 +537,7 @@ public sealed class ClassManagementService : IClassManagementService
                 return validation;
             }
 
-            var student = await BuildStudentAsync(input, entity);
+            var student = await BuildStudentAsync(input, entity, actor);
             _context.Students.Add(student);
             await _context.SaveChangesAsync();
             _context.ClassStudents.Add(new ClassStudent
@@ -549,7 +551,7 @@ public sealed class ClassManagementService : IClassManagementService
         });
     }
 
-    public Task<ClassOperationResult> BulkCreateStudentsInClassAsync(int classId, IReadOnlyList<NewStudentInput> inputs, int? teacherId = null)
+    public Task<ClassOperationResult> BulkCreateStudentsInClassAsync(int classId, IReadOnlyList<NewStudentInput> inputs, RecordActor actor, int? teacherId = null)
     {
         return InTransactionAsync(async () =>
         {
@@ -600,7 +602,7 @@ public sealed class ClassManagementService : IClassManagementService
                     return ClassOperationResult.Fail($"The student number '{requestedStudentNumber}' is repeated in the bulk roster.");
                 }
 
-                var student = await BuildStudentAsync(row, entity, usernames, studentNumbers);
+                var student = await BuildStudentAsync(row, entity, actor, usernames, studentNumbers);
                 students.Add(student);
                 usernames.Add(student.Username);
                 studentNumbers.Add(student.StudentNumber);
@@ -619,7 +621,7 @@ public sealed class ClassManagementService : IClassManagementService
         });
     }
 
-    public Task<ClassOperationResult> BulkCreateStudentsAsync(IReadOnlyList<NewStudentInput> inputs)
+    public Task<ClassOperationResult> BulkCreateStudentsAsync(IReadOnlyList<NewStudentInput> inputs, RecordActor actor)
     {
         return InTransactionAsync(async () =>
         {
@@ -659,7 +661,7 @@ public sealed class ClassManagementService : IClassManagementService
                     return ClassOperationResult.Fail($"The student number '{requestedStudentNumber}' is repeated in the bulk profiles.");
                 }
 
-                var student = await BuildStudentAsync(row, null, usernames, studentNumbers);
+                var student = await BuildStudentAsync(row, null, actor, usernames, studentNumbers);
                 students.Add(student);
                 usernames.Add(student.Username);
                 studentNumbers.Add(student.StudentNumber);
@@ -886,6 +888,7 @@ public sealed class ClassManagementService : IClassManagementService
     private async Task<Student> BuildStudentAsync(
         NewStudentInput input,
         Class? entity,
+        RecordActor actor,
         HashSet<string>? reservedUsernames = null,
         HashSet<string>? reservedStudentNumbers = null)
     {
@@ -895,6 +898,8 @@ public sealed class ClassManagementService : IClassManagementService
 
         return new Student
         {
+            CreatedByType = actor.Type,
+            CreatedById = actor.Id,
             StudentNumber = studentNumber,
             FirstName = name.First,
             LastName = name.Last,

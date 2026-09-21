@@ -34,7 +34,8 @@ public class ClassManagementServiceTests
         var result = await service.CreateClassAsync(
             new ClassInput("Grade 6 - Rose", "Rose", "Computer", "Grade 6", "Monday", "2026-2027", inactiveTeacher.TeacherId),
             null,
-            isAdmin: true);
+            isAdmin: true,
+            actor: RecordActor.Admin(1));
 
         Assert.False(result.Success);
         Assert.Contains("active teacher", result.Error, StringComparison.OrdinalIgnoreCase);
@@ -48,7 +49,8 @@ public class ClassManagementServiceTests
         var result = await new ClassManagementService(db).CreateClassAsync(
             new ClassInput("Grade 6 Test", "A", "Computer", "Grade 6", "Monday", null, null),
             actorTeacherId: null,
-            isAdmin: true);
+            isAdmin: true,
+            actor: RecordActor.Admin(1));
 
         var classroom = await db.Classes.SingleAsync();
         Assert.True(result.Success);
@@ -124,7 +126,7 @@ public class ClassManagementServiceTests
         {
             new NewStudentInput(null, "Valid", "Student", "", "valid.student", "good1234"),
             new NewStudentInput(null, "Missing", "", "", "missing.last", "good1234")
-        }, teacher.TeacherId);
+        }, RecordActor.Teacher(teacher.TeacherId), teacher.TeacherId);
 
         Assert.False(result.Success);
         Assert.Empty(await db.Students.ToListAsync());
@@ -141,7 +143,7 @@ public class ClassManagementServiceTests
         {
             new NewStudentInput(null, "Ana", "Reyes", null, "ana.reyes", "secret12"),
             new NewStudentInput(null, "Ben", "Cruz", null, null, "secret23")
-        });
+        }, RecordActor.Admin(1));
 
         var students = await db.Students.OrderBy(student => student.FirstName).ToListAsync();
         Assert.True(result.Success);
@@ -165,7 +167,7 @@ public class ClassManagementServiceTests
         {
             new NewStudentInput(null, "Valid", "Student", null, "valid.student", "secret12"),
             new NewStudentInput(null, "Missing", "", null, "invalid.student", "secret23")
-        });
+        }, RecordActor.Admin(1));
 
         Assert.False(result.Success);
         Assert.Empty(await db.Students.ToListAsync());

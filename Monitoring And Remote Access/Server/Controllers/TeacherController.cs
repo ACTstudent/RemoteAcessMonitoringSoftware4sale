@@ -43,8 +43,8 @@ namespace Server.Controllers
 
         protected override ApplicationDbContext Db => _context;
 
-        protected override (string UserType, int? UserId) Actor =>
-            (RoleNames.Teacher, HttpContext.Session.GetInt32("TeacherId"));
+        protected override RecordActor Actor =>
+            RecordActor.Teacher(HttpContext.Session.GetInt32("TeacherId"));
 
         private async Task<bool> LoginIdentifierInUseAsync(string value, int excludedStudentId)
         {
@@ -832,6 +832,7 @@ namespace Server.Controllers
             var result = await _classManagement.CreateStudentInClassAsync(
                 classId.Value,
                 new NewStudentInput(student.StudentNumber, student.FirstName, student.LastName, student.FullName, student.Username, student.PasswordHash),
+                Actor,
                 teacherId.Value);
             if (!await RecordAsync(result, "CreateStudent", $"Created student {result.Name} in class {classId}",
                 $"Student '{result.Name}' registered successfully!"))
@@ -1048,7 +1049,8 @@ namespace Server.Controllers
             var result = await _classManagement.CreateClassAsync(
                 new ClassInput(cls.ClassName, cls.Section, cls.Subject, cls.GradeLevel, cls.Schedule, cls.AcademicYear, teacherId),
                 teacherId,
-                isAdmin: false);
+                isAdmin: false,
+                actor: Actor);
             if (!await RecordAsync(result, "ClassCreated", $"Created class '{result.Name}'",
                 $"Class '{result.Name}' created successfully!"))
             {
@@ -1153,6 +1155,7 @@ namespace Server.Controllers
             var result = await _classManagement.CreateStudentInClassAsync(
                 classId,
                 new NewStudentInput(null, firstName, lastName, null, username, password),
+                Actor,
                 teacherId.Value);
             if (!await RecordAsync(result, "AddStudentToClass", $"Added student {result.Name} to class {classId}",
                 $"Student '{result.Name}' added successfully!"))
@@ -1187,7 +1190,7 @@ namespace Server.Controllers
                     i < (bulkPasswords?.Count ?? 0) ? bulkPasswords![i] : null))
                 .ToList();
 
-            var result = await _classManagement.BulkCreateStudentsInClassAsync(classId, rows, teacherId.Value);
+            var result = await _classManagement.BulkCreateStudentsInClassAsync(classId, rows, Actor, teacherId.Value);
             if (!await RecordAsync(result, "BulkAddStudents", $"Bulk added {result.Count} students to class {classId}",
                 $"Successfully added {result.Count} student(s) to the class."))
             {
@@ -1207,7 +1210,7 @@ namespace Server.Controllers
             var parsed = _classManagement.ParseBulkStudentsCsv(await reader.ReadToEndAsync());
             var import = await _classManagement.ValidateBulkStudentsAsync(classId, parsed.Rows, teacherId.Value);
             if (import.Errors.Count > 0) return CsvExport.Result("Student-Import-Errors", BulkErrorCsv(import.Errors));
-            var result = await _classManagement.BulkCreateStudentsInClassAsync(classId, import.Rows, teacherId.Value);
+            var result = await _classManagement.BulkCreateStudentsInClassAsync(classId, import.Rows, Actor, teacherId.Value);
             TempData[result.Success ? "Message" : "ErrorMessage"] = result.Success ? $"Successfully added {result.Count} student(s) to the class." : result.Error;
             return RedirectToAction("ClassDetails", new { id = classId });
         }

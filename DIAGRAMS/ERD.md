@@ -36,6 +36,8 @@ erDiagram
         string Status
         int FailedLoginAttempts
         datetime LockoutEndUtc "nullable"
+        string CreatedByType "Admin | Teacher | System"
+        int CreatedById "nullable, no FK"
     }
 
     STUDENT {
@@ -51,6 +53,8 @@ erDiagram
         datetime LockoutEndUtc "nullable"
         int ClassId FK "nullable, SET NULL"
         int AdviserId FK "nullable, SET NULL"
+        string CreatedByType "Admin | Teacher | System"
+        int CreatedById "nullable, no FK"
     }
 
     CLASS {
@@ -65,6 +69,8 @@ erDiagram
         bool IsArchived
         datetime CreatedAt
         int TeacherId FK "nullable, SET NULL"
+        string CreatedByType "Admin | Teacher | System"
+        int CreatedById "nullable, no FK"
     }
 
     CLASS_STUDENT {
@@ -141,6 +147,9 @@ erDiagram
     SESSION_RULE o|--o{ LAB_SESSION : governs
     COMPUTER ||--o{ COMPUTER_STATUS_HISTORY : records
     ROLE }o--o{ PERMISSION : role_permissions
+    ADMIN ||..o{ TEACHER : created_by_identifier
+    ADMIN ||..o{ STUDENT : created_by_identifier
+    ADMIN ||..o{ CLASS : created_by_identifier
 ```
 
 ## Policy, telemetry and operations
@@ -343,6 +352,7 @@ erDiagram
 ## Integrity And Scope Notes
 
 - `Admin`, `Teacher` and `Student` are separate account tables. Each stores `PasswordHash`, `FailedLoginAttempts` and `LockoutEndUtc`. No plain password column exists.
+- `Student`, `Teacher` and `Class` record who created them in `CreatedByType` and `CreatedById`. The creator may be an administrator or a teacher, and those live in different tables, so the type says which table the id belongs to. This is the same pair `AuditLog` and `ComputerStatusHistory` already use, and like those it is not a foreign key: the database cannot check that the id exists, and deleting an administrator leaves the ids pointing at nobody. Rows that predate the columns, and rows the seeder writes, carry `System`. Added by the `RecordWhoCreatedAccountsAndClasses` migration; `DatabaseInitializer` adds the same columns to databases that were created before it.
 - Application roles are fixed. `Role`, `Permission` and the `RolePermissions` join table hold seeded metadata for display only; they do not drive runtime authorisation.
 - `Student.ClassId` is the primary class association and is set to null when the class is deleted. `ClassStudent` records explicit roster membership and is unique on `(ClassId, StudentId)`.
 - `Computer.AssignedTo` holds the assigned student identifier as text. It is unique when present but is not an EF foreign key; assignment integrity is enforced in application code.
