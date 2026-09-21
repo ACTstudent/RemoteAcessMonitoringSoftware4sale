@@ -109,10 +109,10 @@ function createWorkstationCard(connectionId, studentId, pcName) {
     stream.appendChild(image);
 
     const footer = document.createElement("div");
-    footer.className = "p-3 bg-light d-flex flex-wrap gap-2 justify-content-between align-items-center";
+    footer.className = "workstation-card-footer p-3 bg-light";
     const activity = document.createElement("span");
     activity.id = `activity-${connectionId}`;
-    activity.className = "small text-dark text-truncate";
+    activity.className = "workstation-card-activity small text-dark text-truncate";
     activity.textContent = "Activity unavailable";
     const timestamp = document.createElement("span");
     timestamp.id = `time-${connectionId}`;
@@ -120,13 +120,13 @@ function createWorkstationCard(connectionId, studentId, pcName) {
     timestamp.textContent = "Waiting for live frame";
     const browser = document.createElement("span");
     browser.id = `browser-${connectionId}`;
-    browser.className = "small text-muted w-100";
+    browser.className = "small text-muted";
     browser.textContent = "Browser monitoring pending";
     const viewButton = document.createElement("span");
     viewButton.className = "btn btn-sm btn-outline-primary rounded-pill px-3";
     viewButton.innerHTML = '<i class="bi bi-arrows-fullscreen me-1"></i> View';
     const student = document.createElement("span");
-    student.className = "small fw-semibold w-100";
+    student.className = "workstation-card-student small fw-semibold";
     student.textContent = studentId ? `Student #${studentId}` : "Connected student";
     footer.append(student, activity, timestamp, browser, viewButton);
 

@@ -500,7 +500,7 @@ body {
 }
 
 .modal .form-label {
-    color: #44403C;
+    color: var(--text-main);
     font-size: 0.82rem;
     font-weight: 700;
     margin-bottom: 0.4rem;
@@ -508,7 +508,7 @@ body {
 
 .modal .form-control,
 .modal .form-select {
-    border-color: #DAD4C9;
+    border-color: var(--card-border);
     border-radius: var(--radius-md);
     min-height: 44px;
 }
@@ -610,7 +610,7 @@ body {
     width: 46px;
     height: 46px;
     border-radius: var(--radius-md);
-    background-color: #f4f4f5;
+    background-color: var(--surface-sunk);
     color: var(--sidebar-bg);
     display: flex;
     align-items: center;
@@ -632,7 +632,7 @@ body {
 
 /* Search and Filters */
 .filter-control {
-    background-color: #f4f4f5;
+    background-color: var(--surface-sunk);
     border: 1px solid var(--card-border);
     border-radius: var(--radius-md);
     padding: 0.65rem 1rem;
@@ -957,7 +957,7 @@ body {
     display: flex;
     gap: 0.25rem;
     padding: 0.3rem;
-    background: #F1EDE5;
+    background: var(--surface-line);
     border: 1px solid var(--card-border);
     border-radius: var(--radius-pill);
     flex-wrap: nowrap;
@@ -1003,7 +1003,7 @@ body {
     overflow-y: auto;
     border-color: var(--card-border) !important;
     border-radius: 14px !important;
-    background: #FCFAF6;
+    background: var(--surface-raised);
 }
 
 .bulk-select-item {
@@ -1026,7 +1026,7 @@ body {
    so those elements rendered unstyled. They are part of the shared system now.
    --------------------------------------------------------------------------- */
 .text-emerald-700 {
-    color: #15803D;
+    color: var(--cams-success);
 }
 
 .stat {
@@ -1096,7 +1096,7 @@ body {
     align-items: center;
     gap: 0.75rem;
     padding: 0.7rem 0;
-    border-bottom: 1px solid #F1EDE5;
+    border-bottom: 1px solid var(--surface-line);
 }
 
 .info-row:last-child {
@@ -1120,8 +1120,8 @@ body {
 }
 
 .notice-card.is-read {
-    border-left-color: #DAD4C9;
-    background: #FCFAF6;
+    border-left-color: var(--card-border);
+    background: var(--surface-raised);
 }
 
 .notice-card .notice-title {
@@ -1130,7 +1130,7 @@ body {
 }
 
 .notice-card .notice-message {
-    color: #44403C;
+    color: var(--text-main);
     margin: 0.4rem 0 0;
     font-size: 0.93rem;
 }
@@ -1402,7 +1402,7 @@ body {
     top: 0;
     z-index: 2000;
     padding: 0.75rem 1.25rem;
-    background: var(--cams-emerald, #157347);
+    background: var(--accent-emerald);
     color: #fff;
     border-bottom-right-radius: 0.5rem;
     font-weight: 600;
@@ -1427,12 +1427,12 @@ body {
 .page-title {
     font-weight: 800;
     letter-spacing: -0.5px;
-    color: #212529;
+    color: var(--text-main);
     margin-bottom: 0;
 }
 
 .page-subtitle {
-    color: #6c757d;
+    color: var(--text-muted);
     font-size: 0.875rem;
     margin-bottom: 0;
 }
@@ -1773,8 +1773,8 @@ summary:focus-visible,
    is more specific than a plain class on its own would be. */
 .log-group-events .custom-table thead th,
 .crud-page .log-group-events .custom-table thead th {
-    background: #1e6f49;
-    color: #ffffff;
+    background: var(--surface-sunk);
+    color: var(--text-on-sage);
     text-transform: none;
     letter-spacing: 0;
 }

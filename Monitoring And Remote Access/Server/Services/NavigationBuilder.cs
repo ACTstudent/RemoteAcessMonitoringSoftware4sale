@@ -28,6 +28,47 @@ public static class NavigationBuilder
     private static string Name(HttpContext context, string key, string fallback) =>
         context.Session.GetString(key) is { Length: > 0 } value ? value : fallback;
 
+    /// <summary>
+    /// The lab-wide pages, declared once.
+    ///
+    /// Both portals reach these: an administrator owns them, and a teacher is
+    /// admitted to them by <c>[TeacherSharedAction]</c>. They used to be written
+    /// out twice, and the two copies had drifted - the same page carried a
+    /// different label and a different icon depending on which sidebar you were
+    /// looking at. <c>Admin/Index</c> was "Global Dashboard &amp; Sessions" to an
+    /// administrator and "Dashboard &amp; All Sessions" to a teacher;
+    /// <c>Admin/Classes</c> was "Classes, Class Details &amp; Import" to one and
+    /// "Classes, Student Profiles &amp; Import" to the other; the blacklist and
+    /// whitelist gained and lost the word "Directory". A page is one thing, so
+    /// it gets one name and one icon wherever it is listed.
+    /// </summary>
+    private static IEnumerable<NavSection> GlobalSections() => new[]
+    {
+        new NavSection("Global Operations", new[]
+        {
+            new NavItem("Global Dashboard & Sessions", "grid-fill", "Index", "Admin")
+        }),
+        new NavSection("Global People & Student Profiles", new[]
+        {
+            new NavItem("Teachers", "person-badge-fill", "Teachers", "Admin"),
+            new NavItem("Students", "mortarboard-fill", "Students", "Admin"),
+            new NavItem("Classes, Class Details & Import", "folder-fill", "Classes", "Admin",
+                AlsoActiveOn: new[] { "ClassDetails" })
+        }),
+        new NavSection("Global Computers", new[]
+        {
+            new NavItem("Computers, History & Mapping", "pc-display", "Computers", "Admin",
+                AlsoActiveOn: new[] { "ComputerHistory" })
+        }),
+        new NavSection("Global Restrictions", new[]
+        {
+            new NavItem("Rules & Categories", "slash-circle-fill", "Restrictions", "Admin"),
+            new NavItem("Blacklist Directory", "ban", "Blacklists", "Admin"),
+            new NavItem("Whitelist Directory", "check-circle-fill", "Whitelists", "Admin"),
+            new NavItem("Session Rules", "hourglass-split", "SessionRules", "Admin")
+        })
+    };
+
     // ---------- Teacher ----------
 
     private static NavigationModel BuildTeacher(HttpContext context) => new(
@@ -40,11 +81,15 @@ public static class NavigationBuilder
         RoleBadgeCss: "bg-success",
         AvatarIcon: "person-badge",
         ScriptPartial: "_TeacherAlertBadgeScript",
-        Sections: new[]
+        Sections: new NavSection[]
         {
+            // "My Classroom" rather than a bare "Dashboard": the lab-wide
+            // overview further down is also a dashboard, and two links a few
+            // rows apart both reading Dashboard told a teacher nothing about
+            // which one they wanted.
             new NavSection(null, new[]
             {
-                new NavItem("Dashboard", "speedometer2", "Dashboard", "Teacher")
+                new NavItem("My Classroom Dashboard", "speedometer2", "Dashboard", "Teacher")
             }),
             new NavSection("Laboratory Control", new[]
             {
@@ -68,22 +113,8 @@ public static class NavigationBuilder
                 new NavItem("Monitoring Alerts", "bell-fill", "Alerts", "Teacher",
                     AlsoActiveOn: new[] { "AlertHistory" }, BadgeViewComponent: "OpenAlertCount"),
                 new NavItem("Account Settings", "person-gear", "Settings", "Teacher")
-            }),
-            new NavSection("Global Operations", new[]
-            {
-                new NavItem("Dashboard & All Sessions", "globe2", "Index", "Admin"),
-                new NavItem("Teachers", "person-badge-fill", "Teachers", "Admin"),
-                new NavItem("Students", "mortarboard-fill", "Students", "Admin"),
-                new NavItem("Classes, Student Profiles & Import", "folder-symlink-fill", "Classes", "Admin",
-                    AlsoActiveOn: new[] { "ClassDetails" }),
-                new NavItem("Computers, History & Mapping", "pc-display-horizontal", "Computers", "Admin",
-                    AlsoActiveOn: new[] { "ComputerHistory" }),
-                new NavItem("Rules & Categories", "shield-lock-fill", "Restrictions", "Admin"),
-                new NavItem("Blacklists", "ban", "Blacklists", "Admin"),
-                new NavItem("Whitelists", "check-circle-fill", "Whitelists", "Admin"),
-                new NavItem("Session Rules", "hourglass-split", "SessionRules", "Admin")
             })
-        });
+        }.Concat(GlobalSections()).ToArray());
 
     // ---------- Admin ----------
     //
@@ -105,31 +136,7 @@ public static class NavigationBuilder
             return BuildTeacher(context);
         }
 
-        var sections = new List<NavSection>();
-
-        sections.Add(new NavSection("Global Operations", new[]
-        {
-            new NavItem("Global Dashboard & Sessions", "grid-fill", "Index", "Admin")
-        }));
-        sections.Add(new NavSection("Global People & Student Profiles", new[]
-        {
-            new NavItem("Teachers", "person-badge-fill", "Teachers", "Admin"),
-            new NavItem("Students", "mortarboard-fill", "Students", "Admin"),
-            new NavItem("Classes, Class Details & Import", "folder-fill", "Classes", "Admin",
-                AlsoActiveOn: new[] { "ClassDetails" })
-        }));
-        sections.Add(new NavSection("Global Computers", new[]
-        {
-            new NavItem("Computers, History & Mapping", "pc-display", "Computers", "Admin",
-                AlsoActiveOn: new[] { "ComputerHistory" })
-        }));
-        sections.Add(new NavSection("Global Restrictions", new[]
-        {
-            new NavItem("Rules & Categories", "slash-circle-fill", "Restrictions", "Admin"),
-            new NavItem("Blacklist Directory", "ban", "Blacklists", "Admin"),
-            new NavItem("Whitelist Directory", "check-circle-fill", "Whitelists", "Admin"),
-            new NavItem("Session Rules", "hourglass-split", "SessionRules", "Admin")
-        }));
+        var sections = new List<NavSection>(GlobalSections());
 
         sections.Add(new NavSection("Administrator Only", new[]
         {

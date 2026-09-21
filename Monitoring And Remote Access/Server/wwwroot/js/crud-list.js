@@ -42,7 +42,20 @@
         const label = panel.dataset.crudLabel || 'records';
         const pageSize = Math.max(1, Number.parseInt(panel.dataset.crudPageSize, 10) || 6);
         const storageKey = `cams.directory:${location.pathname}${location.search}:${index}`;
-        const initialEmptyMessage = empty?.textContent.trim();
+        // A view writes its empty state as a heading and a sentence beneath it.
+        // Reading textContent off the wrapper runs the two together - "No classes
+        // yetSelect Create Class to add your first section" - so the parts are
+        // read separately and punctuated back into one line.
+        const initialEmptyMessage = (() => {
+            if (!empty) return undefined;
+            const parts = Array.from(empty.children)
+                .map(child => child.textContent.trim())
+                .filter(Boolean);
+            if (parts.length < 2) return empty.textContent.trim();
+            return parts
+                .map((part, i) => (i === parts.length - 1 || /[.!?:]$/.test(part) ? part : part + '.'))
+                .join(' ');
+        })();
         let page = 1;
         let matchingItems = items;
         // Only visible record text is indexed; field values, credentials and action labels are excluded.

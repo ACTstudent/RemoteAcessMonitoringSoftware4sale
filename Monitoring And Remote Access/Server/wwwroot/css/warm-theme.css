@@ -13,8 +13,25 @@
 
 /* ---------------------------------------------------------------- login -- */
 body.login-page {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 1rem;
     background: radial-gradient(ellipse at top left, #E1EEDC, transparent 65%), var(--body-bg);
 }
+.login-shell { width: 100%; max-width: 26rem; }
+.login-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-xl); overflow: hidden; }
+.login-banner { padding: 2rem 1.5rem 1.6rem; text-align: center; }
+.login-banner h1 { font-size: 1.35rem; font-weight: 800; letter-spacing: -.03em; margin: .35rem 0 .15rem; }
+.login-banner p { margin: 0; font-size: .8rem; }
+.login-body { padding: 1.6rem 1.5rem 1.75rem; }
+.login-body .form-label { font-size: .8rem; font-weight: 700; margin-bottom: .4rem; }
+.login-body .form-control { min-height: 46px; }
+.btn-login { min-height: 48px; font-weight: 700; }
+.login-footnote { margin-top: 1.25rem; text-align: center; font-size: .78rem; }
+.error-page main { width: 100%; max-width: 34rem; }
 .login-page .login-card { border-color: var(--card-border); box-shadow: var(--shadow-raised); }
 .login-page .login-banner { background: var(--surface-sunk); color: var(--text-on-sage); }
 .login-page .login-banner p,
@@ -80,7 +97,12 @@ body.login-page {
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-card);
 }
-.crud-panel { box-shadow: var(--shadow-raised); }
+.crud-panel {
+    /* Directory views carry Bootstrap border-0, rounded-4 and shadow-sm utilities. */
+    border: 1px solid var(--card-border) !important;
+    border-radius: var(--radius-xl) !important;
+    box-shadow: var(--shadow-raised) !important;
+}
 .crud-metrics > :last-child .metric-card { border-left: 1px solid var(--card-border); }
 
 /* ---------------------------------------------------------- data table -- */
@@ -123,6 +145,77 @@ body.login-page {
 .page-item.active .page-link { background-color: var(--accent-emerald); border-color: var(--accent-emerald); }
 .page-link:focus-visible { outline: 2px solid var(--accent-emerald); outline-offset: 2px; box-shadow: none; }
 
+/* Bootstrap components share the same palette on every portal and standalone page. */
+:root {
+    --bs-body-color: var(--text-main);
+    --bs-body-bg: var(--body-bg);
+    --bs-border-color: var(--card-border);
+    --bs-link-color: var(--accent-emerald);
+    --bs-link-color-rgb: 40, 103, 68;
+    --bs-link-hover-color: var(--accent-emerald-hover);
+    --bs-link-hover-color-rgb: 29, 80, 52;
+    --bs-primary-rgb: 40, 103, 68;
+    --bs-success-rgb: 47, 125, 79;
+    --bs-primary-bg-subtle: var(--surface-sunk);
+    --bs-primary-text-emphasis: var(--text-on-sage);
+    --bs-primary-border-subtle: var(--border-strong);
+    --bs-info-bg-subtle: #FFF5DD;
+    --bs-info-text-emphasis: #69490F;
+    --bs-info-border-subtle: #E6D1A7;
+    --bs-secondary-color: var(--text-muted);
+    --bs-tertiary-bg: var(--surface-line);
+    --bs-secondary-bg: var(--surface-sunk);
+}
+.text-muted { color: var(--text-muted) !important; }
+.text-dark { color: var(--text-main) !important; }
+.bg-light { background-color: var(--surface-raised) !important; }
+.card { --bs-card-border-color: var(--card-border); --bs-card-bg: var(--card-bg); --bs-card-cap-bg: var(--surface-raised); }
+.app-shell .card:not(.crud-table-panel), .error-page .card {
+    border-radius: var(--radius-xl) !important;
+    box-shadow: var(--shadow-card) !important;
+}
+.app-shell .card-header { border-bottom-color: var(--surface-line); }
+.app-shell .card-header.bg-white { background-color: var(--surface-raised) !important; }
+.app-shell .card-header:first-child { border-radius: var(--radius-xl) var(--radius-xl) 0 0; }
+.app-shell .card-footer { background: var(--surface-raised); border-top-color: var(--surface-line); }
+.app-shell .badge.bg-success, .app-shell .badge.badge-active { background: var(--surface-sunk) !important; color: var(--text-on-sage) !important; }
+.app-shell .badge.bg-primary { background: var(--surface-sunk) !important; color: var(--accent-emerald) !important; }
+.app-shell .badge.bg-secondary { background: var(--surface-line) !important; color: var(--text-muted) !important; }
+.app-shell .badge.bg-danger { background: var(--bs-danger-bg-subtle) !important; color: var(--bs-danger-text-emphasis) !important; }
+.app-shell .badge.bg-info { background: var(--bs-info-bg-subtle) !important; color: var(--bs-info-text-emphasis) !important; }
+.app-shell .empty-state { color: var(--text-muted); }
+.app-shell .empty-state-icon { color: var(--accent-emerald); opacity: .7; }
+.app-shell .modal-header:not(.surface-brand) { background: var(--surface-sunk); color: var(--text-on-sage); border-bottom-color: var(--surface-line); }
+.app-shell .modal-footer { background: var(--surface-raised); border-top-color: var(--surface-line); }
+.app-shell .table > thead > tr > th { font-weight: 650; text-transform: none; letter-spacing: 0; }
+.app-shell .school-logo-img { box-shadow: var(--shadow-card); border-color: var(--card-border); }
+.app-shell .modal-content { border-radius: var(--radius-xl) !important; }
+.table { --bs-table-color: var(--text-main); --bs-table-border-color: var(--surface-line); --bs-table-hover-bg: var(--surface-sunk); --bs-table-striped-bg: var(--surface-stripe); }
+.table > thead > tr > th { background: var(--surface-sunk); color: var(--text-on-sage); }
+.form-control:disabled, .form-select:disabled { background-color: var(--surface-line); color: var(--text-muted); }
+.form-check-input { accent-color: var(--accent-emerald); }
+.form-check-input:checked, .form-check-input:indeterminate { background-color: var(--accent-emerald); border-color: var(--accent-emerald); }
+.form-check-input:focus { border-color: var(--accent-emerald); box-shadow: 0 0 0 .2rem var(--focus-ring-color); }
+.form-range::-webkit-slider-thumb { background: var(--accent-emerald); }
+.form-range::-moz-range-thumb { background: var(--accent-emerald); }
+.form-control.is-invalid, .form-select.is-invalid { border-color: var(--cams-danger); }
+.form-control.is-valid, .form-select.is-valid { border-color: var(--cams-success); }
+.nav-pills { --bs-nav-pills-link-active-bg: var(--accent-emerald); }
+.nav-tabs { --bs-nav-tabs-border-color: var(--card-border); --bs-nav-tabs-link-active-color: var(--accent-emerald); --bs-nav-tabs-link-active-bg: var(--card-bg); }
+.accordion { --bs-accordion-active-bg: var(--surface-sunk); --bs-accordion-active-color: var(--text-on-sage); --bs-accordion-border-color: var(--card-border); --bs-accordion-btn-focus-box-shadow: 0 0 0 .2rem var(--focus-ring-color); }
+.dropdown-menu { --bs-dropdown-link-active-bg: var(--accent-emerald); --bs-dropdown-link-hover-bg: var(--surface-sunk); border-color: var(--card-border); border-radius: var(--radius-md); box-shadow: var(--shadow-raised); }
+.list-group { --bs-list-group-active-bg: var(--accent-emerald); --bs-list-group-active-border-color: var(--accent-emerald); --bs-list-group-border-color: var(--surface-line); --bs-list-group-action-hover-bg: var(--surface-sunk); }
+.progress { --bs-progress-bar-bg: var(--accent-emerald); --bs-progress-bg: var(--surface-line); }
+.pagination { --bs-pagination-active-bg: var(--accent-emerald); --bs-pagination-active-border-color: var(--accent-emerald); --bs-pagination-hover-color: var(--accent-emerald-hover); --bs-pagination-hover-bg: var(--surface-sunk); }
+.alert-primary, .alert-success { --bs-alert-color: var(--text-on-sage); --bs-alert-bg: var(--surface-sunk); --bs-alert-border-color: var(--border-strong); }
+.alert-info { --bs-alert-color: #69490F; --bs-alert-bg: #FFF5DD; --bs-alert-border-color: #E6D1A7; }
+.badge { border-radius: var(--radius-pill); }
+.btn-link { --bs-btn-color: var(--accent-emerald); --bs-btn-hover-color: var(--accent-emerald-hover); }
+.btn-info { --bs-btn-bg: var(--cams-info); --bs-btn-border-color: var(--cams-info); --bs-btn-color: #fff; --bs-btn-hover-bg: #69490F; --bs-btn-hover-border-color: #69490F; --bs-btn-hover-color: #fff; --bs-btn-active-bg: #69490F; --bs-btn-active-color: #fff; }
+.btn-outline-info { --bs-btn-color: var(--cams-info); --bs-btn-border-color: var(--cams-info); --bs-btn-hover-bg: var(--cams-info); --bs-btn-hover-border-color: var(--cams-info); --bs-btn-hover-color: #fff; --bs-btn-active-bg: var(--cams-info); --bs-btn-active-color: #fff; }
+.btn-primary:hover, .btn-primary:active, .btn-dark:hover, .btn-dark:active { background-color: var(--primary-hover) !important; border-color: var(--primary-hover) !important; }
+.btn-outline-primary:hover, .btn-outline-primary:active { background-color: var(--accent-emerald) !important; color: #fff !important; }
+
 /* ----------------------------------------------------- monitoring wall -- */
 .monitoring-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; margin-bottom: 24px; }
 .monitoring-eyebrow { display: block; color: var(--text-muted); font-size: .66rem; font-weight: 650; text-transform: uppercase; letter-spacing: .14em; margin-bottom: 5px; }
@@ -156,7 +249,35 @@ body.login-page {
 .monitoring-tools .form-control { flex: 1 1 200px; width: auto; }
 .monitoring-tools .btn { font-size: .72rem; }
 .monitoring-stations #workstationsGrid { margin: 0; padding: 0 10px 18px; }
-.monitoring-dashboard .workstation-card { background: var(--surface-stripe); border-color: var(--surface-line); border-radius: var(--radius-lg); }
+/* The grid is a Bootstrap row, so the columns already stretch to the tallest
+   card. What did not line up was the inside: the footer wrapped to one, two or
+   three lines depending on how long the application name was, so the View
+   button and the activity text sat at a different height on every card. The
+   footer is a fixed grid now and is pushed to the bottom of the card, which
+   puts the same thing in the same place on every station. */
+.monitoring-dashboard .unit-col { display: flex; }
+.monitoring-dashboard .workstation-card {
+    width: 100%;
+    background: var(--surface-stripe);
+    border-color: var(--surface-line);
+    border-radius: var(--radius-lg);
+}
+.workstation-card-footer {
+    margin-top: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        "student student"
+        "activity browser"
+        "time     view";
+    align-items: center;
+    gap: 6px 10px;
+}
+.workstation-card-student { grid-area: student; min-width: 0; }
+.workstation-card-activity { grid-area: activity; min-width: 0; }
+.workstation-card-footer > [id^="browser-"] { grid-area: browser; justify-self: end; }
+.workstation-card-footer > [id^="time-"] { grid-area: time; min-width: 0; }
+.workstation-card-footer > .btn { grid-area: view; justify-self: end; }
 .monitoring-dashboard .workstation-card .bg-light { background: var(--surface-stripe) !important; }
 .monitoring-dashboard .workstation-card.station-idle { border-color: #E4CE9C; background: #FCF8EE; }
 .monitoring-dashboard .workstation-card.station-idle .bg-light { background: #FCF8EE !important; }
@@ -181,3 +302,16 @@ body.login-page {
     .monitoring-session { width: 100%; justify-content: space-between; }
 }
 @media (max-width: 380px) { .monitoring-metrics { grid-template-columns: 1fr; } }
+
+/* Deployment layout: shared styling, including the narrow-screen bundle picker. */
+
+    .deployment-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+    .deployment-details dt { color: var(--text-muted); font-weight: 600; }
+    .deployment-details dd { overflow-wrap: anywhere; }
+    .hash-value { color: var(--cams-success); font-size: .78rem; }
+    .deployment-bundle-form { max-width: 920px; }
+    @media (max-width: 767px) {
+        .deployment-heading { align-items: flex-start; flex-direction: column; }
+        .deployment-bundle-form .input-group { display: grid; gap: .75rem; }
+        .deployment-bundle-form .form-select, .deployment-bundle-form .btn { width: 100%; border-radius: var(--radius-md) !important; }
+    }

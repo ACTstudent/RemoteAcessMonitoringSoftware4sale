@@ -8,10 +8,6 @@
     var nav = NavigationBuilder.Build(variant, ViewContext.HttpContext);
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
-    // The CRUD management design is the standard for the whole system, so it is
-    // on by default. A view can set ViewData["CrudPage"] = false if it genuinely
-    // needs the plainer treatment; nothing does at present.
-    var isCrudPage = ViewData["CrudPage"] as bool? ?? true;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -23,14 +19,11 @@
     <link href="~/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
     <link href="~/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
-    @if (isCrudPage)
-    {
-        <link href="~/css/crud.css" rel="stylesheet" asp-append-version="true" />
-    }
+    <link href="~/css/crud.css" rel="stylesheet" asp-append-version="true" />
     <link href="~/css/warm-theme.css" rel="stylesheet" asp-append-version="true" />
     <link href="~/css/motion.css" rel="stylesheet" asp-append-version="true" />
 </head>
-<body class="app-shell @(isCrudPage ? "crud-page" : "")">
+<body class="app-shell crud-page">
     <a class="skip-to-content" href="#main-content">Skip to main content</a>
     <div class="app-wrapper">
         <aside class="app-sidebar" id="appSidebar" aria-label="@nav.NavAriaLabel">
@@ -121,10 +114,7 @@
     <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/signalr/signalr.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-    @if (isCrudPage)
-    {
-        <script src="~/js/crud-list.js" asp-append-version="true"></script>
-    }
+    <script src="~/js/crud-list.js" asp-append-version="true"></script>
     @if (nav.ScriptPartial is not null)
     {
         <partial name="@nav.ScriptPartial" />
