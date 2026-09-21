@@ -27,7 +27,9 @@ both points.
 
 | Document | What it covers |
 | --- | --- |
+| [**Diagrams index**](../DIAGRAMS/README.md) | **Start here.** All five draw.io drawings and six documents, which question each one answers, and how they are checked against the source |
 | [Entity Relationship Diagram](../DIAGRAMS/ERD.md) | Database entities and their relationships |
+| [Use Case Specifications](../DIAGRAMS/Use-Case-Specifications.md) | A written specification for all 219 use cases, ten fields each |
 | [System Flowchart](../DIAGRAMS/Flowchart.md) | End-to-end system flow |
 | [SignalR Message Flow](../DIAGRAMS/SignalR-Message-Flow.md) | Hub messages between server and client |
 | [Menu Structure](../DIAGRAMS/Menu-Structure-Diagram.md) | Navigation across the three roles |

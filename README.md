@@ -107,6 +107,7 @@ The ones reached for most often:
 
 - [CAMS Guide](CAMS-Guide.md) — the product and its three roles
 - [Deployment Guide](DEPLOYMENT.md) — trust bootstrap, offline bundle, validation
+- [Diagrams](DIAGRAMS/README.md) — use case, class model and both ERDs, generated from the source
 - [Running the tests](docs/README.md#running-the-tests) — one command for all 506
 - [Improvement progress](docs/improvements/PROGRESS.md) — what is done, what is blocked
 
