@@ -149,22 +149,44 @@
 }
 
 
+/* The sage-and-ivory palette lives here, on :root, rather than in a theme
+   file that redefines it further down the cascade. Every component below
+   already reads these tokens, so warming the system is a matter of changing
+   the values once - and a page added later inherits the same look without
+   opting in. */
 :root {
-    --sidebar-bg: #16401F;
-    --sidebar-active-bg: #1D5C2E;
-    --sidebar-hover-bg: rgba(255, 255, 255, 0.08);
+    --sidebar-bg: #286744;
+    --sidebar-active-bg: #286744;
+    --sidebar-hover-bg: #DCEADD;
     --sidebar-width: 260px;
-    --primary-color: #16401F;
-    --primary-hover: #1D5C2E;
-    --accent-emerald: #17803A;
-    --accent-emerald-hover: #136B31;
-    --primary-dark: #1C1917;
-    --body-bg: #FAF8F3;
-    --card-bg: #ffffff;
-    --card-border: #E7E2D9;
+    --primary-color: #286744;
+    --primary-hover: #1D5034;
+    --accent-emerald: #286744;
+    --accent-emerald-hover: #1D5034;
+    --primary-dark: #263D30;
+    --body-bg: #F6F8F4;
+    --card-bg: #FFFFFF;
+    --card-border: #DFE5DC;
     --card-border-radius: 16px;
-    --text-main: #1C1917;
-    --text-muted: #6F6861;
+    --text-main: #263D30;
+    --text-muted: #68776C;
+
+    /* Surfaces the stylesheet used to spell out by hand: the tint behind a
+       table head or a hovered row, the hairline between rows, the header
+       band, and the faint stripe on alternating rows. */
+    --surface-sunk: #EAF2EB;
+    --surface-line: #E7EDE5;
+    --surface-raised: #FCFDF9;
+    --surface-stripe: #FBFCF8;
+    /* Foreground for anything sitting on --surface-sunk. */
+    --text-on-sage: #294635;
+    /* A border with enough weight to read as an outline on a pale ground. */
+    --border-strong: #A6BFAC;
+
+    /* Two elevations. Every card, panel and popover picks one, so depth means
+       the same thing on every page. */
+    --shadow-card: 0 3px 8px rgba(32, 59, 40, 0.06);
+    --shadow-raised: 0 5px 14px rgba(32, 59, 40, 0.07);
     --font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
     /* Radius scale. The stylesheet had eight ad-hoc values - 7, 8, 12, 14, 16,
@@ -189,7 +211,7 @@
 
        A soft halo rather than a hard outline: a translucent spread reads as a
        highlight around the control instead of a border drawn on top of it. */
-    --focus-ring-color: rgba(29, 92, 46, 0.38);
+    --focus-ring-color: rgba(40, 103, 68, 0.38);
     --focus-ring-color-on-dark: rgba(187, 243, 198, 0.45);
     --focus-ring-width: 4px;
 }
@@ -383,7 +405,7 @@ body {
 }
 
 .btn-toggle-sidebar:hover {
-    background-color: #F3EFE8;
+    background-color: var(--surface-line);
 }
 
 .user-profile-badge {
@@ -473,7 +495,7 @@ body {
 }
 
 .modal-footer {
-    border-color: #F3EFE8;
+    border-color: var(--surface-line);
     padding: 1rem 1.4rem 1.25rem;
 }
 
@@ -764,8 +786,8 @@ body {
 }
 
 .custom-table thead th {
-    background-color: #FAF8F3;
-    color: var(--text-muted);
+    background-color: var(--surface-sunk);
+    color: var(--text-on-sage);
     font-size: 0.8rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -777,7 +799,7 @@ body {
 .custom-table tbody td {
     padding: 1rem 1.25rem;
     vertical-align: middle;
-    border-bottom: 1px solid #F3EFE8;
+    border-bottom: 1px solid var(--surface-line);
 }
 
 .custom-table tbody tr:last-child td {
@@ -785,7 +807,7 @@ body {
 }
 
 .custom-table tbody tr:hover td {
-    background-color: #FAF8F3;
+    background-color: var(--surface-sunk);
 }
 
 /* Workstation Card Container */
@@ -1151,8 +1173,8 @@ body {
    at 4.5:1 or better.
    --------------------------------------------------------------------------- */
 :root {
-    --cams-primary: #1D5C2E;   /* deep forest - brand / "Session" */
-    --cams-success: #17803A;   /* accent green - active / healthy */
+    --cams-primary: #286744;   /* forest green - brand / "Session" */
+    --cams-success: #2F7D4F;   /* active / healthy */
     --cams-info: #8A6117;      /* warm ochre - informational, distinct from danger */
     --cams-danger: #B91C1C;
     --cams-warning: #B45309;
@@ -1178,10 +1200,10 @@ body {
 .btn-primary {
     --bs-btn-bg: var(--cams-primary);
     --bs-btn-border-color: var(--cams-primary);
-    --bs-btn-hover-bg: #16401F;
-    --bs-btn-hover-border-color: #16401F;
-    --bs-btn-active-bg: #16401F;
-    --bs-btn-active-border-color: #16401F;
+    --bs-btn-hover-bg: var(--primary-hover);
+    --bs-btn-hover-border-color: var(--primary-hover);
+    --bs-btn-active-bg: var(--primary-hover);
+    --bs-btn-active-border-color: var(--primary-hover);
     --bs-btn-disabled-bg: var(--cams-primary);
     --bs-btn-disabled-border-color: var(--cams-primary);
 }

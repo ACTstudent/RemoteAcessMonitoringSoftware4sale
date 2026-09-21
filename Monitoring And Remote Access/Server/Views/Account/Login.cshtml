@@ -20,8 +20,8 @@
             align-items: center;
             justify-content: center;
             padding: 1.5rem 1rem;
-            background: radial-gradient(circle at 15% 15%, #1D5C2E 0%, transparent 55%),
-                        linear-gradient(135deg, var(--sidebar-bg) 0%, #1A1712 100%);
+            background: radial-gradient(circle at 15% 15%, var(--accent-emerald) 0%, transparent 55%),
+                        linear-gradient(135deg, var(--sidebar-bg) 0%, var(--primary-dark) 100%);
         }
 
         .login-shell {
@@ -54,7 +54,7 @@
         .login-banner p {
             margin: 0;
             font-size: 0.8rem;
-            color: #BBF3C6;
+            color: var(--surface-sunk);
         }
 
         .login-body {
@@ -64,19 +64,19 @@
         .login-body .form-label {
             font-size: 0.8rem;
             font-weight: 700;
-            color: #44403C;
+            color: var(--text-main);
             margin-bottom: 0.4rem;
         }
 
         .login-body .form-control {
             min-height: 46px;
             border-radius: 12px;
-            border-color: #DAD4C9;
+            border-color: var(--card-border);
         }
 
         .login-body .form-control:focus {
             border-color: var(--accent-emerald);
-            box-shadow: 0 0 0 3px rgba(23, 128, 58, 0.16);
+            box-shadow: 0 0 0 3px var(--focus-ring-color);
         }
 
         .btn-login {
