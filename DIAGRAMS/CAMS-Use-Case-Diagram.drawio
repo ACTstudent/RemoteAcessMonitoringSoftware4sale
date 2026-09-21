@@ -9,8 +9,8 @@
         <mxCell id="uc2" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="120" y="150" width="525" height="344" as="geometry"/></mxCell>
         <mxCell id="uc3" value="PROCESS LOG IN  ·  AccountController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="140" y="168" width="485" height="30" as="geometry"/></mxCell>
         <mxCell id="uc4" value="ADMIN" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="74" y="292" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc5" value="LOGIN" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="220" width="175" height="84" as="geometry"/></mxCell>
-        <mxCell id="uc6" value="LOGOUT" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="350" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc5" value="LOGIN USER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="220" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc6" value="LOGOUT USER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="350" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc7" value="LOGIN ASYNC" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="410" y="220" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc8" value="LOGOUT ASYNC" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="410" y="350" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc9" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="uc4" target="uc5"><mxGeometry relative="1" as="geometry"/></mxCell>
@@ -21,7 +21,7 @@
         <mxCell id="uc14" value="VIEW ADMIN HOME  ·  AdminController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="791" y="168" width="485" height="30" as="geometry"/></mxCell>
         <mxCell id="uc15" value="ADMIN" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="725" y="422" width="30" height="60" as="geometry"/></mxCell>
         <mxCell id="uc16" value="ADMIN INDEX" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="831" y="220" width="175" height="84" as="geometry"/></mxCell>
-        <mxCell id="uc17" value="SETTINGS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="831" y="350" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc17" value="VIEW SETTINGS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="831" y="350" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc18" value="LAN CONFIG" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="831" y="480" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc19" value="CHANGE PASSWORD" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="831" y="610" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc20" value="CHANGE ADMIN PASSWORD ASYNC" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1061" y="415" width="175" height="84" as="geometry"/></mxCell>
@@ -42,7 +42,7 @@
         <mxCell id="uc35" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="1843" y="150" width="295" height="864" as="geometry"/></mxCell>
         <mxCell id="uc36" value="MANAGE TEACHER ACCOUNT  ·  AdminController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1863" y="168" width="255" height="30" as="geometry"/></mxCell>
         <mxCell id="uc37" value="ADMIN" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="1797" y="552" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc38" value="TEACHERS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1903" y="220" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc38" value="VIEW TEACHERS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1903" y="220" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc39" value="CREATE TEACHER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1903" y="350" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc40" value="UPDATE TEACHER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1903" y="480" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc41" value="DELETE TEACHER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1903" y="610" width="175" height="84" as="geometry"/></mxCell>
@@ -57,7 +57,7 @@
         <mxCell id="uc50" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="2264" y="150" width="525" height="734" as="geometry"/></mxCell>
         <mxCell id="uc51" value="MANAGE STUDENT ACCOUNT  ·  AdminController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="2284" y="168" width="485" height="30" as="geometry"/></mxCell>
         <mxCell id="uc52" value="ADMIN" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="2218" y="487" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc53" value="STUDENTS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2324" y="220" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc53" value="VIEW STUDENTS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2324" y="220" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc54" value="CREATE STUDENT" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2324" y="350" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc55" value="UPDATE STUDENT" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2324" y="480" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc56" value="DELETE STUDENT" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2324" y="610" width="175" height="84" as="geometry"/></mxCell>
@@ -72,7 +72,7 @@
         <mxCell id="uc65" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="120" y="1104" width="295" height="864" as="geometry"/></mxCell>
         <mxCell id="uc66" value="MANAGE COMPUTER PROFILE  ·  AdminController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="140" y="1122" width="255" height="30" as="geometry"/></mxCell>
         <mxCell id="uc67" value="ADMIN" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="74" y="1506" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc68" value="COMPUTERS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="1174" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc68" value="VIEW COMPUTERS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="1174" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc69" value="CREATE COMPUTER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="1304" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc70" value="UPDATE COMPUTER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="1434" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc71" value="DELETE COMPUTER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="1564" width="175" height="84" as="geometry"/></mxCell>
@@ -87,7 +87,7 @@
         <mxCell id="uc80" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="541" y="1104" width="295" height="864" as="geometry"/></mxCell>
         <mxCell id="uc81" value="MANAGE CLASS  ·  AdminController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="561" y="1122" width="255" height="30" as="geometry"/></mxCell>
         <mxCell id="uc82" value="ADMIN" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="495" y="1506" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc83" value="CLASSES" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="601" y="1174" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc83" value="VIEW CLASSES" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="601" y="1174" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc84" value="CREATE CLASS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="601" y="1304" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc85" value="UPDATE CLASS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="601" y="1434" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc86" value="DELETE CLASS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="601" y="1564" width="175" height="84" as="geometry"/></mxCell>
@@ -117,7 +117,7 @@
         <mxCell id="uc110" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="1383" y="1104" width="295" height="604" as="geometry"/></mxCell>
         <mxCell id="uc111" value="MANAGE RESTRICTION RULE  ·  AdminController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1403" y="1122" width="255" height="30" as="geometry"/></mxCell>
         <mxCell id="uc112" value="ADMIN" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="1337" y="1376" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc113" value="RESTRICTIONS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1443" y="1174" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc113" value="VIEW RESTRICTIONS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1443" y="1174" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc114" value="CREATE RESTRICTION" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1443" y="1304" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc115" value="UPDATE RESTRICTION" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1443" y="1434" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc116" value="DELETE RESTRICTION" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1443" y="1564" width="175" height="84" as="geometry"/></mxCell>
@@ -128,8 +128,8 @@
         <mxCell id="uc121" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="1804" y="1104" width="295" height="994" as="geometry"/></mxCell>
         <mxCell id="uc122" value="MANAGE BLACKLIST AND WHITELIST  ·  AdminController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1824" y="1122" width="255" height="30" as="geometry"/></mxCell>
         <mxCell id="uc123" value="ADMIN" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="1758" y="1571" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc124" value="BLACKLISTS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1864" y="1174" width="175" height="84" as="geometry"/></mxCell>
-        <mxCell id="uc125" value="WHITELISTS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1864" y="1304" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc124" value="VIEW BLACKLISTS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1864" y="1174" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc125" value="VIEW WHITELISTS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1864" y="1304" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc126" value="CREATE BLACKLIST" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1864" y="1434" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc127" value="UPDATE BLACKLIST" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1864" y="1564" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc128" value="DELETE BLACKLIST" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1864" y="1694" width="175" height="84" as="geometry"/></mxCell>
@@ -171,7 +171,7 @@
         <mxCell id="uc164" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="962" y="2188" width="295" height="474" as="geometry"/></mxCell>
         <mxCell id="uc165" value="MANAGE ROLE AND PERMISSION  ·  AdminController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="982" y="2206" width="255" height="30" as="geometry"/></mxCell>
         <mxCell id="uc166" value="ADMIN" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="916" y="2395" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc167" value="ROLES" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1022" y="2258" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc167" value="VIEW ROLES" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1022" y="2258" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc168" value="CREATE ROLE" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1022" y="2388" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc169" value="DELETE ROLE" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1022" y="2518" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc170" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="uc166" target="uc167"><mxGeometry relative="1" as="geometry"/></mxCell>
@@ -191,7 +191,7 @@
         <mxCell id="uc184" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="2034" y="2188" width="525" height="864" as="geometry"/></mxCell>
         <mxCell id="uc185" value="VIEW REPORTS AND LOGS  ·  AdminController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="2054" y="2206" width="485" height="30" as="geometry"/></mxCell>
         <mxCell id="uc186" value="ADMIN" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="1988" y="2590" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc187" value="REPORTS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2094" y="2453" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc187" value="VIEW REPORTS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2094" y="2453" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc188" value="AUDIT LOGS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2094" y="2583" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc189" value="SYSTEM LOGS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2094" y="2713" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc190" value="EXPORT REPORTS CSV" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2324" y="2258" width="175" height="84" as="geometry"/></mxCell>
@@ -226,10 +226,10 @@
         <mxCell id="uc219" value="MANAGE DEPLOYMENT  ·  AdminDeploymentController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="791" y="3160" width="485" height="30" as="geometry"/></mxCell>
         <mxCell id="uc220" value="ADMIN" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="725" y="3479" width="30" height="60" as="geometry"/></mxCell>
         <mxCell id="uc221" value="DEPLOYMENT INDEX" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="831" y="3212" width="175" height="84" as="geometry"/></mxCell>
-        <mxCell id="uc222" value="INSTALLER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="831" y="3342" width="175" height="84" as="geometry"/></mxCell>
-        <mxCell id="uc223" value="MANIFEST" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="831" y="3472" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc222" value="DOWNLOAD INSTALLER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="831" y="3342" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc223" value="DOWNLOAD MANIFEST" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="831" y="3472" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc224" value="ROOT CERTIFICATE" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="831" y="3602" width="175" height="84" as="geometry"/></mxCell>
-        <mxCell id="uc225" value="BUNDLE" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="831" y="3732" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc225" value="CREATE BUNDLE" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="831" y="3732" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc226" value="GET STATUS ASYNC" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1061" y="3407" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc227" value="CREATE BUNDLE ASYNC" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1061" y="3537" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc228" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="uc220" target="uc221"><mxGeometry relative="1" as="geometry"/></mxCell>
@@ -243,8 +243,8 @@
         <mxCell id="uc236" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="120" y="3966" width="525" height="344" as="geometry"/></mxCell>
         <mxCell id="uc237" value="PROCESS LOG IN  ·  AccountController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="140" y="3984" width="485" height="30" as="geometry"/></mxCell>
         <mxCell id="uc238" value="TEACHER" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="74" y="4108" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc239" value="LOGIN" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="4036" width="175" height="84" as="geometry"/></mxCell>
-        <mxCell id="uc240" value="LOGOUT" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="4166" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc239" value="LOGIN USER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="4036" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc240" value="LOGOUT USER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="4166" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc241" value="LOGIN ASYNC" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="410" y="4036" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc242" value="LOGOUT ASYNC" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="410" y="4166" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc243" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="uc238" target="uc239"><mxGeometry relative="1" as="geometry"/></mxCell>
@@ -254,7 +254,7 @@
         <mxCell id="uc247" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="771" y="3966" width="525" height="344" as="geometry"/></mxCell>
         <mxCell id="uc248" value="MANAGE OWN ACCOUNT  ·  TeacherController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="791" y="3984" width="485" height="30" as="geometry"/></mxCell>
         <mxCell id="uc249" value="TEACHER" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="725" y="4108" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc250" value="SETTINGS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="831" y="4036" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc250" value="VIEW SETTINGS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="831" y="4036" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc251" value="CHANGE PASSWORD" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="831" y="4166" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc252" value="CHANGE TEACHER PASSWORD ASYNC" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1061" y="4101" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc253" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="uc249" target="uc250"><mxGeometry relative="1" as="geometry"/></mxCell>
@@ -263,7 +263,7 @@
         <mxCell id="uc256" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="1422" y="3966" width="295" height="864" as="geometry"/></mxCell>
         <mxCell id="uc257" value="MANAGE PEER TEACHER ACCOUNT  ·  AdminController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1442" y="3984" width="255" height="30" as="geometry"/></mxCell>
         <mxCell id="uc258" value="TEACHER" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="1376" y="4368" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc259" value="TEACHERS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1482" y="4036" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc259" value="VIEW TEACHERS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1482" y="4036" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc260" value="CREATE TEACHER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1482" y="4166" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc261" value="UPDATE TEACHER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1482" y="4296" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc262" value="DELETE TEACHER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1482" y="4426" width="175" height="84" as="geometry"/></mxCell>
@@ -278,7 +278,7 @@
         <mxCell id="uc271" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="1843" y="3966" width="525" height="734" as="geometry"/></mxCell>
         <mxCell id="uc272" value="MANAGE STUDENT ACCOUNT  ·  TeacherController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1863" y="3984" width="485" height="30" as="geometry"/></mxCell>
         <mxCell id="uc273" value="TEACHER" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="1797" y="4303" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc274" value="STUDENTS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1903" y="4036" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc274" value="VIEW STUDENTS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1903" y="4036" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc275" value="CREATE STUDENT" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1903" y="4166" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc276" value="UPDATE STUDENT" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1903" y="4296" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc277" value="DELETE STUDENT" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1903" y="4426" width="175" height="84" as="geometry"/></mxCell>
@@ -293,7 +293,7 @@
         <mxCell id="uc286" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="2494" y="3966" width="295" height="864" as="geometry"/></mxCell>
         <mxCell id="uc287" value="MANAGE COMPUTER PROFILE  ·  AdminController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="2514" y="3984" width="255" height="30" as="geometry"/></mxCell>
         <mxCell id="uc288" value="TEACHER" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="2448" y="4368" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc289" value="COMPUTERS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2554" y="4036" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc289" value="VIEW COMPUTERS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2554" y="4036" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc290" value="CREATE COMPUTER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2554" y="4166" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc291" value="UPDATE COMPUTER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2554" y="4296" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc292" value="DELETE COMPUTER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2554" y="4426" width="175" height="84" as="geometry"/></mxCell>
@@ -308,7 +308,7 @@
         <mxCell id="uc301" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="120" y="4920" width="295" height="864" as="geometry"/></mxCell>
         <mxCell id="uc302" value="MANAGE CLASS  ·  TeacherController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="140" y="4938" width="255" height="30" as="geometry"/></mxCell>
         <mxCell id="uc303" value="TEACHER" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="74" y="5322" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc304" value="CLASSES" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="4990" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc304" value="VIEW CLASSES" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="4990" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc305" value="CREATE CLASS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="5120" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc306" value="UPDATE CLASS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="5250" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc307" value="DELETE CLASS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="5380" width="175" height="84" as="geometry"/></mxCell>
@@ -336,7 +336,7 @@
         <mxCell id="uc329" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="962" y="4920" width="295" height="604" as="geometry"/></mxCell>
         <mxCell id="uc330" value="MANAGE RESTRICTION RULE  ·  TeacherController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="982" y="4938" width="255" height="30" as="geometry"/></mxCell>
         <mxCell id="uc331" value="TEACHER" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="916" y="5192" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc332" value="RESTRICTIONS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1022" y="4990" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc332" value="VIEW RESTRICTIONS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1022" y="4990" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc333" value="CREATE RESTRICTION" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1022" y="5120" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc334" value="UPDATE RESTRICTION" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1022" y="5250" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc335" value="DELETE RESTRICTION" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1022" y="5380" width="175" height="84" as="geometry"/></mxCell>
@@ -347,8 +347,8 @@
         <mxCell id="uc340" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="1383" y="4920" width="295" height="994" as="geometry"/></mxCell>
         <mxCell id="uc341" value="MANAGE BLACKLIST AND WHITELIST  ·  AdminController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1403" y="4938" width="255" height="30" as="geometry"/></mxCell>
         <mxCell id="uc342" value="TEACHER" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="1337" y="5387" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc343" value="BLACKLISTS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1443" y="4990" width="175" height="84" as="geometry"/></mxCell>
-        <mxCell id="uc344" value="WHITELISTS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1443" y="5120" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc343" value="VIEW BLACKLISTS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1443" y="4990" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc344" value="VIEW WHITELISTS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1443" y="5120" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc345" value="CREATE BLACKLIST" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1443" y="5250" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc346" value="UPDATE BLACKLIST" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1443" y="5380" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc347" value="DELETE BLACKLIST" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1443" y="5510" width="175" height="84" as="geometry"/></mxCell>
@@ -403,7 +403,7 @@
         <mxCell id="uc396" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="1192" y="6004" width="755" height="604" as="geometry"/></mxCell>
         <mxCell id="uc397" value="CONTROL STUDENT SESSION  ·  TeacherController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1212" y="6022" width="715" height="30" as="geometry"/></mxCell>
         <mxCell id="uc398" value="TEACHER" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="1146" y="6276" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc399" value="SESSIONS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1252" y="6074" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc399" value="VIEW SESSIONS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1252" y="6074" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc400" value="START SESSION" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1252" y="6204" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc401" value="TOGGLE PAUSE" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1252" y="6334" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc402" value="END SESSION" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1252" y="6464" width="175" height="84" as="geometry"/></mxCell>
@@ -418,7 +418,7 @@
         <mxCell id="uc411" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="2073" y="6004" width="525" height="474" as="geometry"/></mxCell>
         <mxCell id="uc412" value="MONITOR STUDENT SCREEN  ·  TeacherController + Hub" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="2093" y="6022" width="485" height="30" as="geometry"/></mxCell>
         <mxCell id="uc413" value="TEACHER" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="2027" y="6211" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc414" value="MONITORING" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2133" y="6074" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc414" value="OPEN MONITORING" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2133" y="6074" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc415" value="MONITORING INDEX" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2133" y="6204" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc416" value="LIVE STATE" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2133" y="6334" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc417" value="SEND SCREEN FRAME" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2363" y="6204" width="175" height="84" as="geometry"/></mxCell>
@@ -463,7 +463,7 @@
         <mxCell id="uc456" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="541" y="7348" width="525" height="994" as="geometry"/></mxCell>
         <mxCell id="uc457" value="MANAGE MONITORING ALERT  ·  TeacherController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="561" y="7366" width="485" height="30" as="geometry"/></mxCell>
         <mxCell id="uc458" value="TEACHER" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="495" y="7815" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc459" value="ALERTS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="601" y="7418" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc459" value="VIEW ALERTS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="601" y="7418" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc460" value="ALERT HISTORY" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="601" y="7548" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc461" value="OPEN ALERT COUNT" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="601" y="7678" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc462" value="ACKNOWLEDGE ALERT" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="601" y="7808" width="175" height="84" as="geometry"/></mxCell>
@@ -482,8 +482,8 @@
         <mxCell id="uc475" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="1192" y="7348" width="525" height="1254" as="geometry"/></mxCell>
         <mxCell id="uc476" value="VIEW TEACHER RECORDS  ·  TeacherController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1212" y="7366" width="485" height="30" as="geometry"/></mxCell>
         <mxCell id="uc477" value="TEACHER" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="1146" y="7945" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc478" value="DASHBOARD" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1252" y="7418" width="175" height="84" as="geometry"/></mxCell>
-        <mxCell id="uc479" value="RECORDS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1252" y="7548" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc478" value="VIEW DASHBOARD" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1252" y="7418" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc479" value="VIEW RECORDS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1252" y="7548" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc480" value="CLASS ANALYTICS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1252" y="7678" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc481" value="LAB UTILIZATION" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1252" y="7808" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc482" value="UNIFIED TIMELINE" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1252" y="7938" width="175" height="84" as="geometry"/></mxCell>
@@ -512,8 +512,8 @@
         <mxCell id="uc505" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="120" y="8692" width="525" height="344" as="geometry"/></mxCell>
         <mxCell id="uc506" value="PROCESS LOG IN  ·  AccountController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="140" y="8710" width="485" height="30" as="geometry"/></mxCell>
         <mxCell id="uc507" value="STUDENT" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="74" y="8834" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc508" value="LOGIN" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="8762" width="175" height="84" as="geometry"/></mxCell>
-        <mxCell id="uc509" value="LOGOUT" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="8892" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc508" value="LOGIN USER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="8762" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc509" value="LOGOUT USER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="8892" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc510" value="LOGIN ASYNC" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="410" y="8762" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc511" value="LOGOUT ASYNC" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="410" y="8892" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc512" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="uc507" target="uc508"><mxGeometry relative="1" as="geometry"/></mxCell>
@@ -551,19 +551,19 @@
         <mxCell id="uc544" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="2073" y="8692" width="295" height="214" as="geometry"/></mxCell>
         <mxCell id="uc545" value="VIEW STUDENT SESSION  ·  StudentController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="2093" y="8710" width="255" height="30" as="geometry"/></mxCell>
         <mxCell id="uc546" value="STUDENT" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="2027" y="8769" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc547" value="INDEX" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2133" y="8762" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc547" value="VIEW STUDENT HOME" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2133" y="8762" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc548" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="uc546" target="uc547"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="uc549" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="2494" y="8692" width="295" height="344" as="geometry"/></mxCell>
         <mxCell id="uc550" value="MANAGE STUDENT ALERT  ·  StudentController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="2514" y="8710" width="255" height="30" as="geometry"/></mxCell>
         <mxCell id="uc551" value="STUDENT" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="2448" y="8834" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc552" value="ALERTS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2554" y="8762" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc552" value="VIEW ALERTS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2554" y="8762" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc553" value="MARK READ" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2554" y="8892" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc554" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="uc551" target="uc552"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="uc555" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="uc551" target="uc553"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="uc556" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="120" y="9646" width="525" height="344" as="geometry"/></mxCell>
         <mxCell id="uc557" value="MANAGE STUDENT ACCOUNT  ·  StudentController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="140" y="9664" width="485" height="30" as="geometry"/></mxCell>
         <mxCell id="uc558" value="STUDENT" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="74" y="9788" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc559" value="SETTINGS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="9716" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc559" value="VIEW SETTINGS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="9716" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc560" value="RESET PASSWORD" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="9846" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc561" value="CHANGE STUDENT PASSWORD ASYNC" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="410" y="9781" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc562" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="uc558" target="uc559"><mxGeometry relative="1" as="geometry"/></mxCell>
