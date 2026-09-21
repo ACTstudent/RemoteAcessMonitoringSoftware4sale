@@ -1,6 +1,17 @@
-# CAMS Major Entity Relationship Diagram
+# CAMS Entity Relationship Diagram
 
-This readable ERD shows the principal persisted entities and enforced EF Core relationships in CAMS Computer Account Management System. It intentionally omits many scalar telemetry fields and supporting category/legacy tables. Passwords are stored only as `PasswordHash` values.
+Every persisted table in CAMS Computer Account Management System, as defined by the EF Core model in `Server/Data/ApplicationDbContext.cs` and `Server/Models`. Scalar columns that carry no structural meaning are summarised rather than listed in full. Passwords exist only as `PasswordHash` values.
+
+Editable draw.io copies of the same model live beside this file:
+
+- [`CAMS-ERD.drawio`](CAMS-ERD.drawio) - this diagram, crow's foot notation, every table.
+- [`CAMS-Chen-ERD.drawio`](CAMS-Chen-ERD.drawio) - the conceptual core in Chen notation (entities, relationship diamonds, attribute ellipses).
+
+Open either at [app.diagrams.net](https://app.diagrams.net) with **File > Open From > Device**.
+
+## Accounts, classes, workstations and sessions
+
+These are the relationships EF Core enforces with real foreign keys.
 
 ```mermaid
 erDiagram
@@ -10,15 +21,21 @@ erDiagram
         string PasswordHash
         string FullName
         bool IsActive
-        datetime LockoutEndUtc
+        int FailedLoginAttempts
+        datetime LockoutEndUtc "nullable"
     }
 
     TEACHER {
         int TeacherId PK
         string Username
         string PasswordHash
+        string FirstName
+        string LastName
+        string Email
+        string ContactNumber
         string Status
-        datetime LockoutEndUtc
+        int FailedLoginAttempts
+        datetime LockoutEndUtc "nullable"
     }
 
     STUDENT {
@@ -26,18 +43,28 @@ erDiagram
         string StudentNumber UK
         string Username UK
         string PasswordHash
+        string FirstName
+        string LastName
+        string GradeSection
         string Status
-        int ClassId FK
-        int AdviserId FK
+        int FailedLoginAttempts
+        datetime LockoutEndUtc "nullable"
+        int ClassId FK "nullable, SET NULL"
+        int AdviserId FK "nullable, SET NULL"
     }
 
     CLASS {
         int ClassId PK
         string ClassName
+        string Section
+        string Subject
+        string GradeLevel
+        string Schedule
         string AcademicYear
         string Status
         bool IsArchived
-        int TeacherId FK
+        datetime CreatedAt
+        int TeacherId FK "nullable, SET NULL"
     }
 
     CLASS_STUDENT {
@@ -49,16 +76,18 @@ erDiagram
 
     COMPUTER {
         int ComputerId PK
-        string LaboratoryStation UK
+        string LaboratoryStation UK "NOCASE"
         string Status
-        string AssignedTo UK
+        string AssignedTo UK "nullable, not an FK"
     }
 
     COMPUTER_STATUS_HISTORY {
         int ComputerStatusHistoryId PK
-        int ComputerId FK
+        int ComputerId FK "CASCADE"
         string Status
         datetime ChangedAt
+        string ChangedByType
+        int ChangedById "nullable"
     }
 
     SESSION_RULE {
@@ -68,36 +97,25 @@ erDiagram
         bool AllowPause
         bool AllowRemoteControl
         bool IsDefault
+        bool IsActive
+        datetime CreatedAt
     }
 
     LAB_SESSION {
         int Id PK
         int StudentId FK
-        int TeacherId FK
-        int ComputerId FK
-        int SessionRuleId FK
-        string Status
+        int TeacherId FK "nullable"
+        int ComputerId FK "nullable"
+        int SessionRuleId FK "nullable"
+        string PCName
+        string IPAddress
         datetime StartTime
-        datetime EndTime
+        datetime PauseTime "nullable"
+        int AccumulatedPauseSeconds
+        datetime EndTime "nullable"
         bool IsActive
-    }
-
-    RESTRICTION_RULE {
-        int RestrictionRuleId PK
-        int TeacherId FK
-        string RuleType
-        string Target
-        string Mode
-        bool IsGlobal
-        bool IsActive
-    }
-
-    USAGE_LOG {
-        int UsageLogId PK
-        int StudentId FK
-        string PcName
-        string AppName
-        datetime Timestamp
+        string Status
+        int MaxDurationMinutes "nullable"
     }
 
     ROLE {
@@ -109,31 +127,229 @@ erDiagram
     PERMISSION {
         int PermissionId PK
         string Name
+        string Description
     }
 
-    TEACHER o|--o{ CLASS : assigned_to
+    TEACHER o|--o{ CLASS : teaches
     TEACHER o|--o{ STUDENT : advises
     CLASS o|--o{ STUDENT : primary_class
     CLASS ||--o{ CLASS_STUDENT : has_membership
     STUDENT ||--o{ CLASS_STUDENT : enrolled_through
     STUDENT ||--o{ LAB_SESSION : attends
-    TEACHER o|--o{ LAB_SESSION : owns
+    TEACHER o|--o{ LAB_SESSION : supervises
     COMPUTER o|--o{ LAB_SESSION : hosts
     SESSION_RULE o|--o{ LAB_SESSION : governs
     COMPUTER ||--o{ COMPUTER_STATUS_HISTORY : records
+    ROLE }o--o{ PERMISSION : role_permissions
+```
+
+## Policy, telemetry and operations
+
+`RESTRICTION_RULE`, `USAGE_LOG` and `WEBSITE_USAGE_LOG` carry real foreign keys. Everything else in this half correlates to a student, workstation or connection through plain string or integer identifiers, so those links are drawn as dashed associations rather than enforced constraints.
+
+```mermaid
+erDiagram
+    TEACHER {
+        int TeacherId PK
+    }
+
+    STUDENT {
+        int Id PK
+    }
+
+    RESTRICTION_RULE {
+        int RestrictionRuleId PK
+        string RuleType "Application | Website"
+        string Target
+        string Description
+        string Mode "Block | Allow"
+        bool IsGlobal
+        int TeacherId FK "nullable"
+        bool IsActive
+        datetime CreatedAt
+    }
+
+    BLACKLIST_ITEM {
+        int BlacklistItemId PK
+        string TargetType
+        string Value
+        string Reason
+        bool IsActive
+        datetime CreatedAt
+    }
+
+    APPLICATION_CATEGORY {
+        int ApplicationCategoryId PK
+        string Name
+        string Pattern
+        string Mode
+        bool IsActive
+    }
+
+    WEBSITE_CATEGORY {
+        int WebsiteCategoryId PK
+        string Name
+        string DomainPattern
+        string Mode
+        bool IsActive
+    }
+
+    SESSION_RULE {
+        int SessionRuleId PK
+    }
+
+    USAGE_LOG {
+        int UsageLogId PK
+        int StudentId FK "nullable"
+        string PcName
+        string AppName
+        datetime Timestamp
+    }
+
+    WEBSITE_USAGE_LOG {
+        int WebsiteUsageLogId PK
+        int StudentId FK "nullable"
+        string Domain
+        string Browser
+        datetime Timestamp
+    }
+
+    ACTIVITY_EVENT {
+        int ActivityEventId PK
+        string ConnectionId
+        string StudentId "identifier, no FK"
+        string PcName
+        string EventType
+        string ApplicationName "nullable"
+        string Details "nullable"
+        datetime Timestamp
+    }
+
+    IDLE_INTERVAL {
+        int IdleIntervalId PK
+        string ConnectionId
+        string StudentId "identifier, no FK"
+        string PcName
+        datetime StartedAt
+        datetime EndedAt "nullable"
+    }
+
+    BROWSER_MONITORING_RECORD {
+        int BrowserMonitoringRecordId PK
+        string ConnectionId
+        string StudentId "identifier, no FK"
+        string PcName
+        string Browser
+        int Mode "enum"
+        string Detail "nullable"
+        datetime Timestamp
+    }
+
+    MONITORING_ALERT {
+        int MonitoringAlertId PK
+        string StudentId "identifier, no FK"
+        string PcName
+        string Severity
+        string Title
+        string Message
+        bool IsAcknowledged
+        datetime AcknowledgedAt "nullable"
+        int AcknowledgedByTeacherId "nullable"
+        datetime DismissedAt "nullable"
+        int DismissedByTeacherId "nullable"
+        string DismissalReason "nullable"
+        string DedupeKey
+        string GroupKey
+        int OccurrenceCount
+        datetime CreatedAt
+        datetime LastSeenAt
+    }
+
+    REMOTE_CONTROL_SESSION {
+        int RemoteControlSessionId PK
+        int TeacherId "identifier, no FK"
+        string StudentId "identifier, no FK"
+        string PcName
+        string ConnectionId
+        datetime StartedAt
+        datetime EndedAt "nullable"
+        bool IsActive
+    }
+
+    REMOTE_COMMAND_LOG {
+        int RemoteCommandLogId PK
+        int RemoteControlSessionId "nullable, no FK"
+        int TeacherId "identifier, no FK"
+        string StudentId "identifier, no FK"
+        string PcName
+        string Command
+        string Details
+        datetime Timestamp
+    }
+
+    NOTIFICATION {
+        int NotificationId PK
+        int StudentId "nullable, no FK"
+        string Type
+        string Title
+        string Message
+        bool IsRead
+        datetime CreatedAt
+    }
+
+    AUDIT_LOG {
+        int AuditLogId PK
+        string UserType "Admin | Teacher | Student | System"
+        int UserId "nullable, no FK"
+        string Action
+        string Details
+        string IpAddress "nullable"
+        datetime Timestamp
+    }
+
+    SYSTEM_LOG {
+        int SystemLogId PK
+        string Level
+        string Message
+        string StackTrace "nullable"
+        datetime Timestamp
+    }
+
+    LAN_CONFIGURATION {
+        int LanConfigurationId PK
+        string ServerAddress
+        int ServerPort
+        string DhcpRangeStart "nullable"
+        string DhcpRangeEnd "nullable"
+        string Gateway "nullable"
+        string DnsServer "nullable"
+        bool IsActive
+        datetime UpdatedAt
+    }
+
     TEACHER o|--o{ RESTRICTION_RULE : owns_scoped_rule
     STUDENT o|--o{ USAGE_LOG : produces
-    ROLE }o--o{ PERMISSION : metadata_links
+    STUDENT o|--o{ WEBSITE_USAGE_LOG : produces
+    STUDENT ||..o{ ACTIVITY_EVENT : correlates_by_identifier
+    STUDENT ||..o{ IDLE_INTERVAL : correlates_by_identifier
+    STUDENT ||..o{ BROWSER_MONITORING_RECORD : correlates_by_identifier
+    STUDENT ||..o{ MONITORING_ALERT : correlates_by_identifier
+    STUDENT ||..o{ NOTIFICATION : correlates_by_identifier
+    TEACHER ||..o{ REMOTE_CONTROL_SESSION : operates
+    TEACHER ||..o{ REMOTE_COMMAND_LOG : issues
+    REMOTE_CONTROL_SESSION ||..o{ REMOTE_COMMAND_LOG : groups
 ```
 
 ## Integrity And Scope Notes
 
-- `Admin`, `Teacher`, and `Student` are separate account tables and all store `PasswordHash`, failed-attempt, and lockout state. No plain `Password` field exists in the current account models.
-- Application roles are fixed. `Role`, `Permission`, and `RolePermissions` retain seeded metadata for display; they do not provide configurable runtime RBAC.
-- `Student.ClassId` is the primary class association. `ClassStudent` preserves explicit roster membership and has a unique `(ClassId, StudentId)` pair.
-- `Computer.AssignedTo` stores the assigned student ID as text in the current schema. It is unique when present but is not an EF foreign key to `Student`; assignment integrity is enforced by application logic.
-- Unique filtered indexes permit at most one active `LabSession` per student and at most one active `LabSession` per computer.
-- `Computer.LaboratoryStation` is case-insensitively unique. `Computer.AssignedTo` is unique when non-null.
-- A global `RestrictionRule` has no teacher owner. A teacher-owned rule has `TeacherId` and is applied only in that teacher's active-session scope.
-- Monitoring alerts, browser records, activity events, idle intervals, remote-control sessions, and remote-command logs correlate to students, PCs, teachers, or connections through scalar identifiers in the current models. They are intentionally not drawn as enforced foreign-key relationships.
-- Audit logs, system logs, notifications, website usage, blacklist/category records, and detected LAN configuration records are supporting entities omitted to keep the diagram readable.
+- `Admin`, `Teacher` and `Student` are separate account tables. Each stores `PasswordHash`, `FailedLoginAttempts` and `LockoutEndUtc`. No plain password column exists.
+- Application roles are fixed. `Role`, `Permission` and the `RolePermissions` join table hold seeded metadata for display only; they do not drive runtime authorisation.
+- `Student.ClassId` is the primary class association and is set to null when the class is deleted. `ClassStudent` records explicit roster membership and is unique on `(ClassId, StudentId)`.
+- `Computer.AssignedTo` holds the assigned student identifier as text. It is unique when present but is not an EF foreign key; assignment integrity is enforced in application code.
+- Filtered unique indexes allow at most one active `LabSession` per student, and at most one active `LabSession` per computer.
+- `Computer.LaboratoryStation` is unique under a `NOCASE` collation.
+- `Classes` carries a non-unique index on `(ClassName, AcademicYear)`, added after this diagram was first drawn.
+- A global `RestrictionRule` has no teacher owner. A teacher-owned rule carries `TeacherId` and applies only within that teacher's active-session scope.
+- Telemetry and operations tables (`ActivityEvent`, `IdleInterval`, `BrowserMonitoringRecord`, `MonitoringAlert`, `RemoteControlSession`, `RemoteCommandLog`, `Notification`, `AuditLog`) identify students, teachers and workstations by value rather than by foreign key. Retention is time-based, which is why they are deliberately decoupled from the account tables.
+- Reporting indexes exist on the busy telemetry tables: `(PcName, Timestamp)` and `(StudentId, Timestamp)` for activity, `(ConnectionId, StartedAt)` and `(StudentId, StartedAt)` for idle intervals, `(StudentId, Timestamp)` and `(PcName, Timestamp)` for browser records, and both `(StudentId, DedupeKey, CreatedAt)` and `(StudentId, GroupKey, LastSeenAt)` for alerts.
+- `RestrictionRule.Mode` of `Allow` is the whitelist. As of v2.18.5 an allow rule is an exception: nothing is blocked for being absent from the rules, and application rules are stored but no longer enforced on the workstation. That is behaviour, not schema; the tables are unchanged.
