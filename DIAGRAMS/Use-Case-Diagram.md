@@ -1,6 +1,10 @@
 # CAMS Use Case Diagram
 
+An editable draw.io copy sits beside this file: [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio). It carries 122 use cases across nine pages - an overview, then one page per package - in proper UML: stick figures for the people, `«system»` boxes for the workstation agent and the background workers, a system boundary, and `«include»` and `«extend»` arrows. Open it at [app.diagrams.net](https://app.diagrams.net) with **File > Open From > Device**.
+
 The actors use fixed roles. Every authenticated operation includes server-side role and object-scope validation; CAMS does not expose configurable RBAC.
+
+Administrator and Teacher are drawn as specialisations of an abstract **Staff** actor. That is taken from the code rather than assumed: `AdminController` is `[Authorize(Roles = AdminOrTeacher)]`, and its authorization filter admits a teacher only to actions marked `[TeacherSharedAction]`. Fifty-six of its actions carry that attribute, so nearly the whole administration surface is shared; what is not shared - administrator accounts, roles and permissions, LAN configuration, reports, audit and system logs, and everything in `AdminDatabaseController` and `AdminDeploymentController` - is attached to the Administrator actor alone.
 
 ```mermaid
 flowchart LR
