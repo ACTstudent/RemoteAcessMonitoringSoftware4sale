@@ -4,7 +4,7 @@ Every persisted table in CAMS Computer Account Management System, as defined by 
 
 Editable draw.io copies of the same model live beside this file:
 
-- [`CAMS-ERD.drawio`](CAMS-ERD.drawio) - this diagram, crow's foot notation, every table.
+- [`CAMS-ERD.drawio`](CAMS-ERD.drawio) - the physical schema in crow's foot notation: all 28 tables, every column with its SQLite storage type, declared maximum length and nullability, marked `PK`, `FK`, `UK` or `UQ`. Those rows are generated from `ApplicationDbContextModelSnapshot.cs`, so a column that changes in the database changes in the diagram rather than drifting from it.
 - [`CAMS-Chen-ERD.drawio`](CAMS-Chen-ERD.drawio) - the conceptual model in Chen notation: 11 entities and 15 relationships, with cardinalities and participation taken from the schema. A nullable foreign key is partial participation, drawn as a single line; a `NOT NULL` one is total, drawn as a double line, which is why `LAB_SESSION` in *Attends* and `COMPUTER_STATUS_HISTORY` in *Logs status* are the only double lines. It leaves out `Role` and `Permission`, and the telemetry that identifies a student by value rather than by foreign key, because neither is a relationship the database holds.
 
 Open either at [app.diagrams.net](https://app.diagrams.net) with **File > Open From > Device**.
