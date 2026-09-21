@@ -5,9 +5,12 @@ Every persisted table in CAMS Computer Account Management System, as defined by 
 Editable draw.io copies of the same model live beside this file:
 
 - [`CAMS-Database-Schema.drawio`](CAMS-Database-Schema.drawio) - the physical schema in crow's foot notation: all 28 tables, every column with its SQLite storage type, declared maximum length and nullability, marked `PK`, `FK`, `UK` or `UQ`. Those rows are generated from `ApplicationDbContextModelSnapshot.cs`, so a column that changes in the database changes in the diagram rather than drifting from it.
+- [`CAMS-Crowsfoot-ERD.drawio`](CAMS-Crowsfoot-ERD.drawio) - the same schema narrowed to the 15 tables the Chen diagram describes, so the two can be read side by side: every column of those tables in full, on a first page, with an *Integrity and Scope Notes* second page for the rules no line can carry. The Chen diagram names two or three attributes per entity to stay legible; this is where the rest of them live.
 - [`CAMS-Chen-ERD.drawio`](CAMS-Chen-ERD.drawio) - the conceptual model in Chen notation: 11 entities and 15 relationships, with cardinalities and participation taken from the schema. A nullable foreign key is partial participation, drawn as a single line; a `NOT NULL` one is total, drawn as a double line, which is why `LAB_SESSION` in *Attends* and `COMPUTER_STATUS_HISTORY` in *Logs status* are the only double lines. It leaves out `Role` and `Permission`, and the telemetry that identifies a student by value rather than by foreign key, because neither is a relationship the database holds.
 
-Open either at [app.diagrams.net](https://app.diagrams.net) with **File > Open From > Device**.
+Open any of them at [app.diagrams.net](https://app.diagrams.net) with **File > Open From > Device**.
+
+In both crow's foot drawings the parent end is a double bar when the child's foreign key is `NOT NULL` and a bar with a circle when it is nullable; the child end is always a crow's foot with a circle, because no foreign key can oblige a parent to have children.
 
 ## Accounts, classes, workstations and sessions
 
