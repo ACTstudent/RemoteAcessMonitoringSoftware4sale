@@ -36,16 +36,17 @@ It deliberately names two or three attributes per entity. The full attribute lis
 
 | File | Contents |
 | --- | --- |
-| [`CAMS-Use-Case-Specifications.pdf`](CAMS-Use-Case-Specifications.pdf) | The written use cases, ready to read or print. 222 pages, US Letter, set the way the handout sets them |
+| [`CAMS-Use-Case-Specifications.pdf`](CAMS-Use-Case-Specifications.pdf) | The written use cases, ready to read or print. 259 pages, US Letter, each module drawn above the use cases it holds |
 | [`CAMS-Use-Case-Specifications.docx`](CAMS-Use-Case-Specifications.docx) | The same document in Word, for pasting into a manuscript |
 | [`Use-Case-Specifications.md`](Use-Case-Specifications.md) | The same content in Markdown, so it renders on GitHub and diffs cleanly |
+| [`usecase-images/`](usecase-images) | The 41 module drawings the documents embed, one PNG per module |
 | [`ERD.md`](ERD.md) | The entity model in Mermaid, and the notes explaining both ERDs |
 | [`Use-Case-Diagram.md`](Use-Case-Diagram.md) | Scope, actor boundaries, and how the diagram was derived |
 | [`SignalR-Message-Flow.md`](SignalR-Message-Flow.md) | How the server and the workstation clients talk to each other |
 | [`Flowchart.md`](Flowchart.md) | The system flow end to end |
 | [`Menu-Structure-Diagram.md`](Menu-Structure-Diagram.md) | The navigation tree behind each role |
 
-Each specification follows the ten fields the course handout sets out: **use case name, purpose, actors, input parameters, output parameters, pre-condition, post-condition, successful scenario, exception scenario, additional remarks.** All three files carry the same 219 written use cases, laid out the way the course handout lays out its worked example: no tables, a bold field label ending in a colon, the value on the same line where it is short and an indented list where it is not, in Arial on US Letter.
+Each specification follows the ten fields the course handout sets out: **use case name, purpose, actors, input parameters, output parameters, pre-condition, post-condition, successful scenario, exception scenario, additional remarks.** All three files carry the same 219 written use cases, laid out the way the course handout lays out its worked example: no tables, a bold field label ending in a colon, the value on the same line where it is short and an indented list where it is not, in Arial on US Letter. Each module opens with **System Use Case:** and the drawing of that module, then **Written Use Case:** and the use cases inside it - the order the handout uses for its worked example.
 
 The parts that can be got wrong are read out of the source rather than written from memory. Input parameters come from the action signature and its `[Bind]` list, so a specification cannot name a field the form does not submit. The pre-condition comes from the `[Authorize]` attribute, including the `[TeacherSharedAction]` marker. The antiforgery step appears only where the controller validates one, and a hub method is described as a SignalR relay rather than a form post.
 

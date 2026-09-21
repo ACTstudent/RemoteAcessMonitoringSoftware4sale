@@ -67,6 +67,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## PROCESS LOG IN  ·  `AccountController`
 
+**System Use Case:**
+
+![PROCESS LOG IN](usecase-images/admin-process-log-in.png)
+
+**Written Use Case:**
+
 ### A-001  ·  LOGIN USER
 
 **Use Case Name:** LOGIN USER  
@@ -236,6 +242,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Drawn as `<<include>>` from **LOGOUT USER**.
 
 ## VIEW ADMIN HOME  ·  `AdminController`
+
+**System Use Case:**
+
+![VIEW ADMIN HOME](usecase-images/admin-view-admin-home.png)
+
+**Written Use Case:**
 
 ### A-005  ·  ADMIN INDEX
 
@@ -433,6 +445,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE ADMIN ACCOUNT  ·  `AdminController`
 
+**System Use Case:**
+
+![MANAGE ADMIN ACCOUNT](usecase-images/admin-manage-admin-account.png)
+
+**Written Use Case:**
+
 ### A-010  ·  CREATE ADMIN
 
 **Use Case Name:** CREATE ADMIN  
@@ -567,6 +585,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *MANAGE ADMIN ACCOUNT* module of the use case diagram.
 
 ## MANAGE TEACHER ACCOUNT  ·  `AdminController`
+
+**System Use Case:**
+
+![MANAGE TEACHER ACCOUNT](usecase-images/admin-manage-teacher-account.png)
+
+**Written Use Case:**
 
 ### A-013  ·  VIEW TEACHERS
 
@@ -832,6 +856,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *MANAGE TEACHER ACCOUNT* module of the use case diagram.
 
 ## MANAGE STUDENT ACCOUNT  ·  `AdminController`
+
+**System Use Case:**
+
+![MANAGE STUDENT ACCOUNT](usecase-images/admin-manage-student-account.png)
+
+**Written Use Case:**
 
 ### A-019  ·  VIEW STUDENTS
 
@@ -1100,6 +1130,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE COMPUTER PROFILE  ·  `AdminController`
 
+**System Use Case:**
+
+![MANAGE COMPUTER PROFILE](usecase-images/admin-manage-computer-profile.png)
+
+**Written Use Case:**
+
 ### A-025  ·  VIEW COMPUTERS
 
 **Use Case Name:** VIEW COMPUTERS  
@@ -1355,6 +1391,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *MANAGE COMPUTER PROFILE* module of the use case diagram.
 
 ## MANAGE CLASS  ·  `AdminController`
+
+**System Use Case:**
+
+![MANAGE CLASS](usecase-images/admin-manage-class.png)
+
+**Written Use Case:**
 
 ### A-031  ·  VIEW CLASSES
 
@@ -1617,6 +1659,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *MANAGE CLASS* module of the use case diagram.
 
 ## MANAGE CLASS ROSTER  ·  `AdminController`
+
+**System Use Case:**
+
+![MANAGE CLASS ROSTER](usecase-images/admin-manage-class-roster.png)
+
+**Written Use Case:**
 
 ### A-037  ·  CLASS DETAILS
 
@@ -1895,6 +1943,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE RESTRICTION RULE  ·  `AdminController`
 
+**System Use Case:**
+
+![MANAGE RESTRICTION RULE](usecase-images/admin-manage-restriction-rule.png)
+
+**Written Use Case:**
+
 ### A-043  ·  VIEW RESTRICTIONS
 
 **Use Case Name:** VIEW RESTRICTIONS  
@@ -2065,6 +2119,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *MANAGE RESTRICTION RULE* module of the use case diagram.
 
 ## MANAGE BLACKLIST AND WHITELIST  ·  `AdminController`
+
+**System Use Case:**
+
+![MANAGE BLACKLIST AND WHITELIST](usecase-images/admin-manage-blacklist-and-whitelist.png)
+
+**Written Use Case:**
 
 ### A-047  ·  VIEW BLACKLISTS
 
@@ -2371,6 +2431,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE CATEGORY  ·  `AdminController`
 
+**System Use Case:**
+
+![MANAGE CATEGORY](usecase-images/admin-manage-category.png)
+
+**Written Use Case:**
+
 ### A-054  ·  CREATE APPLICATION CATEGORY
 
 **Use Case Name:** CREATE APPLICATION CATEGORY  
@@ -2637,6 +2703,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE SESSION RULE  ·  `AdminController`
 
+**System Use Case:**
+
+![MANAGE SESSION RULE](usecase-images/admin-manage-session-rule.png)
+
+**Written Use Case:**
+
 ### A-060  ·  SESSION RULES
 
 **Use Case Name:** SESSION RULES  
@@ -2808,6 +2880,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE ROLE AND PERMISSION  ·  `AdminController`
 
+**System Use Case:**
+
+![MANAGE ROLE AND PERMISSION](usecase-images/admin-manage-role-and-permission.png)
+
+**Written Use Case:**
+
 ### A-064  ·  VIEW ROLES
 
 **Use Case Name:** VIEW ROLES  
@@ -2935,6 +3013,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *MANAGE ROLE AND PERMISSION* module of the use case diagram.
 
 ## CONTROL LABORATORY SESSION  ·  `AdminController`
+
+**System Use Case:**
+
+![CONTROL LABORATORY SESSION](usecase-images/admin-control-laboratory-session.png)
+
+**Written Use Case:**
 
 ### A-067  ·  PAUSE ALL SESSIONS
 
@@ -3106,6 +3190,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Drawn as `<<include>>` from **END ALL SESSIONS**.
 
 ## VIEW REPORTS AND LOGS  ·  `AdminController`
+
+**System Use Case:**
+
+![VIEW REPORTS AND LOGS](usecase-images/admin-view-reports-and-logs.png)
+
+**Written Use Case:**
 
 ### A-071  ·  VIEW REPORTS
 
@@ -3478,6 +3568,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE DATABASE  ·  `AdminDatabaseController`
 
+**System Use Case:**
+
+![MANAGE DATABASE](usecase-images/admin-manage-database.png)
+
+**Written Use Case:**
+
 ### A-080  ·  DATABASE INDEX
 
 **Use Case Name:** DATABASE INDEX  
@@ -3686,6 +3782,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Drawn as `<<include>>` from **STAGE RESTORE**.
 
 ## MANAGE DEPLOYMENT  ·  `AdminDeploymentController`
+
+**System Use Case:**
+
+![MANAGE DEPLOYMENT](usecase-images/admin-manage-deployment.png)
+
+**Written Use Case:**
 
 ### A-085  ·  DEPLOYMENT INDEX
 
@@ -3962,6 +4064,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## PROCESS LOG IN  ·  `AccountController`
 
+**System Use Case:**
+
+![PROCESS LOG IN](usecase-images/teacher-process-log-in.png)
+
+**Written Use Case:**
+
 ### T-092  ·  LOGIN USER
 
 **Use Case Name:** LOGIN USER  
@@ -4132,6 +4240,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE OWN ACCOUNT  ·  `TeacherController`
 
+**System Use Case:**
+
+![MANAGE OWN ACCOUNT](usecase-images/teacher-manage-own-account.png)
+
+**Written Use Case:**
+
 ### T-096  ·  VIEW SETTINGS
 
 **Use Case Name:** VIEW SETTINGS  
@@ -4253,6 +4367,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Drawn as `<<include>>` from **CHANGE PASSWORD**.
 
 ## MANAGE PEER TEACHER ACCOUNT  ·  `AdminController`
+
+**System Use Case:**
+
+![MANAGE PEER TEACHER ACCOUNT](usecase-images/teacher-manage-peer-teacher-account.png)
+
+**Written Use Case:**
 
 ### T-099  ·  VIEW TEACHERS
 
@@ -4518,6 +4638,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *MANAGE PEER TEACHER ACCOUNT* module of the use case diagram.
 
 ## MANAGE STUDENT ACCOUNT  ·  `TeacherController`
+
+**System Use Case:**
+
+![MANAGE STUDENT ACCOUNT](usecase-images/teacher-manage-student-account.png)
+
+**Written Use Case:**
 
 ### T-105  ·  VIEW STUDENTS
 
@@ -4795,6 +4921,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE COMPUTER PROFILE  ·  `AdminController`
 
+**System Use Case:**
+
+![MANAGE COMPUTER PROFILE](usecase-images/teacher-manage-computer-profile.png)
+
+**Written Use Case:**
+
 ### T-111  ·  VIEW COMPUTERS
 
 **Use Case Name:** VIEW COMPUTERS  
@@ -5050,6 +5182,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *MANAGE COMPUTER PROFILE* module of the use case diagram.
 
 ## MANAGE CLASS  ·  `TeacherController`
+
+**System Use Case:**
+
+![MANAGE CLASS](usecase-images/teacher-manage-class.png)
+
+**Written Use Case:**
 
 ### T-117  ·  VIEW CLASSES
 
@@ -5313,6 +5451,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE CLASS ROSTER  ·  `TeacherController`
 
+**System Use Case:**
+
+![MANAGE CLASS ROSTER](usecase-images/teacher-manage-class-roster.png)
+
+**Written Use Case:**
+
 ### T-123  ·  CLASS DETAILS
 
 **Use Case Name:** CLASS DETAILS  
@@ -5543,6 +5687,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE RESTRICTION RULE  ·  `TeacherController`
 
+**System Use Case:**
+
+![MANAGE RESTRICTION RULE](usecase-images/teacher-manage-restriction-rule.png)
+
+**Written Use Case:**
+
 ### T-128  ·  VIEW RESTRICTIONS
 
 **Use Case Name:** VIEW RESTRICTIONS  
@@ -5713,6 +5863,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *MANAGE RESTRICTION RULE* module of the use case diagram.
 
 ## MANAGE BLACKLIST AND WHITELIST  ·  `AdminController`
+
+**System Use Case:**
+
+![MANAGE BLACKLIST AND WHITELIST](usecase-images/teacher-manage-blacklist-and-whitelist.png)
+
+**Written Use Case:**
 
 ### T-132  ·  VIEW BLACKLISTS
 
@@ -6019,6 +6175,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE CATEGORY  ·  `AdminController`
 
+**System Use Case:**
+
+![MANAGE CATEGORY](usecase-images/teacher-manage-category.png)
+
+**Written Use Case:**
+
 ### T-139  ·  CREATE APPLICATION CATEGORY
 
 **Use Case Name:** CREATE APPLICATION CATEGORY  
@@ -6285,6 +6447,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE SESSION RULE  ·  `AdminController`
 
+**System Use Case:**
+
+![MANAGE SESSION RULE](usecase-images/teacher-manage-session-rule.png)
+
+**Written Use Case:**
+
 ### T-145  ·  SESSION RULES
 
 **Use Case Name:** SESSION RULES  
@@ -6455,6 +6623,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *MANAGE SESSION RULE* module of the use case diagram.
 
 ## CONTROL LABORATORY SESSION  ·  `TeacherController`
+
+**System Use Case:**
+
+![CONTROL LABORATORY SESSION](usecase-images/teacher-control-laboratory-session.png)
+
+**Written Use Case:**
 
 ### T-149  ·  GLOBAL START SESSION
 
@@ -6663,6 +6837,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Drawn as `<<include>>` from **GLOBAL END SESSION**.
 
 ## CONTROL STUDENT SESSION  ·  `TeacherController`
+
+**System Use Case:**
+
+![CONTROL STUDENT SESSION](usecase-images/teacher-control-student-session.png)
+
+**Written Use Case:**
 
 ### T-154  ·  VIEW SESSIONS
 
@@ -6920,6 +7100,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MONITOR STUDENT SCREEN  ·  `TeacherController + Hub`
 
+**System Use Case:**
+
+![MONITOR STUDENT SCREEN](usecase-images/teacher-monitor-student-screen.png)
+
+**Written Use Case:**
+
 ### T-160  ·  OPEN MONITORING
 
 **Use Case Name:** OPEN MONITORING  
@@ -7075,6 +7261,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Drawn as `<<include>>` from **OPEN MONITORING**.
 
 ## CONTROL STUDENT WORKSTATION  ·  `RemoteMonitoringHub`
+
+**System Use Case:**
+
+![CONTROL STUDENT WORKSTATION](usecase-images/teacher-control-student-workstation.png)
+
+**Written Use Case:**
 
 ### T-164  ·  START REMOTE CONTROL
 
@@ -7507,6 +7699,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## SEND MESSAGE TO STUDENT  ·  `RemoteMonitoringHub`
 
+**System Use Case:**
+
+![SEND MESSAGE TO STUDENT](usecase-images/teacher-send-message-to-student.png)
+
+**Written Use Case:**
+
 ### T-174  ·  SEND NOTIFICATION
 
 **Use Case Name:** SEND NOTIFICATION  
@@ -7671,6 +7869,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *SEND MESSAGE TO STUDENT* module of the use case diagram.
 
 ## MANAGE MONITORING ALERT  ·  `TeacherController`
+
+**System Use Case:**
+
+![MANAGE MONITORING ALERT](usecase-images/teacher-manage-monitoring-alert.png)
+
+**Written Use Case:**
 
 ### T-178  ·  VIEW ALERTS
 
@@ -8006,6 +8210,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Drawn as `<<extend>>` to **ALERT HISTORY**.
 
 ## VIEW TEACHER RECORDS  ·  `TeacherController`
+
+**System Use Case:**
+
+![VIEW TEACHER RECORDS](usecase-images/teacher-view-teacher-records.png)
+
+**Written Use Case:**
 
 ### T-186  ·  VIEW DASHBOARD
 
@@ -8558,6 +8768,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## PROCESS LOG IN  ·  `AccountController`
 
+**System Use Case:**
+
+![PROCESS LOG IN](usecase-images/student-process-log-in.png)
+
+**Written Use Case:**
+
 ### S-199  ·  LOGIN USER
 
 **Use Case Name:** LOGIN USER  
@@ -8728,6 +8944,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## LOG IN AT WORKSTATION  ·  `ClientAuthController`
 
+**System Use Case:**
+
+![LOG IN AT WORKSTATION](usecase-images/student-log-in-at-workstation.png)
+
+**Written Use Case:**
+
 ### S-203  ·  CLIENT LOGIN
 
 **Use Case Name:** CLIENT LOGIN  
@@ -8892,6 +9114,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Drawn as `<<include>>` from **CLIENT LOGIN**.
 
 ## WORK AT MONITORED WORKSTATION  ·  `RemoteMonitoringHub`
+
+**System Use Case:**
+
+![WORK AT MONITORED WORKSTATION](usecase-images/student-work-at-monitored-workstation.png)
+
+**Written Use Case:**
 
 ### S-207  ·  FETCH RESTRICTIONS
 
@@ -9188,6 +9416,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## VIEW STUDENT SESSION  ·  `StudentController`
 
+**System Use Case:**
+
+![VIEW STUDENT SESSION](usecase-images/student-view-student-session.png)
+
+**Written Use Case:**
+
 ### S-214  ·  VIEW STUDENT HOME
 
 **Use Case Name:** VIEW STUDENT HOME  
@@ -9226,6 +9460,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *VIEW STUDENT SESSION* module of the use case diagram.
 
 ## MANAGE STUDENT ALERT  ·  `StudentController`
+
+**System Use Case:**
+
+![MANAGE STUDENT ALERT](usecase-images/student-manage-student-alert.png)
+
+**Written Use Case:**
 
 ### S-215  ·  VIEW ALERTS
 
@@ -9310,6 +9550,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *MANAGE STUDENT ALERT* module of the use case diagram.
 
 ## MANAGE STUDENT ACCOUNT  ·  `StudentController`
+
+**System Use Case:**
+
+![MANAGE STUDENT ACCOUNT](usecase-images/student-manage-student-account.png)
+
+**Written Use Case:**
 
 ### S-217  ·  VIEW SETTINGS
 
