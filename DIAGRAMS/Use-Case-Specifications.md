@@ -76,22 +76,26 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 | **Primary Actor** | Admin |
 | **Secondary Actor** | None |
 | **Input Parameters** | `username` : `string`<br>`password` : `string` |
-| **Output Parameters** | A redirect back to the listing page, carrying a success or failure message for display. |
-| **Pre-condition** | The caller is signed in. |
+| **Output Parameters** | An authentication cookie carrying the account role as a claim, and a redirect to the landing page for that role. |
+| **Pre-condition** | None. This is the sign-in endpoint and is reachable without an account session; the CAMS server must be running and reachable. |
 | **Post-condition** | The change is committed to the database and visible to the next read.<br>The caller sees the outcome reported on the page they return to. |
 
 **Successful Scenario**
 
-1. The Admin opens the page and CAMS confirms the role on the authentication cookie.
-2. The Admin fills the form and submits it.
-3. The server validates the submitted values against the model rules.
-4. The change is written to the database through `ApplicationDbContext`.
-5. The server redirects back to the listing, where the result is shown.
+1. The Admin opens the CAMS sign-in page.
+2. The Admin enters a username and a password and submits the form.
+3. The server validates the antiforgery token that accompanied the form.
+4. The server checks the credentials against each account table in turn and finds the matching account.
+5. The server confirms the account is active and not locked out.
+6. The server issues an authentication cookie carrying the role as a claim.
+7. The Admin is redirected to the landing page for that role.
 
 **Exception Scenario**
 
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
+- **The username matches no account** — the page reports that the sign-in failed, without saying which half was wrong.
+- **The password does not match the stored hash** — the failed-attempt counter is raised and the same message is shown.
+- **The account is locked out** — the sign-in is refused until the lockout expires, even with the right password.
+- **The account is deactivated** — the sign-in is refused and the person is told to contact an administrator.
 
 **Additional Remarks**
 
@@ -108,17 +112,16 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 | **Primary Actor** | Admin |
 | **Secondary Actor** | None |
 | **Input Parameters** | None beyond the signed-in identity carried on the authentication cookie. |
-| **Output Parameters** | A redirect back to the listing page, carrying a success or failure message for display. |
+| **Output Parameters** | The authentication cookie is cleared and the browser is returned to the sign-in page. |
 | **Pre-condition** | The caller is signed in. |
 | **Post-condition** | The change is committed to the database and visible to the next read.<br>The caller sees the outcome reported on the page they return to. |
 
 **Successful Scenario**
 
-1. The Admin opens the page and CAMS confirms the role on the authentication cookie.
-2. The Admin fills the form and submits it.
-3. The server validates the submitted values against the model rules.
-4. The change is written to the database through `ApplicationDbContext`.
-5. The server redirects back to the listing, where the result is shown.
+1. The Admin chooses to sign out.
+2. The server closes any lab session the account still has open.
+3. The server clears the authentication cookie.
+4. The browser is returned to the sign-in page as an anonymous visitor.
 
 **Exception Scenario**
 
@@ -140,15 +143,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 | **Primary Actor** | Admin |
 | **Secondary Actor** | None; this behaviour runs inside **LOGIN USER** |
 | **Input Parameters** | None beyond the signed-in identity carried on the authentication cookie. |
-| **Output Parameters** | The behaviour completes and its effect is visible to the use case that includes it. |
-| **Pre-condition** | The caller is signed in.<br>**LOGIN USER** has reached the point where this is always performed. |
+| **Output Parameters** | A `LoginResult` naming the role, the account id and the display name, or a result saying the credentials were rejected. |
+| **Pre-condition** | The sign-in use case has supplied a username and a password.<br>**LOGIN USER** has reached the point where this is always performed. |
 | **Post-condition** | The caller has the requested information. Nothing in the database has changed. |
 
 **Successful Scenario**
 
-1. The including use case reaches the point where this behaviour is required.
-2. The server runs `LoginAsync` and applies its result.
-3. Control returns to the including use case, which continues.
+1. The sign-in use case passes the username, the password, the workstation name and the caller address.
+2. The service looks the username up in the administrator, teacher and student tables.
+3. The stored hash is verified against the supplied password.
+4. The active flag and the lockout expiry are checked.
+5. On success the failed-attempt counter is cleared and the role and account id are returned; on failure the counter is raised.
 
 **Exception Scenario**
 
@@ -3000,22 +3005,26 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 | **Primary Actor** | Teacher |
 | **Secondary Actor** | None |
 | **Input Parameters** | `username` : `string`<br>`password` : `string` |
-| **Output Parameters** | A redirect back to the listing page, carrying a success or failure message for display. |
-| **Pre-condition** | The caller is signed in. |
+| **Output Parameters** | An authentication cookie carrying the account role as a claim, and a redirect to the landing page for that role. |
+| **Pre-condition** | None. This is the sign-in endpoint and is reachable without an account session; the CAMS server must be running and reachable. |
 | **Post-condition** | The change is committed to the database and visible to the next read.<br>The caller sees the outcome reported on the page they return to. |
 
 **Successful Scenario**
 
-1. The Teacher opens the page and CAMS confirms the role on the authentication cookie.
-2. The Teacher fills the form and submits it.
-3. The server validates the submitted values against the model rules.
-4. The change is written to the database through `ApplicationDbContext`.
-5. The server redirects back to the listing, where the result is shown.
+1. The Teacher opens the CAMS sign-in page.
+2. The Teacher enters a username and a password and submits the form.
+3. The server validates the antiforgery token that accompanied the form.
+4. The server checks the credentials against each account table in turn and finds the matching account.
+5. The server confirms the account is active and not locked out.
+6. The server issues an authentication cookie carrying the role as a claim.
+7. The Teacher is redirected to the landing page for that role.
 
 **Exception Scenario**
 
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
+- **The username matches no account** — the page reports that the sign-in failed, without saying which half was wrong.
+- **The password does not match the stored hash** — the failed-attempt counter is raised and the same message is shown.
+- **The account is locked out** — the sign-in is refused until the lockout expires, even with the right password.
+- **The account is deactivated** — the sign-in is refused and the person is told to contact an administrator.
 
 **Additional Remarks**
 
@@ -3032,17 +3041,16 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 | **Primary Actor** | Teacher |
 | **Secondary Actor** | None |
 | **Input Parameters** | None beyond the signed-in identity carried on the authentication cookie. |
-| **Output Parameters** | A redirect back to the listing page, carrying a success or failure message for display. |
+| **Output Parameters** | The authentication cookie is cleared and the browser is returned to the sign-in page. |
 | **Pre-condition** | The caller is signed in. |
 | **Post-condition** | The change is committed to the database and visible to the next read.<br>The caller sees the outcome reported on the page they return to. |
 
 **Successful Scenario**
 
-1. The Teacher opens the page and CAMS confirms the role on the authentication cookie.
-2. The Teacher fills the form and submits it.
-3. The server validates the submitted values against the model rules.
-4. The change is written to the database through `ApplicationDbContext`.
-5. The server redirects back to the listing, where the result is shown.
+1. The Teacher chooses to sign out.
+2. The server closes any lab session the account still has open.
+3. The server clears the authentication cookie.
+4. The browser is returned to the sign-in page as an anonymous visitor.
 
 **Exception Scenario**
 
@@ -3064,15 +3072,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 | **Primary Actor** | Teacher |
 | **Secondary Actor** | None; this behaviour runs inside **LOGIN USER** |
 | **Input Parameters** | None beyond the signed-in identity carried on the authentication cookie. |
-| **Output Parameters** | The behaviour completes and its effect is visible to the use case that includes it. |
-| **Pre-condition** | The caller is signed in.<br>**LOGIN USER** has reached the point where this is always performed. |
+| **Output Parameters** | A `LoginResult` naming the role, the account id and the display name, or a result saying the credentials were rejected. |
+| **Pre-condition** | The sign-in use case has supplied a username and a password.<br>**LOGIN USER** has reached the point where this is always performed. |
 | **Post-condition** | The caller has the requested information. Nothing in the database has changed. |
 
 **Successful Scenario**
 
-1. The including use case reaches the point where this behaviour is required.
-2. The server runs `LoginAsync` and applies its result.
-3. Control returns to the including use case, which continues.
+1. The sign-in use case passes the username, the password, the workstation name and the caller address.
+2. The service looks the username up in the administrator, teacher and student tables.
+3. The stored hash is verified against the supplied password.
+4. The active flag and the lockout expiry are checked.
+5. On success the failed-attempt counter is cleared and the role and account id are returned; on failure the counter is raised.
 
 **Exception Scenario**
 
@@ -6431,22 +6441,26 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 | **Primary Actor** | Student |
 | **Secondary Actor** | None |
 | **Input Parameters** | `username` : `string`<br>`password` : `string` |
-| **Output Parameters** | A redirect back to the listing page, carrying a success or failure message for display. |
-| **Pre-condition** | The caller is signed in. |
+| **Output Parameters** | An authentication cookie carrying the account role as a claim, and a redirect to the landing page for that role. |
+| **Pre-condition** | None. This is the sign-in endpoint and is reachable without an account session; the CAMS server must be running and reachable. |
 | **Post-condition** | The change is committed to the database and visible to the next read.<br>The caller sees the outcome reported on the page they return to. |
 
 **Successful Scenario**
 
-1. The Student opens the page and CAMS confirms the role on the authentication cookie.
-2. The Student fills the form and submits it.
-3. The server validates the submitted values against the model rules.
-4. The change is written to the database through `ApplicationDbContext`.
-5. The server redirects back to the listing, where the result is shown.
+1. The Student opens the CAMS sign-in page.
+2. The Student enters a username and a password and submits the form.
+3. The server validates the antiforgery token that accompanied the form.
+4. The server checks the credentials against each account table in turn and finds the matching account.
+5. The server confirms the account is active and not locked out.
+6. The server issues an authentication cookie carrying the role as a claim.
+7. The Student is redirected to the landing page for that role.
 
 **Exception Scenario**
 
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
+- **The username matches no account** — the page reports that the sign-in failed, without saying which half was wrong.
+- **The password does not match the stored hash** — the failed-attempt counter is raised and the same message is shown.
+- **The account is locked out** — the sign-in is refused until the lockout expires, even with the right password.
+- **The account is deactivated** — the sign-in is refused and the person is told to contact an administrator.
 
 **Additional Remarks**
 
@@ -6463,17 +6477,16 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 | **Primary Actor** | Student |
 | **Secondary Actor** | None |
 | **Input Parameters** | None beyond the signed-in identity carried on the authentication cookie. |
-| **Output Parameters** | A redirect back to the listing page, carrying a success or failure message for display. |
+| **Output Parameters** | The authentication cookie is cleared and the browser is returned to the sign-in page. |
 | **Pre-condition** | The caller is signed in. |
 | **Post-condition** | The change is committed to the database and visible to the next read.<br>The caller sees the outcome reported on the page they return to. |
 
 **Successful Scenario**
 
-1. The Student opens the page and CAMS confirms the role on the authentication cookie.
-2. The Student fills the form and submits it.
-3. The server validates the submitted values against the model rules.
-4. The change is written to the database through `ApplicationDbContext`.
-5. The server redirects back to the listing, where the result is shown.
+1. The Student chooses to sign out.
+2. The server closes any lab session the account still has open.
+3. The server clears the authentication cookie.
+4. The browser is returned to the sign-in page as an anonymous visitor.
 
 **Exception Scenario**
 
@@ -6495,15 +6508,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 | **Primary Actor** | Student |
 | **Secondary Actor** | None; this behaviour runs inside **LOGIN USER** |
 | **Input Parameters** | None beyond the signed-in identity carried on the authentication cookie. |
-| **Output Parameters** | The behaviour completes and its effect is visible to the use case that includes it. |
-| **Pre-condition** | The caller is signed in.<br>**LOGIN USER** has reached the point where this is always performed. |
+| **Output Parameters** | A `LoginResult` naming the role, the account id and the display name, or a result saying the credentials were rejected. |
+| **Pre-condition** | The sign-in use case has supplied a username and a password.<br>**LOGIN USER** has reached the point where this is always performed. |
 | **Post-condition** | The caller has the requested information. Nothing in the database has changed. |
 
 **Successful Scenario**
 
-1. The including use case reaches the point where this behaviour is required.
-2. The server runs `LoginAsync` and applies its result.
-3. Control returns to the including use case, which continues.
+1. The sign-in use case passes the username, the password, the workstation name and the caller address.
+2. The service looks the username up in the administrator, teacher and student tables.
+3. The stored hash is verified against the supplied password.
+4. The active flag and the lockout expiry are checked.
+5. On success the failed-attempt counter is cleared and the role and account id are returned; on failure the counter is raised.
 
 **Exception Scenario**
 
@@ -6555,22 +6570,24 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 | **Primary Actor** | Student |
 | **Secondary Actor** | None |
 | **Input Parameters** | `request` : `StudentClientLoginRequest` |
-| **Output Parameters** | A redirect back to the listing page, carrying a success or failure message for display. |
-| **Pre-condition** | The caller is signed in as a student. |
+| **Output Parameters** | A `StudentClientLoginResponse` carrying the student identity, the workstation registration and the session state. |
+| **Pre-condition** | None. The client reaches this before any session exists. The workstation must have found the server and must trust the CAMS root certificate. |
 | **Post-condition** | The change is committed to the database and visible to the next read.<br>The caller sees the outcome reported on the page they return to. |
 
 **Successful Scenario**
 
-1. The Student opens the page and CAMS confirms the role on the authentication cookie.
-2. The Student fills the form and submits it.
-3. The server validates the submitted values against the model rules.
-4. The change is written to the database through `ApplicationDbContext`.
-5. The server redirects back to the listing, where the result is shown.
+1. The CAMS client finds the server on the laboratory network.
+2. The student enters a username and a password in the client.
+3. The client posts the credentials together with the name of the workstation.
+4. The server verifies the credentials and confirms the account is a student that is active and not locked out.
+5. The server registers the workstation against the student, reassigning it if it was held by someone else who is no longer using it.
+6. The client receives the session details and the monitored session begins.
 
 **Exception Scenario**
 
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
+- **No server was found on the network** — the client reports that it cannot reach CAMS and offers the endpoint to be entered by hand.
+- **The workstation is already held by another active session** — the sign-in is refused rather than displacing the student using it.
+- **The account is not a student** — the client refuses the sign-in; teacher and administrator accounts use the web portal.
 
 **Additional Remarks**
 
@@ -6587,17 +6604,15 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 | **Primary Actor** | Student |
 | **Secondary Actor** | None |
 | **Input Parameters** | None beyond the signed-in identity carried on the authentication cookie. |
-| **Output Parameters** | A redirect back to the listing page, carrying a success or failure message for display. |
+| **Output Parameters** | Confirmation that the session was closed and the workstation released. |
 | **Pre-condition** | The caller is signed in as a student. |
 | **Post-condition** | The change is committed to the database and visible to the next read.<br>The caller sees the outcome reported on the page they return to. |
 
 **Successful Scenario**
 
-1. The Student opens the page and CAMS confirms the role on the authentication cookie.
-2. The Student fills the form and submits it.
-3. The server validates the submitted values against the model rules.
-4. The change is written to the database through `ApplicationDbContext`.
-5. The server redirects back to the listing, where the result is shown.
+1. The student signs out from the CAMS client.
+2. The server ends the lab session and records its end time.
+3. The workstation is released so another student may sign in at it.
 
 **Exception Scenario**
 
@@ -6618,19 +6633,19 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 | **Primary Actor** | Student |
 | **Secondary Actor** | None; this behaviour runs inside **CLIENT LOGIN** |
 | **Input Parameters** | None beyond the signed-in identity carried on the authentication cookie. |
-| **Output Parameters** | The rendered page, or a JSON payload where the caller is the page’s own script. |
-| **Pre-condition** | The caller is signed in.<br>**CLIENT LOGIN** has reached the point where this is always performed. |
+| **Output Parameters** | The server endpoint a client should connect to. |
+| **Pre-condition** | None. The endpoint answers an unauthenticated broadcast, so a client can find the server before it has credentials.<br>**CLIENT LOGIN** has reached the point where this is always performed. |
 | **Post-condition** | The caller has the requested information. Nothing in the database has changed. |
 
 **Successful Scenario**
 
-1. The Student opens the page and CAMS confirms the role on the authentication cookie.
-2. The server reads the records the caller is entitled to see.
-3. The page renders with those records.
+1. A CAMS client broadcasts on the laboratory network looking for a server.
+2. The server answers with the endpoint the client should use.
+3. The client stores the endpoint and proceeds to sign in.
 
 **Exception Scenario**
 
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
+- **The broadcast does not reach the server** — no answer is returned and the client falls back to a configured endpoint.
 
 **Additional Remarks**
 
@@ -6647,15 +6662,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 | **Primary Actor** | Student |
 | **Secondary Actor** | None; this behaviour runs inside **CLIENT LOGIN** |
 | **Input Parameters** | None beyond the signed-in identity carried on the authentication cookie. |
-| **Output Parameters** | The behaviour completes and its effect is visible to the use case that includes it. |
-| **Pre-condition** | The caller is signed in.<br>**CLIENT LOGIN** has reached the point where this is always performed. |
+| **Output Parameters** | A `LoginResult` naming the role, the account id and the display name, or a result saying the credentials were rejected. |
+| **Pre-condition** | The sign-in use case has supplied a username and a password.<br>**CLIENT LOGIN** has reached the point where this is always performed. |
 | **Post-condition** | The caller has the requested information. Nothing in the database has changed. |
 
 **Successful Scenario**
 
-1. The including use case reaches the point where this behaviour is required.
-2. The server runs `LoginAsync` and applies its result.
-3. Control returns to the including use case, which continues.
+1. The sign-in use case passes the username, the password, the workstation name and the caller address.
+2. The service looks the username up in the administrator, teacher and student tables.
+3. The stored hash is verified against the supplied password.
+4. The active flag and the lockout expiry are checked.
+5. On success the failed-attempt counter is cleared and the role and account id are returned; on failure the counter is raised.
 
 **Exception Scenario**
 
