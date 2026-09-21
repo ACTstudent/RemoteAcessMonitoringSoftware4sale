@@ -67,17 +67,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## PROCESS LOG IN  ·  `AccountController`
 
-**System Use Case:**
-
 ![PROCESS LOG IN](usecase-images/admin-process-log-in.png)
 
-**Written Use Case:**
+*Figure 3.1: System Use Case for process log in*
 
 ### A-001  ·  LOGIN USER
 
 **Use Case Name:** LOGIN USER  
 **Purpose:** Let a person sign in to the CAMS web portal with a username and password, and place them in the part of the system their role allows.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -124,7 +124,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** LOGOUT USER  
 **Purpose:** End the signed-in session and clear the authentication cookie, so the next visitor to the browser starts as an anonymous user.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -165,7 +167,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** LOGIN ASYNC  
 **Purpose:** Check the supplied password against the stored hash, confirm the account is active and not locked out, and decide which of the three account tables the person belongs to.  
-**Actors:** Admin, None; this behaviour runs inside **LOGIN USER**
+**Actors:**
+
+- Admin (Primary Actor)
+- None; this behaviour runs inside **LOGIN USER** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -206,7 +211,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** LOGOUT ASYNC  
 **Purpose:** Close any lab session the student still has open and record the sign-out.  
-**Actors:** Admin, None; this behaviour runs inside **LOGOUT USER**
+**Actors:**
+
+- Admin (Primary Actor)
+- None; this behaviour runs inside **LOGOUT USER** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -243,17 +251,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## VIEW ADMIN HOME  ·  `AdminController`
 
-**System Use Case:**
-
 ![VIEW ADMIN HOME](usecase-images/admin-view-admin-home.png)
 
-**Written Use Case:**
+*Figure 3.2: System Use Case for view admin home*
 
 ### A-005  ·  ADMIN INDEX
 
 **Use Case Name:** ADMIN INDEX  
 **Purpose:** Show the administrator landing page, summarising the state of the laboratory.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -290,7 +298,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** VIEW SETTINGS  
 **Purpose:** Show the settings page for the signed-in user.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -327,7 +337,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** LAN CONFIG  
 **Purpose:** Show the network configuration the server detected, as a read-only diagnostic.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -364,7 +376,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CHANGE PASSWORD  
 **Purpose:** Let the signed-in user replace their own password after proving they know the current one.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -408,7 +422,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CHANGE ADMIN PASSWORD ASYNC  
 **Purpose:** Verify the current password and replace the stored hash for an administrator account.  
-**Actors:** Admin, None; this behaviour runs inside **CHANGE PASSWORD**
+**Actors:**
+
+- Admin (Primary Actor)
+- None; this behaviour runs inside **CHANGE PASSWORD** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -445,17 +462,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE ADMIN ACCOUNT  ·  `AdminController`
 
-**System Use Case:**
-
 ![MANAGE ADMIN ACCOUNT](usecase-images/admin-manage-admin-account.png)
 
-**Written Use Case:**
+*Figure 3.3: System Use Case for manage admin account*
 
 ### A-010  ·  CREATE ADMIN
 
 **Use Case Name:** CREATE ADMIN  
 **Purpose:** Record a new administrator account in the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -498,7 +515,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE ADMIN  
 **Purpose:** Amend the stored details of an existing administrator account.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -542,7 +561,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DELETE ADMIN  
 **Purpose:** Remove a administrator account from the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -586,17 +607,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE TEACHER ACCOUNT  ·  `AdminController`
 
-**System Use Case:**
-
 ![MANAGE TEACHER ACCOUNT](usecase-images/admin-manage-teacher-account.png)
 
-**Written Use Case:**
+*Figure 3.4: System Use Case for manage teacher account*
 
 ### A-013  ·  VIEW TEACHERS
 
 **Use Case Name:** VIEW TEACHERS  
 **Purpose:** List the teachers the signed-in user is allowed to see.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -633,7 +654,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE TEACHER  
 **Purpose:** Record a new teacher account in the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -676,7 +699,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE TEACHER  
 **Purpose:** Amend the stored details of an existing teacher account.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -720,7 +745,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DELETE TEACHER  
 **Purpose:** Remove a teacher account from the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -766,7 +793,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UNLOCK ACCOUNT  
 **Purpose:** Clear the lockout on an account that has been locked by repeated failed sign-in attempts.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -812,7 +841,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** SET ACCOUNT ACTIVE  
 **Purpose:** Activate or deactivate an account without deleting it, so a person can be kept out of the system while their records survive.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -857,17 +888,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE STUDENT ACCOUNT  ·  `AdminController`
 
-**System Use Case:**
-
 ![MANAGE STUDENT ACCOUNT](usecase-images/admin-manage-student-account.png)
 
-**Written Use Case:**
+*Figure 3.5: System Use Case for manage student account*
 
 ### A-019  ·  VIEW STUDENTS
 
 **Use Case Name:** VIEW STUDENTS  
 **Purpose:** List the students the signed-in user is allowed to see.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -904,7 +935,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE STUDENT  
 **Purpose:** Record a new student account in the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -947,7 +980,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE STUDENT  
 **Purpose:** Amend the stored details of an existing student account.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -991,7 +1026,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DELETE STUDENT  
 **Purpose:** Remove a student account from the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1037,7 +1074,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** BULK CREATE STUDENTS  
 **Purpose:** Create many student accounts in one operation from pasted or uploaded CSV rows.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1084,7 +1123,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** BULK PREVIEW CSV  
 **Purpose:** Parse the submitted CSV and show what would be created, so mistakes are caught before any account exists.  
-**Actors:** Admin, None; this behaviour runs inside **BULK CREATE STUDENTS**
+**Actors:**
+
+- Admin (Primary Actor)
+- None; this behaviour runs inside **BULK CREATE STUDENTS** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -1130,17 +1172,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE COMPUTER PROFILE  ·  `AdminController`
 
-**System Use Case:**
-
 ![MANAGE COMPUTER PROFILE](usecase-images/admin-manage-computer-profile.png)
 
-**Written Use Case:**
+*Figure 3.6: System Use Case for manage computer profile*
 
 ### A-025  ·  VIEW COMPUTERS
 
 **Use Case Name:** VIEW COMPUTERS  
 **Purpose:** List the computers the signed-in user is allowed to see.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1177,7 +1219,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE COMPUTER  
 **Purpose:** Record a new workstation profile in the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1220,7 +1264,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE COMPUTER  
 **Purpose:** Amend the stored details of an existing workstation profile.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1263,7 +1309,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DELETE COMPUTER  
 **Purpose:** Remove a workstation profile from the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1309,7 +1357,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** ASSIGN COMPUTER  
 **Purpose:** Bind a workstation to a student so the workstation is recognised when that student signs in at it.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1355,7 +1405,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** COMPUTER HISTORY  
 **Purpose:** Show the recorded status changes for a workstation, and who made each one.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1392,17 +1444,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE CLASS  ·  `AdminController`
 
-**System Use Case:**
-
 ![MANAGE CLASS](usecase-images/admin-manage-class.png)
 
-**Written Use Case:**
+*Figure 3.7: System Use Case for manage class*
 
 ### A-031  ·  VIEW CLASSES
 
 **Use Case Name:** VIEW CLASSES  
 **Purpose:** List the classes the signed-in user is allowed to see.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1439,7 +1491,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE CLASS  
 **Purpose:** Record a new class in the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1482,7 +1536,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE CLASS  
 **Purpose:** Amend the stored details of an existing class.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1525,7 +1581,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DELETE CLASS  
 **Purpose:** Remove a class from the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1571,7 +1629,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** ASSIGN TEACHER  
 **Purpose:** Put a teacher in charge of a class.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1617,7 +1677,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** ARCHIVE CLASS  
 **Purpose:** Take a class out of active use while keeping its roster and records.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1660,17 +1722,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE CLASS ROSTER  ·  `AdminController`
 
-**System Use Case:**
-
 ![MANAGE CLASS ROSTER](usecase-images/admin-manage-class-roster.png)
 
-**Written Use Case:**
+*Figure 3.8: System Use Case for manage class roster*
 
 ### A-037  ·  CLASS DETAILS
 
 **Use Case Name:** CLASS DETAILS  
 **Purpose:** Show one class with its roster and the students enrolled in it.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1709,7 +1771,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** ENROLL STUDENT  
 **Purpose:** Add an existing student to a class roster.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1756,7 +1820,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** ENROLL STUDENTS  
 **Purpose:** Add several existing students to a class roster in one operation.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1803,7 +1869,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** ADD STUDENT TO CLASS  
 **Purpose:** Create a new student account and place it on a class roster in one step.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1852,7 +1920,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** ASSIGN STUDENT TO CLASS  
 **Purpose:** Set the primary class a student belongs to.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1899,7 +1969,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** REMOVE STUDENT  
 **Purpose:** Take a student off a class roster while leaving the student account intact.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1943,17 +2015,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE RESTRICTION RULE  ·  `AdminController`
 
-**System Use Case:**
-
 ![MANAGE RESTRICTION RULE](usecase-images/admin-manage-restriction-rule.png)
 
-**Written Use Case:**
+*Figure 3.9: System Use Case for manage restriction rule*
 
 ### A-043  ·  VIEW RESTRICTIONS
 
 **Use Case Name:** VIEW RESTRICTIONS  
 **Purpose:** List the restrictions the signed-in user is allowed to see.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -1990,7 +2062,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE RESTRICTION  
 **Purpose:** Record a new restriction rule in the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2033,7 +2107,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE RESTRICTION  
 **Purpose:** Amend the stored details of an existing restriction rule.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2076,7 +2152,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DELETE RESTRICTION  
 **Purpose:** Remove a restriction rule from the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2120,17 +2198,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE BLACKLIST AND WHITELIST  ·  `AdminController`
 
-**System Use Case:**
-
 ![MANAGE BLACKLIST AND WHITELIST](usecase-images/admin-manage-blacklist-and-whitelist.png)
 
-**Written Use Case:**
+*Figure 3.10: System Use Case for manage blacklist and whitelist*
 
 ### A-047  ·  VIEW BLACKLISTS
 
 **Use Case Name:** VIEW BLACKLISTS  
 **Purpose:** List the blacklists the signed-in user is allowed to see.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2167,7 +2245,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** VIEW WHITELISTS  
 **Purpose:** List the whitelists the signed-in user is allowed to see.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2204,7 +2284,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE BLACKLIST  
 **Purpose:** Record a new blacklist entry in the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2253,7 +2335,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE BLACKLIST  
 **Purpose:** Amend the stored details of an existing blacklist entry.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2296,7 +2380,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DELETE BLACKLIST  
 **Purpose:** Remove a blacklist entry from the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2342,7 +2428,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE WHITELIST  
 **Purpose:** Record a new whitelist entry in the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2385,7 +2473,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE WHITELIST  
 **Purpose:** Amend the stored details of an existing whitelist entry.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2431,17 +2521,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE CATEGORY  ·  `AdminController`
 
-**System Use Case:**
-
 ![MANAGE CATEGORY](usecase-images/admin-manage-category.png)
 
-**Written Use Case:**
+*Figure 3.11: System Use Case for manage category*
 
 ### A-054  ·  CREATE APPLICATION CATEGORY
 
 **Use Case Name:** CREATE APPLICATION CATEGORY  
 **Purpose:** Record a new application category in the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2484,7 +2574,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE APPLICATION CATEGORY  
 **Purpose:** Amend the stored details of an existing application category.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2527,7 +2619,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DELETE APPLICATION CATEGORY  
 **Purpose:** Remove a application category from the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2573,7 +2667,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE WEBSITE CATEGORY  
 **Purpose:** Record a new website category in the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2616,7 +2712,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE WEBSITE CATEGORY  
 **Purpose:** Amend the stored details of an existing website category.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2659,7 +2757,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DELETE WEBSITE CATEGORY  
 **Purpose:** Remove a website category from the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2703,17 +2803,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE SESSION RULE  ·  `AdminController`
 
-**System Use Case:**
-
 ![MANAGE SESSION RULE](usecase-images/admin-manage-session-rule.png)
 
-**Written Use Case:**
+*Figure 3.12: System Use Case for manage session rule*
 
 ### A-060  ·  SESSION RULES
 
 **Use Case Name:** SESSION RULES  
 **Purpose:** List the session rules the signed-in user is allowed to see.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2750,7 +2850,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE SESSION RULE  
 **Purpose:** Record a new session rule in the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2793,7 +2895,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE SESSION RULE  
 **Purpose:** Amend the stored details of an existing session rule.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2836,7 +2940,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DELETE SESSION RULE  
 **Purpose:** Remove a session rule from the system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2880,17 +2986,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE ROLE AND PERMISSION  ·  `AdminController`
 
-**System Use Case:**
-
 ![MANAGE ROLE AND PERMISSION](usecase-images/admin-manage-role-and-permission.png)
 
-**Written Use Case:**
+*Figure 3.13: System Use Case for manage role and permission*
 
 ### A-064  ·  VIEW ROLES
 
 **Use Case Name:** VIEW ROLES  
 **Purpose:** Show the seeded roles and the permissions attached to them.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2927,7 +3033,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE ROLE  
 **Purpose:** Add a role to the seeded reference data.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -2970,7 +3078,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DELETE ROLE  
 **Purpose:** Remove a role from the seeded reference data.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -3014,17 +3124,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## CONTROL LABORATORY SESSION  ·  `AdminController`
 
-**System Use Case:**
-
 ![CONTROL LABORATORY SESSION](usecase-images/admin-control-laboratory-session.png)
 
-**Written Use Case:**
+*Figure 3.14: System Use Case for control laboratory session*
 
 ### A-067  ·  PAUSE ALL SESSIONS
 
 **Use Case Name:** PAUSE ALL SESSIONS  
 **Purpose:** Pause every active laboratory session at once, freezing the timers across the room.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -3067,7 +3177,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** RESUME ALL SESSIONS  
 **Purpose:** Resume every paused laboratory session at once.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -3110,7 +3222,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** END ALL SESSIONS  
 **Purpose:** End every active laboratory session at once and tell the workstations.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -3154,7 +3268,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** NOTIFY STATES ASYNC  
 **Purpose:** Push the new session state to every affected workstation so clients stop their timers rather than waiting to notice.  
-**Actors:** Admin, None; this behaviour runs inside **END ALL SESSIONS**
+**Actors:**
+
+- Admin (Primary Actor)
+- None; this behaviour runs inside **END ALL SESSIONS** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -3191,17 +3308,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## VIEW REPORTS AND LOGS  ·  `AdminController`
 
-**System Use Case:**
-
 ![VIEW REPORTS AND LOGS](usecase-images/admin-view-reports-and-logs.png)
 
-**Written Use Case:**
+*Figure 3.15: System Use Case for view reports and logs*
 
 ### A-071  ·  VIEW REPORTS
 
 **Use Case Name:** VIEW REPORTS  
 **Purpose:** Show the laboratory reports an administrator uses for oversight.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -3246,7 +3363,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** AUDIT LOGS  
 **Purpose:** Show the audit trail of administrative actions.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -3284,7 +3403,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** SYSTEM LOGS  
 **Purpose:** Show the technical log the server writes.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -3322,7 +3443,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** EXPORT REPORTS CSV  
 **Purpose:** Produce the reports view as a CSV file the user can download.  
-**Actors:** Admin, None; this behaviour runs inside **VIEW REPORTS**
+**Actors:**
+
+- Admin (Primary Actor)
+- None; this behaviour runs inside **VIEW REPORTS** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -3366,7 +3490,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** EXPORT ATTENDANCE CSV  
 **Purpose:** Produce the attendance view as a CSV file the user can download.  
-**Actors:** Admin, None; this behaviour runs inside **VIEW REPORTS**
+**Actors:**
+
+- Admin (Primary Actor)
+- None; this behaviour runs inside **VIEW REPORTS** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -3409,7 +3536,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** EXPORT USAGE CSV  
 **Purpose:** Produce the usage view as a CSV file the user can download.  
-**Actors:** Admin, None; this behaviour runs inside **VIEW REPORTS**
+**Actors:**
+
+- Admin (Primary Actor)
+- None; this behaviour runs inside **VIEW REPORTS** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -3449,7 +3579,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** EXPORT REMOTE COMMANDS CSV  
 **Purpose:** Produce the remote commands view as a CSV file the user can download.  
-**Actors:** Admin, None; this behaviour runs inside **VIEW REPORTS**
+**Actors:**
+
+- Admin (Primary Actor)
+- None; this behaviour runs inside **VIEW REPORTS** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -3492,7 +3625,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** EXPORT AUDIT CSV  
 **Purpose:** Produce the audit view as a CSV file the user can download.  
-**Actors:** Admin, None; this behaviour runs inside **AUDIT LOGS**
+**Actors:**
+
+- Admin (Primary Actor)
+- None; this behaviour runs inside **AUDIT LOGS** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -3531,7 +3667,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** EXPORT SYSTEM LOGS CSV  
 **Purpose:** Produce the system logs view as a CSV file the user can download.  
-**Actors:** Admin, None; this behaviour runs inside **SYSTEM LOGS**
+**Actors:**
+
+- Admin (Primary Actor)
+- None; this behaviour runs inside **SYSTEM LOGS** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -3568,17 +3707,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE DATABASE  ·  `AdminDatabaseController`
 
-**System Use Case:**
-
 ![MANAGE DATABASE](usecase-images/admin-manage-database.png)
 
-**Written Use Case:**
+*Figure 3.16: System Use Case for manage database*
 
 ### A-080  ·  DATABASE INDEX
 
 **Use Case Name:** DATABASE INDEX  
 **Purpose:** Show database health: file size, integrity check, applied and pending migrations, and the backups on disk.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -3615,7 +3754,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE BACKUP  
 **Purpose:** Take a backup copy of the SQLite database file and store it on the server.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -3658,7 +3799,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** VALIDATE BACKUP  
 **Purpose:** Check that a backup file is a readable, intact database before anybody relies on it.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -3701,7 +3844,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** STAGE RESTORE  
 **Purpose:** Stage a backup so the server restores it on the next restart, rather than swapping the file underneath a running system.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -3746,7 +3891,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** STAGE RESTORE ASYNC  
 **Purpose:** Take a safety backup of the current database and mark the chosen backup for restore at next start.  
-**Actors:** Admin, None; this behaviour runs inside **STAGE RESTORE**
+**Actors:**
+
+- Admin (Primary Actor)
+- None; this behaviour runs inside **STAGE RESTORE** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -3783,17 +3931,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE DEPLOYMENT  ·  `AdminDeploymentController`
 
-**System Use Case:**
-
 ![MANAGE DEPLOYMENT](usecase-images/admin-manage-deployment.png)
 
-**Written Use Case:**
+*Figure 3.17: System Use Case for manage deployment*
 
 ### A-085  ·  DEPLOYMENT INDEX
 
 **Use Case Name:** DEPLOYMENT INDEX  
 **Purpose:** Show the deployment hub: release version, installer and certificate state, and the endpoint clients should use.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -3831,7 +3979,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DOWNLOAD INSTALLER  
 **Purpose:** Download the client installer for deployment to a workstation.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -3868,7 +4018,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DOWNLOAD MANIFEST  
 **Purpose:** Download the release manifest listing the files and their hashes.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -3905,7 +4057,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** ROOT CERTIFICATE  
 **Purpose:** Download the root certificate a workstation must trust to reach the server over HTTPS.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -3942,7 +4096,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE BUNDLE  
 **Purpose:** Build and download an offline client bundle for a workstation with no access to the server yet.  
-**Actors:** Admin
+**Actors:**
+
+- Admin (Primary Actor)
 
 **Input Parameters:**
 
@@ -3986,7 +4142,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** GET STATUS ASYNC  
 **Purpose:** Gather the deployment state: release version, file hashes, certificate and endpoint.  
-**Actors:** Admin, None; this behaviour runs inside **DEPLOYMENT INDEX**
+**Actors:**
+
+- Admin (Primary Actor)
+- None; this behaviour runs inside **DEPLOYMENT INDEX** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -4025,7 +4184,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE BUNDLE ASYNC  
 **Purpose:** Assemble an offline installer bundle carrying the installer, the root certificate and the server endpoint.  
-**Actors:** Admin, None; this behaviour runs inside **CREATE BUNDLE**
+**Actors:**
+
+- Admin (Primary Actor)
+- None; this behaviour runs inside **CREATE BUNDLE** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -4064,17 +4226,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## PROCESS LOG IN  ·  `AccountController`
 
-**System Use Case:**
-
 ![PROCESS LOG IN](usecase-images/teacher-process-log-in.png)
 
-**Written Use Case:**
+*Figure 3.18: System Use Case for process log in*
 
 ### T-092  ·  LOGIN USER
 
 **Use Case Name:** LOGIN USER  
 **Purpose:** Let a person sign in to the CAMS web portal with a username and password, and place them in the part of the system their role allows.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -4121,7 +4283,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** LOGOUT USER  
 **Purpose:** End the signed-in session and clear the authentication cookie, so the next visitor to the browser starts as an anonymous user.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -4162,7 +4326,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** LOGIN ASYNC  
 **Purpose:** Check the supplied password against the stored hash, confirm the account is active and not locked out, and decide which of the three account tables the person belongs to.  
-**Actors:** Teacher, None; this behaviour runs inside **LOGIN USER**
+**Actors:**
+
+- Teacher (Primary Actor)
+- None; this behaviour runs inside **LOGIN USER** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -4203,7 +4370,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** LOGOUT ASYNC  
 **Purpose:** Close any lab session the student still has open and record the sign-out.  
-**Actors:** Teacher, None; this behaviour runs inside **LOGOUT USER**
+**Actors:**
+
+- Teacher (Primary Actor)
+- None; this behaviour runs inside **LOGOUT USER** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -4240,17 +4410,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE OWN ACCOUNT  ·  `TeacherController`
 
-**System Use Case:**
-
 ![MANAGE OWN ACCOUNT](usecase-images/teacher-manage-own-account.png)
 
-**Written Use Case:**
+*Figure 3.19: System Use Case for manage own account*
 
 ### T-096  ·  VIEW SETTINGS
 
 **Use Case Name:** VIEW SETTINGS  
 **Purpose:** Show the settings page for the signed-in user.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -4287,7 +4457,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CHANGE PASSWORD  
 **Purpose:** Let the signed-in user replace their own password after proving they know the current one.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -4331,7 +4503,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CHANGE TEACHER PASSWORD ASYNC  
 **Purpose:** Verify the current password and replace the stored hash for a teacher account.  
-**Actors:** Teacher, None; this behaviour runs inside **CHANGE PASSWORD**
+**Actors:**
+
+- Teacher (Primary Actor)
+- None; this behaviour runs inside **CHANGE PASSWORD** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -4368,17 +4543,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE PEER TEACHER ACCOUNT  ·  `AdminController`
 
-**System Use Case:**
-
 ![MANAGE PEER TEACHER ACCOUNT](usecase-images/teacher-manage-peer-teacher-account.png)
 
-**Written Use Case:**
+*Figure 3.20: System Use Case for manage peer teacher account*
 
 ### T-099  ·  VIEW TEACHERS
 
 **Use Case Name:** VIEW TEACHERS  
 **Purpose:** List the teachers the signed-in user is allowed to see.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -4415,7 +4590,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE TEACHER  
 **Purpose:** Record a new teacher account in the system.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -4458,7 +4635,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE TEACHER  
 **Purpose:** Amend the stored details of an existing teacher account.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -4502,7 +4681,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DELETE TEACHER  
 **Purpose:** Remove a teacher account from the system.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -4548,7 +4729,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UNLOCK ACCOUNT  
 **Purpose:** Clear the lockout on an account that has been locked by repeated failed sign-in attempts.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -4594,7 +4777,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** SET ACCOUNT ACTIVE  
 **Purpose:** Activate or deactivate an account without deleting it, so a person can be kept out of the system while their records survive.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -4639,17 +4824,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE STUDENT ACCOUNT  ·  `TeacherController`
 
-**System Use Case:**
-
 ![MANAGE STUDENT ACCOUNT](usecase-images/teacher-manage-student-account.png)
 
-**Written Use Case:**
+*Figure 3.21: System Use Case for manage student account*
 
 ### T-105  ·  VIEW STUDENTS
 
 **Use Case Name:** VIEW STUDENTS  
 **Purpose:** List the students the signed-in user is allowed to see.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -4686,7 +4871,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE STUDENT  
 **Purpose:** Record a new student account in the system.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -4733,7 +4920,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE STUDENT  
 **Purpose:** Amend the stored details of an existing student account.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -4778,7 +4967,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DELETE STUDENT  
 **Purpose:** Remove a student account from the system.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -4825,7 +5016,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** BULK ADD STUDENTS  
 **Purpose:** Create many student accounts at once and enrol them into a class in the same operation.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -4875,7 +5068,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** BULK PREVIEW CSV  
 **Purpose:** Parse the submitted CSV and show what would be created, so mistakes are caught before any account exists.  
-**Actors:** Teacher, None; this behaviour runs inside **BULK ADD STUDENTS**
+**Actors:**
+
+- Teacher (Primary Actor)
+- None; this behaviour runs inside **BULK ADD STUDENTS** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -4921,17 +5117,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE COMPUTER PROFILE  ·  `AdminController`
 
-**System Use Case:**
-
 ![MANAGE COMPUTER PROFILE](usecase-images/teacher-manage-computer-profile.png)
 
-**Written Use Case:**
+*Figure 3.22: System Use Case for manage computer profile*
 
 ### T-111  ·  VIEW COMPUTERS
 
 **Use Case Name:** VIEW COMPUTERS  
 **Purpose:** List the computers the signed-in user is allowed to see.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -4968,7 +5164,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE COMPUTER  
 **Purpose:** Record a new workstation profile in the system.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5011,7 +5209,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE COMPUTER  
 **Purpose:** Amend the stored details of an existing workstation profile.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5054,7 +5254,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DELETE COMPUTER  
 **Purpose:** Remove a workstation profile from the system.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5100,7 +5302,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** ASSIGN COMPUTER  
 **Purpose:** Bind a workstation to a student so the workstation is recognised when that student signs in at it.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5146,7 +5350,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** COMPUTER HISTORY  
 **Purpose:** Show the recorded status changes for a workstation, and who made each one.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5183,17 +5389,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE CLASS  ·  `TeacherController`
 
-**System Use Case:**
-
 ![MANAGE CLASS](usecase-images/teacher-manage-class.png)
 
-**Written Use Case:**
+*Figure 3.23: System Use Case for manage class*
 
 ### T-117  ·  VIEW CLASSES
 
 **Use Case Name:** VIEW CLASSES  
 **Purpose:** List the classes the signed-in user is allowed to see.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5230,7 +5436,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE CLASS  
 **Purpose:** Record a new class in the system.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5273,7 +5481,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE CLASS  
 **Purpose:** Amend the stored details of an existing class.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5316,7 +5526,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DELETE CLASS  
 **Purpose:** Remove a class from the system.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5362,7 +5574,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** ASSIGN TEACHER  
 **Purpose:** Put a teacher in charge of a class.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5408,7 +5622,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** ARCHIVE CLASS  
 **Purpose:** Take a class out of active use while keeping its roster and records.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5451,17 +5667,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE CLASS ROSTER  ·  `TeacherController`
 
-**System Use Case:**
-
 ![MANAGE CLASS ROSTER](usecase-images/teacher-manage-class-roster.png)
 
-**Written Use Case:**
+*Figure 3.24: System Use Case for manage class roster*
 
 ### T-123  ·  CLASS DETAILS
 
 **Use Case Name:** CLASS DETAILS  
 **Purpose:** Show one class with its roster and the students enrolled in it.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5500,7 +5716,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** ENROLL STUDENT  
 **Purpose:** Add an existing student to a class roster.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5547,7 +5765,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** ENROLL STUDENTS  
 **Purpose:** Add several existing students to a class roster in one operation.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5594,7 +5814,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** ADD STUDENT TO CLASS  
 **Purpose:** Create a new student account and place it on a class roster in one step.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5643,7 +5865,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** REMOVE STUDENT  
 **Purpose:** Take a student off a class roster while leaving the student account intact.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5687,17 +5911,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE RESTRICTION RULE  ·  `TeacherController`
 
-**System Use Case:**
-
 ![MANAGE RESTRICTION RULE](usecase-images/teacher-manage-restriction-rule.png)
 
-**Written Use Case:**
+*Figure 3.25: System Use Case for manage restriction rule*
 
 ### T-128  ·  VIEW RESTRICTIONS
 
 **Use Case Name:** VIEW RESTRICTIONS  
 **Purpose:** List the restrictions the signed-in user is allowed to see.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5734,7 +5958,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE RESTRICTION  
 **Purpose:** Record a new restriction rule in the system.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5777,7 +6003,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE RESTRICTION  
 **Purpose:** Amend the stored details of an existing restriction rule.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5820,7 +6048,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DELETE RESTRICTION  
 **Purpose:** Remove a restriction rule from the system.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5864,17 +6094,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE BLACKLIST AND WHITELIST  ·  `AdminController`
 
-**System Use Case:**
-
 ![MANAGE BLACKLIST AND WHITELIST](usecase-images/teacher-manage-blacklist-and-whitelist.png)
 
-**Written Use Case:**
+*Figure 3.26: System Use Case for manage blacklist and whitelist*
 
 ### T-132  ·  VIEW BLACKLISTS
 
 **Use Case Name:** VIEW BLACKLISTS  
 **Purpose:** List the blacklists the signed-in user is allowed to see.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5911,7 +6141,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** VIEW WHITELISTS  
 **Purpose:** List the whitelists the signed-in user is allowed to see.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5948,7 +6180,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE BLACKLIST  
 **Purpose:** Record a new blacklist entry in the system.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -5997,7 +6231,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE BLACKLIST  
 **Purpose:** Amend the stored details of an existing blacklist entry.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6040,7 +6276,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DELETE BLACKLIST  
 **Purpose:** Remove a blacklist entry from the system.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6086,7 +6324,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE WHITELIST  
 **Purpose:** Record a new whitelist entry in the system.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6129,7 +6369,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE WHITELIST  
 **Purpose:** Amend the stored details of an existing whitelist entry.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6175,17 +6417,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE CATEGORY  ·  `AdminController`
 
-**System Use Case:**
-
 ![MANAGE CATEGORY](usecase-images/teacher-manage-category.png)
 
-**Written Use Case:**
+*Figure 3.27: System Use Case for manage category*
 
 ### T-139  ·  CREATE APPLICATION CATEGORY
 
 **Use Case Name:** CREATE APPLICATION CATEGORY  
 **Purpose:** Record a new application category in the system.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6228,7 +6470,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE APPLICATION CATEGORY  
 **Purpose:** Amend the stored details of an existing application category.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6271,7 +6515,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DELETE APPLICATION CATEGORY  
 **Purpose:** Remove a application category from the system.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6317,7 +6563,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE WEBSITE CATEGORY  
 **Purpose:** Record a new website category in the system.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6360,7 +6608,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE WEBSITE CATEGORY  
 **Purpose:** Amend the stored details of an existing website category.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6403,7 +6653,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DELETE WEBSITE CATEGORY  
 **Purpose:** Remove a website category from the system.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6447,17 +6699,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE SESSION RULE  ·  `AdminController`
 
-**System Use Case:**
-
 ![MANAGE SESSION RULE](usecase-images/teacher-manage-session-rule.png)
 
-**Written Use Case:**
+*Figure 3.28: System Use Case for manage session rule*
 
 ### T-145  ·  SESSION RULES
 
 **Use Case Name:** SESSION RULES  
 **Purpose:** List the session rules the signed-in user is allowed to see.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6494,7 +6746,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CREATE SESSION RULE  
 **Purpose:** Record a new session rule in the system.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6537,7 +6791,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UPDATE SESSION RULE  
 **Purpose:** Amend the stored details of an existing session rule.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6580,7 +6836,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DELETE SESSION RULE  
 **Purpose:** Remove a session rule from the system.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6624,17 +6882,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## CONTROL LABORATORY SESSION  ·  `TeacherController`
 
-**System Use Case:**
-
 ![CONTROL LABORATORY SESSION](usecase-images/teacher-control-laboratory-session.png)
 
-**Written Use Case:**
+*Figure 3.29: System Use Case for control laboratory session*
 
 ### T-149  ·  GLOBAL START SESSION
 
 **Use Case Name:** GLOBAL START SESSION  
 **Purpose:** Start a laboratory-wide session so every connected workstation begins at the same moment.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6677,7 +6935,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** GLOBAL PAUSE SESSION  
 **Purpose:** Pause the laboratory-wide session for the whole room.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6720,7 +6980,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** GLOBAL END SESSION  
 **Purpose:** End the laboratory-wide session for the whole room.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6764,7 +7026,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** GLOBAL SESSION STATE  
 **Purpose:** Report the current laboratory-wide session state so the page can show the right timer and controls.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6801,7 +7065,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** NOTIFY STATES ASYNC  
 **Purpose:** Push the new session state to every affected workstation so clients stop their timers rather than waiting to notice.  
-**Actors:** Teacher, None; this behaviour runs inside **GLOBAL END SESSION**
+**Actors:**
+
+- Teacher (Primary Actor)
+- None; this behaviour runs inside **GLOBAL END SESSION** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -6838,17 +7105,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## CONTROL STUDENT SESSION  ·  `TeacherController`
 
-**System Use Case:**
-
 ![CONTROL STUDENT SESSION](usecase-images/teacher-control-student-session.png)
 
-**Written Use Case:**
+*Figure 3.30: System Use Case for control student session*
 
 ### T-154  ·  VIEW SESSIONS
 
 **Use Case Name:** VIEW SESSIONS  
 **Purpose:** List the lab sessions the teacher may act on.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6885,7 +7152,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** START SESSION  
 **Purpose:** Open a lab session for one student at one workstation under a chosen session rule.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6933,7 +7202,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** TOGGLE PAUSE  
 **Purpose:** Pause a running session, or resume a paused one, accumulating the paused time so it is not charged against the limit.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -6978,7 +7249,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** END SESSION  
 **Purpose:** Close one student lab session and record its end time.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -7023,7 +7296,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** ENSURE STUDENT SESSION ASYNC  
 **Purpose:** Find the student a session, creating one if none is open, and apply the governing session rule to it.  
-**Actors:** Teacher, None; this behaviour runs inside **START SESSION**
+**Actors:**
+
+- Teacher (Primary Actor)
+- None; this behaviour runs inside **START SESSION** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -7063,7 +7339,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** END EXPIRED SESSIONS ASYNC  
 **Purpose:** Close sessions that have run past the limit their session rule sets, without anyone having to intervene.  
-**Actors:** Teacher, None; this behaviour runs inside **ENSURE STUDENT SESSION ASYNC**
+**Actors:**
+
+- Teacher (Primary Actor)
+- None; this behaviour runs inside **ENSURE STUDENT SESSION ASYNC** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -7100,17 +7379,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MONITOR STUDENT SCREEN  ·  `TeacherController + Hub`
 
-**System Use Case:**
-
 ![MONITOR STUDENT SCREEN](usecase-images/teacher-monitor-student-screen.png)
 
-**Written Use Case:**
+*Figure 3.31: System Use Case for monitor student screen*
 
 ### T-160  ·  OPEN MONITORING
 
 **Use Case Name:** OPEN MONITORING  
 **Purpose:** Open the live monitoring wall showing every connected student workstation.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -7148,7 +7427,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** MONITORING INDEX  
 **Purpose:** Serve the monitoring surface the live screen grid is built on.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -7185,7 +7466,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** LIVE STATE  
 **Purpose:** Report the current state of every connected workstation so the monitoring page can refresh without reloading.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -7222,7 +7505,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** SEND SCREEN FRAME  
 **Purpose:** Send one captured frame of the workstation screen to the watching teacher.  
-**Actors:** Teacher, The CAMS client on the target workstation
+**Actors:**
+
+- Teacher (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -7262,17 +7548,18 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## CONTROL STUDENT WORKSTATION  ·  `RemoteMonitoringHub`
 
-**System Use Case:**
-
 ![CONTROL STUDENT WORKSTATION](usecase-images/teacher-control-student-workstation.png)
 
-**Written Use Case:**
+*Figure 3.32: System Use Case for control student workstation*
 
 ### T-164  ·  START REMOTE CONTROL
 
 **Use Case Name:** START REMOTE CONTROL  
 **Purpose:** Take keyboard and mouse control of a student workstation, with the client showing that remote control is active.  
-**Actors:** Teacher, The CAMS client on the target workstation
+**Actors:**
+
+- Teacher (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -7316,7 +7603,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** STOP REMOTE CONTROL  
 **Purpose:** Hand control of the workstation back to the student.  
-**Actors:** Teacher, The CAMS client on the target workstation
+**Actors:**
+
+- Teacher (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -7359,7 +7649,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** LOCK STUDENT  
 **Purpose:** Lock a student workstation so the student cannot use it until it is unlocked.  
-**Actors:** Teacher, The CAMS client on the target workstation
+**Actors:**
+
+- Teacher (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -7402,7 +7695,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UNLOCK STUDENT  
 **Purpose:** Release the CAMS lock on a student workstation.  
-**Actors:** Teacher, The CAMS client on the target workstation
+**Actors:**
+
+- Teacher (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -7444,7 +7740,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** FORCE LOGOUT  
 **Purpose:** Sign a student out of the workstation from the teacher console.  
-**Actors:** Teacher, The CAMS client on the target workstation
+**Actors:**
+
+- Teacher (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -7487,7 +7786,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** SHUTDOWN STUDENT  
 **Purpose:** Shut a student workstation down remotely.  
-**Actors:** Teacher, The CAMS client on the target workstation
+**Actors:**
+
+- Teacher (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -7530,7 +7832,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** RESTART STUDENT  
 **Purpose:** Restart a student workstation remotely.  
-**Actors:** Teacher, The CAMS client on the target workstation
+**Actors:**
+
+- Teacher (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -7573,7 +7878,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** BULK LOCK STUDENTS  
 **Purpose:** Lock several student workstations in one action.  
-**Actors:** Teacher, The CAMS client on the target workstation
+**Actors:**
+
+- Teacher (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -7614,7 +7922,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** BULK FORCE LOGOUT STUDENTS  
 **Purpose:** Sign several students out of their workstations in one action.  
-**Actors:** Teacher, The CAMS client on the target workstation
+**Actors:**
+
+- Teacher (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -7655,7 +7966,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** SEND REMOTE INPUT  
 **Purpose:** Deliver one keyboard or mouse event to the workstation under remote control.  
-**Actors:** Teacher, The CAMS client on the target workstation
+**Actors:**
+
+- Teacher (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -7699,17 +8013,18 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## SEND MESSAGE TO STUDENT  ·  `RemoteMonitoringHub`
 
-**System Use Case:**
-
 ![SEND MESSAGE TO STUDENT](usecase-images/teacher-send-message-to-student.png)
 
-**Written Use Case:**
+*Figure 3.33: System Use Case for send message to student*
 
 ### T-174  ·  SEND NOTIFICATION
 
 **Use Case Name:** SEND NOTIFICATION  
 **Purpose:** Send a message to connected students that appears on their workstation.  
-**Actors:** Teacher, The CAMS client on the target workstation
+**Actors:**
+
+- Teacher (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -7749,7 +8064,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** SEND WARNING POPUP  
 **Purpose:** Send a warning dialog to one student, shown on top of whatever they are doing.  
-**Actors:** Teacher, The CAMS client on the target workstation
+**Actors:**
+
+- Teacher (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -7792,7 +8110,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** BROADCAST SCREEN  
 **Purpose:** Put the teacher screen on every connected student workstation.  
-**Actors:** Teacher, The CAMS client on the target workstation
+**Actors:**
+
+- Teacher (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -7832,7 +8153,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** STOP BROADCAST  
 **Purpose:** Stop the teacher screen broadcast and return the workstations to the student view.  
-**Actors:** Teacher, The CAMS client on the target workstation
+**Actors:**
+
+- Teacher (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -7870,17 +8194,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE MONITORING ALERT  ·  `TeacherController`
 
-**System Use Case:**
-
 ![MANAGE MONITORING ALERT](usecase-images/teacher-manage-monitoring-alert.png)
 
-**Written Use Case:**
+*Figure 3.34: System Use Case for manage monitoring alert*
 
 ### T-178  ·  VIEW ALERTS
 
 **Use Case Name:** VIEW ALERTS  
 **Purpose:** List the monitoring alerts raised for the classes the teacher is responsible for.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -7917,7 +8241,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** ALERT HISTORY  
 **Purpose:** Show alerts that have already been acted on, with who acted and when.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -7957,7 +8283,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** OPEN ALERT COUNT  
 **Purpose:** Report how many alerts are still open, for the badge on the navigation bar.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -7994,7 +8322,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** ACKNOWLEDGE ALERT  
 **Purpose:** Mark one alert as seen and being handled.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -8041,7 +8371,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** BULK ACKNOWLEDGE ALERTS  
 **Purpose:** Acknowledge several alerts in one action.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -8085,7 +8417,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** BULK DISMISS ALERTS  
 **Purpose:** Dismiss several alerts in one action.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -8130,7 +8464,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** BULK REOPEN ALERTS  
 **Purpose:** Reopen several alerts that were closed too early.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -8174,7 +8510,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** EXPORT ALERTS CSV  
 **Purpose:** Produce the alerts view as a CSV file the user can download.  
-**Actors:** Teacher, None; this behaviour runs inside **ALERT HISTORY**
+**Actors:**
+
+- Teacher (Primary Actor)
+- None; this behaviour runs inside **ALERT HISTORY** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -8211,17 +8550,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## VIEW TEACHER RECORDS  ·  `TeacherController`
 
-**System Use Case:**
-
 ![VIEW TEACHER RECORDS](usecase-images/teacher-view-teacher-records.png)
 
-**Written Use Case:**
+*Figure 3.35: System Use Case for view teacher records*
 
 ### T-186  ·  VIEW DASHBOARD
 
 **Use Case Name:** VIEW DASHBOARD  
 **Purpose:** Show the teacher landing page with the state of the laboratory at a glance.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -8258,7 +8597,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** VIEW RECORDS  
 **Purpose:** Show captured application and website activity for the teacher’s students.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -8296,7 +8637,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CLASS ANALYTICS  
 **Purpose:** Show usage patterns for a class rather than for one student.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -8338,7 +8681,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** LAB UTILIZATION  
 **Purpose:** Show how heavily the laboratory workstations are being used over time.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -8380,7 +8725,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** UNIFIED TIMELINE  
 **Purpose:** Show one student’s activity as a single timeline across applications, websites and idle periods.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -8427,7 +8774,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** ACTIVITY TIMELINE  
 **Purpose:** Serve the timeline data the unified timeline view is drawn from.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -8471,7 +8820,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** BROWSER MONITORING HISTORY  
 **Purpose:** Show the record of browser activity captured from the workstations.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -8514,7 +8865,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** REMOTE HISTORY  
 **Purpose:** Show which remote commands were issued, by whom, and against which workstation.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -8558,7 +8911,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** STUDENT DETAILS  
 **Purpose:** Show one student in full: account, class, sessions and captured activity.  
-**Actors:** Teacher
+**Actors:**
+
+- Teacher (Primary Actor)
 
 **Input Parameters:**
 
@@ -8600,7 +8955,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** EXPORT RECORDS CSV  
 **Purpose:** Produce the records view as a CSV file the user can download.  
-**Actors:** Teacher, None; this behaviour runs inside **VIEW RECORDS**
+**Actors:**
+
+- Teacher (Primary Actor)
+- None; this behaviour runs inside **VIEW RECORDS** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -8639,7 +8997,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** EXPORT REMOTE HISTORY CSV  
 **Purpose:** Produce the remote history view as a CSV file the user can download.  
-**Actors:** Teacher, None; this behaviour runs inside **REMOTE HISTORY**
+**Actors:**
+
+- Teacher (Primary Actor)
+- None; this behaviour runs inside **REMOTE HISTORY** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -8683,7 +9044,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** EXPORT BROWSER MONITORING CSV  
 **Purpose:** Produce the browser monitoring view as a CSV file the user can download.  
-**Actors:** Teacher, None; this behaviour runs inside **BROWSER MONITORING HISTORY**
+**Actors:**
+
+- Teacher (Primary Actor)
+- None; this behaviour runs inside **BROWSER MONITORING HISTORY** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -8725,7 +9089,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** EXPORT STUDENT ANALYTICS CSV  
 **Purpose:** Produce the student analytics view as a CSV file the user can download.  
-**Actors:** Teacher, None; this behaviour runs inside **STUDENT DETAILS**
+**Actors:**
+
+- Teacher (Primary Actor)
+- None; this behaviour runs inside **STUDENT DETAILS** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -8768,17 +9135,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## PROCESS LOG IN  ·  `AccountController`
 
-**System Use Case:**
-
 ![PROCESS LOG IN](usecase-images/student-process-log-in.png)
 
-**Written Use Case:**
+*Figure 3.36: System Use Case for process log in*
 
 ### S-199  ·  LOGIN USER
 
 **Use Case Name:** LOGIN USER  
 **Purpose:** Let a person sign in to the CAMS web portal with a username and password, and place them in the part of the system their role allows.  
-**Actors:** Student
+**Actors:**
+
+- Student (Primary Actor)
 
 **Input Parameters:**
 
@@ -8825,7 +9192,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** LOGOUT USER  
 **Purpose:** End the signed-in session and clear the authentication cookie, so the next visitor to the browser starts as an anonymous user.  
-**Actors:** Student
+**Actors:**
+
+- Student (Primary Actor)
 
 **Input Parameters:**
 
@@ -8866,7 +9235,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** LOGIN ASYNC  
 **Purpose:** Check the supplied password against the stored hash, confirm the account is active and not locked out, and decide which of the three account tables the person belongs to.  
-**Actors:** Student, None; this behaviour runs inside **LOGIN USER**
+**Actors:**
+
+- Student (Primary Actor)
+- None; this behaviour runs inside **LOGIN USER** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -8907,7 +9279,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** LOGOUT ASYNC  
 **Purpose:** Close any lab session the student still has open and record the sign-out.  
-**Actors:** Student, None; this behaviour runs inside **LOGOUT USER**
+**Actors:**
+
+- Student (Primary Actor)
+- None; this behaviour runs inside **LOGOUT USER** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -8944,17 +9319,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## LOG IN AT WORKSTATION  ·  `ClientAuthController`
 
-**System Use Case:**
-
 ![LOG IN AT WORKSTATION](usecase-images/student-log-in-at-workstation.png)
 
-**Written Use Case:**
+*Figure 3.37: System Use Case for log in at workstation*
 
 ### S-203  ·  CLIENT LOGIN
 
 **Use Case Name:** CLIENT LOGIN  
 **Purpose:** Let a student sign in from the CAMS client installed on a laboratory workstation, binding the sign-in to the machine the student is sitting at.  
-**Actors:** Student
+**Actors:**
+
+- Student (Primary Actor)
 
 **Input Parameters:**
 
@@ -8998,7 +9373,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CLIENT LOGOUT  
 **Purpose:** End the workstation session from the client, releasing the workstation so another student may sign in to it.  
-**Actors:** Student
+**Actors:**
+
+- Student (Primary Actor)
 
 **Input Parameters:**
 
@@ -9037,7 +9414,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** DEPLOYMENT PING  
 **Purpose:** Answer the discovery request a client broadcasts while looking for the CAMS server on the laboratory network.  
-**Actors:** Student, None; this behaviour runs inside **CLIENT LOGIN**
+**Actors:**
+
+- Student (Primary Actor)
+- None; this behaviour runs inside **CLIENT LOGIN** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -9076,7 +9456,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** LOGIN ASYNC  
 **Purpose:** Check the supplied password against the stored hash, confirm the account is active and not locked out, and decide which of the three account tables the person belongs to.  
-**Actors:** Student, None; this behaviour runs inside **CLIENT LOGIN**
+**Actors:**
+
+- Student (Primary Actor)
+- None; this behaviour runs inside **CLIENT LOGIN** (Secondary Actor)
 
 **Input Parameters:**
 
@@ -9115,17 +9498,18 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## WORK AT MONITORED WORKSTATION  ·  `RemoteMonitoringHub`
 
-**System Use Case:**
-
 ![WORK AT MONITORED WORKSTATION](usecase-images/student-work-at-monitored-workstation.png)
 
-**Written Use Case:**
+*Figure 3.38: System Use Case for work at monitored workstation*
 
 ### S-207  ·  FETCH RESTRICTIONS
 
 **Use Case Name:** FETCH RESTRICTIONS  
 **Purpose:** Give the client the restriction rules that apply to the student signed in at that workstation.  
-**Actors:** Student, The CAMS client on the target workstation
+**Actors:**
+
+- Student (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -9166,7 +9550,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** REPORT ACTIVE APP  
 **Purpose:** Report which application is in the foreground on the workstation.  
-**Actors:** Student, The CAMS client on the target workstation
+**Actors:**
+
+- Student (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -9208,7 +9595,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** REPORT WEBSITE ACTIVITY  
 **Purpose:** Report the website the student is viewing in the browser.  
-**Actors:** Student, The CAMS client on the target workstation
+**Actors:**
+
+- Student (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -9250,7 +9640,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** REPORT IDLE STATUS  
 **Purpose:** Report whether the workstation has gone idle.  
-**Actors:** Student, The CAMS client on the target workstation
+**Actors:**
+
+- Student (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -9292,7 +9685,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** REPORT BROWSER MONITORING STATUS  
 **Purpose:** Report whether browser monitoring is working on the workstation.  
-**Actors:** Student, The CAMS client on the target workstation
+**Actors:**
+
+- Student (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -9334,7 +9730,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** REPORT TELEMETRY BATCH  
 **Purpose:** Send a batch of buffered telemetry, so a brief disconnection does not lose the record.  
-**Actors:** Student, The CAMS client on the target workstation
+**Actors:**
+
+- Student (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -9376,7 +9775,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** REPORT INFRACTION  
 **Purpose:** Report that the student tried to open something a restriction rule blocks.  
-**Actors:** Student, The CAMS client on the target workstation
+**Actors:**
+
+- Student (Primary Actor)
+- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
@@ -9416,17 +9818,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## VIEW STUDENT SESSION  ·  `StudentController`
 
-**System Use Case:**
-
 ![VIEW STUDENT SESSION](usecase-images/student-view-student-session.png)
 
-**Written Use Case:**
+*Figure 3.39: System Use Case for view student session*
 
 ### S-214  ·  VIEW STUDENT HOME
 
 **Use Case Name:** VIEW STUDENT HOME  
 **Purpose:** Show the student portal home with the current session state and timer.  
-**Actors:** Student
+**Actors:**
+
+- Student (Primary Actor)
 
 **Input Parameters:**
 
@@ -9461,17 +9863,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE STUDENT ALERT  ·  `StudentController`
 
-**System Use Case:**
-
 ![MANAGE STUDENT ALERT](usecase-images/student-manage-student-alert.png)
 
-**Written Use Case:**
+*Figure 3.40: System Use Case for manage student alert*
 
 ### S-215  ·  VIEW ALERTS
 
 **Use Case Name:** VIEW ALERTS  
 **Purpose:** List the monitoring alerts raised for the classes the teacher is responsible for.  
-**Actors:** Student
+**Actors:**
+
+- Student (Primary Actor)
 
 **Input Parameters:**
 
@@ -9508,7 +9910,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** MARK READ  
 **Purpose:** Let a student mark one of their own alerts as read.  
-**Actors:** Student
+**Actors:**
+
+- Student (Primary Actor)
 
 **Input Parameters:**
 
@@ -9551,17 +9955,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ## MANAGE STUDENT ACCOUNT  ·  `StudentController`
 
-**System Use Case:**
-
 ![MANAGE STUDENT ACCOUNT](usecase-images/student-manage-student-account.png)
 
-**Written Use Case:**
+*Figure 3.41: System Use Case for manage student account*
 
 ### S-217  ·  VIEW SETTINGS
 
 **Use Case Name:** VIEW SETTINGS  
 **Purpose:** Show the settings page for the signed-in user.  
-**Actors:** Student
+**Actors:**
+
+- Student (Primary Actor)
 
 **Input Parameters:**
 
@@ -9598,7 +10002,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** RESET PASSWORD  
 **Purpose:** Let a student replace their own password from the student portal.  
-**Actors:** Student
+**Actors:**
+
+- Student (Primary Actor)
 
 **Input Parameters:**
 
@@ -9642,7 +10048,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Use Case Name:** CHANGE STUDENT PASSWORD ASYNC  
 **Purpose:** Verify the current password and replace the stored hash for a student account.  
-**Actors:** Student, None; this behaviour runs inside **RESET PASSWORD**
+**Actors:**
+
+- Student (Primary Actor)
+- None; this behaviour runs inside **RESET PASSWORD** (Secondary Actor)
 
 **Input Parameters:**
 
