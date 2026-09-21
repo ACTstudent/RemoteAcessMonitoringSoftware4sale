@@ -425,6 +425,24 @@ window.CamsToast = (function () {
         var compactNavigation = document.body.classList.contains('crud-page');
         var storageKey = compactNavigation ? 'cams.crud.navigation.compact' : STORAGE_KEY;
         var menu = sidebar.querySelector('.sidebar-nav');
+        sidebar.querySelectorAll('[data-nav-group]').forEach(function (group) {
+            var groupKey = 'cams.navigation.group:' + sidebar.getAttribute('aria-label') + ':' + group.dataset.navGroup;
+            try {
+                if (group.dataset.currentGroup !== 'true') {
+                    group.open = window.sessionStorage.getItem(groupKey) === 'true';
+                }
+            } catch (error) { /* Native disclosure still works without storage. */ }
+            group.addEventListener('toggle', function () {
+                try { window.sessionStorage.setItem(groupKey, String(group.open)); } catch (error) { }
+            });
+            group.querySelector('summary').addEventListener('click', function (event) {
+                if (isDesktop() && document.body.classList.contains('sidebar-collapsed')) {
+                    event.preventDefault();
+                    setCollapsed(false);
+                    group.open = true;
+                }
+            });
+        });
         // Keep each role's menu position across full-page navigation, per tab.
         var scrollStorageKey = 'cams.sidebar.scroll:' + (sidebar.getAttribute('aria-label') || 'default');
         var savedScrollTop = 0;

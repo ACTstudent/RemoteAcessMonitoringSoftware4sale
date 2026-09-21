@@ -7,6 +7,8 @@ const hub = window.teacherHubConnection;
 
 const activeUnits = new Map();
 let selectedConnectionId = null;
+let stationFilter = "all";
+let restrictionAlertCount = 0;
 let remoteSupportActive = false;
 let lastMouseEventAt = 0;
 let broadcastStream = null;
@@ -20,7 +22,42 @@ function valueOf(object, camelName, pascalName) {
 }
 
 function updateCount() {
-    document.getElementById("lblConnectedCount").textContent = `${activeUnits.size} Units Active`;
+    document.getElementById("lblConnectedCount").textContent = activeUnits.size;
+    document.getElementById("lblActiveCount").textContent = [...activeUnits.values()].filter(unit => unit.activityKnown && !unit.isIdle).length;
+    document.getElementById("lblIdleCount").textContent = [...activeUnits.values()].filter(unit => unit.isIdle).length;
+    document.getElementById("lblAlertCount").textContent = restrictionAlertCount;
+    applyStationFilters();
+}
+
+function applyStationFilters() {
+    const query = document.getElementById("gridSearch").value.trim().toLowerCase();
+    let visible = 0;
+    activeUnits.forEach((unit, connectionId) => {
+        const column = document.getElementById(`unit-card-${connectionId}`);
+        if (!column) return;
+        const matchesState = stationFilter === "all"
+            || (stationFilter === "active" && unit.activityKnown && !unit.isIdle)
+            || (stationFilter === "idle" && unit.isIdle)
+            || (stationFilter === "attention" && unit.hasAlert);
+        const matchesSearch = `${unit.pcName} ${unit.studentId} ${unit.applicationName}`.toLowerCase().includes(query);
+        column.style.display = matchesState && matchesSearch ? "" : "none";
+        if (matchesState && matchesSearch) visible++;
+    });
+    document.getElementById("lblVisibleCount").textContent = `${visible} of ${activeUnits.size} stations shown`;
+    document.getElementById("stationFilterEmpty").hidden = visible > 0 || activeUnits.size === 0;
+}
+
+function appendMonitoringAlert(message, station) {
+    document.getElementById("monitoringAlertsEmpty")?.remove();
+    const feed = document.getElementById("monitoringAlertFeed");
+    const item = document.createElement("li");
+    const title = document.createElement("div");
+    title.textContent = message;
+    const context = document.createElement("small");
+    context.textContent = `${station || "Workstation"} · ${new Date().toLocaleTimeString()}`;
+    item.append(title, context);
+    feed.prepend(item);
+    while (feed.children.length > 20) feed.lastElementChild.remove();
 }
 
 function showError(message) {
@@ -33,10 +70,10 @@ function createWorkstationCard(connectionId, studentId, pcName) {
     if (!connectionId || document.getElementById(`unit-card-${connectionId}`)) return;
 
     document.getElementById("emptyState")?.remove();
-    activeUnits.set(connectionId, { studentId, pcName, lastFrame: null, lastFrameAt: 0, applicationName: "Unknown", isIdle: false, browsers: {} });
+    activeUnits.set(connectionId, { studentId, pcName, lastFrame: null, lastFrameAt: 0, applicationName: "Unknown", activityKnown: false, isIdle: false, hasAlert: false, browsers: {} });
 
     const column = document.createElement("div");
-    column.className = "col-lg-3 col-md-4 col-sm-6 unit-col";
+    column.className = "col-xl-4 col-sm-6 unit-col";
     column.id = `unit-card-${connectionId}`;
 
     const card = document.createElement("div");
@@ -56,8 +93,10 @@ function createWorkstationCard(connectionId, studentId, pcName) {
     const name = document.createElement("span");
     name.className = "fw-bold text-dark font-monospace small text-truncate";
     name.textContent = pcName || "Unknown workstation";
+    card.setAttribute("aria-label", `View ${pcName || "workstation"}, student ${studentId || "unknown"}`);
     const online = document.createElement("span");
     online.className = "badge badge-active ms-2";
+    online.id = `status-${connectionId}`;
     online.textContent = "Online";
     header.append(name, online);
 
@@ -86,7 +125,10 @@ function createWorkstationCard(connectionId, studentId, pcName) {
     const viewButton = document.createElement("span");
     viewButton.className = "btn btn-sm btn-outline-primary rounded-pill px-3";
     viewButton.innerHTML = '<i class="bi bi-arrows-fullscreen me-1"></i> View';
-    footer.append(activity, timestamp, browser, viewButton);
+    const student = document.createElement("span");
+    student.className = "small fw-semibold w-100";
+    student.textContent = studentId ? `Student #${studentId}` : "Connected student";
+    footer.append(student, activity, timestamp, browser, viewButton);
 
     card.append(header, stream, footer);
     column.appendChild(card);
@@ -96,6 +138,8 @@ function createWorkstationCard(connectionId, studentId, pcName) {
 
 function removeWorkstationCard(connectionId) {
     document.getElementById(`unit-card-${connectionId}`)?.remove();
+    const disconnected = activeUnits.get(connectionId);
+    if (disconnected) appendMonitoringAlert("Station disconnected", disconnected.pcName);
     activeUnits.delete(connectionId);
     if (selectedConnectionId === connectionId) {
         selectedConnectionId = null;
@@ -451,10 +495,19 @@ async function bulkCommand(method, label) {
 function updateActivity(connectionId, applicationName, isIdle) {
     const unit = activeUnits.get(connectionId);
     if (!unit) return;
+    unit.activityKnown = true;
     if (applicationName) unit.applicationName = applicationName;
     if (typeof isIdle === "boolean") unit.isIdle = isIdle;
     const activity = document.getElementById(`activity-${connectionId}`);
     if (activity) activity.textContent = unit.isIdle ? "Idle" : unit.applicationName || "Active";
+    const card = document.getElementById(`unit-card-${connectionId}`)?.querySelector(".workstation-card");
+    card?.classList.toggle("station-idle", unit.isIdle);
+    const status = document.getElementById(`status-${connectionId}`);
+    if (status) {
+        status.textContent = unit.isIdle ? "Idle" : "Active";
+        status.className = `badge ms-2 ${unit.isIdle ? "bg-warning text-dark" : "badge-active"}`;
+    }
+    updateCount();
 }
 
 // Plain labels for the collector modes, rendered by the server from
@@ -567,9 +620,14 @@ hub.on("WebsiteActivityReceived", website => updateActivity(valueOf(website, "co
 hub.on("BrowserMonitoringStatusReceived", updateBrowserStatus);
 hub.on("IdleStatusReceived", idle => updateActivity(valueOf(idle, "connectionId", "ConnectionId"), null, Boolean(valueOf(idle, "isIdle", "IsIdle"))));
 hub.on("InfractionDetected", infraction => {
-    showError(`Restriction alert: ${valueOf(infraction, "target", "Target") || "restricted activity detected"}`);
+    restrictionAlertCount++;
     const connectionId = valueOf(infraction, "connectionId", "ConnectionId");
+    const unit = activeUnits.get(connectionId);
+    if (unit) unit.hasAlert = true;
+    appendMonitoringAlert(`Restriction alert: ${valueOf(infraction, "target", "Target") || "restricted activity detected"}`, unit?.pcName);
+    updateCount();
     const card = document.getElementById(`unit-card-${connectionId}`)?.querySelector(".workstation-card");
+    card?.classList.add("station-alert");
     card?.classList.add("border", "border-danger", "border-3");
     if (card) setTimeout(() => card.classList.remove("border", "border-danger", "border-3"), 8000);
 });
@@ -612,9 +670,17 @@ hub.onclose(() => {
     showError("The monitoring connection closed. Refresh the page to reconnect.");
 });
 
-document.getElementById("gridSearch")?.addEventListener("input", function () {
-    const query = this.value.toLowerCase();
-    document.querySelectorAll(".unit-col").forEach(column => column.style.display = column.textContent.toLowerCase().includes(query) ? "" : "none");
+document.getElementById("gridSearch")?.addEventListener("input", applyStationFilters);
+document.querySelectorAll("[data-station-filter]").forEach(button => {
+    button.addEventListener("click", () => {
+        stationFilter = button.dataset.stationFilter;
+        document.querySelectorAll("[data-station-filter]").forEach(item => {
+            const selected = item === button;
+            item.classList.toggle("active", selected);
+            item.setAttribute("aria-pressed", String(selected));
+        });
+        applyStationFilters();
+    });
 });
 document.getElementById("liveViewModal")?.addEventListener("hide.bs.modal", stopRemoteSupport);
 

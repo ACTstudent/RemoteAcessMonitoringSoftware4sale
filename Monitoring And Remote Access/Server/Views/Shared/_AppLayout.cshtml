@@ -27,6 +27,7 @@
     {
         <link href="~/css/crud.css" rel="stylesheet" asp-append-version="true" />
     }
+    <link href="~/css/warm-theme.css" rel="stylesheet" asp-append-version="true" />
     <link href="~/css/motion.css" rel="stylesheet" asp-append-version="true" />
 </head>
 <body class="app-shell @(isCrudPage ? "crud-page" : "")">
@@ -42,24 +43,29 @@
             <nav class="sidebar-nav">
                 @foreach (var group in nav.Sections)
                 {
-                    if (!string.IsNullOrEmpty(group.Label))
+                    var groupActive = group.Items.Any(item => nav.IsActive(item, currentController, currentAction));
+                    if (!string.IsNullOrEmpty(group.Label) && group.Items.Count > 1)
                     {
-                        <div class="sidebar-label">@group.Label</div>
+                        <details class="sidebar-group" data-nav-group="@group.Label" data-current-group="@(groupActive ? "true" : "false")" open="@groupActive">
+                            <summary class="sidebar-group-toggle" title="@group.Label">
+                                <i class="bi bi-@group.Items[0].Icon" aria-hidden="true"></i>
+                                <span class="nav-group-label">@group.Label</span>
+                                <i class="bi bi-chevron-down nav-group-chevron" aria-hidden="true"></i>
+                            </summary>
+                            <div class="sidebar-group-links">
+                                @foreach (var item in group.Items)
+                                {
+                                    <partial name="_NavigationLink" model="item" />
+                                }
+                            </div>
+                        </details>
                     }
-                    foreach (var item in group.Items)
+                    else
                     {
-                        var isActive = nav.IsActive(item, currentController, currentAction);
-                        <a href="@Url.Action(item.Action, item.Controller)"
-                           title="@item.Text" aria-label="@item.Text"
-                           class="nav-item-custom @(isActive ? "active" : "")"
-                           @(isActive ? Html.Raw("aria-current=\"page\"") : null)>
-                            <i class="bi bi-@item.Icon" aria-hidden="true"></i>
-                            <span class="nav-item-label">@item.Text</span>
-                            @if (item.BadgeViewComponent is not null)
-                            {
-                                @await Component.InvokeAsync(item.BadgeViewComponent)
-                            }
-                        </a>
+                        foreach (var item in group.Items)
+                        {
+                            <partial name="_NavigationLink" model="item" />
+                        }
                     }
                 }
             </nav>

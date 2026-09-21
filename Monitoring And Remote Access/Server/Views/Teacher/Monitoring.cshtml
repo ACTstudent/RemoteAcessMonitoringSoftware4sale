@@ -4,67 +4,57 @@
     Layout = "_TeacherLayout";
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-    <div class="d-flex align-items-center gap-3">
-        <div class="icon-box-primary"><i class="bi bi-camera-video-fill fs-3"></i></div>
+<section class="monitoring-dashboard">
+    <div class="monitoring-heading">
         <div>
-            <h2 class="page-title">Live Workstation Monitoring</h2>
-            <p class="text-muted mb-0 small">Global live feeds and remote operations for every authenticated student workstation</p>
+            <p class="monitoring-eyebrow">Computer account management system</p>
+            <h2 class="page-title">Laboratory Control Panel</h2>
+            <p class="text-muted small mb-0">Pardo Elementary School · Live workstation monitoring</p>
+        </div>
+        <div class="monitoring-session">
+            <div><span class="monitoring-eyebrow">Session elapsed</span><strong id="lblSessionTimer" class="session-timer">00:00</strong></div>
+            <div><span id="lblSessionState" class="small">Waiting for the server</span><a asp-action="Sessions" class="btn btn-outline-primary btn-sm d-block mt-2">Session controls <i class="bi bi-arrow-right"></i></a></div>
         </div>
     </div>
-    <div class="d-flex gap-2">
-        <button class="btn btn-outline-primary rounded-pill px-3" onclick="openWarning(true)"><i class="bi bi-megaphone-fill me-1"></i> Warn all</button>
-        <button id="broadcastButton" class="btn btn-outline-warning rounded-pill px-3" onclick="toggleBroadcast()"><i class="bi bi-broadcast me-1"></i> Broadcast screen</button>
-        <button class="btn btn-outline-emerald rounded-pill px-3" onclick="bulkCommand('BulkLockStudents', 'lock')"><i class="bi bi-lock-fill me-1"></i> Lock visible</button>
-        <button class="btn btn-outline-danger rounded-pill px-3" onclick="bulkCommand('BulkForceLogoutStudents', 'log out')"><i class="bi bi-power me-1"></i> Log out visible</button>
+    <div id="hubError" class="alert alert-danger d-none" role="alert"></div>
+    <div class="monitoring-metrics">
+        <div class="metric-card"><div class="metric-title">Units online <i class="bi bi-wifi"></i></div><div id="lblConnectedCount" class="metric-value">0</div><p>Connected student PCs</p></div>
+        <div class="metric-card"><div class="metric-title">Active students <i class="bi bi-activity"></i></div><div id="lblActiveCount" class="metric-value">0</div><p>Reporting activity</p></div>
+        <div class="metric-card"><div class="metric-title">Idle units <i class="bi bi-clock"></i></div><div id="lblIdleCount" class="metric-value">0</div><p>Reported idle by the client</p></div>
+        <div class="metric-card"><div class="metric-title">Restriction alerts <i class="bi bi-shield-exclamation"></i></div><div id="lblAlertCount" class="metric-value">0</div><p>Received while this page is open</p></div>
     </div>
-</div>
-
-<div id="hubError" class="alert alert-danger d-none rounded-3" role="alert"></div>
-
-@* FLOW-04. What was sent, to which workstation, and what came back. A command
-   whose result does not name its target can be read against the wrong machine,
-   and one that never answered is not the same as one that was refused. *@
-<ul id="commandFeed" class="command-feed list-unstyled" aria-live="polite" aria-label="Recent workstation commands"></ul>
-
-<div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
-    <div class="row g-3 align-items-center">
-        <div class="col-md-3 col-sm-6">
-            <div class="d-flex align-items-center gap-2">
-                <span class="badge bg-success rounded-circle p-2"></span>
-                @* FLOW-03: this shows the session's own state and nothing else.
-                   The transport is reported by the header indicator, and remote
-                   control by lblRemoteControlState below. All three used to
-                   share this label. *@
-                <span class="fw-bold text-dark small">Session: <span id="lblSessionState" class="text-success">Waiting for the server</span></span>
-                <span class="small ms-2" id="lblRemoteControlState">Not in control</span>
+    <div class="monitoring-layout">
+        <section class="monitoring-stations" aria-labelledby="stationsTitle">
+            <div class="monitoring-panel-heading">
+                <div><h5 id="stationsTitle">Live station monitor</h5><p class="text-muted small mb-0">Select a station to view its screen and controls.</p></div>
+                <div class="station-filters" role="group" aria-label="Station status">
+                    <button type="button" class="btn active" data-station-filter="all" aria-pressed="true">All</button>
+                    <button type="button" class="btn" data-station-filter="active" aria-pressed="false">Active</button>
+                    <button type="button" class="btn" data-station-filter="idle" aria-pressed="false">Idle</button>
+                    <button type="button" class="btn" data-station-filter="attention" aria-pressed="false">Alerts</button>
+                </div>
             </div>
-        </div>
-        <div class="col-md-3 col-sm-6">
-            <div class="d-flex align-items-center gap-2">
-                <i class="bi bi-clock-history text-muted"></i>
-                <span class="fw-bold text-dark small">Session Timer: <span id="lblSessionTimer" class="session-timer fs-5">00:00</span></span>
+            <div class="monitoring-tools">
+                <input type="search" id="gridSearch" aria-label="Filter workstations" class="form-control" placeholder="Search station or student…" />
+                <button class="btn btn-outline-primary" onclick="openWarning(true)"><i class="bi bi-megaphone me-1"></i>Warn all</button>
+                <button id="broadcastButton" class="btn btn-outline-warning" onclick="toggleBroadcast()"><i class="bi bi-broadcast me-1"></i>Broadcast screen</button>
+                <button class="btn btn-outline-emerald" onclick="bulkCommand('BulkLockStudents', 'lock')">Lock visible</button>
+                <button class="btn btn-outline-danger" onclick="bulkCommand('BulkForceLogoutStudents', 'log out')">Log out visible</button>
             </div>
-        </div>
-        <div class="col-md-4 col-sm-8">
-            <div class="search-input-wrapper">
-                <input type="text" id="gridSearch" aria-label="Filter workstations" class="form-control filter-control search-input py-1.5" placeholder="Filter workstations..." />
-                <i class="bi bi-search search-icon text-muted"></i>
+            <div class="row g-3" id="workstationsGrid">
+                <div class="col-12 text-center py-5 text-muted" id="emptyState"><i class="bi bi-display display-5 d-block mb-3"></i><h5>Waiting for student PCs</h5><p class="small">Stations appear here when students connect to CAMS.</p></div>
             </div>
-        </div>
-        <div class="col-md-2 col-sm-4 text-end">
-            <span class="badge bg-light text-dark font-monospace border py-2 px-3 rounded-pill" id="lblConnectedCount">0 Units Active</span>
-        </div>
+            <p id="stationFilterEmpty" class="text-center text-muted py-4" hidden>No stations match these filters.</p>
+            <div class="monitoring-panel-footer"><span id="lblVisibleCount">0 stations shown</span><span id="lblRemoteControlState">Not in control</span></div>
+        </section>
+        <aside class="monitoring-alerts" aria-labelledby="monitoringAlertsTitle">
+            <div class="monitoring-panel-heading"><h5 id="monitoringAlertsTitle"><i class="bi bi-exclamation-triangle me-2"></i>Alerts</h5><a asp-action="Alerts" class="small">View history</a></div>
+            <ul id="monitoringAlertFeed" class="list-unstyled" aria-live="polite"><li id="monitoringAlertsEmpty" class="text-muted small">No new alerts. Events received here will appear as they happen.</li></ul>
+            <div class="monitoring-panel-heading"><h5>Recent commands</h5></div>
+            <ul id="commandFeed" class="command-feed list-unstyled" aria-live="polite" aria-label="Recent workstation commands"></ul>
+        </aside>
     </div>
-</div>
-
-<div class="row g-4" id="workstationsGrid">
-    <div class="col-12 text-center py-5 text-muted" id="emptyState">
-        <i class="bi bi-display-slash display-3 d-block opacity-50 mb-3 text-emerald-800"></i>
-        <h5 class="fw-bold">Awaiting Workstation Connections...</h5>
-        <p class="small">Authenticated student clients will appear here when they connect.</p>
-    </div>
-</div>
+</section>
 
 <div class="modal fade" id="liveViewModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">

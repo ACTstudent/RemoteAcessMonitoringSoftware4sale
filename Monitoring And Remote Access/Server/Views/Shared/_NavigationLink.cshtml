@@ -1,0 +1,17 @@
+@model Server.Models.NavItem
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    var active = string.Equals(Model.Controller, controller, StringComparison.OrdinalIgnoreCase)
+        && (string.Equals(Model.Action, action, StringComparison.OrdinalIgnoreCase)
+            || (Model.AlsoActiveOn?.Contains(action, StringComparer.OrdinalIgnoreCase) ?? false));
+}
+<a href="@Url.Action(Model.Action, Model.Controller)" title="@Model.Text" aria-label="@Model.Text"
+   class="nav-item-custom @(active ? "active" : "")" aria-current="@(active ? "page" : null)">
+    <i class="bi bi-@Model.Icon" aria-hidden="true"></i>
+    <span class="nav-item-label">@Model.Text</span>
+    @if (Model.BadgeViewComponent is not null)
+    {
+        @await Component.InvokeAsync(Model.BadgeViewComponent)
+    }
+</a>

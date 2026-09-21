@@ -1,0 +1,8 @@
+@model Server.Models.ClassFieldOptions
+<select id="@Model.Id" name="@Model.Name" class="form-select filter-control">
+    <option value="">@(Model.Name == "Schedule" ? "Flexible / not scheduled" : "Select an option")</option>
+    @foreach (var choice in Model.Choices())
+    {
+        <option value="@choice" selected="@(string.Equals(choice, Model.Value, StringComparison.OrdinalIgnoreCase))">@choice</option>
+    }
+</select>
