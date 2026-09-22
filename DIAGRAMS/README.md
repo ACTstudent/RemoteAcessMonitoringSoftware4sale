@@ -45,6 +45,7 @@ It deliberately names two or three attributes per entity. The full attribute lis
 | [`SignalR-Message-Flow.md`](SignalR-Message-Flow.md) | How the server and the workstation clients talk to each other |
 | [`Flowchart.md`](Flowchart.md) | The system flow end to end |
 | [`Menu-Structure-Diagram.md`](Menu-Structure-Diagram.md) | The navigation tree behind each role |
+| [`CAMS-Appendices.md`](CAMS-Appendices.md) | Appendices | Flow of the system, the application prototype with 17 screens, and sample program code |
 
 Each specification follows the ten fields the course handout sets out: **use case name, purpose, actors, input parameters, output parameters, pre-condition, post-condition, successful scenario, exception scenario, additional remarks.** All three files carry the same 201 written use cases, laid out the way the course handout lays out its worked example: no tables, a bold field label ending in a colon, the value on the same line where it is short and an indented list where it is not, in Times New Roman twelve point, double spaced and justified on US Letter, which is how a thesis chapter is set. Each module is drawn first, with an italic numbered caption beneath the drawing - *Figure 3.1: System Use Case for Process Log In* - and the use cases inside that module follow. Actors are listed and marked primary or secondary.
 
