@@ -156,6 +156,66 @@ The sidebar groups every destination under five headings — Dashboard, People, 
 
 **Figure C.17: System and exception logs.** Server diagnostic trace, runtime exceptions and warnings.
 
+### Teacher portal
+
+The teacher works along a narrower path than the administrator, scoped to the classes they advise. These screens were photographed while signed in as a teacher account, so what is shown is what a teacher actually sees.
+
+![Teacher classroom dashboard](prototype-images/teacher-dashboard.png)
+
+**Figure C.18: Teacher classroom dashboard.** Scoped to the classes the teacher advises. The counters are live: running sessions, connected students, and the hub connection state.
+
+![Laboratory sessions](prototype-images/teacher-sessions.png)
+
+**Figure C.19: Laboratory sessions.** Opening a session against a session rule fixes its duration and whether it may be paused or remotely controlled.
+
+![Live monitoring wall](prototype-images/teacher-monitoring.png)
+
+**Figure C.20: Live monitoring wall.** One card per connected workstation, carrying the current screen, the signed-in pupil, the active application and the remaining time.
+
+![Remote command history](prototype-images/teacher-remotehistory.png)
+
+**Figure C.21: Remote command history.** Every lock, sign-out, shutdown, restart and remote-control session, with who issued it and when.
+
+![Workstations](prototype-images/teacher-computers.png)
+
+**Figure C.22: Workstations.** The teacher view of the laboratory machines and their power and lock state.
+
+![Class list](prototype-images/teacher-classes.png)
+
+**Figure C.23: Class list.** The classes this teacher advises.
+
+![Student profiles](prototype-images/teacher-students.png)
+
+**Figure C.24: Student profiles.** The pupils enrolled in those classes.
+
+![Class restrictions](prototype-images/teacher-restrictions.png)
+
+**Figure C.25: Class restrictions.** The application and website rules enforced on the workstations during a session.
+
+![Classroom records](prototype-images/teacher-records.png)
+
+**Figure C.26: Classroom records.** Attendance, session duration and usage, read back from the same history the monitoring wall writes.
+
+![Laboratory utilisation](prototype-images/teacher-lab.png)
+
+**Figure C.27: Laboratory utilisation.** How heavily the laboratory is used, by period.
+
+![Activity timeline](prototype-images/teacher-timeline.png)
+
+**Figure C.28: Activity timeline.** Sessions, commands and infractions on one chronological axis.
+
+![Browser monitoring history](prototype-images/teacher-browser.png)
+
+**Figure C.29: Browser monitoring history.** The websites reached on each workstation, and which were blocked.
+
+![Monitoring alerts](prototype-images/teacher-alerts.png)
+
+**Figure C.30: Monitoring alerts.** Infractions raised by the client, acknowledged, dismissed or reopened.
+
+![Account settings](prototype-images/teacher-settings.png)
+
+**Figure C.31: Account settings.** The teacher’s own account and password.
+
 ---
 
 ## Appendix D. Sample Program Code
@@ -330,6 +390,7 @@ private static IEnumerable<NavSection> GlobalSections() => new[]
 | [`Use-Case-Diagram.md`](Use-Case-Diagram.md) | The use case model and its coverage check |
 | [`CAMS-Use-Case-Specifications.pdf`](CAMS-Use-Case-Specifications.pdf) | 201 written use cases, ten fields each |
 | [`ERD.md`](ERD.md) | Entity relationship model and database schema |
+| [`CAMS-User-Interface.pdf`](CAMS-User-Interface.pdf) | The same 31 screens as a printable PDF |
 | [`Flowchart.md`](Flowchart.md) | Deployment and login flow in more detail |
 | [`SignalR-Message-Flow.md`](SignalR-Message-Flow.md) | Every hub message and its direction |
 | [`Menu-Structure-Diagram.md`](Menu-Structure-Diagram.md) | Navigation structure per role |
