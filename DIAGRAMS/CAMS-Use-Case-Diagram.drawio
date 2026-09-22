@@ -71,7 +71,7 @@
         <mxCell id="uc64" value="UPDATE COMPUTER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="1434" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc65" value="ARCHIVE COMPUTER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="1564" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc66" value="DELETE COMPUTER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="1694" width="175" height="84" as="geometry"/></mxCell>
-        <mxCell id="uc67" value="ASSIGN COMPUTER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="1824" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc67" value="MAP STUDENT WORKSTATION" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="1824" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc68" value="VIEW COMPUTER HISTORY" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="1954" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc69" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="uc61" target="uc62"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="uc70" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="uc61" target="uc63"><mxGeometry relative="1" as="geometry"/></mxCell>
@@ -159,7 +159,7 @@
         <mxCell id="uc152" value="VIEW SESSION RULES" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="601" y="2258" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc153" value="CREATE SESSION RULE" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="601" y="2388" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc154" value="UPDATE SESSION RULE" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="601" y="2518" width="175" height="84" as="geometry"/></mxCell>
-        <mxCell id="uc155" value="DELETE SESSION RULE" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="601" y="2648" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc155" value="DEACTIVATE SESSION RULE" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="601" y="2648" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc156" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="uc151" target="uc152"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="uc157" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="uc151" target="uc153"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="uc158" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="uc151" target="uc154"><mxGeometry relative="1" as="geometry"/></mxCell>
@@ -280,7 +280,7 @@
         <mxCell id="uc273" value="UPDATE COMPUTER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2094" y="4296" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc274" value="ARCHIVE COMPUTER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2094" y="4426" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc275" value="DELETE COMPUTER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2094" y="4556" width="175" height="84" as="geometry"/></mxCell>
-        <mxCell id="uc276" value="ASSIGN COMPUTER" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2094" y="4686" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc276" value="MAP STUDENT WORKSTATION" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2094" y="4686" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc277" value="VIEW COMPUTER HISTORY" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="2094" y="4816" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc278" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="uc270" target="uc271"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="uc279" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="uc270" target="uc272"><mxGeometry relative="1" as="geometry"/></mxCell>
@@ -366,7 +366,7 @@
         <mxCell id="uc359" value="VIEW SESSION RULES" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="6204" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc360" value="CREATE SESSION RULE" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="6334" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc361" value="UPDATE SESSION RULE" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="6464" width="175" height="84" as="geometry"/></mxCell>
-        <mxCell id="uc362" value="DELETE SESSION RULE" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="6594" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc362" value="DEACTIVATE SESSION RULE" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="180" y="6594" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc363" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="uc358" target="uc359"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="uc364" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="uc358" target="uc360"><mxGeometry relative="1" as="geometry"/></mxCell>
         <mxCell id="uc365" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="uc358" target="uc361"><mxGeometry relative="1" as="geometry"/></mxCell>
@@ -374,7 +374,7 @@
         <mxCell id="uc367" value="" style="html=1;whiteSpace=wrap;" vertex="1" parent="1"><mxGeometry x="541" y="6134" width="295" height="604" as="geometry"/></mxCell>
         <mxCell id="uc368" value="CONTROL LABORATORY SESSION  ·  TeacherController" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="561" y="6152" width="255" height="30" as="geometry"/></mxCell>
         <mxCell id="uc369" value="TEACHER" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="495" y="6406" width="30" height="60" as="geometry"/></mxCell>
-        <mxCell id="uc370" value="START LAB SESSIONS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="601" y="6204" width="175" height="84" as="geometry"/></mxCell>
+        <mxCell id="uc370" value="RESUME LAB SESSIONS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="601" y="6204" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc371" value="PAUSE LAB SESSIONS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="601" y="6334" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc372" value="END LAB SESSIONS" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="601" y="6464" width="175" height="84" as="geometry"/></mxCell>
         <mxCell id="uc373" value="VIEW SESSION STATE" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="601" y="6594" width="175" height="84" as="geometry"/></mxCell>

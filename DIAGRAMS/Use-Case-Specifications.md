@@ -1261,10 +1261,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `PermanentlyDeleteComputer`.
 - Appears in the *MANAGE COMPUTER PROFILE* module of the use case diagram.
 
-### A-027  ·  ASSIGN COMPUTER
+### A-027  ·  MAP STUDENT WORKSTATION
 
-**Use Case Name:** ASSIGN COMPUTER  
-**Purpose:** Bind a workstation to a student so the workstation is recognised when that student signs in at it.  
+**Use Case Name:** MAP STUDENT WORKSTATION  
+**Purpose:** Map a workstation to a student so the workstation is recognised when that student signs in at it. An archived station cannot be mapped.  
 **Actors:**
 
 - Admin (Primary Actor)
@@ -2844,10 +2844,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UpdateSessionRule` (POST).
 - Appears in the *MANAGE SESSION RULE* module of the use case diagram.
 
-### A-061  ·  DELETE SESSION RULE
+### A-061  ·  DEACTIVATE SESSION RULE
 
-**Use Case Name:** DELETE SESSION RULE  
-**Purpose:** Remove a session rule from the system.  
+**Use Case Name:** DEACTIVATE SESSION RULE  
+**Purpose:** Take a session rule out of use while keeping it on file. The rule is marked inactive and loses any default flag, and sessions already recorded against it still resolve to a named rule; where the rule allowed remote control, open remote sessions under it are closed.  
 **Actors:**
 
 - Admin (Primary Actor)
@@ -4942,10 +4942,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `PermanentlyDeleteComputer`.
 - Appears in the *MANAGE COMPUTER PROFILE* module of the use case diagram.
 
-### T-107  ·  ASSIGN COMPUTER
+### T-107  ·  MAP STUDENT WORKSTATION
 
-**Use Case Name:** ASSIGN COMPUTER  
-**Purpose:** Bind a workstation to a student so the workstation is recognised when that student signs in at it.  
+**Use Case Name:** MAP STUDENT WORKSTATION  
+**Purpose:** Map a workstation to a student so the workstation is recognised when that student signs in at it. An archived station cannot be mapped.  
 **Actors:**
 
 - Teacher (Primary Actor)
@@ -6476,10 +6476,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UpdateSessionRule` (POST).
 - Appears in the *MANAGE SESSION RULE* module of the use case diagram.
 
-### T-140  ·  DELETE SESSION RULE
+### T-140  ·  DEACTIVATE SESSION RULE
 
-**Use Case Name:** DELETE SESSION RULE  
-**Purpose:** Remove a session rule from the system.  
+**Use Case Name:** DEACTIVATE SESSION RULE  
+**Purpose:** Take a session rule out of use while keeping it on file. The rule is marked inactive and loses any default flag, and sessions already recorded against it still resolve to a named rule; where the rule allowed remote control, open remote sessions under it are closed.  
 **Actors:**
 
 - Teacher (Primary Actor)
@@ -6530,9 +6530,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.29: System Use Case for control laboratory session*
 
-### T-141  ·  START LAB SESSIONS
+### T-141  ·  RESUME LAB SESSIONS
 
-**Use Case Name:** START LAB SESSIONS  
+**Use Case Name:** RESUME LAB SESSIONS  
 **Purpose:** Start a laboratory-wide session so every connected workstation begins at the same moment.  
 **Actors:**
 
