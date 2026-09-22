@@ -2,12 +2,12 @@
 
 A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio), set out in the ten fields the course handout uses: use case name, purpose, actors, input parameters, output parameters, pre-condition, post-condition, successful scenario, exception scenario and additional remarks.
 
-**202 use cases** across 28 modules. Each name is strict verb-noun and still maps to the function that implements it; where the identifier and the behaviour disagree the behaviour decides the name, so `DeleteComputer`, which archives, reads ARCHIVE COMPUTER. The inputs, HTTP verb and authorisation rule in each specification are read out of that function rather than written from memory, so a specification cannot claim a parameter the action does not take.
+**201 use cases** across 28 modules. Each name is strict verb-noun and still maps to the function that implements it; where the identifier and the behaviour disagree the behaviour decides the name, so `DeleteComputer`, which archives, reads ARCHIVE COMPUTER. The inputs, HTTP verb and authorisation rule in each specification are read out of that function rather than written from memory, so a specification cannot claim a parameter the action does not take.
 
 | Actor | Use cases | Modules |
 | --- | ---: | ---: |
 | Admin | 85 | 17 |
-| Teacher | 102 | 18 |
+| Teacher | 101 | 18 |
 | Student | 15 | 3 |
 
 ---
@@ -51,12 +51,12 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - CONTROL STUDENT WORKSTATION — T-153, T-154, T-155, T-156, T-157, T-158, T-159, T-160, T-161, T-162
 - SEND MESSAGE TO STUDENT — T-163, T-164, T-165, T-166
 - MANAGE MONITORING ALERT — T-167, T-168, T-169, T-170, T-171, T-172, T-173, T-174
-- VIEW TEACHER RECORDS — T-175, T-176, T-177, T-178, T-179, T-180, T-181, T-182, T-183, T-184, T-185, T-186, T-187
+- VIEW TEACHER RECORDS — T-175, T-176, T-177, T-178, T-179, T-180, T-181, T-182, T-183, T-184, T-185, T-186
 
 **STUDENT**  
-- LOG IN AT WORKSTATION — S-188, S-189, S-190, S-191, S-192
-- WORK AT MONITORED WORKSTATION — S-193, S-194, S-195, S-196, S-197, S-198, S-199
-- USE THE CLIENT AGENT — S-200, S-201, S-202
+- LOG IN AT WORKSTATION — S-187, S-188, S-189, S-190, S-191
+- WORK AT MONITORED WORKSTATION — S-192, S-193, S-194, S-195, S-196, S-197, S-198
+- USE THE CLIENT AGENT — S-199, S-200, S-201
 
 ---
 
@@ -8143,7 +8143,6 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 - Implemented by `TeacherController.Records` (GET).
 - Appears in the *VIEW TEACHER RECORDS* module of the use case diagram.
-- Pulls in **EXPORT RECORDS CSV** (`<<extend>>`).
 
 ### T-177  ·  VIEW CLASS ANALYTICS
 
@@ -8463,49 +8462,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *VIEW TEACHER RECORDS* module of the use case diagram.
 - Pulls in **EXPORT STUDENT ANALYTICS CSV** (`<<extend>>`).
 
-### T-184  ·  EXPORT RECORDS CSV
-
-**Use Case Name:** EXPORT RECORDS CSV  
-**Purpose:** Produce the records view as a CSV file the user can download.  
-**Actors:**
-
-- Teacher (Primary Actor)
-- None; this behaviour runs inside **VIEW RECORDS** (Secondary Actor)
-
-**Input Parameters:**
-
-- None beyond the signed-in identity carried on the authentication cookie.
-
-**Output Parameters:**
-
-- The rendered page, or a JSON payload where the caller is the page’s own script.
-
-**Pre-Condition:**
-
-- The caller is signed in as a teacher.
-- **VIEW RECORDS** has reached the point where this is optionally performed.
-
-**Post-Condition:**
-
-- The caller has the requested information. Nothing in the database has changed.
-
-**Successful Scenario:**
-
-1. The Teacher opens the page and CAMS confirms the role on the authentication cookie.
-2. The server reads the records the caller is entitled to see.
-3. The page renders with those records.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-
-**Additional Remarks:**
-
-- Implemented by `TeacherController.ExportRecordsCsv` (GET).
-- Appears in the *VIEW TEACHER RECORDS* module of the use case diagram.
-- Drawn as `<<extend>>` to **VIEW RECORDS**.
-
-### T-185  ·  EXPORT REMOTE HISTORY CSV
+### T-184  ·  EXPORT REMOTE HISTORY CSV
 
 **Use Case Name:** EXPORT REMOTE HISTORY CSV  
 **Purpose:** Produce the remote history view as a CSV file the user can download.  
@@ -8552,7 +8509,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *VIEW TEACHER RECORDS* module of the use case diagram.
 - Drawn as `<<extend>>` to **VIEW REMOTE HISTORY**.
 
-### T-186  ·  EXPORT BROWSER MONITORING CSV
+### T-185  ·  EXPORT BROWSER MONITORING CSV
 
 **Use Case Name:** EXPORT BROWSER MONITORING CSV  
 **Purpose:** Produce the browser monitoring view as a CSV file the user can download.  
@@ -8597,7 +8554,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *VIEW TEACHER RECORDS* module of the use case diagram.
 - Drawn as `<<extend>>` to **VIEW BROWSER HISTORY**.
 
-### T-187  ·  EXPORT STUDENT ANALYTICS CSV
+### T-186  ·  EXPORT STUDENT ANALYTICS CSV
 
 **Use Case Name:** EXPORT STUDENT ANALYTICS CSV  
 **Purpose:** Produce the student analytics view as a CSV file the user can download.  
@@ -8651,7 +8608,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.36: System Use Case for log in at workstation*
 
-### S-188  ·  AUTHENTICATE WORKSTATION
+### S-187  ·  AUTHENTICATE WORKSTATION
 
 **Use Case Name:** AUTHENTICATE WORKSTATION  
 **Purpose:** Let a student sign in from the CAMS client installed on a laboratory workstation, binding the sign-in to the machine the student is sitting at.  
@@ -8697,7 +8654,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *LOG IN AT WORKSTATION* module of the use case diagram.
 - Pulls in **VERIFY ENDPOINT** (`<<include>>`), **DISCOVER LAB SERVER** (`<<include>>`), **SET SERVER ADDRESS** (`<<extend>>`).
 
-### S-189  ·  DISCONNECT WORKSTATION
+### S-188  ·  DISCONNECT WORKSTATION
 
 **Use Case Name:** DISCONNECT WORKSTATION  
 **Purpose:** End the workstation session from the client, releasing the workstation so another student may sign in to it.  
@@ -8738,7 +8695,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `ClientAuthController.Logout` (POST).
 - Appears in the *LOG IN AT WORKSTATION* module of the use case diagram.
 
-### S-190  ·  VERIFY ENDPOINT
+### S-189  ·  VERIFY ENDPOINT
 
 **Use Case Name:** VERIFY ENDPOINT  
 **Purpose:** Answer the discovery request a client broadcasts while looking for the CAMS server on the laboratory network.  
@@ -8780,7 +8737,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *LOG IN AT WORKSTATION* module of the use case diagram.
 - Drawn as `<<include>>` from **AUTHENTICATE WORKSTATION**.
 
-### S-191  ·  DISCOVER LAB SERVER
+### S-190  ·  DISCOVER LAB SERVER
 
 **Use Case Name:** DISCOVER LAB SERVER  
 **Purpose:** Find the CAMS server on the laboratory network when no address has been saved, so a workstation can be set up without anyone typing one in. The client asks over the network and takes the first server that answers.  
@@ -8822,7 +8779,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *LOG IN AT WORKSTATION* module of the use case diagram.
 - Drawn as `<<include>>` from **AUTHENTICATE WORKSTATION**.
 
-### S-192  ·  SET SERVER ADDRESS
+### S-191  ·  SET SERVER ADDRESS
 
 **Use Case Name:** SET SERVER ADDRESS  
 **Purpose:** Point the client at the server by hand, for the case where discovery finds nothing. The address is checked for shape before it is saved, and the client retries the sign-in with it.  
@@ -8870,7 +8827,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.37: System Use Case for work at monitored workstation*
 
-### S-193  ·  FETCH RESTRICTIONS
+### S-192  ·  FETCH RESTRICTIONS
 
 **Use Case Name:** FETCH RESTRICTIONS  
 **Purpose:** Give the client the restriction rules that apply to the student signed in at that workstation.  
@@ -8914,7 +8871,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
 - Pulls in **REPORT ACTIVE APP** (`<<include>>`), **REPORT WEBSITE ACTIVITY** (`<<include>>`), **REPORT IDLE STATUS** (`<<include>>`), **REPORT BROWSER STATUS** (`<<include>>`), **REPORT TELEMETRY BATCH** (`<<include>>`), **REPORT INFRACTION** (`<<extend>>`).
 
-### S-194  ·  REPORT ACTIVE APP
+### S-193  ·  REPORT ACTIVE APP
 
 **Use Case Name:** REPORT ACTIVE APP  
 **Purpose:** Report which application is in the foreground on the workstation.  
@@ -8959,7 +8916,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
 - Drawn as `<<include>>` from **FETCH RESTRICTIONS**.
 
-### S-195  ·  REPORT WEBSITE ACTIVITY
+### S-194  ·  REPORT WEBSITE ACTIVITY
 
 **Use Case Name:** REPORT WEBSITE ACTIVITY  
 **Purpose:** Report the website the student is viewing in the browser.  
@@ -9004,7 +8961,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
 - Drawn as `<<include>>` from **FETCH RESTRICTIONS**.
 
-### S-196  ·  REPORT IDLE STATUS
+### S-195  ·  REPORT IDLE STATUS
 
 **Use Case Name:** REPORT IDLE STATUS  
 **Purpose:** Report whether the workstation has gone idle.  
@@ -9049,7 +9006,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
 - Drawn as `<<include>>` from **FETCH RESTRICTIONS**.
 
-### S-197  ·  REPORT BROWSER STATUS
+### S-196  ·  REPORT BROWSER STATUS
 
 **Use Case Name:** REPORT BROWSER STATUS  
 **Purpose:** Report whether browser monitoring is working on the workstation.  
@@ -9094,7 +9051,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
 - Drawn as `<<include>>` from **FETCH RESTRICTIONS**.
 
-### S-198  ·  REPORT TELEMETRY BATCH
+### S-197  ·  REPORT TELEMETRY BATCH
 
 **Use Case Name:** REPORT TELEMETRY BATCH  
 **Purpose:** Send a batch of buffered telemetry, so a brief disconnection does not lose the record.  
@@ -9139,7 +9096,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
 - Drawn as `<<include>>` from **FETCH RESTRICTIONS**.
 
-### S-199  ·  REPORT INFRACTION
+### S-198  ·  REPORT INFRACTION
 
 **Use Case Name:** REPORT INFRACTION  
 **Purpose:** Report that the student tried to open something a restriction rule blocks.  
@@ -9190,7 +9147,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.38: System Use Case for use the client agent*
 
-### S-200  ·  OPEN CLIENT WINDOW
+### S-199  ·  OPEN CLIENT WINDOW
 
 **Use Case Name:** OPEN CLIENT WINDOW  
 **Purpose:** Bring the CAMS window back from the notification area, where the agent sits while the student works. It reopens in the middle of the screen.  
@@ -9229,7 +9186,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `MainForm.RestoreFromTray` (CAMS client).
 - Appears in the *USE THE CLIENT AGENT* module of the use case diagram.
 
-### S-201  ·  CHECK CONNECTION STATUS
+### S-200  ·  CHECK CONNECTION STATUS
 
 **Use Case Name:** CHECK CONNECTION STATUS  
 **Purpose:** Show who is signed in at this workstation, whether the agent is connected to the server, and how much of the lab session is left, without leaving what the student is doing.  
@@ -9268,7 +9225,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `MainForm.ShowTrayStatus` (CAMS client).
 - Appears in the *USE THE CLIENT AGENT* module of the use case diagram.
 
-### S-202  ·  EXIT CLIENT AGENT
+### S-201  ·  EXIT CLIENT AGENT
 
 **Use Case Name:** EXIT CLIENT AGENT  
 **Purpose:** Close the agent from the notification area. Any lab session still open is signed out first, so the workstation is released rather than left showing an occupant who has gone.  
