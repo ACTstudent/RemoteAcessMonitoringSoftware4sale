@@ -2,13 +2,13 @@
 
 A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio), set out in the ten fields the course handout uses: use case name, purpose, actors, input parameters, output parameters, pre-condition, post-condition, successful scenario, exception scenario and additional remarks.
 
-**204 use cases** across 29 modules. Each name is strict verb-noun and still maps to the function that implements it; where the identifier and the behaviour disagree the behaviour decides the name, so `DeleteComputer`, which archives, reads ARCHIVE COMPUTER. The inputs, HTTP verb and authorisation rule in each specification are read out of that function rather than written from memory, so a specification cannot claim a parameter the action does not take.
+**197 use cases** across 27 modules. Each name is strict verb-noun and still maps to the function that implements it; where the identifier and the behaviour disagree the behaviour decides the name, so `DeleteComputer`, which archives, reads ARCHIVE COMPUTER. The inputs, HTTP verb and authorisation rule in each specification are read out of that function rather than written from memory, so a specification cannot claim a parameter the action does not take.
 
 | Actor | Use cases | Modules |
 | --- | ---: | ---: |
 | Admin | 85 | 17 |
 | Teacher | 102 | 18 |
-| Student | 17 | 6 |
+| Student | 10 | 2 |
 
 ---
 
@@ -54,12 +54,8 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - VIEW TEACHER RECORDS — T-175, T-176, T-177, T-178, T-179, T-180, T-181, T-182, T-183, T-184, T-185, T-186, T-187
 
 **STUDENT**  
-- PROCESS LOG IN — S-188, S-189
-- LOG IN AT WORKSTATION — S-190, S-191, S-192
-- WORK AT MONITORED WORKSTATION — S-193, S-194, S-195, S-196, S-197, S-198, S-199
-- VIEW STUDENT SESSION — S-200
-- MANAGE STUDENT ALERT — S-201, S-202
-- MANAGE STUDENT ACCOUNT — S-203, S-204
+- LOG IN AT WORKSTATION — S-188, S-189, S-190
+- WORK AT MONITORED WORKSTATION — S-191, S-192, S-193, S-194, S-195, S-196, S-197
 
 ---
 
@@ -8648,109 +8644,13 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 # STUDENT
 
-## PROCESS LOG IN  ·  `AccountController`
-
-![PROCESS LOG IN](usecase-images/student-process-log-in.png)
-
-*Figure 3.36: System Use Case for process log in*
-
-### S-188  ·  AUTHENTICATE USER
-
-**Use Case Name:** AUTHENTICATE USER  
-**Purpose:** Let a person sign in to the CAMS web portal with a username and password, and place them in the part of the system their role allows.  
-**Actors:**
-
-- Student (Primary Actor)
-
-**Input Parameters:**
-
-- `username` : `string`
-- `password` : `string`
-
-**Output Parameters:**
-
-- An authentication cookie carrying the account role as a claim, and a redirect to the landing page for that role.
-
-**Pre-Condition:**
-
-- None. This is the sign-in endpoint and is reachable without an account session; the CAMS server must be running and reachable.
-
-**Post-Condition:**
-
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
-
-**Successful Scenario:**
-
-1. The Student opens the CAMS sign-in page.
-2. The Student enters a username and a password and submits the form.
-3. The server validates the antiforgery token that accompanied the form.
-4. The server checks the credentials against each account table in turn and finds the matching account.
-5. The server confirms the account is active and not locked out.
-6. The server issues an authentication cookie carrying the role as a claim.
-7. The Student is redirected to the landing page for that role.
-
-**Exception Scenario:**
-
-- **The username matches no account** — the page reports that the sign-in failed, without saying which half was wrong.
-- **The password does not match the stored hash** — the failed-attempt counter is raised and the same message is shown.
-- **The account is locked out** — the sign-in is refused until the lockout expires, even with the right password.
-- **The account is deactivated** — the sign-in is refused and the person is told to contact an administrator.
-
-**Additional Remarks:**
-
-- Implemented by `AccountController.Login` (POST).
-- Appears in the *PROCESS LOG IN* module of the use case diagram.
-
-### S-189  ·  SIGN OUT USER
-
-**Use Case Name:** SIGN OUT USER  
-**Purpose:** End the signed-in session and clear the authentication cookie, so the next visitor to the browser starts as an anonymous user.  
-**Actors:**
-
-- Student (Primary Actor)
-
-**Input Parameters:**
-
-- None beyond the signed-in identity carried on the authentication cookie.
-
-**Output Parameters:**
-
-- The authentication cookie is cleared and the browser is returned to the sign-in page.
-
-**Pre-Condition:**
-
-- The caller is signed in.
-
-**Post-Condition:**
-
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
-
-**Successful Scenario:**
-
-1. The Student chooses to sign out.
-2. The server closes any lab session the account still has open.
-3. The server clears the authentication cookie.
-4. The browser is returned to the sign-in page as an anonymous visitor.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
-
-**Additional Remarks:**
-
-- Implemented by `AccountController.Logout` (POST).
-- Appears in the *PROCESS LOG IN* module of the use case diagram.
-
 ## LOG IN AT WORKSTATION  ·  `ClientAuthController`
 
 ![LOG IN AT WORKSTATION](usecase-images/student-log-in-at-workstation.png)
 
-*Figure 3.37: System Use Case for log in at workstation*
+*Figure 3.36: System Use Case for log in at workstation*
 
-### S-190  ·  AUTHENTICATE WORKSTATION
+### S-188  ·  AUTHENTICATE WORKSTATION
 
 **Use Case Name:** AUTHENTICATE WORKSTATION  
 **Purpose:** Let a student sign in from the CAMS client installed on a laboratory workstation, binding the sign-in to the machine the student is sitting at.  
@@ -8796,7 +8696,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *LOG IN AT WORKSTATION* module of the use case diagram.
 - Pulls in **VERIFY ENDPOINT** (`<<include>>`).
 
-### S-191  ·  DISCONNECT WORKSTATION
+### S-189  ·  DISCONNECT WORKSTATION
 
 **Use Case Name:** DISCONNECT WORKSTATION  
 **Purpose:** End the workstation session from the client, releasing the workstation so another student may sign in to it.  
@@ -8837,7 +8737,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `ClientAuthController.Logout` (POST).
 - Appears in the *LOG IN AT WORKSTATION* module of the use case diagram.
 
-### S-192  ·  VERIFY ENDPOINT
+### S-190  ·  VERIFY ENDPOINT
 
 **Use Case Name:** VERIFY ENDPOINT  
 **Purpose:** Answer the discovery request a client broadcasts while looking for the CAMS server on the laboratory network.  
@@ -8883,9 +8783,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 ![WORK AT MONITORED WORKSTATION](usecase-images/student-work-at-monitored-workstation.png)
 
-*Figure 3.38: System Use Case for work at monitored workstation*
+*Figure 3.37: System Use Case for work at monitored workstation*
 
-### S-193  ·  FETCH RESTRICTIONS
+### S-191  ·  FETCH RESTRICTIONS
 
 **Use Case Name:** FETCH RESTRICTIONS  
 **Purpose:** Give the client the restriction rules that apply to the student signed in at that workstation.  
@@ -8929,7 +8829,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
 - Pulls in **REPORT ACTIVE APP** (`<<include>>`), **REPORT WEBSITE ACTIVITY** (`<<include>>`), **REPORT IDLE STATUS** (`<<include>>`), **REPORT BROWSER STATUS** (`<<include>>`), **REPORT TELEMETRY BATCH** (`<<include>>`), **REPORT INFRACTION** (`<<extend>>`).
 
-### S-194  ·  REPORT ACTIVE APP
+### S-192  ·  REPORT ACTIVE APP
 
 **Use Case Name:** REPORT ACTIVE APP  
 **Purpose:** Report which application is in the foreground on the workstation.  
@@ -8974,7 +8874,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
 - Drawn as `<<include>>` from **FETCH RESTRICTIONS**.
 
-### S-195  ·  REPORT WEBSITE ACTIVITY
+### S-193  ·  REPORT WEBSITE ACTIVITY
 
 **Use Case Name:** REPORT WEBSITE ACTIVITY  
 **Purpose:** Report the website the student is viewing in the browser.  
@@ -9019,7 +8919,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
 - Drawn as `<<include>>` from **FETCH RESTRICTIONS**.
 
-### S-196  ·  REPORT IDLE STATUS
+### S-194  ·  REPORT IDLE STATUS
 
 **Use Case Name:** REPORT IDLE STATUS  
 **Purpose:** Report whether the workstation has gone idle.  
@@ -9064,7 +8964,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
 - Drawn as `<<include>>` from **FETCH RESTRICTIONS**.
 
-### S-197  ·  REPORT BROWSER STATUS
+### S-195  ·  REPORT BROWSER STATUS
 
 **Use Case Name:** REPORT BROWSER STATUS  
 **Purpose:** Report whether browser monitoring is working on the workstation.  
@@ -9109,7 +9009,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
 - Drawn as `<<include>>` from **FETCH RESTRICTIONS**.
 
-### S-198  ·  REPORT TELEMETRY BATCH
+### S-196  ·  REPORT TELEMETRY BATCH
 
 **Use Case Name:** REPORT TELEMETRY BATCH  
 **Purpose:** Send a batch of buffered telemetry, so a brief disconnection does not lose the record.  
@@ -9154,7 +9054,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
 - Drawn as `<<include>>` from **FETCH RESTRICTIONS**.
 
-### S-199  ·  REPORT INFRACTION
+### S-197  ·  REPORT INFRACTION
 
 **Use Case Name:** REPORT INFRACTION  
 **Purpose:** Report that the student tried to open something a restriction rule blocks.  
@@ -9198,230 +9098,3 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `RemoteMonitoringHub.ReportInfraction` (GET).
 - Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
 - Drawn as `<<extend>>` to **FETCH RESTRICTIONS**.
-
-## VIEW STUDENT SESSION  ·  `StudentController`
-
-![VIEW STUDENT SESSION](usecase-images/student-view-student-session.png)
-
-*Figure 3.39: System Use Case for view student session*
-
-### S-200  ·  VIEW STUDENT HOME
-
-**Use Case Name:** VIEW STUDENT HOME  
-**Purpose:** Show the student portal home with the current session state and timer.  
-**Actors:**
-
-- Student (Primary Actor)
-
-**Input Parameters:**
-
-- None beyond the signed-in identity carried on the authentication cookie.
-
-**Output Parameters:**
-
-- The rendered page, or a JSON payload where the caller is the page’s own script.
-
-**Pre-Condition:**
-
-- The caller is signed in as a student.
-
-**Post-Condition:**
-
-- The caller has the requested information. Nothing in the database has changed.
-
-**Successful Scenario:**
-
-1. The Student opens the page and CAMS confirms the role on the authentication cookie.
-2. The server reads the records the caller is entitled to see.
-3. The page renders with those records.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-
-**Additional Remarks:**
-
-- Implemented by `StudentController.Index` (GET).
-- Appears in the *VIEW STUDENT SESSION* module of the use case diagram.
-
-## MANAGE STUDENT ALERT  ·  `StudentController`
-
-![MANAGE STUDENT ALERT](usecase-images/student-manage-student-alert.png)
-
-*Figure 3.40: System Use Case for manage student alert*
-
-### S-201  ·  VIEW ALERTS
-
-**Use Case Name:** VIEW ALERTS  
-**Purpose:** List the monitoring alerts raised for the classes the teacher is responsible for.  
-**Actors:**
-
-- Student (Primary Actor)
-
-**Input Parameters:**
-
-- None beyond the signed-in identity carried on the authentication cookie.
-
-**Output Parameters:**
-
-- The rendered page, or a JSON payload where the caller is the page’s own script.
-
-**Pre-Condition:**
-
-- The caller is signed in as a student.
-
-**Post-Condition:**
-
-- The caller has the requested information. Nothing in the database has changed.
-
-**Successful Scenario:**
-
-1. The Student opens the page and CAMS confirms the role on the authentication cookie.
-2. The server reads the records the caller is entitled to see.
-3. The page renders with those records.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-
-**Additional Remarks:**
-
-- Implemented by `StudentController.Alerts` (GET).
-- Appears in the *MANAGE STUDENT ALERT* module of the use case diagram.
-
-### S-202  ·  MARK ALERT READ
-
-**Use Case Name:** MARK ALERT READ  
-**Purpose:** Let a student mark one of their own alerts as read.  
-**Actors:**
-
-- Student (Primary Actor)
-
-**Input Parameters:**
-
-- `id` : `int`
-
-**Output Parameters:**
-
-- A redirect back to the listing page, carrying a success or failure message for display.
-
-**Pre-Condition:**
-
-- The caller is signed in as a student.
-- The record named by the identifier exists.
-
-**Post-Condition:**
-
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
-
-**Successful Scenario:**
-
-1. The Student opens the page and CAMS confirms the role on the authentication cookie.
-2. The Student fills the form and submits it.
-3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
-- **The identifier matches no record** — the action reports that the record was not found and makes no change.
-
-**Additional Remarks:**
-
-- Implemented by `StudentController.MarkRead` (POST).
-- Appears in the *MANAGE STUDENT ALERT* module of the use case diagram.
-
-## MANAGE STUDENT ACCOUNT  ·  `StudentController`
-
-![MANAGE STUDENT ACCOUNT](usecase-images/student-manage-student-account.png)
-
-*Figure 3.41: System Use Case for manage student account*
-
-### S-203  ·  VIEW SETTINGS
-
-**Use Case Name:** VIEW SETTINGS  
-**Purpose:** Show the settings page for the signed-in user.  
-**Actors:**
-
-- Student (Primary Actor)
-
-**Input Parameters:**
-
-- None beyond the signed-in identity carried on the authentication cookie.
-
-**Output Parameters:**
-
-- The rendered page, or a JSON payload where the caller is the page’s own script.
-
-**Pre-Condition:**
-
-- The caller is signed in as a student.
-
-**Post-Condition:**
-
-- The caller has the requested information. Nothing in the database has changed.
-
-**Successful Scenario:**
-
-1. The Student opens the page and CAMS confirms the role on the authentication cookie.
-2. The server reads the records the caller is entitled to see.
-3. The page renders with those records.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-
-**Additional Remarks:**
-
-- Implemented by `StudentController.Settings` (GET).
-- Appears in the *MANAGE STUDENT ACCOUNT* module of the use case diagram.
-
-### S-204  ·  RESET PASSWORD
-
-**Use Case Name:** RESET PASSWORD  
-**Purpose:** Let a student replace their own password from the student portal.  
-**Actors:**
-
-- Student (Primary Actor)
-
-**Input Parameters:**
-
-- `input` : `PasswordChangeInput`
-
-**Output Parameters:**
-
-- A redirect back to the listing page, carrying a success or failure message for display.
-
-**Pre-Condition:**
-
-- The caller is signed in as a student.
-
-**Post-Condition:**
-
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
-
-**Successful Scenario:**
-
-1. The Student opens the page and CAMS confirms the role on the authentication cookie.
-2. The Student fills the form and submits it.
-3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
-
-**Additional Remarks:**
-
-- Implemented by `StudentController.ResetPassword` (POST).
-- Appears in the *MANAGE STUDENT ACCOUNT* module of the use case diagram.
