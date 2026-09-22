@@ -44,27 +44,27 @@ public static class NavigationBuilder
     /// </summary>
     private static IEnumerable<NavSection> GlobalSections() => new[]
     {
-        new NavSection("Global Operations", new[]
+        new NavSection("Overview", new[]
         {
-            new NavItem("Global Dashboard & Sessions", "grid-fill", "Index", "Admin")
+            new NavItem("Dashboard", "grid-fill", "Index", "Admin")
         }),
-        new NavSection("Global People & Student Profiles", new[]
+        new NavSection("People", new[]
         {
             new NavItem("Teachers", "person-badge-fill", "Teachers", "Admin"),
             new NavItem("Students", "mortarboard-fill", "Students", "Admin"),
-            new NavItem("Classes, Class Details & Import", "folder-fill", "Classes", "Admin",
+            new NavItem("Classes", "folder-fill", "Classes", "Admin",
                 AlsoActiveOn: new[] { "ClassDetails" })
         }),
-        new NavSection("Global Computers", new[]
+        new NavSection("Laboratory", new[]
         {
-            new NavItem("Computers, History & Mapping", "pc-display", "Computers", "Admin",
+            new NavItem("Computers", "pc-display", "Computers", "Admin",
                 AlsoActiveOn: new[] { "ComputerHistory" })
         }),
-        new NavSection("Global Restrictions", new[]
+        new NavSection("Policies", new[]
         {
-            new NavItem("Rules & Categories", "slash-circle-fill", "Restrictions", "Admin"),
-            new NavItem("Blacklist Directory", "ban", "Blacklists", "Admin"),
-            new NavItem("Whitelist Directory", "check-circle-fill", "Whitelists", "Admin"),
+            new NavItem("Restriction Rules", "slash-circle-fill", "Restrictions", "Admin"),
+            new NavItem("Blacklist", "ban", "Blacklists", "Admin"),
+            new NavItem("Whitelist", "check-circle-fill", "Whitelists", "Admin"),
             new NavItem("Session Rules", "hourglass-split", "SessionRules", "Admin")
         })
     };
@@ -89,30 +89,30 @@ public static class NavigationBuilder
             // which one they wanted.
             new NavSection(null, new[]
             {
-                new NavItem("My Classroom Dashboard", "speedometer2", "Dashboard", "Teacher")
+                new NavItem("My Classroom", "speedometer2", "Dashboard", "Teacher")
             }),
             new NavSection("Laboratory Control", new[]
             {
-                new NavItem("Session Management", "play-circle-fill", "Sessions", "Teacher"),
+                new NavItem("Sessions", "play-circle-fill", "Sessions", "Teacher"),
                 new NavItem("Live Monitoring", "camera-video-fill", "Monitoring", "Teacher"),
-                new NavItem("Remote-Control History", "terminal-fill", "RemoteHistory", "Teacher"),
+                new NavItem("Remote History", "terminal-fill", "RemoteHistory", "Teacher"),
                 new NavItem("Workstations", "pc-display", "Computers", "Teacher")
             }),
-            new NavSection("Classroom Management", new[]
+            new NavSection("My Classes", new[]
             {
-                new NavItem("Class Management", "folder-fill", "Classes", "Teacher",
+                new NavItem("My Class List", "folder-fill", "Classes", "Teacher",
                     AlsoActiveOn: new[] { "ClassDetails", "ClassAnalytics" }),
-                new NavItem("Student Profiles", "people-fill", "Students", "Teacher",
+                new NavItem("My Students", "people-fill", "Students", "Teacher",
                     AlsoActiveOn: new[] { "StudentDetails" }),
-                new NavItem("Access Restrictions", "slash-circle-fill", "Restrictions", "Teacher"),
-                new NavItem("Classroom Records", "journal-check", "Records", "Teacher"),
+                new NavItem("Class Restrictions", "slash-circle-fill", "Restrictions", "Teacher"),
+                new NavItem("Records", "journal-check", "Records", "Teacher"),
                 new NavItem("Lab Utilization", "bar-chart-fill", "LabUtilization", "Teacher"),
-                new NavItem("Unified Timeline", "clock-history", "UnifiedTimeline", "Teacher",
+                new NavItem("Timeline", "clock-history", "UnifiedTimeline", "Teacher",
                     AlsoActiveOn: new[] { "ActivityTimeline" }),
-                new NavItem("Browser Monitoring", "browser-chrome", "BrowserMonitoringHistory", "Teacher"),
-                new NavItem("Monitoring Alerts", "bell-fill", "Alerts", "Teacher",
+                new NavItem("Browser History", "browser-chrome", "BrowserMonitoringHistory", "Teacher"),
+                new NavItem("Alerts", "bell-fill", "Alerts", "Teacher",
                     AlsoActiveOn: new[] { "AlertHistory" }, BadgeViewComponent: "OpenAlertCount"),
-                new NavItem("Account Settings", "person-gear", "Settings", "Teacher")
+                new NavItem("Settings", "person-gear", "Settings", "Teacher")
             })
         }.Concat(GlobalSections()).ToArray());
 
@@ -140,12 +140,12 @@ public static class NavigationBuilder
 
         sections.Add(new NavSection("Administrator Only", new[]
         {
-            new NavItem("Admin Accounts & Lockouts", "person-gear", "Settings", "Admin"),
-            new NavItem("Roles & Permissions", "key-fill", "Roles", "Admin"),
+            new NavItem("Admin Accounts", "person-gear", "Settings", "Admin"),
+            new NavItem("Roles", "key-fill", "Roles", "Admin"),
             new NavItem("LAN Status", "router-fill", "LanConfig", "Admin"),
-            new NavItem("Deployment Hub", "box-seam-fill", "Index", "AdminDeployment"),
-            new NavItem("Database Maintenance", "database-gear", "Index", "AdminDatabase"),
-            new NavItem("System Reports", "bar-chart-line-fill", "Reports", "Admin"),
+            new NavItem("Deployment", "box-seam-fill", "Index", "AdminDeployment"),
+            new NavItem("Database", "database-gear", "Index", "AdminDatabase"),
+            new NavItem("Reports", "bar-chart-line-fill", "Reports", "Admin"),
             new NavItem("Audit Trail", "journal-text", "AuditLogs", "Admin"),
             new NavItem("System Logs", "bug-fill", "SystemLogs", "Admin")
         }));
@@ -179,9 +179,9 @@ public static class NavigationBuilder
         {
             new NavSection(null, new[]
             {
-                new NavItem("Session Information", "info-circle-fill", "Index", "Student"),
-                new NavItem("Alert Center", "bell-fill", "Alerts", "Student"),
-                new NavItem("Account Settings", "gear-fill", "Settings", "Student")
+                new NavItem("My Session", "info-circle-fill", "Index", "Student"),
+                new NavItem("Alerts", "bell-fill", "Alerts", "Student"),
+                new NavItem("Settings", "gear-fill", "Settings", "Student")
             })
         });
 }
