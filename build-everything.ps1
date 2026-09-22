@@ -6,6 +6,8 @@
 #   client-dist\CAMS-Client-Setup.exe
 #   client-dist\CAMS-Client-Setup.exe.sha256
 
+param([switch]$SkipTests)
+
 $ErrorActionPreference = "Stop"
 $root = [System.IO.Path]::GetFullPath($PSScriptRoot)
 
@@ -111,6 +113,9 @@ $solution = Join-Path $root "Monitoring And Remote Access\RemoteMonitoring.sln"
 $clientProject = Join-Path $root "Monitoring And Remote Access\Client\Client.csproj"
 $serverProject = Join-Path $root "Monitoring And Remote Access\Server\Server.csproj"
 
+if ($SkipTests) {
+    Write-Host "[2/9] Test suites skipped by request; installer validation remains enabled." -ForegroundColor Yellow
+} else {
 Write-Host "[2/9] Running server and client tests..." -ForegroundColor Cyan
 # Results are written as TRX so a failing release build leaves behind which test
 # failed and why, rather than only a red step in the log. CI uploads this folder.
@@ -123,6 +128,7 @@ Invoke-Native "dotnet" (@(
     "test", $clientTestProject, "-c", "Release", "--verbosity", "minimal",
     "--logger", "trx;LogFileName=client-tests.trx", "--results-directory", $testResults
 ) + $versionArguments) "Client tests failed"
+}
 
 Write-Host "[3/9] Building the solution..." -ForegroundColor Cyan
 Invoke-Native "dotnet" (@("build", $solution, "-c", "Release", "-v", "minimal") + $versionArguments) "Solution build failed"

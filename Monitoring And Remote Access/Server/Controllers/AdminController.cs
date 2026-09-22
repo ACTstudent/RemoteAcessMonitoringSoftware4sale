@@ -1201,6 +1201,41 @@ namespace Server.Controllers
         // ---------- Workstation-to-Student mapping ----------
         [HttpPost]
         [TeacherSharedAction]
+        public async Task<IActionResult> PermanentlyDeleteComputer(int id)
+        {
+            if (!CheckAccess()) return Denied();
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            var computer = await _context.Computers.FindAsync(id);
+            if (computer == null)
+            {
+                TempData["ErrorMessage"] = "This workstation no longer exists.";
+                return RedirectToAction(nameof(Computers));
+            }
+
+            var sessions = await _context.LabSessions.Where(s => s.ComputerId == id).ToListAsync();
+            if (sessions.Any(s => s.IsActive))
+            {
+                TempData["ErrorMessage"] = "End the active lab session before deleting this workstation.";
+                return RedirectToAction(nameof(Computers));
+            }
+
+            // Keep session dates, student references and the recorded PC name.
+            // Only the link to the station being removed needs to be cleared.
+            foreach (var session in sessions) session.ComputerId = null;
+            var history = await _context.ComputerStatusHistories.Where(h => h.ComputerId == id).ToListAsync();
+            _context.ComputerStatusHistories.RemoveRange(history);
+            _context.Computers.Remove(computer);
+            await _context.SaveChangesAsync();
+            await AuditAsync("DeleteComputer", $"Permanently deleted workstation {id}: {computer.LaboratoryStation}; removed {history.Count} status records; retained {sessions.Count} lab sessions");
+            await transaction.CommitAsync();
+
+            TempData["Message"] = $"Workstation '{computer.LaboratoryStation}' deleted. Past lab sessions were retained.";
+            return RedirectToAction(nameof(Computers));
+        }
+
+        [HttpPost]
+        [TeacherSharedAction]
         public async Task<IActionResult> AssignComputer(int studentId, int? computerId)
         {
             if (!CheckAccess()) return Denied();

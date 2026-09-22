@@ -217,22 +217,23 @@ body.login-page {
 .btn-outline-primary:hover, .btn-outline-primary:active { background-color: var(--accent-emerald) !important; color: #fff !important; }
 
 /* ----------------------------------------------------- monitoring wall -- */
-.monitoring-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; margin-bottom: 24px; }
+.monitoring-dashboard { --monitoring-gap: 16px; --monitoring-side-width: calc((100% - 3 * var(--monitoring-gap)) / 4); }
+.monitoring-heading { display: grid; grid-template-columns: minmax(0, 1fr) var(--monitoring-side-width); align-items: center; gap: var(--monitoring-gap); margin-bottom: 24px; }
 .monitoring-eyebrow { display: block; color: var(--text-muted); font-size: .66rem; font-weight: 650; text-transform: uppercase; letter-spacing: .14em; margin-bottom: 5px; }
 .monitoring-session {
-    display: flex; align-items: center; gap: 25px;
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 12px;
     background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: var(--radius-xl); padding: 16px 22px; box-shadow: var(--shadow-card);
+    border-radius: var(--radius-xl); padding: 16px 20px; box-shadow: var(--shadow-card); min-width: 0;
 }
 .monitoring-session .session-timer { display: block; font-size: 1.65rem; }
-.monitoring-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+.monitoring-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--monitoring-gap); margin-bottom: 24px; }
 .monitoring-metrics .metric-title { letter-spacing: .1em; text-transform: uppercase; font-size: .65rem; }
 .monitoring-metrics .metric-title i { float: right; font-size: 1.2rem; color: var(--accent-emerald); }
 .monitoring-metrics .metric-card:nth-child(3) i { color: var(--cams-warning); }
 .monitoring-metrics .metric-card:nth-child(4) i { color: var(--cams-danger); }
 .monitoring-metrics p { font-size: .7rem; color: var(--text-muted); margin: 12px 0 0; }
 
-.monitoring-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; align-items: start; gap: 20px; }
+.monitoring-layout { display: grid; grid-template-columns: minmax(0, 1fr) var(--monitoring-side-width); align-items: start; gap: var(--monitoring-gap); }
 .monitoring-stations,
 .monitoring-alerts {
     background: var(--card-bg); border: 1px solid var(--card-border);
@@ -296,9 +297,13 @@ body.login-page {
 }
 
 /* -------------------------------------------------------- responsive ---- */
-@media (max-width: 1250px) { .monitoring-layout { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1250px) {
+    .monitoring-layout { grid-template-columns: minmax(0, 1fr); }
+    .monitoring-heading { grid-template-columns: minmax(0, 1fr) 300px; }
+}
 @media (max-width: 767px) {
     .monitoring-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .monitoring-heading { grid-template-columns: minmax(0, 1fr); }
     .monitoring-session { width: 100%; justify-content: space-between; }
 }
 @media (max-width: 380px) { .monitoring-metrics { grid-template-columns: 1fr; } }
