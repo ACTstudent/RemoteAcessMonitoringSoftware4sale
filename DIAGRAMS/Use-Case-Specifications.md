@@ -2,13 +2,13 @@
 
 A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio), set out in the ten fields the course handout uses: use case name, purpose, actors, input parameters, output parameters, pre-condition, post-condition, successful scenario, exception scenario and additional remarks.
 
-**197 use cases** across 27 modules. Each name is strict verb-noun and still maps to the function that implements it; where the identifier and the behaviour disagree the behaviour decides the name, so `DeleteComputer`, which archives, reads ARCHIVE COMPUTER. The inputs, HTTP verb and authorisation rule in each specification are read out of that function rather than written from memory, so a specification cannot claim a parameter the action does not take.
+**202 use cases** across 28 modules. Each name is strict verb-noun and still maps to the function that implements it; where the identifier and the behaviour disagree the behaviour decides the name, so `DeleteComputer`, which archives, reads ARCHIVE COMPUTER. The inputs, HTTP verb and authorisation rule in each specification are read out of that function rather than written from memory, so a specification cannot claim a parameter the action does not take.
 
 | Actor | Use cases | Modules |
 | --- | ---: | ---: |
 | Admin | 85 | 17 |
 | Teacher | 102 | 18 |
-| Student | 10 | 2 |
+| Student | 15 | 3 |
 
 ---
 
@@ -54,8 +54,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - VIEW TEACHER RECORDS — T-175, T-176, T-177, T-178, T-179, T-180, T-181, T-182, T-183, T-184, T-185, T-186, T-187
 
 **STUDENT**  
-- LOG IN AT WORKSTATION — S-188, S-189, S-190
-- WORK AT MONITORED WORKSTATION — S-191, S-192, S-193, S-194, S-195, S-196, S-197
+- LOG IN AT WORKSTATION — S-188, S-189, S-190, S-191, S-192
+- WORK AT MONITORED WORKSTATION — S-193, S-194, S-195, S-196, S-197, S-198, S-199
+- USE THE CLIENT AGENT — S-200, S-201, S-202
 
 ---
 
@@ -8694,7 +8695,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 - Implemented by `ClientAuthController.Login` (POST).
 - Appears in the *LOG IN AT WORKSTATION* module of the use case diagram.
-- Pulls in **VERIFY ENDPOINT** (`<<include>>`).
+- Pulls in **VERIFY ENDPOINT** (`<<include>>`), **DISCOVER LAB SERVER** (`<<include>>`), **SET SERVER ADDRESS** (`<<extend>>`).
 
 ### S-189  ·  DISCONNECT WORKSTATION
 
@@ -8779,13 +8780,97 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *LOG IN AT WORKSTATION* module of the use case diagram.
 - Drawn as `<<include>>` from **AUTHENTICATE WORKSTATION**.
 
+### S-191  ·  DISCOVER LAB SERVER
+
+**Use Case Name:** DISCOVER LAB SERVER  
+**Purpose:** Find the CAMS server on the laboratory network when no address has been saved, so a workstation can be set up without anyone typing one in. The client asks over the network and takes the first server that answers.  
+**Actors:**
+
+- Student (Primary Actor)
+- None; this behaviour runs inside **AUTHENTICATE WORKSTATION** (Secondary Actor)
+
+**Input Parameters:**
+
+- None beyond the signed-in identity carried on the authentication cookie.
+
+**Output Parameters:**
+
+- The behaviour completes and its effect is visible to the use case that includes it.
+
+**Pre-Condition:**
+
+- The caller is signed in.
+- **AUTHENTICATE WORKSTATION** has reached the point where this is always performed.
+
+**Post-Condition:**
+
+- The caller has the requested information. Nothing in the database has changed.
+
+**Successful Scenario:**
+
+1. The including use case reaches the point where this behaviour is required.
+2. The server runs `DiscoverLabServer` and applies its result.
+3. Control returns to the including use case, which continues.
+
+**Exception Scenario:**
+
+- The behaviour fails and the including use case reports the failure rather than continuing as if it had succeeded.
+
+**Additional Remarks:**
+
+- Implemented by `ServerDiscoveryClient.DiscoverAsync` (CAMS client).
+- Appears in the *LOG IN AT WORKSTATION* module of the use case diagram.
+- Drawn as `<<include>>` from **AUTHENTICATE WORKSTATION**.
+
+### S-192  ·  SET SERVER ADDRESS
+
+**Use Case Name:** SET SERVER ADDRESS  
+**Purpose:** Point the client at the server by hand, for the case where discovery finds nothing. The address is checked for shape before it is saved, and the client retries the sign-in with it.  
+**Actors:**
+
+- Student (Primary Actor)
+- None; this behaviour runs inside **AUTHENTICATE WORKSTATION** (Secondary Actor)
+
+**Input Parameters:**
+
+- None beyond the signed-in identity carried on the authentication cookie.
+
+**Output Parameters:**
+
+- The behaviour completes and its effect is visible to the use case that includes it.
+
+**Pre-Condition:**
+
+- The caller is signed in.
+- **AUTHENTICATE WORKSTATION** has reached the point where this is optionally performed.
+
+**Post-Condition:**
+
+- The caller has the requested information. Nothing in the database has changed.
+
+**Successful Scenario:**
+
+1. The including use case reaches the point where this behaviour is required.
+2. The server runs `SetServerAddress` and applies its result.
+3. Control returns to the including use case, which continues.
+
+**Exception Scenario:**
+
+- The behaviour fails and the including use case reports the failure rather than continuing as if it had succeeded.
+
+**Additional Remarks:**
+
+- Implemented by `MainForm.ShowServerUrlDialog` (CAMS client).
+- Appears in the *LOG IN AT WORKSTATION* module of the use case diagram.
+- Drawn as `<<extend>>` to **AUTHENTICATE WORKSTATION**.
+
 ## WORK AT MONITORED WORKSTATION  ·  `RemoteMonitoringHub`
 
 ![WORK AT MONITORED WORKSTATION](usecase-images/student-work-at-monitored-workstation.png)
 
 *Figure 3.37: System Use Case for work at monitored workstation*
 
-### S-191  ·  FETCH RESTRICTIONS
+### S-193  ·  FETCH RESTRICTIONS
 
 **Use Case Name:** FETCH RESTRICTIONS  
 **Purpose:** Give the client the restriction rules that apply to the student signed in at that workstation.  
@@ -8829,7 +8914,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
 - Pulls in **REPORT ACTIVE APP** (`<<include>>`), **REPORT WEBSITE ACTIVITY** (`<<include>>`), **REPORT IDLE STATUS** (`<<include>>`), **REPORT BROWSER STATUS** (`<<include>>`), **REPORT TELEMETRY BATCH** (`<<include>>`), **REPORT INFRACTION** (`<<extend>>`).
 
-### S-192  ·  REPORT ACTIVE APP
+### S-194  ·  REPORT ACTIVE APP
 
 **Use Case Name:** REPORT ACTIVE APP  
 **Purpose:** Report which application is in the foreground on the workstation.  
@@ -8874,7 +8959,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
 - Drawn as `<<include>>` from **FETCH RESTRICTIONS**.
 
-### S-193  ·  REPORT WEBSITE ACTIVITY
+### S-195  ·  REPORT WEBSITE ACTIVITY
 
 **Use Case Name:** REPORT WEBSITE ACTIVITY  
 **Purpose:** Report the website the student is viewing in the browser.  
@@ -8919,7 +9004,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
 - Drawn as `<<include>>` from **FETCH RESTRICTIONS**.
 
-### S-194  ·  REPORT IDLE STATUS
+### S-196  ·  REPORT IDLE STATUS
 
 **Use Case Name:** REPORT IDLE STATUS  
 **Purpose:** Report whether the workstation has gone idle.  
@@ -8964,7 +9049,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
 - Drawn as `<<include>>` from **FETCH RESTRICTIONS**.
 
-### S-195  ·  REPORT BROWSER STATUS
+### S-197  ·  REPORT BROWSER STATUS
 
 **Use Case Name:** REPORT BROWSER STATUS  
 **Purpose:** Report whether browser monitoring is working on the workstation.  
@@ -9009,7 +9094,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
 - Drawn as `<<include>>` from **FETCH RESTRICTIONS**.
 
-### S-196  ·  REPORT TELEMETRY BATCH
+### S-198  ·  REPORT TELEMETRY BATCH
 
 **Use Case Name:** REPORT TELEMETRY BATCH  
 **Purpose:** Send a batch of buffered telemetry, so a brief disconnection does not lose the record.  
@@ -9054,7 +9139,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
 - Drawn as `<<include>>` from **FETCH RESTRICTIONS**.
 
-### S-197  ·  REPORT INFRACTION
+### S-199  ·  REPORT INFRACTION
 
 **Use Case Name:** REPORT INFRACTION  
 **Purpose:** Report that the student tried to open something a restriction rule blocks.  
@@ -9098,3 +9183,126 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `RemoteMonitoringHub.ReportInfraction` (GET).
 - Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
 - Drawn as `<<extend>>` to **FETCH RESTRICTIONS**.
+
+## USE THE CLIENT AGENT  ·  `MainForm + TrayIconController`
+
+![USE THE CLIENT AGENT](usecase-images/student-use-the-client-agent.png)
+
+*Figure 3.38: System Use Case for use the client agent*
+
+### S-200  ·  OPEN CLIENT WINDOW
+
+**Use Case Name:** OPEN CLIENT WINDOW  
+**Purpose:** Bring the CAMS window back from the notification area, where the agent sits while the student works. It reopens in the middle of the screen.  
+**Actors:**
+
+- Student (Primary Actor)
+
+**Input Parameters:**
+
+- None beyond the signed-in identity carried on the authentication cookie.
+
+**Output Parameters:**
+
+- The behaviour completes and its effect is visible to the use case that includes it.
+
+**Pre-Condition:**
+
+- The caller is signed in.
+
+**Post-Condition:**
+
+- The caller has the requested information. Nothing in the database has changed.
+
+**Successful Scenario:**
+
+1. The including use case reaches the point where this behaviour is required.
+2. The server runs `OpenClientWindow` and applies its result.
+3. Control returns to the including use case, which continues.
+
+**Exception Scenario:**
+
+- The behaviour fails and the including use case reports the failure rather than continuing as if it had succeeded.
+
+**Additional Remarks:**
+
+- Implemented by `MainForm.RestoreFromTray` (CAMS client).
+- Appears in the *USE THE CLIENT AGENT* module of the use case diagram.
+
+### S-201  ·  CHECK CONNECTION STATUS
+
+**Use Case Name:** CHECK CONNECTION STATUS  
+**Purpose:** Show who is signed in at this workstation, whether the agent is connected to the server, and how much of the lab session is left, without leaving what the student is doing.  
+**Actors:**
+
+- Student (Primary Actor)
+
+**Input Parameters:**
+
+- None beyond the signed-in identity carried on the authentication cookie.
+
+**Output Parameters:**
+
+- The behaviour completes and its effect is visible to the use case that includes it.
+
+**Pre-Condition:**
+
+- The caller is signed in.
+
+**Post-Condition:**
+
+- The caller has the requested information. Nothing in the database has changed.
+
+**Successful Scenario:**
+
+1. The including use case reaches the point where this behaviour is required.
+2. The server runs `CheckConnectionStatus` and applies its result.
+3. Control returns to the including use case, which continues.
+
+**Exception Scenario:**
+
+- The behaviour fails and the including use case reports the failure rather than continuing as if it had succeeded.
+
+**Additional Remarks:**
+
+- Implemented by `MainForm.ShowTrayStatus` (CAMS client).
+- Appears in the *USE THE CLIENT AGENT* module of the use case diagram.
+
+### S-202  ·  EXIT CLIENT AGENT
+
+**Use Case Name:** EXIT CLIENT AGENT  
+**Purpose:** Close the agent from the notification area. Any lab session still open is signed out first, so the workstation is released rather than left showing an occupant who has gone.  
+**Actors:**
+
+- Student (Primary Actor)
+
+**Input Parameters:**
+
+- None beyond the signed-in identity carried on the authentication cookie.
+
+**Output Parameters:**
+
+- The behaviour completes and its effect is visible to the use case that includes it.
+
+**Pre-Condition:**
+
+- The caller is signed in.
+
+**Post-Condition:**
+
+- The caller has the requested information. Nothing in the database has changed.
+
+**Successful Scenario:**
+
+1. The including use case reaches the point where this behaviour is required.
+2. The server runs `ExitClientAgent` and applies its result.
+3. Control returns to the including use case, which continues.
+
+**Exception Scenario:**
+
+- The behaviour fails and the including use case reports the failure rather than continuing as if it had succeeded.
+
+**Additional Remarks:**
+
+- Implemented by `MainForm.ExitFromTray` (CAMS client).
+- Appears in the *USE THE CLIENT AGENT* module of the use case diagram.
