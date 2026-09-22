@@ -2,7 +2,7 @@
 
 A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio), set out in the ten fields the course handout uses: use case name, purpose, actors, input parameters, output parameters, pre-condition, post-condition, successful scenario, exception scenario and additional remarks.
 
-**204 use cases** across 29 modules. Each one is named after the function that implements it, and the inputs, HTTP verb and authorisation rule in each specification are read out of that function rather than written from memory, so a specification cannot claim a parameter the action does not take.
+**204 use cases** across 29 modules. Each name is strict verb-noun and still maps to the function that implements it; where the identifier and the behaviour disagree the behaviour decides the name, so `DeleteComputer`, which archives, reads ARCHIVE COMPUTER. The inputs, HTTP verb and authorisation rule in each specification are read out of that function rather than written from memory, so a specification cannot claim a parameter the action does not take.
 
 | Actor | Use cases | Modules |
 | --- | ---: | ---: |
