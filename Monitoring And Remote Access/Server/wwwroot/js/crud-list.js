@@ -101,8 +101,12 @@
             matchingItems = matches.map(record => record.element);
             page = Math.min(Math.max(page, 1), pages);
             items.forEach(item => { item.hidden = true; });
-            const start = (page - 1) * pageSize;
-            matches.slice(start, start + pageSize).forEach(record => { record.element.hidden = false; });
+            // In scroll mode pageSize is Infinity, and (page - 1) * Infinity is
+            // NaN, which sliced every record away and printed "Showing NaN-NaN".
+            // Scrolling starts at nothing and shows the lot.
+            const start = scrolls ? 0 : (page - 1) * pageSize;
+            const visible = scrolls ? matches : matches.slice(start, start + pageSize);
+            visible.forEach(record => { record.element.hidden = false; });
             if (empty) {
                 empty.hidden = matches.length > 0;
                 empty.textContent = items.length ? `No ${label} match your search or filters.` : `No ${label} yet. Use the controls above to add records when available.`;
