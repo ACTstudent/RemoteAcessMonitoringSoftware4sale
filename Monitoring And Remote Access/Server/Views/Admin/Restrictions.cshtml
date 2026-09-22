@@ -7,9 +7,6 @@
 <!-- Header Row -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div class="d-flex align-items-center gap-3">
-        <div class="icon-box-primary">
-            <i class="bi bi-slash-circle-fill fs-3"></i>
-        </div>
         <div>
             <h2 class="page-title">Whitelist & Blacklist Security Policies</h2>
             <p class="text-muted mb-0 small">Enforce website domain rules across all student workstations</p>
@@ -34,19 +31,19 @@
 
 <!-- Rule Directory Card -->
 <div class="row g-3 mb-4">
-    <div class="col-md-4"><div class="metric-card d-flex justify-content-between align-items-center"><div><div class="metric-title">Total Rules</div><div class="metric-value">@Model.Restrictions.Count</div></div><div class="metric-icon-box"><i class="bi bi-shield-check fs-3" aria-hidden="true"></i></div></div></div>
-    <div class="col-md-4"><div class="metric-card metric-card-emerald d-flex justify-content-between align-items-center"><div><div class="metric-title">Active Rules</div><div class="metric-value">@Model.Restrictions.Count(rule => rule.IsActive)</div></div><div class="metric-icon-box"><i class="bi bi-check-circle fs-3" aria-hidden="true"></i></div></div></div>
-    <div class="col-md-4"><div class="metric-card d-flex justify-content-between align-items-center"><div><div class="metric-title">Inactive Rules</div><div class="metric-value">@Model.Restrictions.Count(rule => !rule.IsActive)</div></div><div class="metric-icon-box"><i class="bi bi-pause-circle fs-3" aria-hidden="true"></i></div></div></div>
+    <div class="col-md-4"><div class="metric-card d-flex justify-content-between align-items-center"><div><div class="metric-title">Total Rules</div><div class="metric-value">@Model.Restrictions.Count</div></div><div class="metric-icon-box"><i class="bi bi-shield-fill-check fs-3" aria-hidden="true"></i></div></div></div>
+    <div class="col-md-4"><div class="metric-card metric-card-emerald d-flex justify-content-between align-items-center"><div><div class="metric-title">Active Rules</div><div class="metric-value">@Model.Restrictions.Count(rule => rule.IsActive)</div></div><div class="metric-icon-box"><i class="bi bi-check-circle-fill fs-3" aria-hidden="true"></i></div></div></div>
+    <div class="col-md-4"><div class="metric-card d-flex justify-content-between align-items-center"><div><div class="metric-title">Inactive Rules</div><div class="metric-value">@Model.Restrictions.Count(rule => !rule.IsActive)</div></div><div class="metric-icon-box"><i class="bi bi-pause-circle-fill fs-3" aria-hidden="true"></i></div></div></div>
 </div>
 
 <div class="card crud-panel border-0 shadow-sm rounded-4 overflow-hidden mb-4" data-crud-list data-crud-label="restriction rules" data-crud-page-size="6">
     <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
         <h5 class="fw-bold mb-0 text-dark">Security Policies</h5>
-        <span class="badge bg-light text-dark font-monospace fs-6">@Model.Restrictions.Count Rules</span>
+        <span class="badge bg-light text-dark font-monospace fs-6 fw-normal">@Model.Restrictions.Count Rules</span>
     </div>
     <div class="crud-toolbar">
         <input type="search" class="form-control crud-search" data-crud-search aria-label="Search restriction rules" placeholder="Search restriction rule..." />
-        <select class="form-select" data-crud-filter="status" aria-label="Filter restriction rules by status"><option value="">All statuses</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
+        <select class="form-select" data-crud-filter="status" aria-label="Filter restriction rules by status"><option value="">All status</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
         <button type="button" class="btn btn-emerald" data-bs-toggle="modal" data-bs-target="#createRuleModal"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Add Restriction Rule</button>
     </div>
     <div class="table-responsive">
@@ -88,14 +85,14 @@
                             </span>
                         </td>
                         <td class="text-end">
-                            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editRule-@r.RestrictionRuleId">Edit</button>
+                            <div class="crud-actions d-flex justify-content-end gap-1">
+                            <button class="btn btn-sm btn-outline-emerald crud-action" data-bs-toggle="modal" data-bs-target="#editRule-@r.RestrictionRuleId" title="Edit rule"><i class="bi bi-pencil-square" aria-hidden="true"></i><span class="visually-hidden">Edit rule</span></button>
                             <form method="post" action="/Admin/DeleteRestriction" class="form-inline-action" data-confirm="Delete this security rule?" data-confirm-title="Delete security rule" data-confirm-label="Delete">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@r.RestrictionRuleId" />
-                                <button class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                                    <i class="bi bi-trash me-1"></i> Delete
-                                </button>
+                                <button class="btn btn-sm btn-outline-danger crud-action" title="Delete rule"><i class="bi bi-trash" aria-hidden="true"></i><span class="visually-hidden">Delete rule</span></button>
                             </form>
+                            </div>
                         </td>
                     </tr>
                 }
@@ -120,7 +117,7 @@
                 <div class="card-header bg-white py-3"><h5 class="fw-bold mb-0">@categorySet.Name Categories</h5></div>
                 <div class="crud-toolbar">
                     <input type="search" class="form-control crud-search" data-crud-search aria-label="Search @categorySet.Name categories" placeholder="Search category..." />
-                    <select class="form-select" data-crud-filter="status" aria-label="Filter @categorySet.Name categories by status"><option value="">All statuses</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
+                    <select class="form-select" data-crud-filter="status" aria-label="Filter @categorySet.Name categories by status"><option value="">All status</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
                     <button type="button" class="btn btn-emerald" data-bs-toggle="modal" data-bs-target="#create-@categorySet.Name"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Add Category</button>
                 </div>
                 <div class="table-responsive"><table class="table custom-table align-middle mb-0"><thead><tr><th>Name / Pattern</th><th>Mode</th><th>Status</th><th class="text-end">Actions</th></tr></thead><tbody>
@@ -128,7 +125,7 @@
         {
             var app = raw as Server.Models.ApplicationCategory; var web = raw as Server.Models.WebsiteCategory;
             var id = app?.ApplicationCategoryId ?? web?.WebsiteCategoryId ?? 0; var name = app?.Name ?? web?.Name ?? ""; var pattern = app?.Pattern ?? web?.DomainPattern ?? ""; var mode = app?.Mode ?? web?.Mode ?? "Block"; var active = app?.IsActive ?? web?.IsActive ?? false;
-            <tr data-crud-item data-status="@(active ? "Active" : "Inactive")"><td><strong>@name</strong><br /><code>@pattern</code></td><td>@mode</td><td><span class="badge @(active ? "bg-success" : "bg-secondary")">@(active ? "Active" : "Inactive")</span></td><td class="text-end"><button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#edit-@categorySet.Name-@id">Edit</button><form class="d-inline" method="post" action="/Admin/Delete@(categorySet.Name)Category" data-confirm="Delete this category?" data-confirm-title="Delete category" data-confirm-label="Delete">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@id" /><button class="btn btn-sm btn-outline-danger">Delete</button></form></td></tr>
+            <tr data-crud-item data-status="@(active ? "Active" : "Inactive")"><td><strong>@name</strong><br /><code>@pattern</code></td><td>@mode</td><td><span class="status-chip @(active ? "is-active" : "is-inactive")">@(active ? "Active" : "Inactive")</span></td><td class="text-end"><button class="btn btn-sm btn-outline-emerald crud-action" data-bs-toggle="modal" data-bs-target="#edit-@categorySet.Name-@id" title="Edit category"><i class="bi bi-pencil-square" aria-hidden="true"></i><span class="visually-hidden">Edit category</span></button><form class="d-inline" method="post" action="/Admin/Delete@(categorySet.Name)Category" data-confirm="Delete this category?" data-confirm-title="Delete category" data-confirm-label="Delete">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@id" /><button class="btn btn-sm btn-outline-danger crud-action" title="Delete category"><i class="bi bi-trash" aria-hidden="true"></i><span class="visually-hidden">Delete category</span></button></form></td></tr>
         }
         @if (!categorySet.Items.Any()) { <tr><td colspan="4" class="text-center empty-state"><i class="bi bi-tags empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No categories configured.</span></td></tr> }
                 </tbody></table></div>

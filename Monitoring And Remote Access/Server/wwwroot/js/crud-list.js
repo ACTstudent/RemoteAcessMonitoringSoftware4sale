@@ -40,7 +40,12 @@
         const empty = own('[data-crud-empty]')[0];
         if (!footer) return;
         const label = panel.dataset.crudLabel || 'records';
-        const pageSize = Math.max(1, Number.parseInt(panel.dataset.crudPageSize, 10) || 6);
+        // A panel marked data-crud-scroll shows everything and scrolls in its own
+        // box, rather than splitting the records over numbered pages.
+        const scrolls = panel.hasAttribute('data-crud-scroll');
+        const pageSize = scrolls
+            ? Number.POSITIVE_INFINITY
+            : Math.max(1, Number.parseInt(panel.dataset.crudPageSize, 10) || 6);
         const storageKey = `cams.directory:${location.pathname}${location.search}:${index}`;
         // A view writes its empty state as a heading and a sentence beneath it.
         // Reading textContent off the wrapper runs the two together - "No classes
@@ -107,6 +112,7 @@
                 ? `Showing ${start + 1}–${Math.min(start + pageSize, matches.length)} of ${matches.length} ${label}${matches.length < items.length ? ` (${items.length} total)` : ''}`
                 : `Showing 0 of ${items.length} ${label}`;
             navigation.replaceChildren();
+            if (scrolls) return;   // nothing to page through
             const addButton = (text, accessibleName, target, disabled, current = false) => {
                 const button = document.createElement('button');
                 button.type = 'button';

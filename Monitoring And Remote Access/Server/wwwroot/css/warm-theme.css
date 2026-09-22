@@ -320,3 +320,142 @@ body.login-page {
         .deployment-bundle-form .input-group { display: grid; gap: .75rem; }
         .deployment-bundle-form .form-select, .deployment-bundle-form .btn { width: 100%; border-radius: var(--radius-md) !important; }
     }
+
+/* ======================================================================
+   Admin portal refinements
+
+   These are the parts of the design review that repeat on every table
+   page, so they live here once rather than as per-view markup.
+   ====================================================================== */
+
+/* Stat cards. The icon sits in a filled circle, so the three cards in a row
+   read as one set. The muted variant keeps the circle instead of fading to
+   nothing, which is what made the Inactive card look unfinished. */
+.metric-icon-box {
+    border-radius: 50%;
+    background-color: var(--accent-emerald);
+    color: #fff;
+    flex: 0 0 auto;
+}
+.metric-icon-box i { font-weight: 700; }
+.metric-icon-box.is-muted {
+    background-color: var(--border-strong);
+    color: #fff;
+}
+
+/* A line under the card title saying what the number counts. */
+.metric-note {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+    line-height: 1.35;
+}
+
+/* Row actions carry no outline until you reach for them. Every row used to
+   show a line of outlined pills, which competed with the data. */
+.crud-actions { align-items: center; }
+.crud-actions .crud-action {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    /* .btn-outline-emerald sets its border with !important, so the reset has
+       to match it or the edit icon keeps the ring the review asked to drop. */
+    border-color: transparent !important;
+    background-color: transparent !important;
+    transition: background-color 0.15s ease;
+}
+.crud-actions .crud-action:hover,
+.crud-actions .crud-action:focus-visible,
+.crud-actions .crud-action:active {
+    border-color: transparent !important;
+    background-color: var(--surface-sunk) !important;
+}
+.crud-actions .crud-action:hover { color: var(--text-on-sage) !important; }
+.crud-actions .btn-outline-danger.crud-action:hover { color: var(--cams-danger) !important; }
+
+/* Status reads as a tinted chip with a dot, not a block of solid colour. */
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.8rem;
+    font-weight: 600;
+    background-color: var(--surface-sunk);
+    color: var(--text-on-sage);
+}
+.status-chip::before {
+    content: "";
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background-color: currentColor;
+    flex: 0 0 auto;
+}
+.status-chip.is-active { background-color: var(--cams-success-tint); color: var(--cams-success-ink); }
+.status-chip.is-inactive { background-color: var(--surface-sunk); color: var(--text-muted); }
+
+/* Category and role labels were solid black, which read as an error state. */
+.badge.bg-dark {
+    background-color: var(--surface-sunk) !important;
+    color: var(--text-on-sage) !important;
+    font-weight: 600;
+}
+
+/* Tables: one row height, middles aligned, the action column to the right. */
+.custom-table > :not(caption) > * > * { padding-top: 0.85rem; padding-bottom: 0.85rem; }
+.custom-table th, .custom-table td { vertical-align: middle; }
+.custom-table td:last-child, .custom-table th:last-child { text-align: right; }
+
+/* Detail lists on the LAN, Deployment and Database pages sat too tight to
+   scan. The rows get room and a hairline between them. */
+.detail-rows > * + * { margin-top: 0.85rem; padding-top: 0.85rem; border-top: 1px solid var(--surface-line); }
+.detail-rows dt, .detail-rows .detail-label { color: var(--text-muted); font-size: 0.8rem; font-weight: 600; }
+.detail-rows dd, .detail-rows .detail-value { margin-bottom: 0; line-height: 1.6; }
+
+/* A button whose icon should read as part of the label, not a badge on it. */
+.btn .icon-plain { background: none !important; border-radius: 0; padding: 0; width: auto; height: auto; }
+
+/* "Finish setting up CAMS" filled the left of its card and left the right
+   half empty. The steps run in two columns from medium up, with room
+   between them and between each step. */
+@media (min-width: 768px) {
+    .setup-step-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 2.75rem;
+        row-gap: 1.15rem;
+        align-items: start;
+    }
+}
+.setup-step { line-height: 1.55; }
+.setup-step-body { display: flex; flex-direction: column; gap: 0.2rem; }
+.setup-step-why { color: var(--text-muted); font-size: 0.85rem; }
+.setup-step-action { font-size: 0.85rem; font-weight: 600; }
+.setup-checklist .card-body { padding: 1.5rem 1.75rem; }
+
+/* The class directory scrolls in place instead of paging, so moving through
+   sections does not reload the grid under you. */
+.crud-scroll-area {
+    max-height: 62vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 0.35rem;
+}
+.crud-panel[data-crud-scroll] .crud-footer { justify-content: flex-start; }
+
+/* LAN status, Deployment Hub and Database Maintenance are read, not scanned,
+   so their definition lists get room to breathe and a rule between rows. */
+.detail-rows-grid > dt, .detail-rows-grid > dd { padding-top: 0.7rem; padding-bottom: 0.7rem; line-height: 1.65; }
+.detail-rows-grid > dt { color: var(--text-muted); font-weight: 600; }
+.detail-rows-grid > dt:not(:first-of-type), .detail-rows-grid > dd:not(:first-of-type) { border-top: 1px solid var(--surface-line); }
+
+/* Database Maintenance lays its facts out in list groups rather than a dl. */
+.database-page .list-group-item { padding-top: 0.8rem; padding-bottom: 0.8rem; line-height: 1.65; }
+.database-page .card-body { padding: 1.5rem; }
+.database-page dl > dt, .database-page dl > dd { padding-top: 0.6rem; padding-bottom: 0.6rem; line-height: 1.6; }

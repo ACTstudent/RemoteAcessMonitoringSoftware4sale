@@ -7,9 +7,6 @@
 <!-- Header Row -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div class="d-flex align-items-center gap-3">
-        <div class="icon-box-primary">
-            <i class="bi bi-key-fill fs-3"></i>
-        </div>
         <div>
             <h2 class="page-title">Roles & Permissions</h2>
             <p class="text-muted mb-0 small">Manage role-based access control (RBAC) privileges for Administrators, Teachers, and Students</p>
@@ -21,7 +18,7 @@
 <!-- Roles Table Card -->
 <div class="crud-panel" data-crud-list data-crud-label="roles" data-crud-page-size="6">
     <div class="crud-toolbar"><input type="search" class="form-control crud-search" data-crud-search placeholder="Search roles..." aria-label="Search roles" /><button class="btn btn-emerald rounded-pill px-4 py-2 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#createRoleModal">
-        <i class="bi bi-plus-circle-fill me-1"></i> Add Custom Role
+        <i class="bi bi-plus-lg me-1"></i> Add Custom Role
     </button></div>
     <div class="table-responsive">
         <table class="table custom-table align-middle mb-0">
@@ -57,13 +54,13 @@
                             }
                         </td>
                         <td class="text-end">
+                            <div class="crud-actions d-flex justify-content-end gap-1">
                             <form method="post" action="/Admin/DeleteRole" class="form-inline-action" data-confirm="Delete this role?" data-confirm-title="Delete role" data-confirm-label="Delete">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@r.RoleId" />
-                                <button class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                                    <i class="bi bi-trash me-1"></i> Delete
-                                </button>
+                                <button class="btn btn-sm btn-outline-danger crud-action" title="Delete role"><i class="bi bi-trash" aria-hidden="true"></i><span class="visually-hidden">Delete role</span></button>
                             </form>
+                            </div>
                         </td>
                     </tr>
                 }

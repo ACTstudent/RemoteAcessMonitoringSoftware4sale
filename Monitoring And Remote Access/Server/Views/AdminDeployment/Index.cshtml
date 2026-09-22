@@ -7,7 +7,6 @@
 
 <div class="deployment-heading mb-4">
     <div class="d-flex align-items-center gap-3">
-        <div class="icon-box-primary"><i class="bi bi-box-seam-fill fs-3"></i></div>
         <div>
             <h2 class="fw-extrabold mb-0 text-dark">CAMS Deployment Hub</h2>
             <p class="text-muted mb-0 small">Verified packages for authenticated local workstation deployment</p>
@@ -31,9 +30,8 @@
                     <h5 class="fw-bold mb-1">Client package</h5>
                     <div class="text-muted small">Every download is revalidated against the packaged manifest.</div>
                 </div>
-                <i class="bi bi-file-earmark-lock2 fs-2 text-emerald-700"></i>
             </div>
-            <dl class="row small deployment-details">
+            <dl class="row small deployment-details detail-rows-grid">
                 <dt class="col-sm-4">Product</dt><dd class="col-sm-8">@(Model.Product ?? "Unavailable")</dd>
                 <dt class="col-sm-4">Client version</dt><dd class="col-sm-8">@(Model.ClientVersion ?? "Unavailable")</dd>
                 <dt class="col-sm-4">Server version</dt><dd class="col-sm-8">@Model.ServerVersion</dd>
@@ -55,7 +53,7 @@
         <section class="card border-0 shadow-sm rounded-4 h-100 p-4">
             <h5 class="fw-bold mb-3"><i class="bi bi-patch-check-fill me-2 text-emerald-700"></i>Active HTTPS certificate</h5>
             <div class="badge bg-light text-dark border align-self-start mb-3">@Model.CertificateMode</div>
-            <dl class="small deployment-details mb-0">
+            <dl class="small deployment-details detail-rows-grid mb-0">
                 <dt>Subject</dt><dd>@(Model.CertificateSubject ?? "Unavailable")</dd>
                 <dt>Thumbprint</dt><dd><code class="hash-value">@(Model.CertificateThumbprint ?? "Unavailable")</code></dd>
                 <dt>Certificate SHA256</dt><dd><code class="hash-value">@(Model.CertificateSha256 ?? "Unavailable")</code></dd>

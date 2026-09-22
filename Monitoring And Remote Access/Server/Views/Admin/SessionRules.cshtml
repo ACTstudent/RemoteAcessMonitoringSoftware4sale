@@ -7,9 +7,6 @@
 <!-- Header Row -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div class="d-flex align-items-center gap-3">
-        <div class="icon-box-primary">
-            <i class="bi bi-hourglass-split fs-3"></i>
-        </div>
         <div>
             <h2 class="page-title">Session Policy Rules</h2>
             <p class="text-muted mb-0 small">Configure timed 45-minute lab session rules, remote control, and pause limits</p>
@@ -19,19 +16,19 @@
 
 <!-- Session Rules Table Card -->
 <div class="row g-3 mb-4">
-    <div class="col-md-4"><div class="metric-card d-flex justify-content-between align-items-center"><div><div class="metric-title">Total Rules</div><div class="metric-value">@Model.Count()</div></div><div class="metric-icon-box"><i class="bi bi-shield-check fs-3" aria-hidden="true"></i></div></div></div>
-    <div class="col-md-4"><div class="metric-card metric-card-emerald d-flex justify-content-between align-items-center"><div><div class="metric-title">Active Rules</div><div class="metric-value">@Model.Count(rule => rule.IsActive)</div></div><div class="metric-icon-box"><i class="bi bi-check-circle fs-3" aria-hidden="true"></i></div></div></div>
-    <div class="col-md-4"><div class="metric-card d-flex justify-content-between align-items-center"><div><div class="metric-title">Inactive Rules</div><div class="metric-value">@Model.Count(rule => !rule.IsActive)</div></div><div class="metric-icon-box"><i class="bi bi-pause-circle fs-3" aria-hidden="true"></i></div></div></div>
+    <div class="col-md-4"><div class="metric-card d-flex justify-content-between align-items-center"><div><div class="metric-title">Total Rules</div><div class="metric-value">@Model.Count()</div></div><div class="metric-icon-box"><i class="bi bi-shield-fill-check fs-3" aria-hidden="true"></i></div></div></div>
+    <div class="col-md-4"><div class="metric-card metric-card-emerald d-flex justify-content-between align-items-center"><div><div class="metric-title">Active Rules</div><div class="metric-value">@Model.Count(rule => rule.IsActive)</div></div><div class="metric-icon-box"><i class="bi bi-check-circle-fill fs-3" aria-hidden="true"></i></div></div></div>
+    <div class="col-md-4"><div class="metric-card d-flex justify-content-between align-items-center"><div><div class="metric-title">Inactive Rules</div><div class="metric-value">@Model.Count(rule => !rule.IsActive)</div></div><div class="metric-icon-box"><i class="bi bi-pause-circle-fill fs-3" aria-hidden="true"></i></div></div></div>
 </div>
 
 <div class="card crud-panel border-0 shadow-sm rounded-4 overflow-hidden mb-4" data-crud-list data-crud-label="session rules" data-crud-page-size="6">
     <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
         <h5 class="fw-bold mb-0 text-dark">Lab Session Rule Policies</h5>
-        <span class="badge bg-light text-dark font-monospace fs-6">@Model.Count() Policies</span>
+        <span class="badge bg-light text-dark font-monospace fs-6 fw-normal">@Model.Count() Policies</span>
     </div>
     <div class="crud-toolbar">
         <input type="search" class="form-control crud-search" data-crud-search aria-label="Search session rules" placeholder="Search session rule..." />
-        <select class="form-select" data-crud-filter="status" aria-label="Filter session rules by status"><option value="">All statuses</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
+        <select class="form-select" data-crud-filter="status" aria-label="Filter session rules by status"><option value="">All status</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
         <button type="button" class="btn btn-emerald" data-bs-toggle="modal" data-bs-target="#createSessionRuleModal"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Add Session Rule</button>
     </div>
     <div class="table-responsive">
@@ -71,14 +68,14 @@
                             </span>
                         </td>
                         <td class="text-end">
-                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editSessionRule-@r.SessionRuleId">Edit</button>
+                            <div class="crud-actions d-flex justify-content-end gap-1">
+                            <button type="button" class="btn btn-sm btn-outline-emerald crud-action" data-bs-toggle="modal" data-bs-target="#editSessionRule-@r.SessionRuleId" title="Edit policy"><i class="bi bi-pencil-square" aria-hidden="true"></i><span class="visually-hidden">Edit policy</span></button>
                             <form method="post" action="/Admin/DeleteSessionRule" class="form-inline-action" data-confirm="Deactivate this rule while retaining historical sessions?" data-confirm-title="Deactivate session rule" data-confirm-label="Deactivate">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@r.SessionRuleId" />
-                                <button class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                                    <i class="bi bi-archive me-1"></i> Deactivate
-                                </button>
+                                <button class="btn btn-sm btn-outline-danger crud-action" title="Deactivate policy"><i class="bi bi-archive" aria-hidden="true"></i><span class="visually-hidden">Deactivate policy</span></button>
                             </form>
+                            </div>
                         </td>
                     </tr>
                 }

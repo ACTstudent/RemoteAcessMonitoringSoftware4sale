@@ -22,9 +22,6 @@
 <!-- Header Row -->
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div class="d-flex align-items-center gap-3">
-        <div class="icon-box-primary">
-            <i class="bi bi-journal-text fs-3"></i>
-        </div>
         <div>
             <h2 class="page-title">System Audit Trail</h2>
             <p class="text-muted mb-0 small">Security event tracking, administrative actions, and user login history</p>
@@ -78,7 +75,7 @@
                             </button>
                         </td>
                         <td>
-                            <span class="badge @(actor.UserType == "Admin" ? "bg-dark" : "bg-success") rounded-pill px-3 py-1 font-monospace">
+                            <span class="badge @(actor.UserType == "Admin" ? "bg-dark" : "bg-success-subtle text-success-emphasis") rounded-pill px-3 py-1 font-monospace">
                                 @actor.UserType
                             </span>
                         </td>

@@ -12,7 +12,6 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div class="d-flex align-items-center gap-3">
-        <div class="icon-box-primary"><i class="bi bi-shield-lock-fill fs-3"></i></div>
         <div>
             <h2 class="page-title">Account Security</h2>
             <p class="text-muted mb-0 small">Manage your password and administrator account availability</p>
@@ -40,7 +39,7 @@
     <div class="col-md-4">
         <div class="metric-card d-flex justify-content-between align-items-center">
             <div><div class="metric-title">Inactive Administrators</div><div class="metric-value text-muted">@inactiveAdminCount</div></div>
-            <div class="metric-icon-box bg-light text-secondary"><i class="bi bi-person-dash-fill fs-3"></i></div>
+            <div class="metric-icon-box is-muted"><i class="bi bi-person-dash-fill fs-3"></i></div>
         </div>
     </div>
 </div>
@@ -51,7 +50,7 @@
             <div class="crud-toolbar">
                 <input type="search" class="form-control crud-search" data-crud-search aria-label="Search administrators" placeholder="Search administrator..." />
                 <select class="form-select" data-crud-filter="status" aria-label="Filter administrators by status">
-                    <option value="">All Statuses</option>
+                    <option value="">All status</option>
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
                 </select>
@@ -83,7 +82,7 @@
                                 </td>
                                 <td>@admin.Username</td>
                                 <td>
-                                    <span class="badge @(admin.IsActive ? "bg-success" : "bg-secondary") rounded-pill">@(admin.IsActive ? "Active" : "Inactive")</span>
+                                    <span class="status-chip @(admin.IsActive ? "is-active" : "is-inactive")">@(admin.IsActive ? "Active" : "Inactive")</span>
                                     @if (isLocked)
                                     {
                                         <span class="badge bg-danger rounded-pill ms-1">Locked</span>

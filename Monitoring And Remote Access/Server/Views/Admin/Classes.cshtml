@@ -12,10 +12,9 @@
 }
 
 <div class="crud-page-header d-flex align-items-center gap-3 mb-4">
-    <div class="icon-box-primary"><i class="bi bi-collection-fill fs-3" aria-hidden="true"></i></div>
     <div>
         <h2 class="fw-extrabold mb-1 text-dark">Class Management</h2>
-        <p class="text-muted mb-0 small">Manage sections, teachers, and student profiles. @totalStudentsEnrolled enrolled student profile(s).</p>
+        <p class="text-muted mb-0 small">Manage sections, teachers, and student profiles.</p>
     </div>
 </div>
 
@@ -29,18 +28,18 @@
     <div class="col-md-4">
         <div class="metric-card metric-card-emerald d-flex justify-content-between align-items-center">
             <div><div class="metric-title">Active Classes</div><div class="metric-value">@activeCount</div></div>
-            <div class="metric-icon-box"><i class="bi bi-folder-check" aria-hidden="true"></i></div>
+            <div class="metric-icon-box"><i class="bi bi-check-circle-fill" aria-hidden="true"></i></div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="metric-card metric-card-muted d-flex justify-content-between align-items-center">
             <div><div class="metric-title">Archived Classes</div><div class="metric-value">@archivedCount</div></div>
-            <div class="metric-icon-box bg-light text-secondary"><i class="bi bi-archive-fill" aria-hidden="true"></i></div>
+            <div class="metric-icon-box is-muted"><i class="bi bi-archive-fill" aria-hidden="true"></i></div>
         </div>
     </div>
 </div>
 
-<section class="crud-panel" data-crud-list data-crud-label="classes" data-crud-page-size="6" aria-label="Class directory">
+<section class="crud-panel" data-crud-list data-crud-scroll data-crud-label="classes" aria-label="Class directory">
     <div class="crud-toolbar">
         <input type="search" class="form-control crud-search" data-crud-search aria-label="Search classes" placeholder="Search classes..." />
         <select class="form-select" data-crud-filter="grade" aria-label="Filter class grade">
@@ -51,13 +50,13 @@
             }
         </select>
         <select class="form-select" data-crud-filter="status" aria-label="Filter class status">
-            <option value="">All statuses</option>
+            <option value="">All status</option>
             <option value="Active">Active</option>
             <option value="Archived">Archived</option>
         </select>
         <button type="button" class="btn btn-emerald" data-bs-toggle="modal" data-bs-target="#createClassModal"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Create Class</button>
     </div>
-    <div class="crud-grid row g-3">
+    <div class="crud-grid crud-scroll-area row g-3">
         @foreach (var item in classes)
         {
             var status = item.IsArchived ? "Archived" : "Active";
@@ -79,16 +78,16 @@
                     </div>
                     <a asp-controller="Admin" asp-action="ClassDetails" asp-route-id="@item.ClassId" class="btn btn-view-class w-100 mt-auto">View Class<span class="visually-hidden"> @item.ClassName</span></a>
                     <div class="crud-card-actions d-flex justify-content-end flex-wrap gap-2 mt-2">
-                        <button type="button" class="btn btn-sm btn-outline-emerald" data-bs-toggle="modal" data-bs-target="#editClassModal-@item.ClassId" title="Edit class"><i class="bi bi-pencil me-1" aria-hidden="true"></i>Edit<span class="visually-hidden"> @item.ClassName</span></button>
+                        <button type="button" class="btn btn-sm btn-outline-emerald rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editClassModal-@item.ClassId" title="Edit class"><i class="bi bi-pencil me-1" aria-hidden="true"></i>Edit<span class="visually-hidden"> @item.ClassName</span></button>
                         <form method="post" asp-controller="Admin" asp-action="ArchiveClass" class="m-0">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@item.ClassId" />
-                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="@(item.IsArchived ? "Restore class" : "Archive class")"><i class="bi @(item.IsArchived ? "bi-arrow-counterclockwise" : "bi-archive") me-1" aria-hidden="true"></i>@(item.IsArchived ? "Restore" : "Archive")<span class="visually-hidden"> @item.ClassName</span></button>
+                            <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill px-3" title="@(item.IsArchived ? "Restore class" : "Archive class")"><i class="bi @(item.IsArchived ? "bi-arrow-counterclockwise" : "bi-archive") me-1" aria-hidden="true"></i>@(item.IsArchived ? "Restore" : "Archive")<span class="visually-hidden"> @item.ClassName</span></button>
                         </form>
                         <form method="post" asp-controller="Admin" asp-action="DeleteClass" class="m-0" data-confirm="Delete this class and its enrollment links? Student accounts will be preserved." data-confirm-title="Delete class" data-confirm-label="Delete">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="classId" value="@item.ClassId" />
-                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete class"><i class="bi bi-trash" aria-hidden="true"></i><span class="visually-hidden">Delete @item.ClassName</span></button>
+                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3" title="Delete class"><i class="bi bi-trash me-1" aria-hidden="true"></i>Delete<span class="visually-hidden"> @item.ClassName</span></button>
                         </form>
                     </div>
                 </article>

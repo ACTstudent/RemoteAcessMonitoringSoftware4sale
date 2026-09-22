@@ -13,12 +13,9 @@
 <!-- Header Row -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div class="d-flex align-items-center gap-3">
-        <div class="icon-box-primary">
-            <i class="bi bi-mortarboard-fill fs-3"></i>
-        </div>
         <div>
             <h2 class="page-title">Student Management</h2>
-            <p class="text-muted mb-0 small">Manage student profiles, LRNs, and workstation assignments</p>
+            <p class="text-muted mb-0 small">Manage student profiles and workstation assignments</p>
         </div>
     </div>
     <div class="d-flex gap-2 flex-wrap justify-content-end">
@@ -61,7 +58,7 @@
                 <div class="metric-title">Inactive Students</div>
                 <div class="metric-value text-muted">@inactiveStudents</div>
             </div>
-            <div class="metric-icon-box bg-light text-secondary">
+            <div class="metric-icon-box is-muted">
                 <i class="bi bi-person-dash-fill fs-3"></i>
             </div>
         </div>
@@ -73,7 +70,7 @@
     <div class="crud-toolbar">
         <input id="studentSearch" type="search" class="form-control crud-search" data-crud-search aria-label="Search students" placeholder="Search student name, ID, or username..." />
         <select class="form-select" data-crud-filter="status" aria-label="Filter students by status">
-            <option value="">All Statuses</option>
+            <option value="">All status</option>
             <option value="Active">Active</option>
             <option value="Inactive">Inactive</option>
         </select>

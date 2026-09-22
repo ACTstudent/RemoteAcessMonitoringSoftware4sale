@@ -7,9 +7,6 @@
 <!-- Header Row -->
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div class="d-flex align-items-center gap-3">
-        <div class="icon-box-primary">
-            <i class="bi bi-bar-chart-line-fill fs-3"></i>
-        </div>
         <div>
             <h2 class="page-title">Administrative Analytics & Reports</h2>
             <p class="text-muted mb-0 small">Export session logs, workstation allocation, and active application usage</p>
@@ -44,7 +41,7 @@
         </div>
          <div class="col-md-4"><label class="form-label fw-semibold text-muted small mb-1" for="reports-class">Class</label><select id="reports-class" name="classId" class="form-select"><option value="">All classes</option>@foreach (var cls in (IEnumerable<Server.Models.Class>)(ViewBag.Classes ?? Array.Empty<Server.Models.Class>())) { <option value="@cls.ClassId" selected="@(Context.Request.Query["classId"] == cls.ClassId.ToString() ? "selected" : null)">@cls.ClassName</option> }</select></div>
          <div class="col-md-4"><label class="form-label fw-semibold text-muted small mb-1" for="reports-laboratory-station">Laboratory station</label><select id="reports-laboratory-station" name="station" class="form-select"><option value="">All stations</option>@foreach (var computer in (IEnumerable<Server.Models.Computer>)(ViewBag.Stations ?? Array.Empty<Server.Models.Computer>())) { <option value="@computer.LaboratoryStation" selected="@(ViewBag.SelectedStation == computer.LaboratoryStation ? "selected" : null)">@computer.LaboratoryStation</option> }</select></div>
-         <div class="col-md-4 d-flex gap-2 align-items-end"><a class="btn btn-outline-secondary" href="@Url.Action("ExportAttendanceCsv", new { from = ViewBag.FromDate, to = ViewBag.ToDate, classId = Context.Request.Query["classId"] })">Attendance CSV</a><a class="btn btn-outline-secondary" href="@Url.Action("ExportRemoteCommandsCsv", new { from = ViewBag.FromDate, to = ViewBag.ToDate })">Remote CSV</a></div>
+         <div class="col-md-4 d-flex flex-wrap gap-2 align-items-end"><a class="btn btn-outline-secondary rounded-pill px-3" href="@Url.Action("ExportAttendanceCsv", new { from = ViewBag.FromDate, to = ViewBag.ToDate, classId = Context.Request.Query["classId"] })"><i class="bi bi-download me-1"></i>Attendance CSV</a><a class="btn btn-outline-secondary rounded-pill px-3" href="@Url.Action("ExportRemoteCommandsCsv", new { from = ViewBag.FromDate, to = ViewBag.ToDate })"><i class="bi bi-download me-1"></i>Remote CSV</a></div>
     </form>
 </div>
 
@@ -58,7 +55,7 @@
                 <div class="metric-title">Total Sessions Logged</div>
                 <div class="metric-value text-success">@ViewBag.TotalSessions</div>
             </div>
-            <div class="metric-icon-box bg-success text-white">
+            <div class="metric-icon-box">
                 <i class="bi bi-journal-check fs-3"></i>
             </div>
         </div>
