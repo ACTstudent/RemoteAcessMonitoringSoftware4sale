@@ -1052,42 +1052,21 @@ body {
     color: #b91c1c;
 }
 
-/* Greeting strip at the top of the student dashboard. */
-.student-hero {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 1.5rem 1.75rem;
-    margin-bottom: 1.5rem;
-    border-radius: var(--card-border-radius);
-    color: #fff;
-    background: linear-gradient(135deg, var(--sidebar-bg), var(--sidebar-active-bg));
-    box-shadow: 0 12px 28px rgba(22, 64, 31, 0.22);
-}
-
-.student-hero h2 {
-    margin: 0;
-    font-weight: 800;
-    letter-spacing: -0.035em;
-}
-
-.student-hero p {
-    margin: 0.25rem 0 0;
-    color: #BBF3C6;
-    font-size: 0.9rem;
-}
-
-.student-hero .hero-station {
+/* The workstation a student is sitting at, shown on the right of their page
+   header. The student dashboard used to open with a dark gradient banner - the
+   only page in the system that did - so it now uses the same page header as
+   every other page and this chip is what survives of it. */
+.hero-station {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     padding: 0.6rem 1.1rem;
     font-weight: 700;
+    font-size: 0.875rem;
+    color: var(--text-on-sage);
     border-radius: var(--radius-pill);
-    background: rgba(255, 255, 255, 0.14);
-    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: var(--surface-sunk);
+    border: 1px solid var(--card-border);
 }
 
 /* Simple labelled rows used for restrictions and blacklist panels. */
