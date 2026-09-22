@@ -19,7 +19,7 @@ body.login-page {
     align-items: center;
     justify-content: center;
     padding: 1.5rem 1rem;
-    background: radial-gradient(ellipse at top left, #E1EEDC, transparent 65%), var(--body-bg);
+    background: radial-gradient(ellipse at top left, var(--surface-wash), transparent 65%), var(--body-bg);
 }
 .login-shell { width: 100%; max-width: 26rem; }
 .login-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-xl); overflow: hidden; }
@@ -208,10 +208,10 @@ body.login-page {
 .progress { --bs-progress-bar-bg: var(--accent-emerald); --bs-progress-bg: var(--surface-line); }
 .pagination { --bs-pagination-active-bg: var(--accent-emerald); --bs-pagination-active-border-color: var(--accent-emerald); --bs-pagination-hover-color: var(--accent-emerald-hover); --bs-pagination-hover-bg: var(--surface-sunk); }
 .alert-primary, .alert-success { --bs-alert-color: var(--text-on-sage); --bs-alert-bg: var(--surface-sunk); --bs-alert-border-color: var(--border-strong); }
-.alert-info { --bs-alert-color: #69490F; --bs-alert-bg: #FFF5DD; --bs-alert-border-color: #E6D1A7; }
+.alert-info { --bs-alert-color: var(--cams-info-ink); --bs-alert-bg: var(--cams-info-tint); --bs-alert-border-color: var(--cams-info-edge); }
 .badge { border-radius: var(--radius-pill); }
 .btn-link { --bs-btn-color: var(--accent-emerald); --bs-btn-hover-color: var(--accent-emerald-hover); }
-.btn-info { --bs-btn-bg: var(--cams-info); --bs-btn-border-color: var(--cams-info); --bs-btn-color: #fff; --bs-btn-hover-bg: #69490F; --bs-btn-hover-border-color: #69490F; --bs-btn-hover-color: #fff; --bs-btn-active-bg: #69490F; --bs-btn-active-color: #fff; }
+.btn-info { --bs-btn-bg: var(--cams-info); --bs-btn-border-color: var(--cams-info); --bs-btn-color: #fff; --bs-btn-hover-bg: var(--cams-info-ink); --bs-btn-hover-border-color: var(--cams-info-ink); --bs-btn-hover-color: #fff; --bs-btn-active-bg: var(--cams-info-ink); --bs-btn-active-color: #fff; }
 .btn-outline-info { --bs-btn-color: var(--cams-info); --bs-btn-border-color: var(--cams-info); --bs-btn-hover-bg: var(--cams-info); --bs-btn-hover-border-color: var(--cams-info); --bs-btn-hover-color: #fff; --bs-btn-active-bg: var(--cams-info); --bs-btn-active-color: #fff; }
 .btn-primary:hover, .btn-primary:active, .btn-dark:hover, .btn-dark:active { background-color: var(--primary-hover) !important; border-color: var(--primary-hover) !important; }
 .btn-outline-primary:hover, .btn-outline-primary:active { background-color: var(--accent-emerald) !important; color: #fff !important; }
@@ -279,9 +279,9 @@ body.login-page {
 .workstation-card-footer > [id^="time-"] { grid-area: time; min-width: 0; }
 .workstation-card-footer > .btn { grid-area: view; justify-self: end; }
 .monitoring-dashboard .workstation-card .bg-light { background: var(--surface-stripe) !important; }
-.monitoring-dashboard .workstation-card.station-idle { border-color: #E4CE9C; background: #FCF8EE; }
-.monitoring-dashboard .workstation-card.station-idle .bg-light { background: #FCF8EE !important; }
-.monitoring-dashboard .workstation-card.station-alert { border-color: #DCB0B8; }
+.monitoring-dashboard .workstation-card.station-idle { border-color: var(--station-idle-edge); background: var(--station-idle-bg); }
+.monitoring-dashboard .workstation-card.station-idle .bg-light { background: var(--station-idle-bg) !important; }
+.monitoring-dashboard .workstation-card.station-alert { border-color: var(--station-alert-edge); }
 .monitoring-dashboard .stream-img { object-fit: contain; }
 .monitoring-dashboard .stream-container { background: var(--surface-sunk); }
 .monitoring-panel-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; border-top: 1px solid var(--surface-line); padding: 14px 18px; font-size: .72rem; color: var(--text-muted); }

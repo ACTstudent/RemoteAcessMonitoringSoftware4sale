@@ -212,7 +212,7 @@
        A soft halo rather than a hard outline: a translucent spread reads as a
        highlight around the control instead of a border drawn on top of it. */
     --focus-ring-color: rgba(40, 103, 68, 0.38);
-    --focus-ring-color-on-dark: rgba(187, 243, 198, 0.45);
+    --focus-ring-color-on-dark: rgba(220, 234, 221, 0.45);
     --focus-ring-width: 4px;
 }
 
@@ -303,7 +303,7 @@ body {
 
 .sidebar-brand-sub {
     font-size: 0.72rem;
-    color: #BBF3C6;
+    color: var(--sidebar-ink);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -316,7 +316,7 @@ body {
     min-height: 0;
     overscroll-behavior: contain;
     scrollbar-width: thin;
-    scrollbar-color: rgba(167, 243, 208, 0.45) transparent;
+    scrollbar-color: rgba(40, 103, 68, 0.45) transparent;
 }
 
 .sidebar-nav::-webkit-scrollbar {
@@ -324,7 +324,7 @@ body {
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb {
-    background: rgba(167, 243, 208, 0.42);
+    background: rgba(40, 103, 68, 0.42);
     border-radius: var(--radius-pill);
 }
 
@@ -332,7 +332,7 @@ body {
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #86E3A0;
+    color: var(--sidebar-ink-muted);
     margin: 1.25rem 0 0.5rem 0.75rem;
     font-weight: 700;
 }
@@ -427,7 +427,7 @@ body {
     justify-content: center;
     font-size: 1.1rem;
     font-weight: 700;
-    box-shadow: 0 2px 6px rgba(22, 64, 31, 0.2);
+    box-shadow: 0 2px 6px rgba(32, 59, 40, 0.2);
 }
 
 /* Page Content Padding */
@@ -471,7 +471,7 @@ body {
 .modal-content {
     border: 0;
     border-radius: var(--radius-lg);
-    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
+    box-shadow: 0 24px 70px rgba(32, 59, 40, 0.22);
     overflow: hidden;
 }
 
@@ -516,7 +516,7 @@ body {
 .modal .form-control:focus,
 .modal .form-select:focus {
     border-color: var(--accent-emerald);
-    box-shadow: 0 0 0 3px rgba(23, 128, 58, 0.14);
+    box-shadow: 0 0 0 3px rgba(40, 103, 68, 0.14);
 }
 
 /* Height is applied only to grid-column action cards (below) so they match each
@@ -627,7 +627,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 10px rgba(22, 64, 31, 0.2);
+    box-shadow: 0 4px 10px rgba(32, 59, 40, 0.2);
 }
 
 /* Search and Filters */
@@ -643,7 +643,7 @@ body {
 .filter-control:focus {
     background-color: #ffffff;
     border-color: var(--sidebar-bg);
-    box-shadow: 0 0 0 3px rgba(22, 64, 31, 0.15);
+    box-shadow: 0 0 0 3px rgba(32, 59, 40, 0.15);
 }
 
 .search-input-wrapper {
@@ -828,7 +828,7 @@ body {
     position: relative;
     width: 100%;
     padding-top: 56.25%; /* 16:9 Aspect Ratio */
-    background: #09090b;
+    background: var(--stream-backdrop);
 }
 
 .stream-img {
@@ -864,7 +864,7 @@ body {
         display: block;
         position: fixed;
         inset: 0;
-        background: rgba(15, 23, 42, 0.45);
+        background: rgba(32, 59, 40, 0.45);
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.25s ease;
@@ -983,13 +983,13 @@ body {
 
 .segmented-tabs .nav-link:hover {
     color: var(--sidebar-bg);
-    background: rgba(23, 128, 58, 0.12);
+    background: rgba(40, 103, 68, 0.12);
 }
 
 .segmented-tabs .nav-link.active {
     color: #ffffff;
     background: var(--accent-emerald);
-    box-shadow: 0 4px 12px rgba(23, 128, 58, 0.28);
+    box-shadow: 0 4px 12px rgba(40, 103, 68, 0.28);
 }
 
 .segmented-tabs .nav-link:focus-visible {
@@ -1012,7 +1012,7 @@ body {
 }
 
 .bulk-select-item:hover {
-    background: rgba(23, 128, 58, 0.10);
+    background: rgba(40, 103, 68, 0.10);
 }
 
 .bulk-select-item .form-check-input:checked {
@@ -1045,11 +1045,11 @@ body {
 }
 
 .session-timer.warn {
-    color: #b45309;
+    color: var(--cams-warning);
 }
 
 .session-timer.expired {
-    color: #b91c1c;
+    color: var(--cams-danger);
 }
 
 /* The workstation a student is sitting at, shown on the right of their page
@@ -1139,7 +1139,7 @@ body {
 
 .password-field .password-toggle:hover {
     color: var(--sidebar-bg);
-    background: rgba(23, 128, 58, 0.12);
+    background: rgba(40, 103, 68, 0.12);
 }
 
 /* ---------------------------------------------------------------------------
@@ -1157,6 +1157,41 @@ body {
     --cams-info: #8A6117;      /* warm ochre - informational, distinct from danger */
     --cams-danger: #B91C1C;
     --cams-warning: #B45309;
+
+    /* The pale companion of each, for a filled badge or an alert body. Every
+       pairing below is the darker value on its own tint, and each was checked
+       for contrast where it is used. These were written out by hand in four
+       places; naming them keeps a warning the same yellow wherever it appears. */
+    --cams-info-tint: #FFF5DD;
+    --cams-info-ink: #69490F;      /* 7.4:1 on the tint */
+    --cams-info-edge: #E6D1A7;
+    --cams-warning-tint: #FEF3C7;
+    --cams-warning-ink: #7C4A03;   /* 6.65:1 on the tint */
+    --cams-danger-tint: #FEE2E2;
+    --cams-danger-ink: #991B1B;    /* 6.80:1 on the tint */
+
+    /* A workstation that has gone quiet, and one that needs attention. */
+    --station-idle-bg: #FCF8EE;
+    --station-idle-edge: #E4CE9C;
+    --station-alert-edge: #DCB0B8;
+
+    /* Success in the same shape as the pairs above. */
+    --cams-success-tint: #E3F2E7;
+    --cams-success-ink: #12622D;   /* 7.29:1 on the tint */
+
+    /* Type on the dark sidebar rail. The two values that were here before
+       came from the old mint palette and read as a different green to the
+       one the rail is painted in; these are the sage the rest of the system
+       already uses, at two weights. */
+    --sidebar-ink: #DCEADD;        /* 5.35:1 on --sidebar-bg */
+    --sidebar-ink-muted: #C3DAC8;  /* 4.50:1 on --sidebar-bg */
+
+    /* The wash behind the sign-in page. */
+    --surface-wash: #E1EEDC;
+
+    /* Letterbox behind a video stream, before the first frame arrives.
+       Near black, biased towards the palette rather than a neutral slate. */
+    --stream-backdrop: #0E1410;
 }
 
 .bg-primary { background-color: var(--cams-primary) !important; }
@@ -1199,10 +1234,10 @@ body {
 }
 
 /* Subtle backgrounds used by badges and callouts. */
-.bg-success-subtle { background-color: #E3F2E7 !important; }
-.bg-danger-subtle { background-color: #FBE6E6 !important; }
-.text-success-emphasis { color: #12622D !important; }
-.text-danger-emphasis { color: #8F1616 !important; }
+.bg-success-subtle { background-color: var(--cams-success-tint) !important; }
+.bg-danger-subtle { background-color: var(--cams-danger-tint) !important; }
+.text-success-emphasis { color: var(--cams-success-ink) !important; }
+.text-danger-emphasis { color: var(--cams-danger-ink) !important; }
 
 /* ---------------------------------------------------------------------------
    Flash notifications
@@ -1234,7 +1269,7 @@ body {
     border: 1px solid var(--card-border);
     border-left: 4px solid var(--cams-success);
     background: #fff;
-    box-shadow: 0 14px 34px rgba(22, 64, 31, 0.18);
+    box-shadow: 0 14px 34px rgba(32, 59, 40, 0.18);
     pointer-events: auto;
     animation: cams-toast-in 0.22s ease-out both;
 }
@@ -1284,7 +1319,7 @@ body {
 
 .cams-toast-close:hover {
     color: var(--text-main);
-    background: rgba(23, 128, 58, 0.12);
+    background: rgba(40, 103, 68, 0.12);
 }
 
 /* Shows how long is left before the toast retires. */
@@ -1456,13 +1491,13 @@ body {
 }
 
 .connection-status-waiting {
-    background: #FEF3C7;
-    color: #7C4A03;          /* 6.65:1 on #FEF3C7 */
+    background: var(--cams-warning-tint);
+    color: var(--cams-warning-ink);   /* 6.65:1 on the tint */
 }
 
 .connection-status-lost {
-    background: #FEE2E2;
-    color: #991B1B;          /* 6.80:1 on #FEE2E2 */
+    background: var(--cams-danger-tint);
+    color: var(--cams-danger-ink);    /* 6.80:1 on the tint */
 }
 
 /* ---------------------------------------------------------------------------
@@ -1528,7 +1563,7 @@ summary:focus-visible,
    it is the last thing that was really there - but the card says so, because a
    frozen desktop and a live one look identical. */
 .workstation-card.workstation-stale {
-    border-color: var(--cams-warning, #B45309);
+    border-color: var(--cams-warning);
 }
 
 .workstation-card.workstation-stale img {
