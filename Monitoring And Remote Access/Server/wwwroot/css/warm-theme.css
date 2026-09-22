@@ -331,14 +331,16 @@ body.login-page {
 /* Stat cards. The icon sits in a filled circle, so the three cards in a row
    read as one set. The muted variant keeps the circle instead of fading to
    nothing, which is what made the Inactive card look unfinished. */
-.metric-icon-box {
+.metric-icon-box,
+.crud-page .metric-icon-box {
     border-radius: 50%;
     background-color: var(--accent-emerald);
     color: #fff;
     flex: 0 0 auto;
 }
 .metric-icon-box i { font-weight: 700; }
-.metric-icon-box.is-muted {
+.metric-icon-box.is-muted,
+.crud-page .metric-icon-box.is-muted {
     background-color: var(--border-strong);
     color: #fff;
 }
@@ -425,13 +427,16 @@ body.login-page {
    half empty. The steps run in two columns from medium up, with room
    between them and between each step. */
 @media (min-width: 768px) {
+    /* Multi-column rather than grid: a grid row is as tall as its tallest
+       cell, so one step with a description opened a gap opposite it. */
     .setup-step-list {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        /* site.css lays this out as a flex column, and a flex container
+           ignores column-count, so the display has to go back to block. */
+        display: block;
+        column-count: 2;
         column-gap: 2.75rem;
-        row-gap: 1.15rem;
-        align-items: start;
     }
+    .setup-step { break-inside: avoid; margin-bottom: 1.15rem; }
 }
 .setup-step { line-height: 1.55; }
 .setup-step-body { display: flex; flex-direction: column; gap: 0.2rem; }
