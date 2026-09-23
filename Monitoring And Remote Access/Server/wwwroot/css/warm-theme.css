@@ -464,3 +464,46 @@ body.login-page {
 .database-page .list-group-item { padding-top: 0.8rem; padding-bottom: 0.8rem; line-height: 1.65; }
 .database-page .card-body { padding: 1.5rem; }
 .database-page dl > dt, .database-page dl > dd { padding-top: 0.6rem; padding-bottom: 0.6rem; line-height: 1.6; }
+
+/* ---------------------------------------------------- Sidebar icon column --
+
+   The icons were placed by whatever advance width each glyph happened to
+   have - bi-pc-display is wider than bi-key-fill - so every label started at
+   a slightly different x and the column read as ragged. And a plain item was
+   inset 0.9rem while a group header was inset 12px, so the two kinds of row
+   did not share a left edge either.
+
+   Each icon now sits in a fixed square and both row types use one inset and
+   one gap, so the icons form a column and the labels start together. */
+
+.nav-item-custom > i,
+.sidebar-group-toggle > i:not(.nav-group-chevron) {
+    flex: 0 0 1.35rem;
+    width: 1.35rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.nav-item-custom,
+.sidebar-group-toggle {
+    padding-left: 0.85rem;
+    padding-right: 0.85rem;
+    gap: 11px;
+}
+
+/* The nested links are smaller and already indented by their rule, but they
+   still need a column of their own. */
+.sidebar-group-links .nav-item-custom {
+    padding-left: 0.55rem;
+    padding-right: 0.55rem;
+    gap: 11px;
+}
+.sidebar-group-links .nav-item-custom > i {
+    flex: 0 0 1.15rem;
+    width: 1.15rem;
+}
+
+/* The chevron keeps to the right edge and is not part of the icon column. */
+.nav-group-chevron { flex: 0 0 auto; margin-left: auto; }
