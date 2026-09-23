@@ -73,16 +73,16 @@ namespace Client
         // Entries with no token are agent-only: the desktop client has a dark
         // brand bar and a compact status line that the portal has no equivalent
         // for, and the on-white status colours would be unreadable there.
-        private static readonly Color BrandDark = Color.FromArgb(22, 64, 31);      // --sidebar-bg      #16401F
-        private static readonly Color BrandDarker = Color.FromArgb(17, 50, 24);    // agent only        #113218, the bar's shadowed edge
-        private static readonly Color BrandEmerald = Color.FromArgb(23, 128, 58);  // --accent-emerald  #17803A
-        private static readonly Color BrandMint = Color.FromArgb(187, 243, 198);   // agent only        #BBF3C6, 9.37:1 on the brand bar
-        private static readonly Color SurfaceBody = Color.FromArgb(250, 248, 243); // --body-bg         #FAF8F3
+        private static readonly Color BrandDark = Color.FromArgb(40, 103, 68);     // --sidebar-bg      #286744
+        private static readonly Color BrandDarker = Color.FromArgb(29, 80, 52);    // --accent-emerald-hover #1D5034
+        private static readonly Color BrandEmerald = Color.FromArgb(40, 103, 68);  // --accent-emerald  #286744
+        private static readonly Color BrandMint = Color.FromArgb(220, 234, 221);   // --sidebar-ink     #DCEADD, 5.35:1 on the brand bar
+        private static readonly Color SurfaceBody = Color.FromArgb(246, 248, 244); // --body-bg         #F6F8F4
         private static readonly Color SurfaceCard = Color.White;                   // --card-bg         #FFFFFF
-        private static readonly Color BorderSubtle = Color.FromArgb(231, 226, 217);// --card-border     #E7E2D9
-        private static readonly Color TextMain = Color.FromArgb(28, 25, 23);       // --text-main       #1C1917
-        private static readonly Color TextMuted = Color.FromArgb(111, 104, 97);    // --text-muted      #6F6861
-        private static readonly Color StatusOk = Color.FromArgb(23, 128, 58);      // --cams-success    #17803A, 5.02:1 on white
+        private static readonly Color BorderSubtle = Color.FromArgb(223, 229, 220);// --card-border     #DFE5DC
+        private static readonly Color TextMain = Color.FromArgb(38, 61, 48);       // --text-main       #263D30
+        private static readonly Color TextMuted = Color.FromArgb(104, 119, 108);   // --text-muted      #68776C
+        private static readonly Color StatusOk = Color.FromArgb(47, 125, 79);      // --cams-success    #2F7D4F, 4.76:1 on white
         private static readonly Color StatusWarn = Color.FromArgb(180, 83, 9);     // --cams-warning    #B45309, 5.02:1 on white
         private static readonly Color StatusDanger = Color.FromArgb(185, 28, 28);  // --cams-danger     #B91C1C, 6.47:1 on white
 
@@ -90,9 +90,9 @@ namespace Client
         // status colours above would not meet a readable contrast. Agent only;
         // the portal has no dark surface carrying status text.
         private static readonly Color OnDarkStrong = Color.White;                  //                   #FFFFFF, 13.4:1 on the brand bar
-        private static readonly Color OnDarkMuted = Color.FromArgb(150, 178, 152); //                   #96B298, 5.10:1
+        private static readonly Color OnDarkMuted = Color.FromArgb(195, 218, 200); // --sidebar-ink-muted #C3DAC8, 4.50:1
         private static readonly Color OnDarkWarn = Color.FromArgb(252, 211, 77);   //                   #FCD34D, 8.15:1
-        private static readonly Color OnDarkDanger = Color.FromArgb(252, 165, 165);//                   #FCA5A5, 6.19:1
+        private static readonly Color OnDarkDanger = Color.FromArgb(254, 202, 202);//                   #FECACA, 4.60:1
 
         private TextBox txtStudentId = new();
         private TextBox txtPassword = new();
@@ -383,26 +383,29 @@ namespace Client
             ShowDesktopShield();
         }
 
-        /// <summary>Applies the shared CAMS field styling to a text box.</summary>
+        /// <summary>Applies the shared CAMS field styling to a text box.
+        /// The boxes are deliberately large: the people typing into them are
+        /// primary school pupils, often hunting for keys one at a time.</summary>
         private static TextBox StyleField(TextBox field, bool isPassword = false)
         {
             field.BorderStyle = BorderStyle.FixedSingle;
-            field.Font = new Font("Segoe UI", 10.5f);
+            field.Font = new Font("Segoe UI", 13f);
             field.BackColor = SurfaceCard;
             field.ForeColor = TextMain;
             field.UseSystemPasswordChar = isPassword;
-            field.Margin = new Padding(0, 2, 0, 12);
-            field.Height = 30;
+            field.Margin = new Padding(0, 4, 0, 18);
+            field.Height = 40;
             return field;
         }
 
-        /// <summary>Field caption in the muted, uppercase style used across CAMS.</summary>
+        /// <summary>Field caption. Sentence case rather than small uppercase,
+        /// because a child reads "Password" faster than "PASSWORD".</summary>
         private static Label FieldLabel(string text) => new()
         {
             Text = text,
             AutoSize = true,
-            ForeColor = TextMuted,
-            Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+            ForeColor = TextMain,
+            Font = new Font("Segoe UI", 11f, FontStyle.Bold),
             Margin = new Padding(0, 0, 0, 2)
         };
 
@@ -421,7 +424,9 @@ namespace Client
         {
             Controls.Clear();
             Text = "CAMS Student Client";
-            ClientSize = new Size(440, 460);
+            // Taller than the fields strictly need, because the boxes and the
+            // button are sized for a child's aim rather than an adult's.
+            ClientSize = new Size(440, 520);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
@@ -440,9 +445,9 @@ namespace Client
             };
             var lblBrandSub = new Label
             {
-                Text = "Student Client  ·  Pardo Elementary School",
+                Text = "Pardo Elementary School",
                 ForeColor = BrandMint,
-                Font = new Font("Segoe UI", 9),
+                Font = new Font("Segoe UI", 10),
                 AutoSize = true,
                 Location = new Point(26, 68)
             };
@@ -460,11 +465,11 @@ namespace Client
 
             var lblTitle = new Label
             {
-                Text = "Sign in to your session",
-                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                Text = "Sign in",
+                Font = new Font("Segoe UI", 17, FontStyle.Bold),
                 ForeColor = TextMain,
                 AutoSize = true,
-                Margin = new Padding(0, 0, 0, 14)
+                Margin = new Padding(0, 0, 0, 18)
             };
 
             int fieldWidth = ClientSize.Width - 48;
@@ -472,11 +477,13 @@ namespace Client
             StyleField(txtStudentId).Width = fieldWidth;
             StyleField(txtPassword, isPassword: true).Width = fieldWidth;
 
-            btnLogin = BrandButton("Log in", BrandEmerald);
+            btnLogin = BrandButton("Sign in", BrandEmerald);
             btnLogin.Width = fieldWidth;
-            btnLogin.Margin = new Padding(0, 6, 0, 14);
+            btnLogin.Height = 52;
+            btnLogin.Font = new Font("Segoe UI", 13, FontStyle.Bold);
+            btnLogin.Margin = new Padding(0, 4, 0, 16);
             btnLogin.FlatAppearance.BorderSize = 0;
-            btnLogin.FlatAppearance.MouseOverBackColor = Color.FromArgb(23, 128, 58);
+            btnLogin.FlatAppearance.MouseOverBackColor = BrandDarker;
             btnLogin.Click += BtnLogin_Click;
 
             lblStatus = new Label
@@ -485,23 +492,24 @@ namespace Client
                 AutoSize = true,
                 MaximumSize = new Size(fieldWidth, 0),
                 ForeColor = TextMuted,
-                Font = new Font("Segoe UI", 9)
+                Font = new Font("Segoe UI", 9.5f)
             };
 
             var lblHint = new Label
             {
-                Text = "Use the account issued by your teacher.",
+                Text = "Ask your teacher if you need help signing in.",
                 AutoSize = true,
+                MaximumSize = new Size(fieldWidth, 0),
                 ForeColor = TextMuted,
-                Font = new Font("Segoe UI", 8.5f),
-                Margin = new Padding(0, 10, 0, 0)
+                Font = new Font("Segoe UI", 9.5f),
+                Margin = new Padding(0, 8, 0, 0)
             };
 
             body.Controls.AddRange(new Control[]
             {
                 lblTitle,
-                FieldLabel("STUDENT ID"), txtStudentId,
-                FieldLabel("PASSWORD"), txtPassword,
+                FieldLabel("Student ID"), txtStudentId,
+                FieldLabel("Password"), txtPassword,
                 btnLogin,
                 lblStatus,
                 lblHint
