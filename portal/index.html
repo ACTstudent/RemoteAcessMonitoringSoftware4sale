@@ -37,7 +37,7 @@
         <a href="#architecture">Architecture</a>
         <a href="#install">Install</a>
         <a href="#support">Support</a>
-        <a class="nav-download" href="#downloads">Get v<span data-version>2.19.3</span></a>
+        <a class="nav-download" href="#downloads">Get v<span data-version>2.20.0</span></a>
       </nav>
     </div>
   </header>
@@ -51,7 +51,7 @@
           <h1 id="hero-title">See the lab.<br><em>Keep control local.</em></h1>
           <p class="hero-lead">CAMS brings live workstation visibility, timed sessions, policy enforcement, and accountable remote actions into one private LAN deployment.</p>
           <div class="hero-actions">
-            <a class="button button-primary" href="#downloads">Download v<span data-version>2.19.3</span></a>
+            <a class="button button-primary" href="#downloads">Download v<span data-version>2.20.0</span></a>
             <a class="button button-quiet" href="#install">Read installation guide</a>
           </div>
           <ul class="trust-line">
@@ -62,7 +62,7 @@
         </div>
 
         <section class="command-panel" aria-label="CAMS deployment summary">
-          <div class="panel-topline"><span class="status-dot"></span> LAB CONTROL / ONLINE <span>v<span data-version>2.19.3</span></span></div>
+          <div class="panel-topline"><span class="status-dot"></span> LAB CONTROL / ONLINE <span>v<span data-version>2.20.0</span></span></div>
           <div class="lab-map">
             <div class="station station-wide"><small>SERVER</small><strong>Teacher console</strong><span>HTTPS :5000</span></div>
             <div class="signal-line"><i></i><i></i><i></i></div>
@@ -122,7 +122,7 @@
             <h3>Run the active laboratory</h3>
             <ul>
               <li>Monitor all connected student workstations in a live grid</li>
-              <li>Start, pause, resume, and end timed sessions</li>
+              <li>Start the lab session for every student at once, then pause, resume, or end it</li>
               <li>Send warnings and broadcast the teacher screen</li>
               <li>Use permitted workstation and remote controls</li>
               <li>Review scoped alerts, records, and exports</li>
@@ -132,11 +132,11 @@
             <div class="role-index">S</div><p class="role-label">Student</p>
             <h3>Enter a managed session</h3>
             <ul>
-              <li>Sign in with automatic workstation registration</li>
+              <li>Sign in once the teacher starts the lab session</li>
               <li>See unit, identity, and elapsed session time</li>
               <li>Receive policy notices and teacher messages</li>
               <li>Review alerts in the student portal</li>
-              <li>Exit cleanly when the teacher ends the session</li>
+              <li>Return to the locked sign-in screen when the session ends</li>
             </ul>
           </article>
         </div>
@@ -226,7 +226,7 @@
           <li><div><span>03</span></div><article><h3>Start on the target network</h3><p>Connect the control PC to the classroom LAN first, then start CAMS. Local CA mode creates a server certificate covering the current machine name and LAN addresses.</p></article></li>
           <li><div><span>04</span></div><article><h3>Use the authenticated Deployment Hub</h3><p>Sign in as administrator and open <code>https://&lt;server-ip&gt;:5000/Admin/Deployment</code>. Confirm the endpoint is certificate-compatible; download the local trust certificate or prepare the verified workstation bundle there.</p></article></li>
           <li><div><span>05</span></div><article><h3>Install each student client</h3><p>Run <a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe">CAMS-Client-Setup.exe</a>, enter the displayed SignalR endpoint, and select only the <code>CAMS-Server-Root.cer</code> obtained from your local Deployment Hub.</p></article></li>
-          <li><div><span>06</span></div><article><h3>Verify before class</h3><p>Sign in with a test student account, confirm the workstation appears in the teacher monitoring grid, and test a permitted warning or lock action before enrolling the full lab.</p></article></li>
+          <li><div><span>06</span></div><article><h3>Verify before class</h3><p>Start a lab session from Session Control, then sign in with a test student account, confirm the workstation appears in the teacher monitoring grid, and test a permitted warning or lock action before enrolling the full lab.</p></article></li>
         </ol>
       </div>
     </section>
@@ -234,7 +234,7 @@
     <section class="section downloads" id="downloads" aria-labelledby="downloads-title">
       <div class="shell">
         <div class="download-heading">
-          <div><p class="section-kicker">Current stable release</p><h2 id="downloads-title">CAMS v<span data-version>2.19.3</span></h2></div>
+          <div><p class="section-kicker">Current stable release</p><h2 id="downloads-title">CAMS v<span data-version>2.20.0</span></h2></div>
           <p>Release downloads are hosted by GitHub. Verify each installer against its published SHA-256 file before deployment.</p>
         </div>
         <div class="download-grid">
@@ -272,6 +272,7 @@
           <details><summary>The browser or client reports an untrusted certificate.<span aria-hidden="true">+</span></summary><p>Do not bypass the warning. Sign in to the local CAMS server, open <code>/Admin/Deployment</code>, and install that deployment's public <code>CAMS-Server-Root.cer</code> for the current Windows user.</p></details>
           <details><summary>The certificate does not match the server IP.<span aria-hidden="true">+</span></summary><p>Connect the server PC to the target network and restart CAMS so local CA mode can issue a certificate for the current LAN address. Use an endpoint marked compatible in the Deployment Hub.</p></details>
           <details><summary>A phone hotspot connects devices but CAMS cannot reach them.<span aria-hidden="true">+</span></summary><p>Some hotspots isolate clients or block broadcast. Disable client isolation if available, use the teacher PC's Wi-Fi IPv4 address instead of <code>localhost</code>, and verify TCP 5000 is reachable.</p></details>
+          <details><summary>A student sees "No session yet" when signing in.<span aria-hidden="true">+</span></summary><p>Students can only sign in while a lab session is running. In the teacher portal, open Session Control, choose Start New Session, and pick a session rule; the waiting students can then press Login again.</p></details>
           <details><summary>An installer hash does not match.<span aria-hidden="true">+</span></summary><p>Do not run the file. Delete it, download the installer and checksum again from the same GitHub release, and repeat SHA-256 verification.</p></details>
           <details><summary>The server moved to another network.<span aria-hidden="true">+</span></summary><p>Restart CAMS after joining the new network. Confirm the new compatible endpoint in <code>/Admin/Deployment</code>; update clients if the saved server address changed.</p></details>
         </div>
@@ -284,7 +285,7 @@
       <div class="footer-brand"><div><strong>CAMS</strong><span>Computer laboratory operations on your network.</span></div></div>
       <div class="footer-links"><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale">Source repository</a><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest">Release notes</a><a href="#privacy">Privacy boundary</a><a href="#install">Installation</a></div>
     </div>
-    <div class="shell footer-base"><span>CAMS v<span data-version>2.19.3</span></span><span>MIT licensed</span><span>Static portal: no analytics, cookies, remote fonts, or CDN assets.</span></div>
+    <div class="shell footer-base"><span>CAMS v<span data-version>2.20.0</span></span><span>MIT licensed</span><span>Static portal: no analytics, cookies, remote fonts, or CDN assets.</span></div>
   </footer>
 
   <noscript><div class="noscript">JavaScript is disabled. All documentation and download links remain available; menu and copy-button enhancements are inactive.</div></noscript>
