@@ -56,7 +56,9 @@ public sealed class AdminHistoricalArchiveSqliteTests
 
         db.ChangeTracker.Clear();
         Assert.Equal("Inactive", (await db.Teachers.SingleAsync()).Status);
-        Assert.Equal("Inactive", (await db.Students.SingleAsync()).Status);
+        // Removing a student archives the account; a place in an archived class
+        // is history and stays (the ClassStudents assertion below).
+        Assert.Equal("Archived", (await db.Students.SingleAsync()).Status);
         Assert.Equal("Archived", (await db.Computers.SingleAsync()).Status);
         Assert.False((await db.SessionRules.SingleAsync(item => item.SessionRuleId == rule.SessionRuleId)).IsActive);
         var history = await db.LabSessions.SingleAsync();

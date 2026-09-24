@@ -47,7 +47,7 @@ public class ClientAuthControllerTests
     }
 
     private static (ClientAuthController Controller, Mock<ServerAuth> Auth, Mock<AspNetAuth> SignIn)
-        CreateController(string ipAddress, ApplicationDbContext? context = null)
+        CreateController(string ipAddress, ApplicationDbContext? context = null, SessionManagerService? lab = null)
     {
         var auth = new Mock<ServerAuth>();
         var signIn = new Mock<AspNetAuth>();
@@ -58,7 +58,7 @@ public class ClientAuthControllerTests
         hub.Setup(h => h.Clients).Returns(clients.Object);
 
         var lifecycle = new LabSessionLifecycleService(context ?? GetDbContext(), hub.Object);
-        var controller = new ClientAuthController(auth.Object, lifecycle);
+        var controller = new ClientAuthController(auth.Object, lifecycle, lab);
 
         var services = new ServiceCollection();
         services.AddSingleton(signIn.Object);
@@ -178,6 +178,50 @@ public class ClientAuthControllerTests
         var message = Assert.IsType<string>(unauthorized.Value);
         Assert.DoesNotContain("password", message, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("username", message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    // ---------- No lab running ----------
+
+    private static SessionManagerService Lab()
+    {
+        var clients = new Mock<IHubClients>();
+        clients.Setup(c => c.Group(It.IsAny<string>())).Returns(Mock.Of<IClientProxy>());
+        var hub = new Mock<IHubContext<RemoteMonitoringHub>>();
+        hub.Setup(h => h.Clients).Returns(clients.Object);
+        return new SessionManagerService(hub.Object);
+    }
+
+    // Students may only sign in while the teacher has a lab running. The answer
+    // is its own status, so the client can say "wait for your teacher" instead
+    // of "wrong password", and it comes before the password is even checked.
+    [Fact]
+    public async Task Login_IsRefusedWithConflictWhileNoLabIsRunning()
+    {
+        var (controller, auth, _) = CreateController(UniqueIp(), lab: Lab());
+
+        var result = await controller.Login(Request());
+
+        var conflict = Assert.IsType<ConflictObjectResult>(result.Result);
+        Assert.Equal(WorkstationRegistrationService.NoLabMessage, conflict.Value);
+        auth.Verify(a => a.LoginAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Login_GoesAheadOnceTheLabIsRunning()
+    {
+        var lab = Lab();
+        lab.StartLab(null);
+        var (controller, auth, signIn) = CreateController(UniqueIp(), lab: lab);
+        auth.Setup(a => a.LoginAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new LoginResult(AccountRole.Student, 7, "Student", "student1", "S-7"));
+        signIn.Setup(s => s.SignInAsync(
+                It.IsAny<HttpContext>(), It.IsAny<string>(), It.IsAny<ClaimsPrincipal>(), It.IsAny<AuthenticationProperties>()))
+            .Returns(Task.CompletedTask);
+
+        var result = await controller.Login(Request());
+
+        Assert.IsType<OkObjectResult>(result.Result);
     }
 
     // ---------- Successful sign-in ----------

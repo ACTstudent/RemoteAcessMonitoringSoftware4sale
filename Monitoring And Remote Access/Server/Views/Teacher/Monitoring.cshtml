@@ -11,9 +11,14 @@
             <h2 class="page-title">Laboratory Control Panel</h2>
             <p class="text-muted small mb-0">Pardo Elementary School · Live workstation monitoring</p>
         </div>
+        @* One grid, not two stacks: the captions share a line and the values
+           share a baseline, so the timer and the state read across. *@
         <div class="monitoring-session">
-            <div><span class="monitoring-eyebrow">Session elapsed</span><strong id="lblSessionTimer" class="session-timer">00:00</strong></div>
-            <div><span id="lblSessionState" class="small">Waiting for the server</span><a asp-action="Sessions" class="btn btn-outline-primary btn-sm d-block mt-2">Session controls <i class="bi bi-arrow-right"></i></a></div>
+            <span class="monitoring-eyebrow">Session elapsed</span>
+            <span class="monitoring-eyebrow">Status</span>
+            <strong id="lblSessionTimer" class="session-timer">00:00</strong>
+            <span id="lblSessionState" class="session-state">Waiting for the server</span>
+            <a asp-action="Sessions" class="btn btn-outline-primary btn-sm session-controls-link">Session controls <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
         </div>
     </div>
     <div id="hubError" class="alert alert-danger d-none" role="alert"></div>

@@ -11,12 +11,14 @@ public sealed class LabSessionLifecycleService
     private readonly ApplicationDbContext _db;
     private readonly IHubContext<RemoteMonitoringHub> _hub;
     private readonly IWorkstationRegistrationService _workstations;
+    private readonly SessionManagerService? _lab;
 
     public LabSessionLifecycleService(
         ApplicationDbContext db,
         IHubContext<RemoteMonitoringHub> hub,
-        IWorkstationRegistrationService? workstations = null)
-    { _db = db; _hub = hub; _workstations = workstations ?? new WorkstationRegistrationService(db); }
+        IWorkstationRegistrationService? workstations = null,
+        SessionManagerService? lab = null)
+    { _db = db; _hub = hub; _lab = lab; _workstations = workstations ?? new WorkstationRegistrationService(db, lab); }
 
     public async Task<int> EndExpiredSessionsAsync(CancellationToken cancellationToken = default)
     {
@@ -152,10 +154,48 @@ public sealed class LabSessionLifecycleService
         return sessions.Count;
     }
 
+    /// <summary>
+    /// Starts the lab for every student on every computer. Each student already
+    /// signed in begins a fresh session now under <paramref name="rule"/>: the
+    /// timer goes back to zero and a paused screen is released. Students who sign
+    /// in later get their session at sign-in, as always, and join under the same
+    /// rule, which is recorded here first so a sign-in during the restart is not
+    /// missed.
+    /// </summary>
+    /// <remarks>
+    /// The sessions are restarted in place rather than ended and replaced. Ending
+    /// one tells the student client the session is over, which closes it, so the
+    /// whole room would be signed out by the very action meant to start them.
+    /// </remarks>
+    public async Task<int> StartAllSessionsAsync(Server.Models.SessionRule? rule, CancellationToken cancellationToken = default)
+    {
+        _lab?.StartLab(rule?.SessionRuleId);
+        var sessions = await _db.LabSessions
+            .Where(s => s.IsActive && s.Status != LabSessionStatus.Ended)
+            .ToListAsync(cancellationToken);
+        var now = DateTime.UtcNow;
+        foreach (var session in sessions)
+        {
+            session.StartTime = now;
+            session.PauseTime = null;
+            session.AccumulatedPauseSeconds = 0;
+            session.Status = LabSessionStatus.Running;
+            session.SessionRuleId = rule?.SessionRuleId;
+            session.MaxDurationMinutes = rule?.MaxDurationMinutes;
+        }
+        if (sessions.Count > 0)
+        {
+            await _db.SaveChangesAsync(cancellationToken);
+            await NotifyStatesAsync(sessions, cancellationToken);
+        }
+        return sessions.Count;
+    }
+
     public async Task<int> PauseAllSessionsAsync(CancellationToken cancellationToken = default)
     {
         // The lab-wide teacher pause freezes every active session. Per-session
         // AllowPause rules still govern the individual pause action.
+        _lab?.PauseSession();
         var sessions = await _db.LabSessions
             .Where(s => s.IsActive && s.Status == LabSessionStatus.Running)
             .ToListAsync(cancellationToken);
@@ -175,6 +215,7 @@ public sealed class LabSessionLifecycleService
 
     public async Task<int> ResumeAllSessionsAsync(CancellationToken cancellationToken = default)
     {
+        _lab?.ResumeLab();
         var sessions = await _db.LabSessions
             .Where(s => s.IsActive && s.Status == LabSessionStatus.Paused)
             .ToListAsync(cancellationToken);
@@ -196,6 +237,9 @@ public sealed class LabSessionLifecycleService
 
     public async Task<int> EndAllSessionsAsync(CancellationToken cancellationToken = default)
     {
+        // The lab is over, whoever ended it; the next sign-in goes back to the
+        // default rule.
+        _lab?.EndSession();
         var sessions = await _db.LabSessions.Include(s => s.Computer)
             .Where(s => s.IsActive && s.Status != LabSessionStatus.Ended)
             .ToListAsync(cancellationToken);

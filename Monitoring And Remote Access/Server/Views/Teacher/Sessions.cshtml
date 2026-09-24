@@ -24,6 +24,33 @@
     </div>
 </div>
 
+@{
+    // The lab itself, which runs from the moment it is started - before any
+    // student signs in. The table below lists each student's own session, so
+    // without this a freshly started lab looked like nothing had happened.
+    var lab = (Shared.Contracts.GlobalSessionMessage)ViewBag.GlobalSession;
+    var labRule = ViewBag.LabRule as Server.Models.SessionRule;
+    var labOpen = lab.Status is "Running" or "Paused";
+    var labPaused = lab.Status == "Paused";
+    var labSignedIn = (int)ViewBag.SignedInStudents;
+}
+@if (labOpen)
+{
+    var labMinutes = lab.ElapsedSeconds / 60;
+    <div class="lab-session-banner d-flex align-items-center gap-3 mb-4 @(labPaused ? "is-paused" : "")" role="status">
+        <i class="bi @(labPaused ? "bi-pause-circle-fill" : "bi-broadcast") fs-3" aria-hidden="true"></i>
+        <div>
+            <div class="fw-bold text-dark">Lab session @(labPaused ? "paused" : "running") for all students</div>
+            <div class="small text-muted">
+                @(labRule is null ? "No time limit" : $"{labRule.Name} ({labRule.MaxDurationMinutes} min)")
+                &middot; @(labMinutes < 1 ? "started just now" : $"{labMinutes} min elapsed")
+                &middot; @(labSignedIn == 1 ? "1 student" : $"{labSignedIn} students") signed in.
+                Students join as they sign in on any computer.
+            </div>
+        </div>
+    </div>
+}
+
 <!-- Metric Summary Cards -->
 <div class="row g-4 mb-4">
     <div class="col-md-4">
@@ -158,42 +185,45 @@
             <form method="post" action="/Teacher/StartSession">
                 @Html.AntiForgeryToken()
                 <div class="modal-body py-4">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small" for="start-session-student">Select Student <span class="text-danger">*</span></label>
-                        <select id="start-session-student" name="studentId" class="form-select filter-control" required>
-                            <option value="" disabled selected>-- Select Student --</option>
-                            @foreach (var s in ViewBag.Students)
-                            {
-                                <option value="@s.Id">@s.Username - @s.FullName</option>
-                            }
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small" for="start-session-computer">Assigned Workstation (Optional)</label>
-                        <select id="start-session-computer" name="computerId" class="form-select filter-control">
-                            <option value="" selected>-- Auto / No station --</option>
-                            @foreach (var c in ViewBag.Computers)
-                            {
-                                <option value="@c.ComputerId">@c.LaboratoryStation</option>
-                            }
-                        </select>
+                    @{
+                        var sessionRules = (IEnumerable<Server.Models.SessionRule>)ViewBag.SessionRules;
+                        var signedIn = labSignedIn;
+                        var labComputers = (int)ViewBag.LabComputers;
+                    }
+                    @if (labOpen)
+                    {
+                        <div class="alert alert-warning small py-2 mb-3" role="note">
+                            A lab session is already @(labPaused ? "paused" : "running"). Starting again restarts everyone's timer from zero.
+                        </div>
+                    }
+                    <div class="d-flex align-items-start gap-3 p-3 mb-4 rounded-3 start-session-scope">
+                        <i class="bi bi-people-fill fs-4 text-emerald-700" aria-hidden="true"></i>
+                        <div>
+                            <div class="fw-semibold text-dark">All students &middot; All computers</div>
+                            <div class="small text-muted">
+                                @(signedIn == 1 ? "1 student is" : $"{signedIn} students are") signed in now and will start fresh under the rule below.
+                                Everyone else joins it when they sign in on any of the @labComputers lab @(labComputers == 1 ? "computer" : "computers").
+                            </div>
+                        </div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-muted small" for="start-session-rule">Session Policy Rule</label>
                         <select id="start-session-rule" name="sessionRuleId" class="form-select filter-control">
-                            <option value="" selected>Default 45-minute rule</option>
-                            @foreach (var r in ViewBag.SessionRules)
+                            @if (!sessionRules.Any())
                             {
-                                <option value="@r.SessionRuleId">@r.Name (@r.MaxDurationMinutes min)</option>
+                                <option value="" selected>No time limit</option>
+                            }
+                            @foreach (var r in sessionRules)
+                            {
+                                <option value="@r.SessionRuleId" selected="@r.IsDefault">@r.Name (@r.MaxDurationMinutes min)</option>
                             }
                         </select>
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-emerald rounded-pill px-4 text-white">Start Session</button>
+                    <button type="submit" class="btn btn-emerald rounded-pill px-4 text-white">Start for everyone</button>
                 </div>
             </form>
         </div>

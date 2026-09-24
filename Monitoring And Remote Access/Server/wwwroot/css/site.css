@@ -1020,6 +1020,39 @@ body {
     border-color: var(--accent-emerald);
 }
 
+/* Session Control's start dialog: who a lab-wide start reaches. */
+.start-session-scope {
+    background: var(--body-bg);
+    border: 1px solid var(--card-border);
+}
+
+/* A select that saves on choice (auto-submit-select.js), while the page saves. */
+select.is-saving {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Session Control: the lab-wide session, shown above each student's own. */
+.lab-session-banner {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-left: 4px solid var(--accent-emerald);
+    border-radius: 1rem;
+    padding: 1rem 1.25rem;
+}
+
+.lab-session-banner > i {
+    color: var(--accent-emerald);
+}
+
+.lab-session-banner.is-paused {
+    border-left-color: var(--cams-warning);
+}
+
+.lab-session-banner.is-paused > i {
+    color: var(--cams-warning);
+}
+
 /* ---------------------------------------------------------------------------
    Student portal
    Utility classes below were referenced by the student views but never defined,

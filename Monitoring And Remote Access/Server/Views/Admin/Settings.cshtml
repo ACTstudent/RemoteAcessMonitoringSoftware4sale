@@ -82,7 +82,7 @@
                                 </td>
                                 <td>@admin.Username</td>
                                 <td>
-                                    <span class="status-chip @(admin.IsActive ? "is-active" : "is-inactive")">@(admin.IsActive ? "Active" : "Inactive")</span>
+                                    <span class="badge @(admin.IsActive ? "bg-success" : "bg-secondary")">@(admin.IsActive ? "Active" : "Inactive")</span>
                                     @if (isLocked)
                                     {
                                         <span class="badge bg-danger rounded-pill ms-1">Locked</span>

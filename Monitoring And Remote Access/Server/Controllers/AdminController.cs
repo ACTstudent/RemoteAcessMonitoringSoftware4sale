@@ -597,66 +597,24 @@ namespace Server.Controllers
 
         [HttpPost]
         [TeacherSharedAction]
-        public async Task<IActionResult> CreateStudent([Bind("StudentNumber,FirstName,LastName,FullName,Username,PasswordHash,Status,GradeSection,ClassId,AdviserId")] Student student)
+        public async Task<IActionResult> CreateStudent(
+            [Bind("StudentNumber,FirstName,LastName,FullName,Username,PasswordHash")] Student student,
+            int? classId = null)
         {
             if (!CheckAccess()) return Denied();
 
-            if (string.IsNullOrWhiteSpace(student.Username))
-            {
-                TempData["ErrorMessage"] = "Username is required.";
-                return RedirectToAction("Students");
-            }
-            if (string.IsNullOrWhiteSpace(student.PasswordHash))
-            {
-                TempData["ErrorMessage"] = "A password is required for a new student.";
-                return RedirectToAction("Students");
-            }
-
-            student.Username = student.Username.Trim();
-            if (await LoginIdentifierInUseAsync(student.Username))
-            {
-                TempData["ErrorMessage"] = $"The username '{student.Username}' is already in use.";
-                return RedirectToAction("Students");
-            }
-
-            student.PasswordHash = _hasher.HashPassword(new object(), student.PasswordHash.Trim());
-            student.Status = string.IsNullOrWhiteSpace(student.Status) ? "Active" : student.Status;
-
-            if (string.IsNullOrWhiteSpace(student.StudentNumber))
-            {
-                student.StudentNumber = $"STU-{DateTime.Now:yyyy}-{new Random().Next(100, 999)}";
-            }
-
-            if (await _context.Students.AnyAsync(s => s.StudentNumber.ToLower() == student.StudentNumber.ToLower()))
-            {
-                TempData["ErrorMessage"] = $"The student number '{student.StudentNumber}' is already in use.";
-                return RedirectToAction("Students");
-            }
-            if (await LoginIdentifierInUseAsync(student.StudentNumber))
-            {
-                TempData["ErrorMessage"] = $"The login identifier '{student.StudentNumber}' is already in use.";
-                return RedirectToAction("Students");
-            }
-
-            if (!string.IsNullOrWhiteSpace(student.FullName))
-            {
-                student.FullName = student.FullName.Trim();
-                var parts = student.FullName.Split(' ', 2);
-                student.FirstName = parts.Length > 0 ? parts[0] : "Student";
-                student.LastName = parts.Length > 1 ? parts[1] : "";
-            }
-            else
-            {
-                student.FirstName = string.IsNullOrWhiteSpace(student.FirstName) ? "Student" : student.FirstName.Trim();
-                student.LastName = string.IsNullOrWhiteSpace(student.LastName) ? "" : student.LastName.Trim();
-                student.FullName = $"{student.FirstName} {student.LastName}".Trim();
-            }
-
-            (student.CreatedByType, student.CreatedById) = Actor;
-            _context.Students.Add(student);
-            await _context.SaveChangesAsync();
-            await AuditAsync("CreateStudent", $"Created student {student.Username}");
-            TempData["Message"] = $"Student '{student.FullName}' created successfully!";
+            // The same rules as Student Profiles, through the same service: a first
+            // and last name, a password of at least 8 characters, a generated
+            // student ID and username when left blank, and an optional class. This
+            // used to have its own copy, which demanded a username and allowed a
+            // one-character password.
+            var input = new NewStudentInput(student.StudentNumber, student.FirstName, student.LastName, student.FullName, student.Username, student.PasswordHash);
+            var result = classId.HasValue
+                ? await _classManagement.CreateStudentInClassAsync(classId.Value, input, Actor)
+                : await _classManagement.CreateStudentAsync(input, Actor);
+            await RecordAsync(result, "CreateStudent",
+                classId.HasValue ? $"Created student {result.Name} in class {classId}" : $"Created student {result.Name} with no class",
+                $"Student '{result.Name}' created successfully!");
             return RedirectToAction("Students");
         }
 
@@ -717,18 +675,16 @@ namespace Server.Controllers
             var student = await _context.Students.FindAsync(id);
             if (student != null)
             {
-                var computer = await _context.Computers.FirstOrDefaultAsync(c => c.AssignedTo == id.ToString());
-                if (computer != null)
-                {
-                    computer.AssignedTo = null;
-                    if (computer.Status == WorkstationStatus.Assigned) computer.Status = WorkstationStatus.Available;
-                }
-
+                // Removal, the same as on Student Profiles. It used to set the
+                // account Inactive - exactly what the Deactivate button beside it
+                // already did - so the row stayed and the button looked broken.
+                // Archived students leave the list (the Removed filter still shows
+                // them), cannot sign in, and keep their history; Restore undoes it.
                 await _sessionLifecycle.EndStudentSessionsAndNotifyAsync(student.Id);
-                student.Status = RecordStatus.Inactive;
-                await _context.SaveChangesAsync();
-                await AuditAsync("DeactivateStudent", $"Deactivated student {student.Username}; historical records retained");
-                TempData["Message"] = $"Student '{student.Username}' deactivated. Historical records were retained.";
+                var result = await _classManagement.ArchiveStudentAsync(student.Id);
+                await RecordAsync(result, "ArchiveStudent",
+                    $"Removed student {student.Username}; historical records retained",
+                    $"Student '{student.FullName}' removed. Their history was kept; choose Removed in the status filter to restore them.");
             }
             return RedirectToAction("Students");
         }
@@ -1060,11 +1016,12 @@ namespace Server.Controllers
             if (!CheckAccess()) return Denied();
             var rule = await _context.SessionRules.FindAsync(input.SessionRuleId);
             if (rule == null || string.IsNullOrWhiteSpace(input.Name) || input.MaxDurationMinutes < 1) return RedirectToAction(nameof(SessionRules));
-            if (input.IsDefault)
+            if (input.IsDefault && input.IsActive)
                 await _context.SessionRules.Where(r => r.SessionRuleId != rule.SessionRuleId && r.IsDefault).ExecuteUpdateAsync(s => s.SetProperty(r => r.IsDefault, false));
             var closesRemoteControl = rule.AllowRemoteControl && (!input.AllowRemoteControl || !input.IsActive);
             rule.Name = input.Name.Trim(); rule.MaxDurationMinutes = input.MaxDurationMinutes; rule.AllowPause = input.AllowPause;
-            rule.AllowRemoteControl = input.AllowRemoteControl; rule.IsDefault = input.IsDefault; rule.IsActive = input.IsActive;
+            // An inactive rule cannot be offered, so it cannot stay the default either.
+            rule.AllowRemoteControl = input.AllowRemoteControl; rule.IsDefault = input.IsDefault && input.IsActive; rule.IsActive = input.IsActive;
             if (closesRemoteControl)
                 await _sessionLifecycle.CloseRemoteSessionsForRuleAsync(rule.SessionRuleId);
             await _context.SaveChangesAsync();
@@ -1439,6 +1396,7 @@ namespace Server.Controllers
                 .ThenBy(t => t.FirstName)
                 .ToListAsync();
             ViewBag.AllStudents = await _context.Students
+                .Where(s => s.Status != RecordStatus.Archived)
                 .Include(s => s.Class)
                 .OrderBy(s => s.LastName)
                 .ThenBy(s => s.FirstName)

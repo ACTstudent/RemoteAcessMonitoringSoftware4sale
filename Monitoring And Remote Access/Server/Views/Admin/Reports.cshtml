@@ -159,10 +159,18 @@
 </div>
 
 <!-- Detailed Session Report Card -->
-<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+@{
+    // Paged on the server, so it uses the shared server pager: the same footer,
+    // wording and arrows as every other list, inside the card rather than
+    // loose beneath it.
+    var sessionPaging = ViewBag.Paging as Server.Models.PagedResult<Server.Models.LabSession>;
+    var classFilter = Context.Request.Query["classId"].ToString();
+    var stationFilter = Context.Request.Query["station"].ToString();
+}
+<div class="card crud-panel border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
         <h5 class="fw-bold mb-0 text-dark">Detailed Lab Session Logs</h5>
-        <span class="badge bg-light text-dark font-monospace fs-6">Showing @Model.Count() of @ViewBag.TotalSessions</span>
+        <i class="bi bi-journal-text text-muted" aria-hidden="true"></i>
     </div>
     <div class="table-responsive">
         <table class="table custom-table align-middle mb-0">
@@ -192,8 +200,23 @@
                         </td>
                     </tr>
                 }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center empty-state"><i class="bi bi-journal-text empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No lab sessions match these filters.</span></td>
+                    </tr>
+                }
             </tbody>
         </table>
     </div>
+    @if (sessionPaging is not null)
+    {
+        @await Html.PartialAsync("_CrudPager", Server.Models.PagerViewModel.For(sessionPaging, "sessions", "Reports", new
+        {
+            from = ViewBag.FromDate,
+            to = ViewBag.ToDate,
+            classId = string.IsNullOrEmpty(classFilter) ? null : classFilter,
+            station = string.IsNullOrEmpty(stationFilter) ? null : stationFilter
+        }))
+    }
 </div>
-@if (ViewBag.Paging is Server.Models.PagedResult<Server.Models.LabSession> p && p.PageCount > 1) { <nav class="mb-4"><a class="btn btn-sm btn-outline-secondary @(p.Page == 1 ? "disabled" : "")" href="@Url.Action("Reports", new { from = ViewBag.FromDate, to = ViewBag.ToDate, classId = Context.Request.Query["classId"], station = Context.Request.Query["station"], pageSize = p.PageSize, page = p.Page - 1 })">Previous</a> <span class="mx-2">Page @p.Page of @p.PageCount</span><a class="btn btn-sm btn-outline-secondary @(p.Page == p.PageCount ? "disabled" : "")" href="@Url.Action("Reports", new { from = ViewBag.FromDate, to = ViewBag.ToDate, classId = Context.Request.Query["classId"], station = Context.Request.Query["station"], pageSize = p.PageSize, page = p.Page + 1 })">Next</a></nav> }

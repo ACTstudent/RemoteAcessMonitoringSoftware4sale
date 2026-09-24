@@ -93,11 +93,27 @@
         navigation.setAttribute('aria-label', `${label} pages`);
         footer.replaceChildren(summary, navigation);
 
+        // A record marked data-crud-set-aside - a removed student, kept for their
+        // history - stays out of the listing until a filter asks for exactly it,
+        // so "All" means everything still in use.
+        // Present and not "false": markup that writes the attribute on every row
+        // with a false value must not hide the whole list.
+        const setAside = record => {
+            const value = record.element.getAttribute('data-crud-set-aside');
+            return value !== null && normalize(value) !== 'false';
+        };
+        const filterMatches = (filter, record) =>
+            normalize(record.element.getAttribute(`data-${filter.dataset.crudFilter}`)) === normalize(filter.value);
+        const askedFor = record => filters.some(filter => filter.value && filterMatches(filter, record));
+
         function render() {
             const words = normalize(search?.value).split(/\s+/).filter(Boolean);
             const matches = records.filter(record => words.every(word => record.text.includes(word)) &&
-                filters.every(filter => !filter.value || normalize(record.element.getAttribute(`data-${filter.dataset.crudFilter}`)) === normalize(filter.value)));
+                filters.every(filter => !filter.value || filterMatches(filter, record)) &&
+                (!setAside(record) || askedFor(record)));
             const pages = Math.max(1, Math.ceil(matches.length / pageSize));
+            // Set-aside records are not part of the total unless asked for.
+            const total = records.filter(record => !setAside(record) || askedFor(record)).length;
             matchingItems = matches.map(record => record.element);
             page = Math.min(Math.max(page, 1), pages);
             items.forEach(item => { item.hidden = true; });
@@ -113,8 +129,8 @@
                 if (!items.length && initialEmptyMessage && !/match your search/i.test(initialEmptyMessage)) empty.textContent = initialEmptyMessage;
             }
             summary.textContent = matches.length
-                ? `Showing ${start + 1}–${Math.min(start + pageSize, matches.length)} of ${matches.length} ${label}${matches.length < items.length ? ` (${items.length} total)` : ''}`
-                : `Showing 0 of ${items.length} ${label}`;
+                ? `Showing ${start + 1}–${Math.min(start + pageSize, matches.length)} of ${matches.length} ${label}${matches.length < total ? ` (${total} total)` : ''}`
+                : `Showing 0 of ${total} ${label}`;
             navigation.replaceChildren();
             if (scrolls) return;   // nothing to page through
             const addButton = (text, accessibleName, target, disabled, current = false) => {

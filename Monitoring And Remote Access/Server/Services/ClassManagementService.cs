@@ -65,6 +65,8 @@ public interface IClassManagementService
     Task<ClassOperationResult> DeleteClassAsync(int classId, int? teacherId = null);
     Task<ClassOperationResult> EnrollExistingStudentAsync(int classId, int studentId, bool moveStudent, int? teacherId = null);
     Task<ClassOperationResult> CreateStudentInClassAsync(int classId, NewStudentInput input, RecordActor actor, int? teacherId = null);
+    Task<ClassOperationResult> CreateStudentAsync(NewStudentInput input, RecordActor actor, int? adviserId = null);
+    Task<ClassOperationResult> ArchiveStudentAsync(int studentId);
     Task<ClassOperationResult> BulkCreateStudentsAsync(IReadOnlyList<NewStudentInput> inputs, RecordActor actor);
     Task<ClassOperationResult> BulkCreateStudentsInClassAsync(int classId, IReadOnlyList<NewStudentInput> inputs, RecordActor actor, int? teacherId = null);
     Task<BulkStudentPreview> PreviewBulkStudentsAsync(int classId, IReadOnlyList<NewStudentInput> inputs, int? teacherId = null);
@@ -453,6 +455,11 @@ public sealed class ClassManagementService : IClassManagementService
             return ClassOperationResult.Fail("The student was not found.");
         }
 
+        if (student.Status == RecordStatus.Archived)
+        {
+            return ClassOperationResult.Fail("That student was removed. An administrator can restore the account from the Students page.");
+        }
+
         var existingMemberships = await _context.ClassStudents
             .Where(cs => cs.StudentId == studentId)
             .ToListAsync();
@@ -549,6 +556,71 @@ public sealed class ClassManagementService : IClassManagementService
             await _context.SaveChangesAsync();
             return ClassOperationResult.Ok(student.FullName);
         });
+    }
+
+    /// <summary>
+    /// One student with no class, for the teacher's Student Profiles page, which
+    /// had no way to add anyone unless a class already existed. The creating
+    /// teacher becomes the adviser, so the student's sessions have a teacher.
+    /// </summary>
+    public Task<ClassOperationResult> CreateStudentAsync(NewStudentInput input, RecordActor actor, int? adviserId = null)
+    {
+        return InTransactionAsync(async () =>
+        {
+            var validation = await ValidateStudentInputAsync(input);
+            if (!validation.Success)
+            {
+                return validation;
+            }
+
+            var student = await BuildStudentAsync(input, null, actor);
+            student.AdviserId = adviserId;
+            _context.Students.Add(student);
+            await _context.SaveChangesAsync();
+            return ClassOperationResult.Ok(student.FullName);
+        });
+    }
+
+    /// <summary>
+    /// Removes a student from use without erasing them. The account is marked
+    /// archived, which takes it off the student lists and stops it signing in;
+    /// places in active classes and the workstation mapping are released.
+    /// Sessions, activity, alerts and places in archived classes are kept,
+    /// because reports and audits refer to them. An administrator restores the
+    /// account by activating it again.
+    /// </summary>
+    public async Task<ClassOperationResult> ArchiveStudentAsync(int studentId)
+    {
+        var student = await _context.Students.FindAsync(studentId);
+        if (student == null)
+        {
+            return ClassOperationResult.Fail("The student was not found.");
+        }
+
+        var activeClassIds = await _context.Classes
+            .Where(c => !c.IsArchived)
+            .Select(c => c.ClassId)
+            .ToListAsync();
+        _context.ClassStudents.RemoveRange(await _context.ClassStudents
+            .Where(cs => cs.StudentId == studentId && activeClassIds.Contains(cs.ClassId))
+            .ToListAsync());
+        if (student.ClassId.HasValue && activeClassIds.Contains(student.ClassId.Value))
+        {
+            student.ClassId = null;
+            student.GradeSection = string.Empty;
+        }
+        student.AdviserId = null;
+
+        var key = studentId.ToString();
+        foreach (var computer in await _context.Computers.Where(c => c.AssignedTo == key).ToListAsync())
+        {
+            computer.AssignedTo = null;
+            if (computer.Status == WorkstationStatus.Assigned) computer.Status = WorkstationStatus.Available;
+        }
+
+        student.Status = RecordStatus.Archived;
+        await _context.SaveChangesAsync();
+        return ClassOperationResult.Ok(student.FullName);
     }
 
     public Task<ClassOperationResult> BulkCreateStudentsInClassAsync(int classId, IReadOnlyList<NewStudentInput> inputs, RecordActor actor, int? teacherId = null)

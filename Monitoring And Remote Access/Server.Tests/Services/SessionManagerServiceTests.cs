@@ -97,6 +97,78 @@ public class SessionManagerServiceTests
         Assert.Equal(e1, e2);
     }
 
+    // Student agents drive their own timer and pause screen from this same
+    // event, so the lab-wide state must only ever reach teacher screens.
+    [Fact]
+    public void LabState_IsSentToTeachersOnly()
+    {
+        var teachers = new Mock<IClientProxy>();
+        var others = new Mock<IClientProxy>();
+        var clients = new Mock<IHubClients>();
+        clients.Setup(c => c.All).Returns(others.Object);
+        clients.Setup(c => c.Group(It.IsAny<string>())).Returns(others.Object);
+        clients.Setup(c => c.Group(Shared.Contracts.HubEventNames.TeachersGroup)).Returns(teachers.Object);
+        var hub = new Mock<IHubContext<Server.Hubs.RemoteMonitoringHub>>();
+        hub.Setup(h => h.Clients).Returns(clients.Object);
+        var service = new SessionManagerService(hub.Object);
+
+        service.StartLab(7);
+        service.PauseSession();
+        service.ResumeLab();
+        service.EndSession();
+
+        teachers.Verify(p => p.SendCoreAsync(Shared.Contracts.HubEventNames.GlobalSessionState,
+            It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Exactly(4));
+        others.Verify(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object?[]>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public void StartLab_RestartsFromZeroUnderTheRule_AndEndClearsTheRule()
+    {
+        var service = CreateService();
+        service.StartLab(3);
+        service.PauseSession();
+        service.StartLab(5);
+
+        Assert.Equal("Running", service.Snapshot().Status);
+        Assert.True(service.Snapshot().ElapsedSeconds < 5);
+        Assert.Equal(5, service.LabRuleId);
+        Assert.True(service.IsLabOpen);
+
+        service.EndSession();
+        Assert.Null(service.LabRuleId);
+        Assert.False(service.IsLabOpen);
+    }
+
+    // Sign-in depends on the lab being open, so a server restart mid-class must
+    // not forget it - that would lock the room out and reset every timer.
+    [Fact]
+    public void LabState_SurvivesAServerRestart()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"cams-lab-{Guid.NewGuid():N}.json");
+        try
+        {
+            var hub = Mock.Of<IHubContext<Server.Hubs.RemoteMonitoringHub>>(h =>
+                h.Clients == Mock.Of<IHubClients>(c => c.Group(It.IsAny<string>()) == Mock.Of<IClientProxy>()));
+            var before = new SessionManagerService(hub, path);
+            before.StartLab(9);
+            before.PauseSession();
+
+            var after = new SessionManagerService(hub, path);
+            Assert.Equal("Paused", after.Snapshot().Status);
+            Assert.Equal(9, after.LabRuleId);
+            Assert.True(after.IsLabOpen);
+
+            after.EndSession();
+            Assert.False(new SessionManagerService(hub, path).IsLabOpen);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
     [Fact]
     public void StartEndStart_ResetsElapsed()
     {

@@ -132,10 +132,9 @@ body.login-page {
 .input-group-text { background: var(--surface-sunk); border-color: var(--card-border); color: var(--text-on-sage); }
 
 /* ------------------------------------------------- repeated fragments -- */
-/* Two shapes that were being sized by a style attribute repeated across six
-   views: the avatar in a roster row, and the dot inside a status pill. */
+/* A shape that was being sized by a style attribute repeated across six
+   views: the avatar in a roster row. */
 .user-avatar-circle.user-avatar-sm { width: 32px; height: 32px; font-size: .85rem; }
-.status-dot { font-size: .5rem; vertical-align: middle; }
 
 /* ------------------------------------------ modals, alerts, pagination -- */
 .modal-content { background: var(--surface-raised); border-radius: var(--radius-xl); }
@@ -221,11 +220,14 @@ body.login-page {
 .monitoring-heading { display: grid; grid-template-columns: minmax(0, 1fr) var(--monitoring-side-width); align-items: center; gap: var(--monitoring-gap); margin-bottom: 24px; }
 .monitoring-eyebrow { display: block; color: var(--text-muted); font-size: .66rem; font-weight: 650; text-transform: uppercase; letter-spacing: .14em; margin-bottom: 5px; }
 .monitoring-session {
-    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 12px;
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: baseline; column-gap: 16px; row-gap: 2px;
     background: var(--card-bg); border: 1px solid var(--card-border);
     border-radius: var(--radius-xl); padding: 16px 20px; box-shadow: var(--shadow-card); min-width: 0;
 }
-.monitoring-session .session-timer { display: block; font-size: 1.65rem; }
+.monitoring-session .monitoring-eyebrow { margin-bottom: 0; }
+.monitoring-session .session-timer { display: block; font-size: 1.65rem; line-height: 1.15; }
+.monitoring-session .session-state { font-weight: 600; color: var(--text-main); overflow-wrap: anywhere; }
+.monitoring-session .session-controls-link { grid-column: 1 / -1; margin-top: 12px; white-space: nowrap; }
 .monitoring-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--monitoring-gap); margin-bottom: 24px; }
 .monitoring-metrics .metric-title { letter-spacing: .1em; text-transform: uppercase; font-size: .65rem; }
 .monitoring-metrics .metric-title i { float: right; font-size: 1.2rem; color: var(--accent-emerald); }
@@ -379,28 +381,9 @@ body.login-page {
 .crud-actions .crud-action:hover { color: var(--text-on-sage) !important; }
 .crud-actions .btn-outline-danger.crud-action:hover { color: var(--cams-danger) !important; }
 
-/* Status reads as a tinted chip with a dot, not a block of solid colour. */
-.status-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.25rem 0.7rem;
-    border-radius: var(--radius-pill);
-    font-size: 0.8rem;
-    font-weight: 600;
-    background-color: var(--surface-sunk);
-    color: var(--text-on-sage);
-}
-.status-chip::before {
-    content: "";
-    width: 0.45rem;
-    height: 0.45rem;
-    border-radius: 50%;
-    background-color: currentColor;
-    flex: 0 0 auto;
-}
-.status-chip.is-active { background-color: var(--cams-success-tint); color: var(--cams-success-ink); }
-.status-chip.is-inactive { background-color: var(--surface-sunk); color: var(--text-muted); }
+/* Status is one plain badge everywhere - the shape the Students list uses
+   (crud.css). The tinted pill with a dot that Teachers, administrators and
+   restriction categories had is gone, so every list reads the same. */
 
 /* Category and role labels were solid black, which read as an error state. */
 .badge.bg-dark {

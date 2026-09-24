@@ -145,13 +145,17 @@ namespace Server.Controllers
             ViewBag.GlobalSession = _sessionManager.Snapshot();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
-            var students = await _classManagement.GetStudentsForTeacherAsync(teacherId.Value);
-            ViewBag.Students = students;
-            var assignedStudentIds = students.Select(student => student.Id.ToString()).ToList();
-            ViewBag.Computers = await _context.Computers
-                .Where(c => c.Status == WorkstationStatus.Available ||
-                    (c.Status == WorkstationStatus.Assigned && c.AssignedTo != null && assignedStudentIds.Contains(c.AssignedTo)))
-                .ToListAsync();
+            // For the start dialog: who a lab-wide start reaches right now.
+            ViewBag.SignedInStudents = await _context.LabSessions
+                .CountAsync(s => s.IsActive && s.Status != LabSessionStatus.Ended);
+            ViewBag.LabComputers = await _context.Computers
+                .CountAsync(c => c.Status != "Archived");
+            // The rule the running lab is under, for the banner: the one chosen at
+            // start, or the default rule when the teacher left it on the default.
+            var labRuleId = _sessionManager.LabRuleId;
+            ViewBag.LabRule = labRuleId.HasValue
+                ? await _context.SessionRules.AsNoTracking().FirstOrDefaultAsync(r => r.SessionRuleId == labRuleId.Value)
+                : await _context.SessionRules.AsNoTracking().FirstOrDefaultAsync(r => r.IsActive && r.IsDefault);
             var sessions = await _context.LabSessions
                 .Include(s => s.Student)
                 .Include(s => s.Teacher)
@@ -163,21 +167,16 @@ namespace Server.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> StartSession(int studentId, int? computerId, int? sessionRuleId)
+        public async Task<IActionResult> StartSession(int? sessionRuleId)
         {
+            // Starts the lab for all students on all computers. There is no longer
+            // a per-student start: every student gets a session the moment they sign
+            // in on any workstation, so picking one student and one station here
+            // only duplicated that - and a session started with no station locked
+            // the student out, because sign-in refused any PC but the blank one.
             if (!CheckAccess()) return Denied();
-
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
-            var student = teacherId.HasValue
-                ? await _context.Students
-                    .Include(s => s.Class)
-                    .FirstOrDefaultAsync(s => s.Id == studentId)
-                : null;
-            if (student == null)
-            {
-                TempData["ErrorMessage"] = "The selected student was not found.";
-                return RedirectToAction("Sessions");
-            }
+            if (!teacherId.HasValue) return Denied();
 
             var rule = sessionRuleId.HasValue
                 ? await _context.SessionRules.FirstOrDefaultAsync(r => r.SessionRuleId == sessionRuleId.Value && r.IsActive)
@@ -190,51 +189,15 @@ namespace Server.Controllers
                 TempData["ErrorMessage"] = "The selected session rule is unavailable.";
                 return RedirectToAction(nameof(Sessions));
             }
-            if (await _context.LabSessions.AnyAsync(s => s.StudentId == studentId && s.IsActive && s.Status != LabSessionStatus.Ended))
-            {
-                TempData["ErrorMessage"] = "This student already has an active session.";
-                return RedirectToAction(nameof(Sessions));
-            }
 
-            Computer? computer = null;
-            if (computerId.HasValue)
-            {
-                computer = await _context.Computers.FirstOrDefaultAsync(c => c.ComputerId == computerId.Value);
-                var assignedToStudent = computer?.AssignedTo == studentId.ToString();
-                if (computer is null ||
-                    (!string.Equals(computer.Status, "Available", StringComparison.OrdinalIgnoreCase) && !assignedToStudent) ||
-                    (!string.IsNullOrWhiteSpace(computer.AssignedTo) && !assignedToStudent) ||
-                    await _context.LabSessions.AnyAsync(s => s.ComputerId == computerId.Value && s.IsActive && s.Status != LabSessionStatus.Ended))
-                {
-                    TempData["ErrorMessage"] = "The selected workstation is not available.";
-                    return RedirectToAction(nameof(Sessions));
-                }
-            }
+            var started = await _sessionLifecycle.StartAllSessionsAsync(rule);
 
-            var session = new LabSession
-            {
-                StudentId = studentId,
-                TeacherId = teacherId,
-                ComputerId = computerId,
-                SessionRuleId = rule?.SessionRuleId,
-                PCName = computer?.LaboratoryStation ?? string.Empty,
-                MaxDurationMinutes = rule?.MaxDurationMinutes,
-                 StartTime = DateTime.UtcNow,
-                Status = LabSessionStatus.Running,
-                IsActive = true
-            };
-
-            _context.LabSessions.Add(session);
-            if (computer is not null)
-            {
-                computer.Status = WorkstationStatus.InUse;
-                computer.AssignedTo = studentId.ToString();
-            }
-            await _context.SaveChangesAsync();
-            await _sessionLifecycle.NotifyStateAsync(session);
-            await AuditAsync("StartSession", $"Started session for student {studentId}");
-            TempData["Message"] = "Lab Session started successfully!";
-            return RedirectToAction("Sessions");
+            var ruleName = rule is null ? "no time limit" : $"{rule.Name} ({rule.MaxDurationMinutes} min)";
+            await AuditAsync("StartSession", $"Started the lab session for all students on all computers under {ruleName}; restarted {started} signed-in session(s)");
+            TempData["Message"] = started == 0
+                ? $"Lab session started under {ruleName}. Students join it as they sign in on any computer."
+                : $"Lab session started under {ruleName} for {started} signed-in student(s). Others join as they sign in on any computer.";
+            return RedirectToAction(nameof(Sessions));
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -793,9 +756,16 @@ namespace Server.Controllers
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
             if (!teacherId.HasValue) return Denied();
 
+            // Removed (archived) students are kept for their history but are no
+            // longer anyone's to manage, so they leave the list.
             var query = AccessibleStudents(teacherId.Value)
+                .Where(student => student.Status != RecordStatus.Archived)
                 .Include(student => student.Class)
                 .AsNoTracking();
+            // The teacher's own open classes, for the Add Student form's class choice.
+            ViewBag.Classes = (await _classManagement.GetClassesAsync(teacherId.Value))
+                .Where(cls => !cls.IsArchived)
+                .ToList();
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var term = search.Trim().ToLower();
@@ -823,22 +793,19 @@ namespace Server.Controllers
         {
             if (!CheckAccess()) return Denied();
             var teacherId = HttpContext.Session.GetInt32("TeacherId");
-            if (!teacherId.HasValue || !classId.HasValue)
-            {
-                TempData["ErrorMessage"] = "Create a student from one of your class rosters so the student is assigned immediately.";
-                return RedirectToAction(nameof(Students), new { search });
-            }
+            if (!teacherId.HasValue) return Denied();
 
-            var result = await _classManagement.CreateStudentInClassAsync(
-                classId.Value,
-                new NewStudentInput(student.StudentNumber, student.FirstName, student.LastName, student.FullName, student.Username, student.PasswordHash),
-                Actor,
-                teacherId.Value);
-            if (!await RecordAsync(result, "CreateStudent", $"Created student {result.Name} in class {classId}",
-                $"Student '{result.Name}' registered successfully!"))
-            {
-                return RedirectToAction(nameof(Students), new { search });
-            }
+            var input = new NewStudentInput(student.StudentNumber, student.FirstName, student.LastName, student.FullName, student.Username, student.PasswordHash);
+
+            // A class is optional. Without one the teacher becomes the student's
+            // adviser; this page used to refuse outright, so a teacher with no
+            // class yet had no way to add anybody.
+            var result = classId.HasValue
+                ? await _classManagement.CreateStudentInClassAsync(classId.Value, input, Actor, teacherId.Value)
+                : await _classManagement.CreateStudentAsync(input, Actor, teacherId.Value);
+            await RecordAsync(result, "CreateStudent",
+                classId.HasValue ? $"Created student {result.Name} in class {classId}" : $"Created student {result.Name} with no class",
+                $"Student '{result.Name}' registered successfully!");
 
             return RedirectToAction(nameof(Students), new { search });
         }
@@ -905,33 +872,16 @@ namespace Server.Controllers
                 .FirstOrDefaultAsync(student => student.Id == studentId);
             if (existing == null) return NotFound();
 
-            var accessibleClassIds = await _context.Classes
-                .Where(cls => cls.TeacherId == teacherId.Value &&
-                              !cls.IsArchived &&
-                              (cls.Status == RecordStatus.Active || string.IsNullOrEmpty(cls.Status)) &&
-                              (cls.ClassId == existing.ClassId ||
-                               _context.ClassStudents.Any(link => link.ClassId == cls.ClassId && link.StudentId == existing.Id)))
-                .Select(cls => cls.ClassId)
-                .ToListAsync();
-
-            foreach (var classId in accessibleClassIds)
-            {
-                var result = await _classManagement.RemoveStudentAsync(classId, studentId, teacherId.Value);
-                if (!result.Success)
-                {
-                    TempData["ErrorMessage"] = result.Error;
-                    return RedirectToAction(nameof(Students), new { search });
-                }
-            }
-
-            if (existing.AdviserId == teacherId.Value)
-            {
-                existing.AdviserId = null;
-                await _context.SaveChangesAsync();
-            }
-
-            await AuditAsync("RemoveStudent", $"Removed student {studentId} from the teacher's roster");
-            TempData["Message"] = $"Student '{existing.FullName}' removed from your roster. The account was preserved.";
+            // This used to only take the student out of the teacher's own classes.
+            // Every teacher sees every student, so the row stayed on the list and
+            // the button looked broken. The student is archived instead: gone
+            // from the lists and unable to sign in, with their history kept.
+            // A student in the lab right now is sent back to the sign-in screen.
+            await _sessionLifecycle.EndStudentSessionsAndNotifyAsync(existing.Id);
+            var result = await _classManagement.ArchiveStudentAsync(existing.Id);
+            await RecordAsync(result, "ArchiveStudent",
+                $"Removed student {existing.Id} ({existing.StudentNumber}); history retained",
+                $"Student '{existing.FullName}' removed. Their history was kept, and an administrator can restore the account.");
             return RedirectToAction(nameof(Students), new { search });
         }
 
@@ -1138,6 +1088,7 @@ namespace Server.Controllers
             cls.ClassStudents = roster.ToList();
             ViewBag.EnrolledStudents = roster;
             ViewBag.AllStudents = await AccessibleStudents(teacherId.Value)
+                .Where(s => s.Status != RecordStatus.Archived)
                 .Include(s => s.Class)
                 .OrderBy(s => s.LastName)
                 .ThenBy(s => s.FirstName)

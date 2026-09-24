@@ -94,18 +94,65 @@
 
 @foreach (var r in Model)
 {
-    <div class="modal fade" id="editSessionRule-@r.SessionRuleId" tabindex="-1">
-        <div class="modal-dialog"><div class="modal-content"><form method="post" action="/Admin/UpdateSessionRule">
-            @Html.AntiForgeryToken()<input type="hidden" name="SessionRuleId" value="@r.SessionRuleId" />
-            <div class="modal-header"><h5>Edit Session Rule</h5></div><div class="modal-body">
-                <input aria-label="Rule name" name="Name" value="@r.Name" maxlength="100" required class="form-control mb-2" />
-                <input aria-label="Maximum duration in minutes" name="MaxDurationMinutes" type="number" min="1" value="@r.MaxDurationMinutes" required class="form-control mb-2" />
-                <label><input type="checkbox" name="AllowPause" value="true" @(r.AllowPause ? "checked" : "") /> Allow pause</label><br />
-                <label><input type="checkbox" name="AllowRemoteControl" value="true" @(r.AllowRemoteControl ? "checked" : "") /> Allow remote control</label><br />
-                <label><input type="checkbox" name="IsDefault" value="true" @(r.IsDefault ? "checked" : "") /> Default</label><br />
-                <label><input type="checkbox" name="IsActive" value="true" @(r.IsActive ? "checked" : "") /> Active</label>
-            </div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div>
-        </form></div></div>
+    var id = r.SessionRuleId;
+    <div class="modal fade" id="editSessionRule-@id" tabindex="-1" aria-labelledby="editSessionRuleLabel-@id" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header border-0 text-white surface-brand">
+                    <h5 class="modal-title fw-bold" id="editSessionRuleLabel-@id">
+                        <i class="bi bi-pencil-square me-2"></i> Edit Session Rule
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="/Admin/UpdateSessionRule">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="SessionRuleId" value="@id" />
+                    <div class="modal-body py-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-muted small" for="edit-rule-name-@id">Rule Name <span class="text-danger">*</span></label>
+                            <input id="edit-rule-name-@id" type="text" name="Name" value="@r.Name" maxlength="100" required class="form-control filter-control" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-muted small" for="edit-rule-duration-@id">Max Duration (Minutes) <span class="text-danger">*</span></label>
+                            <input id="edit-rule-duration-@id" type="number" name="MaxDurationMinutes" min="1" value="@r.MaxDurationMinutes" required class="form-control filter-control" />
+                        </div>
+
+                        @* An unticked box posts nothing, and the rule model defaults Active,
+                           Allow pause and Allow remote control to on - so unticking them
+                           never took effect. Each box is followed by a hidden "false";
+                           when the box is ticked its "true" comes first and wins. *@
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="AllowPause" value="true" class="form-check-input" id="edit-rule-pause-@id" @(r.AllowPause ? "checked" : "") />
+                            <input type="hidden" name="AllowPause" value="false" />
+                            <label class="form-check-label fw-semibold text-dark small" for="edit-rule-pause-@id">Allow Teacher to Pause Session</label>
+                        </div>
+
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="AllowRemoteControl" value="true" class="form-check-input" id="edit-rule-remote-@id" @(r.AllowRemoteControl ? "checked" : "") />
+                            <input type="hidden" name="AllowRemoteControl" value="false" />
+                            <label class="form-check-label fw-semibold text-dark small" for="edit-rule-remote-@id">Allow Remote Desktop Control</label>
+                        </div>
+
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="IsDefault" value="true" class="form-check-input" id="edit-rule-default-@id" @(r.IsDefault ? "checked" : "") />
+                            <input type="hidden" name="IsDefault" value="false" />
+                            <label class="form-check-label fw-semibold text-dark small" for="edit-rule-default-@id">Default Rule for New Sessions</label>
+                        </div>
+
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="IsActive" value="true" class="form-check-input" id="edit-rule-active-@id" @(r.IsActive ? "checked" : "") />
+                            <input type="hidden" name="IsActive" value="false" />
+                            <label class="form-check-label fw-semibold text-dark small" for="edit-rule-active-@id">Active <span class="fw-normal text-muted">(can be chosen when starting a session)</span></label>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-emerald rounded-pill px-4 text-white">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 }
 
@@ -134,11 +181,13 @@
 
                     <div class="form-check mb-2">
                         <input type="checkbox" name="AllowPause" value="true" class="form-check-input" id="chkPause" checked />
+                        <input type="hidden" name="AllowPause" value="false" />
                         <label class="form-check-label fw-semibold text-dark small" for="chkPause">Allow Teacher to Pause Session</label>
                     </div>
 
                     <div class="form-check mb-2">
                         <input type="checkbox" name="AllowRemoteControl" value="true" class="form-check-input" id="chkRemote" checked />
+                        <input type="hidden" name="AllowRemoteControl" value="false" />
                         <label class="form-check-label fw-semibold text-dark small" for="chkRemote">Allow Remote Desktop Control</label>
                     </div>
 

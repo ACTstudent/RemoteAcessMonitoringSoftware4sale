@@ -114,15 +114,17 @@
             <div class="text-center text-muted py-5"><i class="bi bi-calendar2-x fs-2 d-block mb-2"></i>No authorized events match this reporting window.</div>
         }
     </div>
+    @* The shared server pager, as on every other list, inside the card. *@
+    <div class="px-3 px-lg-4">
+        @await Html.PartialAsync("_CrudPager", Server.Models.PagerViewModel.For(timelinePage, "events", "UnifiedTimeline", new
+        {
+            from = filter.From.ToString("yyyy-MM-dd"),
+            to = displayedTo.ToString("yyyy-MM-dd"),
+            filter.StudentId,
+            filter.ClassId,
+            filter.Station,
+            filter.Source,
+            filter.EventType
+        }))
+    </div>
 </div>
-
-@if (timelinePage.PageCount > 1)
-{
-    <nav class="d-flex justify-content-between align-items-center mt-3" aria-label="Timeline pages">
-        <span class="small text-muted">Page @timelinePage.Page of @timelinePage.PageCount</span>
-        <div class="d-flex gap-2">
-            <a class="btn btn-sm btn-outline-secondary @(timelinePage.Page == 1 ? "disabled" : "")" href="@Url.Action("UnifiedTimeline", new { from = filter.From.ToString("yyyy-MM-dd"), to = displayedTo.ToString("yyyy-MM-dd"), filter.StudentId, filter.ClassId, filter.Station, filter.Source, filter.EventType, page = timelinePage.Page - 1, pageSize = timelinePage.PageSize })">Previous</a>
-            <a class="btn btn-sm btn-outline-secondary @(timelinePage.Page == timelinePage.PageCount ? "disabled" : "")" href="@Url.Action("UnifiedTimeline", new { from = filter.From.ToString("yyyy-MM-dd"), to = displayedTo.ToString("yyyy-MM-dd"), filter.StudentId, filter.ClassId, filter.Station, filter.Source, filter.EventType, page = timelinePage.Page + 1, pageSize = timelinePage.PageSize })">Next</a>
-        </div>
-    </nav>
-}

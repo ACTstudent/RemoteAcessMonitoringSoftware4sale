@@ -198,10 +198,14 @@ function drawRemoteFrame(base64Image) {
 // --- FLOW-03: the three states, kept apart ---
 
 /** Session lifecycle, and only that. Never written by a transport event. */
+// The server reports "None" before any lab session has been started, which
+// read as a stray word under the Status caption.
+const SESSION_STATE_TEXT = { None: "Not started" };
+
 function renderSessionState(status) {
     const label = document.getElementById("lblSessionState");
     if (!label) return;
-    label.textContent = status;
+    label.textContent = SESSION_STATE_TEXT[status] ?? status;
     label.dataset.sessionState = status;
     markSessionStateStale(false);
 }
@@ -633,11 +637,29 @@ hub.on("InfractionDetected", infraction => {
 });
 hub.on("StudentConnected", student => createWorkstationCard(valueOf(student, "connectionId", "ConnectionId"), valueOf(student, "studentId", "StudentId"), valueOf(student, "pcName", "PcName")));
 hub.on("StudentDisconnected", connectionId => removeWorkstationCard(connectionId));
+// The server sends the lab's elapsed time when it changes state, not every
+// second, so a running lab is counted forward here between messages.
+let labElapsedSeconds = 0;
+let labRunning = false;
+
+function renderLabTimer() {
+    const timer = document.getElementById("lblSessionTimer");
+    if (!timer) return;
+    timer.textContent = `${String(Math.floor(labElapsedSeconds / 60)).padStart(2, "0")}:${String(labElapsedSeconds % 60).padStart(2, "0")}`;
+}
+
+setInterval(() => {
+    if (!labRunning) return;
+    labElapsedSeconds++;
+    renderLabTimer();
+}, 1000);
+
 hub.on("GlobalSessionState", state => {
     const status = valueOf(state, "status", "Status") || "Ready";
     renderSessionState(status);
-    const elapsed = Number(valueOf(state, "elapsedSeconds", "ElapsedSeconds")) || 0;
-    document.getElementById("lblSessionTimer").textContent = `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`;
+    labElapsedSeconds = Number(valueOf(state, "elapsedSeconds", "ElapsedSeconds")) || 0;
+    labRunning = status === "Running";
+    renderLabTimer();
 });
 
 // FLOW-03. These three are different things and used to share one label.

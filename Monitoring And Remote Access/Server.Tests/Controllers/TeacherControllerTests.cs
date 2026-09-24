@@ -43,10 +43,11 @@ public class TeacherControllerTests
         clientsMock.Setup(c => c.All).Returns(proxyMock.Object);
         clientsMock.Setup(c => c.User(It.IsAny<string>())).Returns(proxyMock.Object);
         clientsMock.Setup(c => c.Users(It.IsAny<IReadOnlyList<string>>())).Returns(proxyMock.Object);
+        clientsMock.Setup(c => c.Group(It.IsAny<string>())).Returns(proxyMock.Object);
         hubMock.Setup(h => h.Clients).Returns(clientsMock.Object);
 
         var sessionManager = new SessionManagerService(hubMock.Object);
-        var lifecycle = new LabSessionLifecycleService(context, hubMock.Object);
+        var lifecycle = new LabSessionLifecycleService(context, hubMock.Object, lab: sessionManager);
         var controller = new TeacherController(context, sessionManager, lifecycle);
         controller.Url = Mock.Of<IUrlHelper>();
         var httpContext = new DefaultHttpContext();
@@ -210,25 +211,33 @@ public class TeacherControllerTests
         db.Classes.Add(cls);
         await db.SaveChangesAsync();
         var student = new Student { FullName = "Test Student", Username = "teststudent", PasswordHash = "hash", ClassId = cls.ClassId };
-        var computer = new Computer { LaboratoryStation = "PC-01", Status = "Available" };
         var rule = new SessionRule { Name = "Standard 45", MaxDurationMinutes = 45, IsDefault = true, IsActive = true };
+        var labRule = new SessionRule { Name = "Long lab", MaxDurationMinutes = 90, IsActive = true };
 
         db.Students.Add(student);
-        db.Computers.Add(computer);
-        db.SessionRules.Add(rule);
+        db.SessionRules.AddRange(rule, labRule);
         await db.SaveChangesAsync();
 
-        // 1. Start Session
-        var startResult = await controller.StartSession(student.Id, computer.ComputerId, rule.SessionRuleId);
+        // The student signs in on a workstation, which opens their session.
+        var computer = new Computer { LaboratoryStation = "PC-01", Status = "In Use", AssignedTo = student.Id.ToString() };
+        db.Computers.Add(computer);
+        db.LabSessions.Add(new LabSession
+        {
+            StudentId = student.Id, Computer = computer, PCName = "PC-01", SessionRuleId = rule.SessionRuleId,
+            MaxDurationMinutes = 45, StartTime = DateTime.UtcNow.AddMinutes(-20), Status = "Running", IsActive = true
+        });
+        await db.SaveChangesAsync();
+
+        // 1. Start the lab for everyone, under a different rule
+        var startResult = await controller.StartSession(labRule.SessionRuleId);
         Assert.IsType<RedirectToActionResult>(startResult);
 
-        var session = await db.LabSessions.FirstOrDefaultAsync(s => s.StudentId == student.Id);
-        Assert.NotNull(session);
+        var session = await db.LabSessions.SingleAsync(s => s.StudentId == student.Id);
         Assert.Equal("Running", session.Status);
         Assert.True(session.IsActive);
-
-        var updatedComp = await db.Computers.FindAsync(computer.ComputerId);
-        Assert.Equal("In Use", updatedComp?.Status);
+        Assert.Equal(labRule.SessionRuleId, session.SessionRuleId);
+        Assert.Equal(90, session.MaxDurationMinutes);
+        Assert.InRange(LabSessionLifecycleService.GetElapsedSeconds(session, DateTime.UtcNow), 0, 5);
 
         // 2. Toggle Pause (Running -> Paused)
         var pauseResult = await controller.TogglePause(session.Id);
@@ -298,12 +307,81 @@ public class TeacherControllerTests
         var updatedStudent = await db.Students.FindAsync(student.Id);
         Assert.Equal("Dr. Jose Rizal", updatedStudent?.FullName);
 
-        // 3. Delete Student
+        // 3. Delete Student: archived, so it leaves the list but the account and
+        // its history are kept.
         var deleteResult = await controller.DeleteStudent(student.Id);
         Assert.IsType<RedirectToActionResult>(deleteResult);
         var preservedStudent = await db.Students.FindAsync(student.Id);
         Assert.NotNull(preservedStudent);
         Assert.Null(preservedStudent?.ClassId);
+        Assert.Equal("Archived", preservedStudent?.Status);
+
+        var list = Assert.IsType<ViewResult>(await controller.Students());
+        Assert.DoesNotContain(Assert.IsAssignableFrom<IEnumerable<Student>>(list.Model), s => s.Id == student.Id);
+    }
+
+    // The delete button used to only unlink the student from the teacher's own
+    // classes. Every teacher sees every student, so the row never went away and
+    // the button looked broken. It archives now: off the list, no sign-in, the
+    // workstation mapping released, history kept.
+    [Fact]
+    public async Task DeleteStudent_RemovesTheStudentFromTheListButKeepsTheirHistory()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var student = new Student { StudentNumber = "S-GONE", FullName = "Leaving Student", Username = "leaving", PasswordHash = "hash", Status = "Active" };
+        var stays = new Student { StudentNumber = "S-STAY", FullName = "Staying Student", Username = "staying", PasswordHash = "hash", Status = "Active" };
+        db.Students.AddRange(student, stays);
+        await db.SaveChangesAsync();
+        db.Computers.Add(new Computer { LaboratoryStation = "PC-09", Status = "Assigned", AssignedTo = student.Id.ToString() });
+        db.LabSessions.Add(new LabSession { StudentId = student.Id, PCName = "PC-09", StartTime = DateTime.UtcNow.AddHours(-1), EndTime = DateTime.UtcNow, Status = "Ended", IsActive = false });
+        await db.SaveChangesAsync();
+
+        await controller.DeleteStudent(student.Id);
+
+        var list = Assert.IsAssignableFrom<IEnumerable<Student>>(Assert.IsType<ViewResult>(await controller.Students()).Model).ToList();
+        Assert.DoesNotContain(list, s => s.Id == student.Id);
+        Assert.Contains(list, s => s.Id == stays.Id);
+        Assert.Equal("Archived", (await db.Students.FindAsync(student.Id))?.Status);
+        var computer = await db.Computers.SingleAsync();
+        Assert.Null(computer.AssignedTo);
+        Assert.Equal("Available", computer.Status);
+        Assert.Single(await db.LabSessions.Where(s => s.StudentId == student.Id).ToListAsync());
+    }
+
+    // Student Profiles had no way to add anyone unless a class existed first.
+    [Fact]
+    public async Task CreateStudent_WithoutAClass_MakesTheTeacherTheAdviser()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+
+        var result = await controller.CreateStudent(new Student
+        {
+            FirstName = "Maria",
+            LastName = "Clara",
+            Username = "mclara",
+            PasswordHash = "pass1234"
+        });
+
+        Assert.IsType<RedirectToActionResult>(result);
+        var created = await db.Students.SingleAsync(s => s.Username == "mclara");
+        Assert.Equal("Maria Clara", created.FullName);
+        Assert.Equal(1, created.AdviserId);
+        Assert.Null(created.ClassId);
+        Assert.Equal("Active", created.Status);
+    }
+
+    [Fact]
+    public async Task CreateStudent_WithAShortPassword_IsRefusedWithAMessage()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+
+        await controller.CreateStudent(new Student { FirstName = "Short", LastName = "Password", Username = "shortpw", PasswordHash = "123" });
+
+        Assert.Empty(await db.Students.ToListAsync());
+        Assert.Contains("8 characters", controller.TempData["ErrorMessage"] as string);
     }
 
     [Fact]

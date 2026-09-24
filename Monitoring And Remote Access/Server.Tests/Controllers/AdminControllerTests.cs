@@ -365,10 +365,10 @@ public class AdminControllerTests
         Assert.Equal(student.Id.ToString(), assignedComp?.AssignedTo);
         Assert.Equal("Assigned", assignedComp?.Status);
 
-        // 4. Delete Student
+        // 4. Delete Student: removed (archived), with the account and history kept
         var deleteResult = await controller.DeleteStudent(student.Id);
         Assert.IsType<RedirectToActionResult>(deleteResult);
-        Assert.Equal("Inactive", (await db.Students.FindAsync(student.Id))?.Status);
+        Assert.Equal("Archived", (await db.Students.FindAsync(student.Id))?.Status);
 
         var unassignedComp = await db.Computers.FindAsync(comp.ComputerId);
         Assert.Null(unassignedComp?.AssignedTo);
@@ -383,6 +383,54 @@ public class AdminControllerTests
         var result = await controller.CreateStudent(new Student { Username = "" });
         var redirect = Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal("Students", redirect.ActionName);
+    }
+
+    // The admin form follows the Student Profiles rules now: username and ID
+    // are generated when blank, and the password must be at least 8 characters.
+    [Fact]
+    public async Task CreateStudent_GeneratesTheUsernameAndIdWhenLeftBlank()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+
+        await controller.CreateStudent(new Student { FirstName = "Andres", LastName = "Bonifacio", PasswordHash = "katipunan1" });
+
+        var created = await db.Students.SingleAsync();
+        Assert.Equal("Andres Bonifacio", created.FullName);
+        Assert.False(string.IsNullOrWhiteSpace(created.Username));
+        Assert.False(string.IsNullOrWhiteSpace(created.StudentNumber));
+        Assert.Equal("Active", created.Status);
+    }
+
+    [Fact]
+    public async Task CreateStudent_RefusesAPasswordShorterThanEight()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+
+        await controller.CreateStudent(new Student { FirstName = "Short", LastName = "Pass", Username = "short", PasswordHash = "1" });
+
+        Assert.Empty(await db.Students.ToListAsync());
+        Assert.Contains("8 characters", controller.TempData["ErrorMessage"] as string);
+    }
+
+    [Fact]
+    public async Task CreateStudent_CanPlaceTheStudentInAClass()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var teacher = new Teacher { FirstName = "T", LastName = "One", Username = "t-one", PasswordHash = "hash", Status = "Active" };
+        db.Teachers.Add(teacher);
+        await db.SaveChangesAsync();
+        var cls = new Class { ClassName = "Grade 6 - Rizal", TeacherId = teacher.TeacherId };
+        db.Classes.Add(cls);
+        await db.SaveChangesAsync();
+
+        await controller.CreateStudent(new Student { FirstName = "Gabriela", LastName = "Silang", PasswordHash = "ilocos1763" }, cls.ClassId);
+
+        var created = await db.Students.SingleAsync();
+        Assert.Equal(cls.ClassId, created.ClassId);
+        Assert.Single(await db.ClassStudents.Where(cs => cs.ClassId == cls.ClassId && cs.StudentId == created.Id).ToListAsync());
     }
 
     [Fact]

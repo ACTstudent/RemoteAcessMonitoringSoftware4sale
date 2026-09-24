@@ -21,11 +21,31 @@ public interface IWorkstationRegistrationService
 
 public sealed class WorkstationRegistrationService : IWorkstationRegistrationService
 {
-    private readonly ApplicationDbContext _db;
+    public const string NoLabMessage = "No lab session is running. Wait for your teacher to start it.";
 
-    public WorkstationRegistrationService(ApplicationDbContext db)
+    private readonly ApplicationDbContext _db;
+    private readonly SessionManagerService? _lab;
+
+    public WorkstationRegistrationService(ApplicationDbContext db, SessionManagerService? lab = null)
     {
         _db = db;
+        _lab = lab;
+    }
+
+    /// <summary>
+    /// The rule a new session starts under: the one the teacher chose when
+    /// starting the lab for everyone, while it is still active, otherwise the
+    /// active default rule.
+    /// </summary>
+    private async Task<SessionRule?> RuleForNewSessionAsync(CancellationToken cancellationToken)
+    {
+        if (_lab?.LabRuleId is int labRuleId)
+        {
+            var labRule = await _db.SessionRules.FirstOrDefaultAsync(
+                item => item.SessionRuleId == labRuleId && item.IsActive, cancellationToken);
+            if (labRule is not null) return labRule;
+        }
+        return await _db.SessionRules.FirstOrDefaultAsync(item => item.IsActive && item.IsDefault, cancellationToken);
     }
 
     public async Task<Computer> GetOrCreateForStudentAsync(
@@ -134,6 +154,14 @@ public sealed class WorkstationRegistrationService : IWorkstationRegistrationSer
 
         try
         {
+            // No lab, no new session. A student already in a session keeps it -
+            // that is the reconnect path below - but nobody starts one until the
+            // teacher opens the lab. Checked before the workstation is claimed,
+            // so a refused sign-in leaves no trace on the computer record.
+            if (_lab is { IsLabOpen: false } &&
+                !await _db.LabSessions.AnyAsync(session => session.StudentId == studentId && session.IsActive && session.Status != LabSessionStatus.Ended, cancellationToken))
+                throw new InvalidOperationException(NoLabMessage);
+
             var computer = await GetOrCreateForStudentAsync(studentId, pcName, cancellationToken);
             var existing = await _db.LabSessions.Include(session => session.Computer)
                 .FirstOrDefaultAsync(session => session.StudentId == studentId && session.IsActive && session.Status != LabSessionStatus.Ended, cancellationToken);
@@ -153,7 +181,7 @@ public sealed class WorkstationRegistrationService : IWorkstationRegistrationSer
 
             var student = await _db.Students.Include(item => item.Class)
                 .FirstAsync(item => item.Id == studentId, cancellationToken);
-            var rule = await _db.SessionRules.FirstOrDefaultAsync(item => item.IsActive && item.IsDefault, cancellationToken);
+            var rule = await RuleForNewSessionAsync(cancellationToken);
             var session = new LabSession
             {
                 StudentId = studentId,

@@ -107,9 +107,7 @@
                         <td>@(string.IsNullOrEmpty(t.ContactNumber) ? "-" : t.ContactNumber)</td>
                         <td>@(string.IsNullOrEmpty(t.Email) ? "-" : t.Email)</td>
                         <td>
-                            <span class="status-chip @(isActive ? "is-active" : "is-inactive")">
-                                @(isActive ? "Active" : "Inactive")
-                            </span>
+                            <span class="badge @(isActive ? "bg-success" : "bg-secondary")">@(isActive ? "Active" : "Inactive")</span>
                             @if (isLocked)
                             {
                                 <span class="badge bg-danger rounded-pill px-2 py-1 ms-1">Locked</span>

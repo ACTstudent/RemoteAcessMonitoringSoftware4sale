@@ -63,7 +63,13 @@
             confirmLabel: 'Move student',
             variant: 'warning'
         });
-        if (!confirmed) return;
+        if (!confirmed) {
+            // The roster saves the moment a class is picked, so a cancelled move
+            // puts the select back; otherwise it would show a class the student
+            // is not in.
+            if (select.hasAttribute('data-current-class-id')) select.value = select.dataset.currentClassId || '';
+            return;
+        }
 
         flag.value = 'true';
         form.requestSubmit();

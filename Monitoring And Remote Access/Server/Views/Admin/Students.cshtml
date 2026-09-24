@@ -5,8 +5,11 @@
     var computers = ViewBag.Computers as List<Server.Models.Computer> ?? new List<Server.Models.Computer>();
     var classes = ViewBag.Classes as IEnumerable<Server.Models.Class> ?? Enumerable.Empty<Server.Models.Class>();
 
-    var totalStudents = Model.Count();
-    var activeStudents = Model.Count(s => string.IsNullOrWhiteSpace(s.Status) || string.Equals(s.Status, "Active", StringComparison.OrdinalIgnoreCase));
+    // Removed students are kept for their history but are not counted: the
+    // cards describe the students still in use, as the list does by default.
+    var inUse = Model.Where(s => !string.Equals(s.Status, "Archived", StringComparison.OrdinalIgnoreCase)).ToList();
+    var totalStudents = inUse.Count;
+    var activeStudents = inUse.Count(s => string.IsNullOrWhiteSpace(s.Status) || string.Equals(s.Status, "Active", StringComparison.OrdinalIgnoreCase));
     var inactiveStudents = totalStudents - activeStudents;
 }
 
@@ -73,6 +76,7 @@
             <option value="">All status</option>
             <option value="Active">Active</option>
             <option value="Inactive">Inactive</option>
+            <option value="Archived">Removed</option>
         </select>
         <button type="button" class="btn btn-outline-emerald" data-bs-toggle="modal" data-bs-target="#bulkStudentsModal">
             <i class="bi bi-people-fill me-1" aria-hidden="true"></i> Bulk Import
@@ -98,8 +102,15 @@
                 @foreach (var s in Model)
                 {
                     var isActive = string.IsNullOrWhiteSpace(s.Status) || string.Equals(s.Status, "Active", StringComparison.OrdinalIgnoreCase);
+                    // Removed by a teacher on Student Profiles: hidden from their lists,
+                    // unable to sign in. Activating restores the account.
+                    var isArchived = string.Equals(s.Status, "Archived", StringComparison.OrdinalIgnoreCase);
+                    var statusLabel = isActive ? "Active" : isArchived ? "Removed" : "Inactive";
                     var isLocked = s.LockoutEndUtc.HasValue && s.LockoutEndUtc.Value > DateTime.UtcNow;
-                    <tr data-crud-item data-status="@(isActive ? "Active" : "Inactive")">
+                    @* Written out only on removed rows. Razor always renders a data-* attribute,
+   even when its value is null, so a conditional value put the marker on
+   every row and "All status" showed nothing. *@
+<tr data-crud-item data-status="@(isArchived ? "Archived" : isActive ? "Active" : "Inactive")" @(isArchived ? Html.Raw("data-crud-set-aside") : Html.Raw(string.Empty))>
                         <td class="fw-bold text-muted font-monospace">@s.StudentNumber</td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
@@ -111,7 +122,7 @@
                         </td>
                         <td class="font-monospace text-emerald-700">@@@s.Username</td>
                         <td>
-                            <span class="badge @(isActive ? "bg-success" : "bg-secondary") rounded-pill px-3 py-1">@(isActive ? "Active" : "Inactive")</span>
+                            <span class="badge @(isActive ? "bg-success" : isArchived ? "bg-dark" : "bg-secondary") rounded-pill px-3 py-1">@statusLabel</span>
                             @if (isLocked)
                             {
                                 <span class="badge bg-danger rounded-pill px-2 py-1 ms-1">Locked</span>
@@ -122,28 +133,29 @@
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="studentId" value="@s.Id" />
                                 <input type="hidden" name="moveStudent" value="false" data-move-flag />
-                                <select aria-label="Class for @s.FullName" name="classId" class="form-select filter-control py-1 px-2" style="font-size: 0.85rem; min-width: 190px;" data-move-select data-current-class="@(s.Class?.ClassName ?? "")" data-current-class-id="@(s.ClassId?.ToString() ?? "")">
+                                @* Saves on choice; there is no Assign button. A move out of
+                                   another class still asks first (student-move-confirm.js). *@
+                                <select aria-label="Class for @s.FullName" name="classId" class="form-select filter-control py-1 px-2" style="font-size: 0.85rem; min-width: 190px;" data-auto-submit data-move-select data-current-class="@(s.Class?.ClassName ?? "")" data-current-class-id="@(s.ClassId?.ToString() ?? "")">
                                     <option value="">-- Unassigned --</option>
                                     @foreach (var cls in classes)
                                     {
                                         <option value="@cls.ClassId" selected="@(s.ClassId == cls.ClassId ? "selected" : null)">@cls.ClassName@(cls.Teacher == null ? "" : $" · {cls.Teacher.FirstName} {cls.Teacher.LastName}")</option>
                                     }
                                 </select>
-                                <button class="btn btn-sm btn-outline-emerald rounded-pill px-3">Assign</button>
                             </form>
                         </td>
                         <td>
                             <form method="post" action="/Admin/AssignComputer" class="d-flex gap-2 align-items-center form-inline-action">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="studentId" value="@s.Id" />
-                                <select aria-label="Workstation for @s.FullName" name="computerId" class="form-select filter-control py-1 px-2" style="font-size: 0.85rem; width: 180px;">
+                                @* Saves on choice; there is no Map button. *@
+                                <select aria-label="Workstation for @s.FullName" name="computerId" class="form-select filter-control py-1 px-2" style="font-size: 0.85rem; width: 180px;" data-auto-submit>
                                     <option value="">-- Unassigned --</option>
                                     @foreach (var c in computers.Where(c => c.AssignedTo == s.Id.ToString() || c.AssignedTo == null))
                                     {
                                         <option value="@c.ComputerId" selected="@(c.AssignedTo == s.Id.ToString())">@c.LaboratoryStation</option>
                                     }
                                 </select>
-                                <button class="btn btn-sm btn-outline-emerald rounded-pill px-3">Map</button>
                             </form>
                         </td>
                         <td>
@@ -157,25 +169,28 @@
                                         <button class="btn btn-sm btn-outline-warning crud-action" title="Unlock account" aria-label="Unlock @s.FullName"><i class="bi bi-unlock" aria-hidden="true"></i></button>
                                     </form>
                                 }
-                                <form method="post" action="/Admin/SetAccountActive" class="form-inline-action" data-confirm="@(isActive ? "Deactivate" : "Activate") this student account across CAMS?" data-confirm-title="@(isActive ? "Deactivate" : "Activate") student" data-confirm-label="@(isActive ? "Deactivate" : "Activate")" data-confirm-variant="@(isActive ? "danger" : "success")">
+                                <form method="post" action="/Admin/SetAccountActive" class="form-inline-action" data-confirm="@(isActive ? "Deactivate this student account across CAMS?" : isArchived ? "Restore this removed student? They can sign in again and will reappear on Student Profiles." : "Activate this student account across CAMS?")" data-confirm-title="@(isActive ? "Deactivate" : isArchived ? "Restore" : "Activate") student" data-confirm-label="@(isActive ? "Deactivate" : "Activate")" data-confirm-variant="@(isActive ? "danger" : "success")">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="accountRole" value="Student" />
                                     <input type="hidden" name="id" value="@s.Id" />
                                     <input type="hidden" name="isActive" value="@((!isActive).ToString())" />
-                                    <button class="btn btn-sm @(isActive ? "btn-outline-secondary" : "btn-outline-success") crud-action" title="@(isActive ? "Deactivate account" : "Activate account")" aria-label="@(isActive ? "Deactivate" : "Activate") @s.FullName">
+                                    <button class="btn btn-sm @(isActive ? "btn-outline-secondary" : "btn-outline-success") crud-action" title="@(isActive ? "Deactivate account" : isArchived ? "Restore account" : "Activate account")" aria-label="@(isActive ? "Deactivate" : isArchived ? "Restore" : "Activate") @s.FullName">
                                         <i class="bi @(isActive ? "bi-person-dash" : "bi-person-check")" aria-hidden="true"></i>
                                     </button>
                                 </form>
                                 <button type="button" class="btn btn-sm btn-outline-emerald crud-action" data-bs-toggle="modal" data-bs-target="#editStudentModal-@s.Id" title="Edit student" aria-label="Edit @s.FullName">
                                     <i class="bi bi-pencil-square" aria-hidden="true"></i>
                                 </button>
-                                <form method="post" action="/Admin/DeleteStudent" class="form-inline-action" data-confirm="Deactivate this student across CAMS while retaining historical records?" data-confirm-title="Deactivate student" data-confirm-label="Deactivate">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="id" value="@s.Id" />
-                                    <button class="btn btn-sm btn-outline-danger crud-action" title="Archive student" aria-label="Archive @s.FullName">
-                                        <i class="bi bi-archive" aria-hidden="true"></i>
-                                    </button>
-                                </form>
+                                @if (!isArchived)
+                                {
+                                    <form method="post" action="/Admin/DeleteStudent" class="form-inline-action" data-confirm="Remove @s.FullName? They disappear from the student lists and can no longer sign in. Their session history is kept, and you can restore them from the Removed filter." data-confirm-title="Remove student" data-confirm-label="Remove">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@s.Id" />
+                                        <button class="btn btn-sm btn-outline-danger crud-action" title="Remove student" aria-label="Remove @s.FullName">
+                                            <i class="bi bi-trash" aria-hidden="true"></i>
+                                        </button>
+                                    </form>
+                                }
                             </div>
                         </td>
                     </tr>
@@ -235,36 +250,52 @@
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="modal-header border-0 text-white surface-brand">
                 <h5 class="modal-title fw-bold" id="createStudentModalLabel">
-                    <i class="bi bi-person-plus me-2"></i> Register New Student
+                    <i class="bi bi-person-plus me-2"></i> Add Student
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+            @* The same form as Student Profiles: generated ID and username when
+               left blank, a password of at least 8 characters, and an optional class. *@
             <form method="post" action="/Admin/CreateStudent">
                 @Html.AntiForgeryToken()
                 <div class="modal-body py-4">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small" for="students-student-id-lrn-number">Student ID / LRN Number <span class="text-danger">*</span></label>
-                        <input id="students-student-id-lrn-number" type="text" name="StudentNumber" class="form-control filter-control" required placeholder="e.g. STU-2026-001" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small" for="students-full-name">Full Name <span class="text-danger">*</span></label>
-                        <input id="students-full-name" type="text" name="FullName" class="form-control filter-control" required placeholder="e.g. John Doe" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small" for="students-username">Username <span class="text-danger">*</span></label>
-                        <input id="students-username" type="text" name="Username" class="form-control filter-control" required placeholder="e.g. student1" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small" for="students-password">Password <span class="text-danger">*</span></label>
-                        <input id="students-password" type="password" name="PasswordHash" class="form-control filter-control" required placeholder="••••••••" />
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold text-muted small" for="students-first-name">First Name <span class="text-danger">*</span></label>
+                            <input id="students-first-name" type="text" name="FirstName" class="form-control filter-control" maxlength="100" required />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold text-muted small" for="students-last-name">Last Name <span class="text-danger">*</span></label>
+                            <input id="students-last-name" type="text" name="LastName" class="form-control filter-control" maxlength="100" required />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold text-muted small" for="students-student-id-lrn-number">Student ID / LRN Number</label>
+                            <input id="students-student-id-lrn-number" type="text" name="StudentNumber" class="form-control filter-control" maxlength="50" placeholder="Made for you if blank" />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold text-muted small" for="students-username">Username</label>
+                            <input id="students-username" type="text" name="Username" class="form-control filter-control" maxlength="50" placeholder="Made from the name if blank" />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold text-muted small" for="students-password">Password <span class="text-danger">*</span></label>
+                            <input id="students-password" type="password" name="PasswordHash" class="form-control filter-control" minlength="8" required autocomplete="new-password" aria-describedby="students-password-hint" />
+                            <div id="students-password-hint" class="form-text">At least 8 characters.</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold text-muted small" for="students-class">Class</label>
+                            <select id="students-class" name="classId" class="form-select filter-control">
+                                <option value="">No class yet</option>
+                                @foreach (var cls in classes)
+                                {
+                                    <option value="@cls.ClassId">@cls.ClassName@(cls.Teacher == null ? "" : $" · {cls.Teacher.FirstName} {cls.Teacher.LastName}")</option>
+                                }
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-emerald rounded-pill px-4 text-white">Save Student</button>
+                    <button type="submit" class="btn btn-emerald rounded-pill px-4 text-white">Add Student</button>
                 </div>
             </form>
         </div>
@@ -319,4 +350,5 @@
 
 @section Scripts {
     <script src="~/js/student-move-confirm.js" asp-append-version="true"></script>
+    <script src="~/js/auto-submit-select.js" asp-append-version="true"></script>
 }

@@ -17,13 +17,16 @@ public sealed class ClientAuthController : ControllerBase
     private static readonly MemoryCache LoginCache = new(new MemoryCacheOptions());
     private readonly ServerAuthService _authenticationService;
     private readonly LabSessionLifecycleService _sessionLifecycle;
+    private readonly SessionManagerService? _lab;
 
     public ClientAuthController(
         ServerAuthService authenticationService,
-        LabSessionLifecycleService sessionLifecycle)
+        LabSessionLifecycleService sessionLifecycle,
+        SessionManagerService? lab = null)
     {
         _authenticationService = authenticationService;
         _sessionLifecycle = sessionLifecycle;
+        _lab = lab;
     }
 
     [AllowAnonymous]
@@ -40,6 +43,12 @@ public sealed class ClientAuthController : ControllerBase
         {
             return BadRequest("Username, password, and workstation name are required.");
         }
+
+        // Students may only sign in to a running lab. Answered before the
+        // password is checked, with its own status, so the client can tell the
+        // pupil to wait for the teacher rather than that they typed it wrong.
+        if (_lab is { IsLabOpen: false })
+            return Conflict(WorkstationRegistrationService.NoLabMessage);
 
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
         var cacheKey = $"client-login:{ipAddress}";

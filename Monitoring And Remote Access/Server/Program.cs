@@ -71,7 +71,11 @@ builder.Services.AddScoped<ActiveTeacherAuthorizationFilter>();
 builder.Services.AddScoped<IClassManagementService, ClassManagementService>();
 builder.Services.AddSingleton<IMonitoringService, MonitoringService>();
 builder.Services.AddSingleton<IDeploymentService, DeploymentService>();
-builder.Services.AddSingleton<SessionManagerService>();
+// The lab session survives a server restart: students may only sign in while
+// one is open, so it is saved next to the database.
+builder.Services.AddSingleton(services => new SessionManagerService(
+    services.GetRequiredService<Microsoft.AspNetCore.SignalR.IHubContext<Server.Hubs.RemoteMonitoringHub>>(),
+    Path.Combine(AppContext.BaseDirectory, "lab-session.json")));
 builder.Services.AddHostedService<ServerDiscoveryService>();
 
 // Session for login state
