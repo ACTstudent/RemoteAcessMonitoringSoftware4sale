@@ -29,6 +29,9 @@
          placeholder on every installed machine. BrandIcon reads it from here
          and picks the frame for the size Windows actually asks for. -->
     <EmbeddedResource Include="cams.ico" LogicalName="cams.ico" />
+    <!-- The school seal on the sign-in screen. Linked from the portal rather
+         than copied, so the client and the web pages always show the same one. -->
+    <EmbeddedResource Include="..\Server\wwwroot\images\pardo_logo.png" LogicalName="pardo_logo.png" Link="pardo_logo.png" />
   </ItemGroup>
 
   <ItemGroup>

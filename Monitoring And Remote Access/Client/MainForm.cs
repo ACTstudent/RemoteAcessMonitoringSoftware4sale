@@ -94,6 +94,16 @@ namespace Client
         private static readonly Color OnDarkWarn = Color.FromArgb(252, 211, 77);   //                   #FCD34D, 8.15:1
         private static readonly Color OnDarkDanger = Color.FromArgb(254, 202, 202);//                   #FECACA, 4.60:1
 
+        // Sign-in screen, taken from the approved "CAMS Portal" mockup. A deeper
+        // green than the portal tokens above, on a pale mint header and footer.
+        private static readonly Color SignInTint = Color.FromArgb(235, 243, 236);   //                   #EBF3EC header and footer
+        private static readonly Color SignInInk = Color.FromArgb(5, 70, 45);        //                   #05462D title, captions, icons
+        private static readonly Color SignInButton = Color.FromArgb(24, 92, 55);    //                   #185C37, 7.6:1 white text
+        private static readonly Color SignInButtonHover = Color.FromArgb(17, 72, 42);//                  #11482A
+        private static readonly Color SignInMuted = Color.FromArgb(85, 107, 96);    //                   #556B60, 5.0:1 on the tint
+        private static readonly Color SignInDot = Color.FromArgb(119, 156, 140);    //                   #779C8C, decorative
+        private static readonly Color SignInFieldBorder = Color.FromArgb(137, 165, 149); //               #89A595
+
         private TextBox txtStudentId = new();
         private TextBox txtPassword = new();
         private Button btnLogin = new();
@@ -289,8 +299,15 @@ namespace Client
             if (foreground == IntPtr.Zero || foreground == Handle) return;
 
             // A window of our own - a dialog, or the tray menu - is not an escape.
+            // The shield is ours too, but it is only the backdrop: if it ever ends
+            // up with the foreground, the sign-in form takes it straight back, or
+            // the student is left typing into a dimmed screen that ignores them.
             var ownerThread = NativeMethods.GetWindowThreadProcessId(foreground, out var ownerPid);
-            if (ownerPid == (uint)Environment.ProcessId) return;
+            if (ownerPid == (uint)Environment.ProcessId)
+            {
+                if (_shields.Any(s => s.IsHandleCreated && s.Handle == foreground)) Activate();
+                return;
+            }
 
             var self = NativeMethods.GetCurrentThreadId();
             var attached = ownerThread != self && NativeMethods.AttachThreadInput(self, ownerThread, true);
@@ -318,12 +335,37 @@ namespace Client
         // with no exit at all. The focus guard covers what the shield leaves.
         private readonly List<Form> _shields = new();
 
+        /// <summary>
+        /// The dimmed backdrop. It can never become the active window, so a click
+        /// on it leaves the keyboard in the sign-in form. Before this, a click
+        /// outside the form activated the shield, the focus guard saw a window of
+        /// our own and stood down, and the student had to Alt+Tab or press the
+        /// taskbar icon to get back to the Username box.
+        /// </summary>
+        private sealed class ShieldForm : Form
+        {
+            private const int WS_EX_NOACTIVATE = 0x08000000;
+            private const int WS_EX_TOOLWINDOW = 0x00000080;   // and not an Alt+Tab entry
+
+            protected override bool ShowWithoutActivation => true;
+
+            protected override CreateParams CreateParams
+            {
+                get
+                {
+                    var cp = base.CreateParams;
+                    cp.ExStyle |= WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW;
+                    return cp;
+                }
+            }
+        }
+
         private void ShowDesktopShield()
         {
             if (_shields.Count > 0 || _hubClient is not null || _isClosing) return;
             foreach (var screen in Screen.AllScreens)
             {
-                var shield = new Form
+                var shield = new ShieldForm
                 {
                     FormBorderStyle = FormBorderStyle.None,
                     StartPosition = FormStartPosition.Manual,
@@ -383,31 +425,48 @@ namespace Client
             ShowDesktopShield();
         }
 
-        /// <summary>Applies the shared CAMS field styling to a text box.
-        /// The boxes are deliberately large: the people typing into them are
-        /// primary school pupils, often hunting for keys one at a time.</summary>
-        private static TextBox StyleField(TextBox field, bool isPassword = false)
-        {
-            field.BorderStyle = BorderStyle.FixedSingle;
-            field.Font = new Font("Segoe UI", 13f);
-            field.BackColor = SurfaceCard;
-            field.ForeColor = TextMain;
-            field.UseSystemPasswordChar = isPassword;
-            field.Margin = new Padding(0, 4, 0, 18);
-            field.Height = 40;
-            return field;
-        }
+        /// <summary>
+        /// Pixels at 100% scaling, converted for this display. The sign-in screen
+        /// places its parts at fixed positions, and fonts grow with the display
+        /// scale, so every measurement goes through here or the text would outgrow
+        /// its boxes at 125% and 150%.
+        /// </summary>
+        private int Dp(int pixels) => (int)Math.Round(pixels * DeviceDpi / 96f);
 
-        /// <summary>Field caption. Sentence case rather than small uppercase,
-        /// because a child reads "Password" faster than "PASSWORD".</summary>
-        private static Label FieldLabel(string text) => new()
+        /// <summary>A sign-in text box in its rounded outline. The boxes are
+        /// deliberately large: the people typing into them are primary school
+        /// pupils, often hunting for keys one at a time.</summary>
+        private RoundedField SignInField(TextBox box, int rightInset) =>
+            new(box)
+            {
+                BackColor = SurfaceCard,
+                BorderColor = SignInFieldBorder,
+                FocusColor = SignInButton,
+                Radius = Dp(8),
+                Padding = new Padding(Dp(12), 0, rightInset, 0),
+                Height = Dp(42)
+            };
+
+        /// <summary>The icon and caption that sit above a sign-in field.</summary>
+        private Control[] SignInCaption(LineGlyph glyph, string text, int left, int top)
         {
-            Text = text,
-            AutoSize = true,
-            ForeColor = TextMain,
-            Font = new Font("Segoe UI", 11f, FontStyle.Bold),
-            Margin = new Padding(0, 0, 0, 2)
-        };
+            int iconSize = Dp(18);
+            var icon = new LineIcon
+            {
+                Glyph = glyph,
+                ForeColor = SignInInk,
+                Bounds = new Rectangle(left, top, iconSize, iconSize)
+            };
+            var caption = new Label
+            {
+                Text = text,
+                AutoSize = true,
+                ForeColor = SignInInk,
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold)
+            };
+            caption.Location = new Point(icon.Right + Dp(8), top + (iconSize - caption.PreferredHeight) / 2);
+            return new Control[] { icon, caption };
+        }
 
         private static Button BrandButton(string text, Color background) => new()
         {
@@ -424,101 +483,205 @@ namespace Client
         {
             Controls.Clear();
             Text = "CAMS Student Client";
-            // Taller than the fields strictly need, because the boxes and the
-            // button are sized for a child's aim rather than an adult's.
-            ClientSize = new Size(440, 520);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
-            BackColor = SurfaceBody;
+            BackColor = SurfaceCard;
             Font = new Font("Segoe UI", 9.75f);
 
-            // Branded banner, echoing the portal's sign-in header.
-            var banner = new Panel { Dock = DockStyle.Top, Height = 118, BackColor = BrandDark };
+            int width = Dp(440);
+            int inset = Dp(40);
+            int fieldWidth = width - inset * 2;
+
+            // --- Header: school seal, product name, and who this client is for --
+            int headerHeight = Dp(136);
+            var header = new Panel { Dock = DockStyle.Top, Height = headerHeight, BackColor = SignInTint };
+
+            int logoSize = Dp(84);
+            var logo = new PictureBox
+            {
+                Size = new Size(logoSize, logoSize),
+                Location = new Point(Dp(36), (headerHeight - logoSize) / 2),
+                BackColor = SignInTint,
+                Image = SchoolLogo.Load(logoSize),
+                AccessibleName = "Pardo Elementary School seal"
+            };
+
             var lblBrand = new Label
             {
-                Text = "CAMS",
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI", 20, FontStyle.Bold),
+                Text = "CAMS Portal",
                 AutoSize = true,
-                Location = new Point(24, 26)
+                ForeColor = SignInInk,
+                Font = new Font("Segoe UI", 17f, FontStyle.Bold)
             };
-            var lblBrandSub = new Label
-            {
-                Text = "Pardo Elementary School",
-                ForeColor = BrandMint,
-                Font = new Font("Segoe UI", 10),
-                AutoSize = true,
-                Location = new Point(26, 68)
-            };
-            banner.Controls.AddRange(new Control[] { lblBrand, lblBrandSub });
 
-            // Stacked form body; a flow layout keeps it correct at any DPI scale.
-            var body = new FlowLayoutPanel
+            var taglineFont = new Font("Segoe UI", 9f);
+            Label TaglinePart(string text) => new()
             {
-                Dock = DockStyle.Fill,
+                Text = text,
+                AutoSize = true,
+                ForeColor = SignInMuted,
+                Font = taglineFont,
+                Margin = Padding.Empty
+            };
+            var lblClient = TaglinePart("Student Client");
+            int dotSize = Dp(6);
+            var dot = new Panel
+            {
+                Size = new Size(dotSize, dotSize),
+                Margin = new Padding(Dp(9), (lblClient.PreferredHeight - dotSize) / 2, Dp(9), 0),
+                BackColor = SignInTint
+            };
+            dot.Paint += (_, e) =>
+            {
+                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                using var brush = new SolidBrush(SignInDot);
+                e.Graphics.FillEllipse(brush, 0, 0, dotSize - 1, dotSize - 1);
+            };
+            var tagline = new FlowLayoutPanel
+            {
+                AutoSize = true,
+                WrapContents = false,
+                BackColor = SignInTint,
+                Margin = Padding.Empty,
+                Padding = Padding.Empty
+            };
+            tagline.Controls.AddRange(new Control[] { lblClient, dot, TaglinePart("Pardo Elementary School") });
+
+            // The title and tagline as one block, centred on the seal.
+            int textLeft = logo.Right + Dp(22);
+            int gap = Dp(2);
+            int blockTop = (headerHeight - (lblBrand.PreferredHeight + gap + lblClient.PreferredHeight)) / 2;
+            lblBrand.Location = new Point(textLeft, blockTop);
+            tagline.Location = new Point(textLeft + Dp(2), blockTop + lblBrand.PreferredHeight + gap);
+            header.Controls.AddRange(new Control[] { logo, lblBrand, tagline });
+
+            // --- Body: the two fields and the Login button -----------------------
+            // Fresh boxes every time the gate is built. They used to be reused, so
+            // after a logout the next pupil at this machine found the previous
+            // one's username and password already filled in.
+            txtStudentId = new TextBox
+            {
+                Font = new Font("Segoe UI", 10f),
+                ForeColor = TextMain,
+                PlaceholderText = "Enter your username",
+                TabIndex = 0
+            };
+            txtPassword = new TextBox
+            {
+                Font = new Font("Segoe UI", 10f),
+                ForeColor = TextMain,
+                PlaceholderText = "Enter your password",
+                UseSystemPasswordChar = true,
+                TabIndex = 0
+            };
+
+            var body = new Panel { Dock = DockStyle.Fill, BackColor = SurfaceCard };
+            // A soft shadow where the header meets the white body.
+            body.Paint += (_, e) =>
+            {
+                var strip = new Rectangle(0, 0, body.Width, Dp(8));
+                using var shade = new System.Drawing.Drawing2D.LinearGradientBrush(
+                    new Rectangle(0, -1, body.Width, strip.Height + 2),
+                    Color.FromArgb(26, SignInInk), Color.FromArgb(0, SignInInk), 90f);
+                e.Graphics.FillRectangle(shade, strip);
+            };
+
+            int y = Dp(26);
+            body.Controls.AddRange(SignInCaption(LineGlyph.Person, "Username", inset + Dp(4), y));
+            y += Dp(26);
+            var idField = SignInField(txtStudentId, Dp(12));
+            idField.Location = new Point(inset, y);
+            idField.Width = fieldWidth;
+            idField.TabIndex = 0;
+            y += idField.Height + Dp(20);
+
+            body.Controls.AddRange(SignInCaption(LineGlyph.Lock, "Password", inset + Dp(4), y));
+            y += Dp(26);
+            int eyeSize = Dp(20);
+            var passwordField = SignInField(txtPassword, Dp(12) + eyeSize + Dp(12));
+            passwordField.Location = new Point(inset, y);
+            passwordField.Width = fieldWidth;
+            passwordField.TabIndex = 1;
+            var eye = new LineIcon
+            {
+                Glyph = LineGlyph.Eye,
+                ForeColor = SignInInk,
+                BackColor = SurfaceCard,
+                Size = new Size(eyeSize, eyeSize),
+                Location = new Point(fieldWidth - Dp(12) - eyeSize, (passwordField.Height - eyeSize) / 2),
+                Cursor = Cursors.Hand,
+                AccessibleName = "Show password",
+                AccessibleRole = AccessibleRole.PushButton
+            };
+            // Lets a pupil check what they typed before pressing Login, rather
+            // than finding out from a refused sign-in.
+            eye.Click += (_, _) =>
+            {
+                bool reveal = txtPassword.UseSystemPasswordChar;
+                txtPassword.UseSystemPasswordChar = !reveal;
+                eye.Glyph = reveal ? LineGlyph.EyeOff : LineGlyph.Eye;
+                eye.AccessibleName = reveal ? "Hide password" : "Show password";
+                txtPassword.Focus();
+            };
+            passwordField.Controls.Add(eye);
+            y += passwordField.Height + Dp(28);
+
+            btnLogin = new RoundedButton
+            {
+                Text = "Login",
+                BackColor = SignInButton,
+                HoverColor = SignInButtonHover,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 11f, FontStyle.Bold),
+                Radius = Dp(8),
+                Bounds = new Rectangle(inset, y, fieldWidth, Dp(46)),
+                TabIndex = 2
+            };
+            btnLogin.Click += BtnLogin_Click;
+            y += btnLogin.Height + Dp(38);
+
+            body.Controls.AddRange(new Control[] { idField, passwordField, btnLogin });
+
+            // --- Footer: connection status and where the account comes from -----
+            int footerHeight = Dp(74);
+            var footer = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Bottom,
+                Height = footerHeight,
                 FlowDirection = FlowDirection.TopDown,
                 WrapContents = false,
-                Padding = new Padding(24, 22, 24, 16),
-                BackColor = SurfaceBody
+                Padding = new Padding(inset, Dp(17), inset, 0),
+                BackColor = SignInTint
             };
-
-            var lblTitle = new Label
-            {
-                Text = "Sign in",
-                Font = new Font("Segoe UI", 17, FontStyle.Bold),
-                ForeColor = TextMain,
-                AutoSize = true,
-                Margin = new Padding(0, 0, 0, 18)
-            };
-
-            int fieldWidth = ClientSize.Width - 48;
-
-            StyleField(txtStudentId).Width = fieldWidth;
-            StyleField(txtPassword, isPassword: true).Width = fieldWidth;
-
-            btnLogin = BrandButton("Sign in", BrandEmerald);
-            btnLogin.Width = fieldWidth;
-            btnLogin.Height = 52;
-            btnLogin.Font = new Font("Segoe UI", 13, FontStyle.Bold);
-            btnLogin.Margin = new Padding(0, 4, 0, 16);
-            btnLogin.FlatAppearance.BorderSize = 0;
-            btnLogin.FlatAppearance.MouseOverBackColor = BrandDarker;
-            btnLogin.Click += BtnLogin_Click;
-
             lblStatus = new Label
             {
-                Text = "Status: Not connected",
+                Text = "Status: Not Connected",
                 AutoSize = true,
                 MaximumSize = new Size(fieldWidth, 0),
-                ForeColor = TextMuted,
-                Font = new Font("Segoe UI", 9.5f)
+                ForeColor = SignInMuted,
+                Font = new Font("Segoe UI", 9f),
+                Margin = new Padding(0, 0, 0, Dp(4))
             };
-
             var lblHint = new Label
             {
-                Text = "Ask your teacher if you need help signing in.",
+                Text = "Use the account issued by your teacher.",
                 AutoSize = true,
                 MaximumSize = new Size(fieldWidth, 0),
-                ForeColor = TextMuted,
-                Font = new Font("Segoe UI", 9.5f),
-                Margin = new Padding(0, 8, 0, 0)
+                ForeColor = SignInMuted,
+                Font = new Font("Segoe UI", 9f),
+                Margin = Padding.Empty
             };
+            footer.Controls.AddRange(new Control[] { lblStatus, lblHint });
 
-            body.Controls.AddRange(new Control[]
-            {
-                lblTitle,
-                FieldLabel("Student ID"), txtStudentId,
-                FieldLabel("Password"), txtPassword,
-                btnLogin,
-                lblStatus,
-                lblHint
-            });
+            ClientSize = new Size(width, headerHeight + y + footerHeight);
 
-            // Fill order matters: the banner docks above the filled body.
+            // Fill order matters: the header and footer dock around the filled body.
             Controls.Add(body);
-            Controls.Add(banner);
+            Controls.Add(footer);
+            Controls.Add(header);
             AcceptButton = btnLogin;
+            ActiveControl = txtStudentId;
         }
 
         /// <summary>One "caption + value" line inside the status card.</summary>
@@ -734,7 +897,7 @@ namespace Client
 
             if (string.IsNullOrEmpty(studentId) || string.IsNullOrEmpty(password))
             {
-                ShowMessage("Sign in", "Please enter your Student ID and Password.", DialogTone.Warning);
+                ShowMessage("Sign in", "Please enter your username and password.", DialogTone.Warning);
                 return;
             }
 
@@ -758,7 +921,8 @@ namespace Client
                  hubClient.RemoteControlStateReceived += state => this.Invoke(() => OnRemoteControlStateChanged(state));
                 hubClient.Locked += () => this.Invoke(() => SetLocked(true));
                 hubClient.Unlocked += () => this.Invoke(() => SetLocked(false));
-                hubClient.ForceLogoutRequested += () => this.Invoke(async () => await ForceLogout(false));
+                hubClient.ForceLogoutRequested += () => this.Invoke(async () => await ForceLogout(false, quit: false,
+                    gateStatus: "Status: Signed out by your teacher."));
                 hubClient.BroadcastReceived += msg => this.Invoke(() => ShowBroadcast(msg));
                 hubClient.BroadcastStopped += () => this.Invoke(CloseBroadcast);
                 hubClient.NotificationReceived += msg => this.Invoke(() => ShowPopup("Notification", msg.Title, msg.Message, false));
@@ -826,8 +990,20 @@ namespace Client
                 btnLogin.Enabled = true;
                 ShowMessage(
                     "Sign in was refused",
-                    "Check the Student ID and password.\n\nThe account must be active, and this workstation must be free of another session.",
+                    "Check the username and password.\n\nThe account must be active, and this workstation must be free of another session.",
                     DialogTone.Danger, affirmative: "Try again");
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Conflict)
+            {
+                // The server only lets students in while the teacher has a lab
+                // session running. Nothing is wrong with what they typed.
+                lblStatus.Text = "Status: No session running yet";
+                lblStatus.ForeColor = StatusWarn;
+                btnLogin.Enabled = true;
+                ShowMessage(
+                    "No session yet",
+                    "Your teacher has not started the lab session yet.\n\nWait for your teacher to start it, then press Login again.",
+                    DialogTone.Warning, affirmative: "OK");
             }
             catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
             {
@@ -1019,10 +1195,13 @@ namespace Client
             _sessionPaused = false;
             _sessionScreen.Hide();
             RenderTimer();
-            ShowPopup("Session Ended", "",
-                "Your laboratory session has ended by the teacher. The workstation is being locked.", true);
-            await ForceLogout(false);
-            NativeMethods.LockWorkStation();
+            // No dialog: the workstation goes straight back behind the sign-in
+            // gate and its desktop shield, which is the lock. It used to show two
+            // stacked messages, quit, and fall back on the Windows lock screen -
+            // which a pupil who knows the Windows password simply unlocks, into a
+            // machine with CAMS no longer running.
+            await ForceLogout(false, quit: false,
+                gateStatus: "Status: Session ended. Wait for your teacher to start the next one.");
         }
 
         private void OnShutdownRequested()
@@ -1458,13 +1637,15 @@ namespace Client
 
         /// <param name="manual">The student ended it, rather than the teacher.</param>
         /// <param name="quit">
-        /// Whether to close the application afterwards. A student logging out goes
-        /// back to the sign-in gate instead: quitting would take the gate, the
-        /// desktop shield and the website filter down with it and leave the
-        /// workstation open until the next logon. Teacher-driven ends still quit,
-        /// because they are followed by a restart that brings the gate back.
+        /// Whether to close the application afterwards. Only a real Exit, or
+        /// Windows shutting down, quits. Everything else - the student logging
+        /// out, the teacher signing them out, the session ending - goes back to
+        /// the sign-in gate, because quitting would take the gate, the desktop
+        /// shield and the website filter down with it and leave the workstation
+        /// open until the next logon.
         /// </param>
-        private async Task ForceLogout(bool manual, bool quit = true)
+        /// <param name="gateStatus">What the gate's status line says afterwards.</param>
+        private async Task ForceLogout(bool manual, bool quit = true, string? gateStatus = null)
         {
             _isClosing = true;
             _sessionPaused = false;
@@ -1483,13 +1664,6 @@ namespace Client
                 await _hubClient.DisposeAsync();
                 _hubClient = null;
             }
-            if (!manual)
-            {
-                ShowMessage(
-                    "Session ended",
-                    "Your teacher ended this session.\n\nCAMS will close now. Sign in again when your teacher starts the next session.",
-                    DialogTone.Info);
-            }
 
             if (quit)
             {
@@ -1505,6 +1679,11 @@ namespace Client
             try
             {
                 ReturnToSignIn();
+                if (gateStatus is not null)
+                {
+                    lblStatus.Text = gateStatus;
+                    lblStatus.ForeColor = StatusWarn;
+                }
             }
             catch (Exception ex)
             {
