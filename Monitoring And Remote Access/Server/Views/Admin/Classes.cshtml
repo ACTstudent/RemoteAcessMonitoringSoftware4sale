@@ -79,12 +79,12 @@
                     <a asp-controller="Admin" asp-action="ClassDetails" asp-route-id="@item.ClassId" class="btn btn-view-class w-100 mt-auto">View Class<span class="visually-hidden"> @item.ClassName</span></a>
                     <div class="crud-card-actions d-flex justify-content-end flex-wrap gap-2 mt-2">
                         <button type="button" class="btn btn-sm btn-outline-emerald rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editClassModal-@item.ClassId" title="Edit class"><i class="bi bi-pencil me-1" aria-hidden="true"></i>Edit<span class="visually-hidden"> @item.ClassName</span></button>
-                        <form method="post" asp-controller="Admin" asp-action="ArchiveClass" class="m-0">
+                        <form method="post" asp-controller="Admin" asp-action="ArchiveClass" class="m-0" data-confirm-subject="@item.ClassName" data-confirm="@(item.IsArchived ? "" : "Archive this class? **Its roster and history are kept**, and you can restore it later.")" data-confirm-title="Archive class" data-confirm-label="Archive">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@item.ClassId" />
                             <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill px-3" title="@(item.IsArchived ? "Restore class" : "Archive class")"><i class="bi @(item.IsArchived ? "bi-arrow-counterclockwise" : "bi-archive") me-1" aria-hidden="true"></i>@(item.IsArchived ? "Restore" : "Archive")<span class="visually-hidden"> @item.ClassName</span></button>
                         </form>
-                        <form method="post" asp-controller="Admin" asp-action="DeleteClass" class="m-0" data-confirm="Delete this class and its enrollment links? Student accounts will be preserved." data-confirm-title="Delete class" data-confirm-label="Delete">
+                        <form method="post" asp-controller="Admin" asp-action="DeleteClass" class="m-0" data-confirm-subject="@item.ClassName" data-confirm="Delete this class and its enrollment links? Student accounts are kept. **This cannot be undone.**" data-confirm-title="Delete class" data-confirm-label="Delete">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="classId" value="@item.ClassId" />
                             <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3" title="Delete class"><i class="bi bi-trash me-1" aria-hidden="true"></i>Delete<span class="visually-hidden"> @item.ClassName</span></button>
@@ -109,7 +109,7 @@
 <div class="modal fade" id="createClassModal" tabindex="-1" aria-labelledby="createClassModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 text-white surface-brand"><h5 class="modal-title fw-bold" id="createClassModalLabel"><i class="bi bi-folder-plus me-2"></i>Create New Class</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button></div>
+            <div class="modal-header"><h5 class="modal-title fw-bold" id="createClassModalLabel"><i class="bi bi-folder-plus me-2"></i>Create New Class</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
             <form method="post" asp-controller="Admin" asp-action="CreateClass">
                 @Html.AntiForgeryToken()
                 <div class="modal-body py-4">
@@ -134,7 +134,7 @@
     <div class="modal fade" id="editClassModal-@item.ClassId" tabindex="-1" aria-labelledby="editClassModalLabel-@item.ClassId" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                <div class="modal-header border-0 text-white surface-brand"><h5 class="modal-title fw-bold" id="editClassModalLabel-@item.ClassId"><i class="bi bi-pencil-square me-2"></i>Edit @item.ClassName</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button></div>
+                <div class="modal-header"><h5 class="modal-title fw-bold" id="editClassModalLabel-@item.ClassId"><i class="bi bi-pencil-square me-2"></i>Edit @item.ClassName</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
                 <form method="post" asp-controller="Admin" asp-action="UpdateClass">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="ClassId" value="@item.ClassId" />

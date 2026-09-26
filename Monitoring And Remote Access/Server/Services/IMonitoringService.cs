@@ -9,7 +9,7 @@ public interface IMonitoringService
     IReadOnlyCollection<ActiveAppMessage> ActiveApps { get; }
     IReadOnlyCollection<BrowserMonitoringStatusMessage> BrowserMonitoringStatus { get; }
 
-    StudentConnectionMessage RegisterStudent(string connectionId, string studentId, string pcName);
+    StudentConnectionMessage RegisterStudent(string connectionId, string studentId, string pcName, string? displayName = null);
     StudentConnectionMessage? FindStudent(string connectionId);
     StudentConnectionMessage? UnregisterStudent(string connectionId);
     void ReportIdleStatus(IdleStatusMessage status);

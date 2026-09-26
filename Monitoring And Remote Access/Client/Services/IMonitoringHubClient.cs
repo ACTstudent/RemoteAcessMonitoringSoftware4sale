@@ -29,5 +29,6 @@ public interface IMonitoringHubClient
     Task FetchRestrictionsAsync();
     Task ReportInfractionAsync(InfractionMessage infraction);
     Task LogoutAsync(CancellationToken cancellationToken = default);
+    Task ChangePasswordAsync(string currentPassword, string newPassword, CancellationToken cancellationToken = default);
     ValueTask DisposeAsync();
 }

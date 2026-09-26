@@ -98,6 +98,10 @@ namespace Client
         public float Radius { get; set; } = 8;
         public Color HoverColor { get; set; } = Color.Black;
 
+        /// <summary>An outline, for a light secondary button that would otherwise
+        /// vanish into a white surface. None when empty.</summary>
+        public Color BorderColor { get; set; } = Color.Empty;
+
         public RoundedButton()
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint |
@@ -126,12 +130,23 @@ namespace Client
                      : BackColor;
             using (var path = Shapes.RoundedRect(new RectangleF(0, 0, Width - 1, Height - 1), Radius))
             using (var brush = new SolidBrush(fill))
+            {
                 g.FillPath(brush, path);
+                if (!BorderColor.IsEmpty)
+                {
+                    using var outline = new Pen(BorderColor, 1.2f);
+                    g.DrawPath(outline, path);
+                }
+            }
 
             if (Focused && ShowFocusCues)
             {
+                // White on a dark button; on a light one it would not show.
+                var ringColor = BackColor.GetBrightness() > 0.6f
+                    ? Color.FromArgb(170, ForeColor)
+                    : Color.FromArgb(200, Color.White);
                 using var ring = Shapes.RoundedRect(new RectangleF(3, 3, Width - 7, Height - 7), Math.Max(2, Radius - 3));
-                using var pen = new Pen(Color.FromArgb(200, Color.White), 1.5f);
+                using var pen = new Pen(ringColor, 1.5f);
                 g.DrawPath(pen, ring);
             }
 

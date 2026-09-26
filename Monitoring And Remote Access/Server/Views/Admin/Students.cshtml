@@ -169,7 +169,7 @@
                                         <button class="btn btn-sm btn-outline-warning crud-action" title="Unlock account" aria-label="Unlock @s.FullName"><i class="bi bi-unlock" aria-hidden="true"></i></button>
                                     </form>
                                 }
-                                <form method="post" action="/Admin/SetAccountActive" class="form-inline-action" data-confirm="@(isActive ? "Deactivate this student account across CAMS?" : isArchived ? "Restore this removed student? They can sign in again and will reappear on Student Profiles." : "Activate this student account across CAMS?")" data-confirm-title="@(isActive ? "Deactivate" : isArchived ? "Restore" : "Activate") student" data-confirm-label="@(isActive ? "Deactivate" : "Activate")" data-confirm-variant="@(isActive ? "danger" : "success")">
+                                <form method="post" action="/Admin/SetAccountActive" class="form-inline-action" data-confirm-subject="@s.FullName" data-confirm="@(isActive ? "Deactivate this student account across CAMS? **They can no longer log in** until the account is activated again." : isArchived ? "Restore this removed student? **They can log in again** and will reappear on Student Profiles." : "Activate this student account across CAMS? **They can log in again.**")" data-confirm-title="@(isActive ? "Deactivate" : isArchived ? "Restore" : "Activate") student" data-confirm-label="@(isActive ? "Deactivate" : "Activate")" data-confirm-variant="@(isActive ? "danger" : "success")">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="accountRole" value="Student" />
                                     <input type="hidden" name="id" value="@s.Id" />
@@ -183,7 +183,7 @@
                                 </button>
                                 @if (!isArchived)
                                 {
-                                    <form method="post" action="/Admin/DeleteStudent" class="form-inline-action" data-confirm="Remove @s.FullName? They disappear from the student lists and can no longer sign in. Their session history is kept, and you can restore them from the Removed filter." data-confirm-title="Remove student" data-confirm-label="Remove">
+                                    <form method="post" action="/Admin/DeleteStudent" class="form-inline-action" data-confirm-subject="@s.FullName" data-confirm="Remove this student from CAMS? They disappear from the student lists and can no longer log in. **Their session history is kept**, and you can restore them from the Removed filter." data-confirm-title="Remove student" data-confirm-label="Remove">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@s.Id" />
                                         <button class="btn btn-sm btn-outline-danger crud-action" title="Remove student" aria-label="Remove @s.FullName">
@@ -212,9 +212,9 @@
 <div class="modal fade" id="bulkStudentsModal" tabindex="-1" aria-labelledby="bulkStudentsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 text-white surface-brand">
+            <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="bulkStudentsModalLabel"><i class="bi bi-people-fill me-2"></i>Bulk Import Students</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" action="/Admin/BulkCreateStudents">
                 @Html.AntiForgeryToken()
@@ -248,11 +248,11 @@
 <div class="modal fade" id="createStudentModal" tabindex="-1" aria-labelledby="createStudentModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 text-white surface-brand">
+            <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="createStudentModalLabel">
                     <i class="bi bi-person-plus me-2"></i> Add Student
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             @* The same form as Student Profiles: generated ID and username when
                left blank, a password of at least 8 characters, and an optional class. *@
@@ -308,11 +308,11 @@
     <div class="modal fade" id="editStudentModal-@s.Id" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                <div class="modal-header border-0 text-white surface-brand">
+                <div class="modal-header">
                     <h5 class="modal-title fw-bold">
                         <i class="bi bi-pencil-square me-2"></i> Edit Student - @s.FullName
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form method="post" action="/Admin/UpdateStudent">
                     @Html.AntiForgeryToken()

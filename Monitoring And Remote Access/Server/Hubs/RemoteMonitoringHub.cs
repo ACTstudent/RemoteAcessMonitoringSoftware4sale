@@ -248,7 +248,10 @@ public sealed class RemoteMonitoringHub : Hub
                 Context.Abort();
                 return;
             }
-            var student = _monitoringService.RegisterStudent(Context.ConnectionId, studentNumber, pcName);
+            // The name the student signed in with, so the monitoring grid can show
+            // who is at each station rather than a student number.
+            var displayName = Principal.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+            var student = _monitoringService.RegisterStudent(Context.ConnectionId, studentNumber, pcName, displayName);
             await TryRecordTelemetryAsync(() => _telemetryService.RecordActivityEventAsync(Context.ConnectionId, student.StudentId, student.PcName, "Connected"));
             await Groups.AddToGroupAsync(Context.ConnectionId, HubEventNames.StudentsGroup);
             await TeacherViewers.SendAsync(HubEventNames.StudentConnected, student);
@@ -591,6 +594,12 @@ public sealed class RemoteMonitoringHub : Hub
                 .ToListAsync();
             teacherIds.UnionWith(activeTeacherIds);
         }
+        // The teacher running the lab: their rules reach every student in it.
+        // Tying teacher rules only to a session's own teacher let a newcomer with
+        // no class or adviser - a session with no teacher at all - browse sites
+        // the teacher had blocked.
+        if (_sessionManager.LabTeacherId is int labTeacherId)
+            teacherIds.Add(labTeacherId);
 
         var rules = await context.RestrictionRules
             .Where(r => r.IsActive && (r.IsGlobal || (r.TeacherId.HasValue && teacherIds.Contains(r.TeacherId.Value))))

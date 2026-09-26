@@ -183,9 +183,9 @@ public class AuthenticationService : IAuthenticationService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<bool> ChangeStudentPasswordAsync(int studentId, string currentPassword, string newPassword)
+    public async Task<bool> ChangeStudentPasswordAsync(int studentId, string currentPassword, string newPassword, string ipAddress = "")
     {
-        return await ChangePasswordAsync("Student", studentId, currentPassword, newPassword, string.Empty);
+        return await ChangePasswordAsync("Student", studentId, currentPassword, newPassword, ipAddress);
     }
 
     public async Task<bool> ChangeTeacherPasswordAsync(

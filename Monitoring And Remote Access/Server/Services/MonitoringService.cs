@@ -15,9 +15,10 @@ namespace Server.Services
         public IReadOnlyCollection<ActiveAppMessage> ActiveApps => _activeApps.Values.ToList();
         public IReadOnlyCollection<BrowserMonitoringStatusMessage> BrowserMonitoringStatus => _browserMonitoringStatus.Values.ToList();
 
-        public StudentConnectionMessage RegisterStudent(string connectionId, string studentId, string pcName)
+        public StudentConnectionMessage RegisterStudent(string connectionId, string studentId, string pcName, string? displayName = null)
         {
-            var message = new StudentConnectionMessage(connectionId, studentId, pcName, DateTime.UtcNow);
+            var message = new StudentConnectionMessage(connectionId, studentId, pcName, DateTime.UtcNow,
+                string.IsNullOrWhiteSpace(displayName) ? null : displayName.Trim());
             _students[connectionId] = message;
             return message;
         }

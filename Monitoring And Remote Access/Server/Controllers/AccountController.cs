@@ -27,18 +27,19 @@ namespace Server.Controllers
         }
 
         /// <summary>
-        /// Where an authenticated user lands when their role does not reach a
-        /// page. This used to be the login form, which told someone who was
-        /// already signed in to sign in, and offered no way onward but the
-        /// browser's Back button.
-        /// </summary>
-        [HttpGet]
-        /// <summary>
         /// Where an unhandled failure lands. Shows the correlation identifier
         /// so a report can be matched to the log entry, and nothing else about
         /// the failure - a stack trace on a classroom screen tells an attacker
         /// more than it tells the teacher.
         /// </summary>
+        /// <remarks>
+        /// Any method, not GET only. The exception handler re-runs the failed
+        /// request here with its original method, so a form post that failed -
+        /// deleting a blacklist entry, say - hit a GET-only action and showed a
+        /// bare "HTTP ERROR 405" instead of this page. The form's antiforgery
+        /// token was already checked by the action that failed.
+        /// </remarks>
+        [IgnoreAntiforgeryToken]
         public IActionResult Error()
         {
             Response.StatusCode = StatusCodes.Status500InternalServerError;
@@ -46,6 +47,12 @@ namespace Server.Controllers
             return View();
         }
 
+        /// <summary>
+        /// Where an authenticated user lands when their role does not reach a
+        /// page. This used to be the login form, which told someone who was
+        /// already signed in to sign in, and offered no way onward but the
+        /// browser's Back button.
+        /// </summary>
         public IActionResult AccessDenied(string? returnUrl = null)
         {
             // Someone with no session at all belongs on the sign-in form; this

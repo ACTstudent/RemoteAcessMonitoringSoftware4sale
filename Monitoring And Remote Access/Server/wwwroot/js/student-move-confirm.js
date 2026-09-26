@@ -59,7 +59,7 @@
             (option && option.textContent.trim()) || 'the selected class';
         const confirmed = await window.camsConfirm({
             title: 'Move student',
-            message: `Move this student from ${currentClass} to ${target}?`,
+            message: `Move this student from **${currentClass}** to **${target}**?`,
             confirmLabel: 'Move student',
             variant: 'warning'
         });

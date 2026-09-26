@@ -479,15 +479,62 @@ body {
     z-index: 1075;
 }
 
-.modal-header-themed {
-    color: #fff;
-    background: linear-gradient(135deg, var(--sidebar-bg), var(--sidebar-active-bg));
-    border: 0;
-    padding: 1.15rem 1.4rem;
+/* Sized for a name and a sentence, not a form. */
+#confirmActionModal .modal-dialog {
+    max-width: 28rem;
 }
 
-.modal-header-themed .modal-title {
+#confirmActionModal .modal-body {
+    padding: 1.5rem 1.75rem 1.25rem;
+}
+
+/* The record the action is about, above the question. */
+#confirmActionModal .confirm-subject {
+    color: var(--text-main);
+    font-size: 1.05rem;
     font-weight: 750;
+    margin-bottom: 0.3rem;
+}
+
+#confirmActionModal .confirm-message {
+    color: var(--text-muted);
+    line-height: 1.55;
+}
+
+/* The part that matters - what is kept, what cannot be undone - is marked
+   with **...** in the message and set in bold. */
+#confirmActionModal .confirm-message strong {
+    font-weight: 750;
+}
+
+#confirmActionModal .modal-footer {
+    border-top: 0;
+    padding-top: 0.25rem;
+}
+
+#confirmActionModal .modal-footer .btn {
+    font-weight: 650;
+    box-shadow: 0 2px 5px rgba(32, 59, 40, 0.18);
+}
+
+#confirmActionModal .modal-footer .btn-light {
+    --bs-btn-bg: #fff;
+    --bs-btn-color: var(--text-main);
+    --bs-btn-border-color: var(--border-strong);
+    --bs-btn-hover-bg: var(--surface-sunk);
+    --bs-btn-hover-color: var(--text-main);
+    --bs-btn-hover-border-color: var(--border-strong);
+    --bs-btn-active-bg: var(--surface-sunk);
+    --bs-btn-active-border-color: var(--border-strong);
+}
+
+#confirmActionModal .modal-footer .btn-danger {
+    --bs-btn-bg: var(--cams-danger);
+    --bs-btn-border-color: var(--cams-danger);
+    --bs-btn-hover-bg: var(--cams-danger-ink);
+    --bs-btn-hover-border-color: var(--cams-danger-ink);
+    --bs-btn-active-bg: var(--cams-danger-ink);
+    --bs-btn-active-border-color: var(--cams-danger-ink);
 }
 
 .modal-body {
@@ -1279,15 +1326,18 @@ select.is-saving {
    message shoved the page down and stayed until the user clicked it away. They
    now float clear of the layout and retire on their own.
    --------------------------------------------------------------------------- */
+/* Top centre, where the eye already is, rather than tucked in the corner
+   beside the account menu where a notice was easy to miss. */
 .cams-toast-region {
     position: fixed;
     top: 1rem;
-    right: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 1080;
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
-    width: min(24rem, calc(100vw - 2rem));
+    width: min(30rem, calc(100vw - 2rem));
     pointer-events: none;
 }
 
@@ -1312,13 +1362,13 @@ select.is-saving {
 }
 
 @keyframes cams-toast-in {
-    from { opacity: 0; transform: translateX(14px); }
-    to { opacity: 1; transform: translateX(0); }
+    from { opacity: 0; transform: translateY(-14px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes cams-toast-out {
-    from { opacity: 1; transform: translateX(0); }
-    to { opacity: 0; transform: translateX(14px); }
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-14px); }
 }
 
 .cams-toast-icon {
@@ -1383,12 +1433,33 @@ select.is-saving {
 
 @media (max-width: 575.98px) {
     .cams-toast-region {
-        top: auto;
-        bottom: 1rem;
+        top: 0.75rem;
         left: 1rem;
         right: 1rem;
         width: auto;
+        transform: none;
     }
+}
+
+/* A page note that retires on its own (site.js, data-auto-dismiss): it fades
+   first, then folds up so the content below moves into its place. */
+[data-auto-dismiss] {
+    transition: opacity 0.6s ease,
+        max-height 0.45s ease 0.5s,
+        margin 0.45s ease 0.5s,
+        padding 0.45s ease 0.5s,
+        border-width 0.45s ease 0.5s;
+}
+
+[data-auto-dismiss].is-dismissed {
+    opacity: 0;
+    overflow: hidden;
+    max-height: 0 !important;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-width: 0;
 }
 
 /* Honour a reduced-motion preference: appear and leave without sliding. */
@@ -1400,6 +1471,10 @@ select.is-saving {
 
     .cams-toast-progress {
         display: none;
+    }
+
+    [data-auto-dismiss] {
+        transition: none;
     }
 }
 

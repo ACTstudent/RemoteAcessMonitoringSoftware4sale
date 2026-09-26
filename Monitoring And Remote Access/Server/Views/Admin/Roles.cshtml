@@ -55,7 +55,7 @@
                         </td>
                         <td class="text-end">
                             <div class="crud-actions d-flex justify-content-end gap-1">
-                            <form method="post" action="/Admin/DeleteRole" class="form-inline-action" data-confirm="Delete this role?" data-confirm-title="Delete role" data-confirm-label="Delete">
+                            <form method="post" action="/Admin/DeleteRole" class="form-inline-action" data-confirm-subject="@r.Name" data-confirm="Delete this role? **This cannot be undone.**" data-confirm-title="Delete role" data-confirm-label="Delete">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@r.RoleId" />
                                 <button class="btn btn-sm btn-outline-danger crud-action" title="Delete role"><i class="bi bi-trash" aria-hidden="true"></i><span class="visually-hidden">Delete role</span></button>
@@ -81,11 +81,11 @@
 <div class="modal fade" id="createRoleModal" tabindex="-1" aria-labelledby="createRoleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 text-white surface-brand">
+            <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="createRoleModalLabel">
                     <i class="bi bi-key me-2"></i> Add Custom Role
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" action="/Admin/CreateRole">
                 @Html.AntiForgeryToken()

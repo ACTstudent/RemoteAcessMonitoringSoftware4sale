@@ -17,6 +17,20 @@ public class MonitoringServiceTests
         Assert.Single(service.ActiveStudents);
     }
 
+    // The monitoring grid shows who is at a station by name; the student
+    // number stays the key everything else uses.
+    [Theory]
+    [InlineData("  Juan Dela Cruz ", "Juan Dela Cruz")]
+    [InlineData("   ", null)]
+    [InlineData(null, null)]
+    public void RegisterStudent_CarriesTheStudentsName(string? given, string? expected)
+    {
+        var msg = new MonitoringService().RegisterStudent("conn1", "STU-2026-245715", "LAB5-PC33", given);
+
+        Assert.Equal(expected, msg.DisplayName);
+        Assert.Equal("STU-2026-245715", msg.StudentId);
+    }
+
     [Fact]
     public void RegisterStudent_MultipleConnections_TracksAll()
     {

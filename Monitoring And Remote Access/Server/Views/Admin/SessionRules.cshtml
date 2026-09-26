@@ -70,7 +70,7 @@
                         <td class="text-end">
                             <div class="crud-actions d-flex justify-content-end gap-1">
                             <button type="button" class="btn btn-sm btn-outline-emerald crud-action" data-bs-toggle="modal" data-bs-target="#editSessionRule-@r.SessionRuleId" title="Edit policy"><i class="bi bi-pencil-square" aria-hidden="true"></i><span class="visually-hidden">Edit policy</span></button>
-                            <form method="post" action="/Admin/DeleteSessionRule" class="form-inline-action" data-confirm="Deactivate this rule while retaining historical sessions?" data-confirm-title="Deactivate session rule" data-confirm-label="Deactivate">
+                            <form method="post" action="/Admin/DeleteSessionRule" class="form-inline-action" data-confirm-subject="@r.Name" data-confirm="Deactivate this session rule **while retaining historical sessions**?" data-confirm-title="Deactivate session rule" data-confirm-label="Deactivate">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@r.SessionRuleId" />
                                 <button class="btn btn-sm btn-outline-danger crud-action" title="Deactivate policy"><i class="bi bi-archive" aria-hidden="true"></i><span class="visually-hidden">Deactivate policy</span></button>
@@ -98,11 +98,11 @@
     <div class="modal fade" id="editSessionRule-@id" tabindex="-1" aria-labelledby="editSessionRuleLabel-@id" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                <div class="modal-header border-0 text-white surface-brand">
+                <div class="modal-header">
                     <h5 class="modal-title fw-bold" id="editSessionRuleLabel-@id">
                         <i class="bi bi-pencil-square me-2"></i> Edit Session Rule
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form method="post" action="/Admin/UpdateSessionRule">
                     @Html.AntiForgeryToken()
@@ -160,11 +160,11 @@
 <div class="modal fade" id="createSessionRuleModal" tabindex="-1" aria-labelledby="createSessionRuleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 text-white surface-brand">
+            <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="createSessionRuleModalLabel">
                     <i class="bi bi-hourglass-top me-2"></i> Create Session Policy Rule
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" action="/Admin/CreateSessionRule">
                 @Html.AntiForgeryToken()

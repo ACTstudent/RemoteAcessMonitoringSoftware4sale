@@ -162,6 +162,55 @@ public class LabSessionLifecycleServiceTests
         Assert.False(lab.IsLabOpen);
     }
 
+    // The teacher who starts the lab runs it: a session with no teacher of its
+    // own is given theirs, a session that has one keeps it, and every connected
+    // student is told to fetch its rules again, since that teacher's rules now
+    // reach them.
+    [Fact]
+    public async Task StartAllSessions_HandsTeacherlessSessionsToTheTeacherRunningTheLab()
+    {
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
+        await using var db = new ApplicationDbContext(options);
+        db.LabSessions.AddRange(
+            new LabSession { StudentId = 1, TeacherId = null, PCName = "PC-1", StartTime = DateTime.UtcNow, Status = "Running", IsActive = true },
+            new LabSession { StudentId = 2, TeacherId = 9, PCName = "PC-2", StartTime = DateTime.UtcNow, Status = "Running", IsActive = true });
+        await db.SaveChangesAsync();
+        var students = new Mock<IClientProxy>();
+        var clients = new Mock<IHubClients>();
+        clients.Setup(c => c.User(It.IsAny<string>())).Returns(Mock.Of<IClientProxy>());
+        clients.Setup(c => c.Group(It.IsAny<string>())).Returns(Mock.Of<IClientProxy>());
+        clients.Setup(c => c.Group(HubEventNames.StudentsGroup)).Returns(students.Object);
+        var hub = new Mock<IHubContext<RemoteMonitoringHub>>();
+        hub.SetupGet(h => h.Clients).Returns(clients.Object);
+        var lab = new SessionManagerService(hub.Object);
+
+        await new LabSessionLifecycleService(db, hub.Object, lab: lab).StartAllSessionsAsync(null, teacherId: 4);
+
+        Assert.Equal(4, (await db.LabSessions.SingleAsync(s => s.StudentId == 1)).TeacherId);
+        Assert.Equal(9, (await db.LabSessions.SingleAsync(s => s.StudentId == 2)).TeacherId);
+        Assert.Equal(4, lab.LabTeacherId);
+        students.Verify(p => p.SendCoreAsync(HubEventNames.PolicyRefreshRequired, It.IsAny<object?[]>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task NewcomerSigningIntoARunningLab_BelongsToTheTeacherRunningIt()
+    {
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
+        await using var db = new ApplicationDbContext(options);
+        var newcomer = new Student { StudentNumber = "STU-NEW", Username = "newcomer", PasswordHash = "hash", Status = "Active" };
+        db.Add(newcomer);
+        await db.SaveChangesAsync();
+        var hub = QuietHub();
+        var lab = new SessionManagerService(hub.Object);
+        var service = new LabSessionLifecycleService(db, hub.Object, lab: lab);
+        await service.StartAllSessionsAsync(null, teacherId: 4);
+
+        var session = await service.EnsureStudentSessionAsync(newcomer.Id, "LAB5-PC33", "127.0.0.1");
+
+        Assert.Equal(4, session.TeacherId);
+    }
+
     [Fact]
     public async Task ResumeAll_DoesNotOpenALabThatWasNeverStarted()
     {

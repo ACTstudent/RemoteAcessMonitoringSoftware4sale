@@ -162,9 +162,9 @@
     <div class="modal fade" id="editComputerModal-@c.ComputerId" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                <div class="modal-header border-0 text-white surface-brand">
+                <div class="modal-header">
                     <h5 class="modal-title fw-bold"><i class="bi bi-pc-display me-2"></i>Edit Workstation Profile</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form method="post" action="/Teacher/UpdateComputer">
                     @Html.AntiForgeryToken()

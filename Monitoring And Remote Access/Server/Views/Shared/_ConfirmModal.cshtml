@@ -1,12 +1,15 @@
-<div class="modal fade" id="confirmActionModal" tabindex="-1" aria-labelledby="confirmActionTitle" aria-describedby="confirmActionMessage" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
+@* Filled in by camsConfirm (site.js). The subject line names the record the
+   action touches - the teacher, the workstation - so it is clear whose account
+   is about to change before anything is pressed. *@
+<div class="modal fade" id="confirmActionModal" tabindex="-1" aria-labelledby="confirmActionTitle" aria-describedby="confirmActionSubject confirmActionMessage" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header modal-header-themed">
+            <div class="modal-header">
                 <h5 class="modal-title" id="confirmActionTitle"><i class="bi bi-exclamation-circle me-2"></i>Confirm action</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p id="confirmActionMessage" class="mb-0 text-secondary">Are you sure you want to continue?</p>
+                <p id="confirmActionSubject" class="confirm-subject" hidden></p>
+                <p id="confirmActionMessage" class="confirm-message mb-0">Are you sure you want to continue?</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>

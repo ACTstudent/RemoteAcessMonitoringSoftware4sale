@@ -66,11 +66,34 @@ function showError(message) {
     error.classList.remove("d-none");
 }
 
-function createWorkstationCard(connectionId, studentId, pcName) {
-    if (!connectionId || document.getElementById(`unit-card-${connectionId}`)) return;
+// Who is at a station: their full name, with the student number kept for the
+// tooltip. The name arrives with the connection; a card first drawn from a
+// screen frame is named when it does.
+function studentLabel(unit) {
+    if (unit?.displayName) return unit.displayName;
+    return unit?.studentId ? `Student #${unit.studentId}` : "Connected student";
+}
+
+function setStudentIdentity(connectionId, displayName) {
+    const unit = activeUnits.get(connectionId);
+    if (!unit || !displayName) return;
+    unit.displayName = displayName;
+    const label = document.getElementById(`student-${connectionId}`);
+    if (label) label.textContent = displayName;
+    document.getElementById(`unit-card-${connectionId}`)?.querySelector(".workstation-card")
+        ?.setAttribute("aria-label", `View ${unit.pcName || "workstation"}, ${displayName}`);
+    if (selectedConnectionId === connectionId) updateSelectedView();
+}
+
+function createWorkstationCard(connectionId, studentId, pcName, displayName) {
+    if (!connectionId) return;
+    if (document.getElementById(`unit-card-${connectionId}`)) {
+        setStudentIdentity(connectionId, displayName);
+        return;
+    }
 
     document.getElementById("emptyState")?.remove();
-    activeUnits.set(connectionId, { studentId, pcName, lastFrame: null, lastFrameAt: 0, applicationName: "Unknown", activityKnown: false, isIdle: false, hasAlert: false, browsers: {} });
+    activeUnits.set(connectionId, { studentId, displayName, pcName, lastFrame: null, lastFrameAt: 0, applicationName: "Unknown", activityKnown: false, isIdle: false, hasAlert: false, browsers: {} });
 
     const column = document.createElement("div");
     column.className = "col-xl-4 col-sm-6 unit-col";
@@ -93,7 +116,7 @@ function createWorkstationCard(connectionId, studentId, pcName) {
     const name = document.createElement("span");
     name.className = "fw-bold text-dark font-monospace small text-truncate";
     name.textContent = pcName || "Unknown workstation";
-    card.setAttribute("aria-label", `View ${pcName || "workstation"}, student ${studentId || "unknown"}`);
+    card.setAttribute("aria-label", `View ${pcName || "workstation"}, ${displayName || `student ${studentId || "unknown"}`}`);
     const online = document.createElement("span");
     online.className = "badge badge-active ms-2";
     online.id = `status-${connectionId}`;
@@ -126,8 +149,10 @@ function createWorkstationCard(connectionId, studentId, pcName) {
     viewButton.className = "btn btn-sm btn-outline-primary rounded-pill px-3";
     viewButton.innerHTML = '<i class="bi bi-arrows-fullscreen me-1"></i> View';
     const student = document.createElement("span");
-    student.className = "workstation-card-student small fw-semibold";
-    student.textContent = studentId ? `Student #${studentId}` : "Connected student";
+    student.id = `student-${connectionId}`;
+    student.className = "workstation-card-student small fw-semibold text-truncate";
+    student.textContent = studentLabel({ studentId, displayName });
+    if (studentId) student.title = `Student number ${studentId}`;
     footer.append(student, activity, timestamp, browser, viewButton);
 
     card.append(header, stream, footer);
@@ -180,7 +205,7 @@ function selectWorkstation(connectionId) {
 function updateSelectedView() {
     const unit = activeUnits.get(selectedConnectionId);
     if (!unit) return;
-    document.getElementById("liveViewTitle").textContent = `Live View - ${unit.pcName || "Workstation"} (${unit.studentId || ""})`;
+    document.getElementById("liveViewTitle").textContent = `Live View - ${unit.pcName || "Workstation"} (${studentLabel(unit)})`;
     document.getElementById("liveViewImage").src = unit.lastFrame ? `data:image/jpeg;base64,${unit.lastFrame}` : "";
     if (remoteSupportActive && unit.lastFrame) drawRemoteFrame(unit.lastFrame);
 }
@@ -357,6 +382,27 @@ function trackCommand(label, target) {
     };
 }
 
+// What each command does to the student's computer, said before it is sent.
+// Restart is forced (shutdown /r /f /t 10) and shutdown runs on a 15-second
+// timer, so open work is not saved in either case.
+const DANGEROUS_COMMANDS = {
+    RestartStudent: {
+        title: "Restart workstation",
+        message: "Restart this computer in 10 seconds? **Open applications close and unsaved work is lost.**",
+        confirmLabel: "Restart"
+    },
+    ShutdownStudent: {
+        title: "Shut down workstation",
+        message: "Shut down this computer in 15 seconds? **Unsaved work is lost**, and it stays off until someone turns it on.",
+        confirmLabel: "Shut down"
+    },
+    ForceLogout: {
+        title: "Log out student",
+        message: "Log this student out? **The computer returns to the CAMS sign-in screen.**",
+        confirmLabel: "Log out"
+    }
+};
+
 async function sendWorkstationCommand(method, dangerous = false) {
     if (!selectedConnectionId) return;
 
@@ -364,10 +410,15 @@ async function sendWorkstationCommand(method, dangerous = false) {
     const target = describeTarget(selectedConnectionId);
 
     if (dangerous) {
-        const confirmed = await window.camsConfirm({
+        const unit = activeUnits.get(selectedConnectionId);
+        const prompt = DANGEROUS_COMMANDS[method] ?? {
             title: "Confirm workstation command",
-            message: `Run ${label.toLowerCase()} on ${target}?`,
+            message: `Run **${label.toLowerCase()}** on this workstation?`,
             confirmLabel: "Run command"
+        };
+        const confirmed = await window.camsConfirm({
+            ...prompt,
+            subject: unit ? [studentLabel(unit), unit.pcName].filter(Boolean).join(" · ") : target
         });
         if (!confirmed) return;
     }
@@ -472,7 +523,8 @@ async function bulkCommand(method, label) {
 
     const confirmed = await window.camsConfirm({
         title: "Confirm bulk command",
-        message: `Run ${label} for ${targets.length} visible workstations?`,
+        subject: `${targets.length} visible workstation${targets.length === 1 ? "" : "s"}`,
+        message: `Run **${label}** on every workstation shown on the monitoring wall?`,
         confirmLabel: "Run command"
     });
     if (!confirmed) return;
@@ -568,7 +620,7 @@ async function loadLiveState() {
         const state = await response.json();
         for (const student of (state.students ?? state.Students ?? [])) {
             const connectionId = valueOf(student, "connectionId", "ConnectionId");
-            createWorkstationCard(connectionId, valueOf(student, "studentId", "StudentId"), valueOf(student, "pcName", "PcName"));
+            createWorkstationCard(connectionId, valueOf(student, "studentId", "StudentId"), valueOf(student, "pcName", "PcName"), valueOf(student, "displayName", "DisplayName"));
         }
         for (const app of (state.apps ?? state.Apps ?? [])) {
             updateActivity(valueOf(app, "connectionId", "ConnectionId"), valueOf(app, "applicationName", "ApplicationName"), false);
@@ -635,7 +687,7 @@ hub.on("InfractionDetected", infraction => {
     card?.classList.add("border", "border-danger", "border-3");
     if (card) setTimeout(() => card.classList.remove("border", "border-danger", "border-3"), 8000);
 });
-hub.on("StudentConnected", student => createWorkstationCard(valueOf(student, "connectionId", "ConnectionId"), valueOf(student, "studentId", "StudentId"), valueOf(student, "pcName", "PcName")));
+hub.on("StudentConnected", student => createWorkstationCard(valueOf(student, "connectionId", "ConnectionId"), valueOf(student, "studentId", "StudentId"), valueOf(student, "pcName", "PcName"), valueOf(student, "displayName", "DisplayName")));
 hub.on("StudentDisconnected", connectionId => removeWorkstationCard(connectionId));
 // The server sends the lab's elapsed time when it changes state, not every
 // second, so a running lab is counted forward here between messages.

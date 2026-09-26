@@ -42,31 +42,32 @@ public static class NavigationBuilder
     /// whitelist gained and lost the word "Directory". A page is one thing, so
     /// it gets one name and one icon wherever it is listed.
     /// </summary>
+    private static readonly NavItem LabDashboard = new("Dashboard", "grid-fill", "Index", "Admin");
+    private static readonly NavItem LabComputers = new("Computers", "pc-display", "Computers", "Admin",
+        AlsoActiveOn: new[] { "ComputerHistory" });
+
+    private static NavSection PeopleSection() => new("People", new[]
+    {
+        new NavItem("Teachers", "person-badge-fill", "Teachers", "Admin"),
+        new NavItem("Students", "mortarboard-fill", "Students", "Admin"),
+        new NavItem("Classes", "folder-fill", "Classes", "Admin",
+            AlsoActiveOn: new[] { "ClassDetails" })
+    });
+
+    private static NavSection PoliciesSection() => new("Policies", new[]
+    {
+        new NavItem("Restriction Rules", "slash-circle-fill", "Restrictions", "Admin"),
+        new NavItem("Blacklist", "ban", "Blacklists", "Admin"),
+        new NavItem("Whitelist", "check-circle-fill", "Whitelists", "Admin"),
+        new NavItem("Session Rules", "hourglass-split", "SessionRules", "Admin")
+    });
+
     private static IEnumerable<NavSection> GlobalSections() => new[]
     {
-        new NavSection("Overview", new[]
-        {
-            new NavItem("Dashboard", "grid-fill", "Index", "Admin")
-        }),
-        new NavSection("People", new[]
-        {
-            new NavItem("Teachers", "person-badge-fill", "Teachers", "Admin"),
-            new NavItem("Students", "mortarboard-fill", "Students", "Admin"),
-            new NavItem("Classes", "folder-fill", "Classes", "Admin",
-                AlsoActiveOn: new[] { "ClassDetails" })
-        }),
-        new NavSection("Laboratory", new[]
-        {
-            new NavItem("Computers", "pc-display", "Computers", "Admin",
-                AlsoActiveOn: new[] { "ComputerHistory" })
-        }),
-        new NavSection("Policies", new[]
-        {
-            new NavItem("Restriction Rules", "slash-circle-fill", "Restrictions", "Admin"),
-            new NavItem("Blacklist", "ban", "Blacklists", "Admin"),
-            new NavItem("Whitelist", "check-circle-fill", "Whitelists", "Admin"),
-            new NavItem("Session Rules", "hourglass-split", "SessionRules", "Admin")
-        })
+        new NavSection("Overview", new[] { LabDashboard }),
+        PeopleSection(),
+        new NavSection("Laboratory", new[] { LabComputers }),
+        PoliciesSection()
     };
 
     // ---------- Teacher ----------
@@ -81,22 +82,30 @@ public static class NavigationBuilder
         RoleBadgeCss: "bg-success",
         AvatarIcon: "person-badge",
         ScriptPartial: "_TeacherAlertBadgeScript",
+        // Arranged as one menu rather than the teacher's sections with the
+        // lab-wide ones appended: that alternated single links and dropdowns
+        // (My Classroom, a group, a group, Dashboard, a group, Computers, a
+        // group), so the rows never lined up into anything. Single links come
+        // first, then the groups, and the lone Computers row joins the rest of
+        // the laboratory pages.
         Sections: new NavSection[]
         {
             // "My Classroom" rather than a bare "Dashboard": the lab-wide
-            // overview further down is also a dashboard, and two links a few
-            // rows apart both reading Dashboard told a teacher nothing about
-            // which one they wanted.
+            // overview beneath it is also a dashboard, and two links both
+            // reading Dashboard told a teacher nothing about which one they
+            // wanted.
             new NavSection(null, new[]
             {
-                new NavItem("My Classroom", "speedometer2", "Dashboard", "Teacher")
+                new NavItem("My Classroom", "speedometer2", "Dashboard", "Teacher"),
+                LabDashboard
             }),
             new NavSection("Laboratory Control", new[]
             {
                 new NavItem("Sessions", "play-circle-fill", "Sessions", "Teacher"),
                 new NavItem("Live Monitoring", "camera-video-fill", "Monitoring", "Teacher"),
                 new NavItem("Remote History", "terminal-fill", "RemoteHistory", "Teacher"),
-                new NavItem("Workstations", "pc-display", "Computers", "Teacher")
+                new NavItem("Workstations", "pc-display", "Computers", "Teacher"),
+                LabComputers
             }),
             new NavSection("My Classes", new[]
             {
@@ -113,8 +122,10 @@ public static class NavigationBuilder
                 new NavItem("Alerts", "bell-fill", "Alerts", "Teacher",
                     AlsoActiveOn: new[] { "AlertHistory" }, BadgeViewComponent: "OpenAlertCount"),
                 new NavItem("Settings", "person-gear", "Settings", "Teacher")
-            })
-        }.Concat(GlobalSections()).ToArray());
+            }),
+            PeopleSection(),
+            PoliciesSection()
+        });
 
     // ---------- Admin ----------
     //

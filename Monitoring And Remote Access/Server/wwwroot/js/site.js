@@ -4,6 +4,7 @@
 
     const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
     const title = document.getElementById("confirmActionTitle");
+    const subject = document.getElementById("confirmActionSubject");
     const message = document.getElementById("confirmActionMessage");
     const confirmButton = document.getElementById("confirmActionButton");
     let pendingConfirmation = null;
@@ -15,8 +16,11 @@
         }
     });
 
+    // subject: the record the action touches, shown in bold above the message.
+    // message: a **phrase** in it is set in bold - the consequence to notice.
     window.camsConfirm = ({
         title: promptTitle = "Confirm action",
+        subject: promptSubject = "",
         message: promptMessage = "Are you sure you want to continue?",
         confirmLabel = "Confirm",
         variant = "danger"
@@ -25,7 +29,11 @@
             if (pendingConfirmation) pendingConfirmation.resolve(false);
             pendingConfirmation = { resolve, confirmed: false };
             title.innerHTML = `<i class="bi bi-exclamation-circle me-2"></i>${escapeHtml(promptTitle)}`;
-            message.textContent = promptMessage;
+            if (subject) {
+                subject.textContent = promptSubject;
+                subject.hidden = !promptSubject;
+            }
+            setEmphasised(message, promptMessage);
             confirmButton.textContent = confirmLabel;
             confirmButton.className = `btn btn-${variant} rounded-pill px-4`;
             modal.show();
@@ -55,6 +63,7 @@
         const submitter = event.submitter;
         window.camsConfirm({
             title: form.dataset.confirmTitle || "Confirm action",
+            subject: form.dataset.confirmSubject || "",
             message: form.dataset.confirm,
             confirmLabel: form.dataset.confirmLabel || "Confirm",
             variant: form.dataset.confirmVariant || "danger"
@@ -70,6 +79,22 @@
         const element = document.createElement("span");
         element.textContent = String(value);
         return element.innerHTML;
+    }
+
+    // Builds the text node by node, so a name typed into a record can never
+    // become markup. An unpaired ** is left as written.
+    function setEmphasised(target, value) {
+        const parts = String(value).split("**");
+        if (parts.length % 2 === 0) {
+            target.textContent = String(value);
+            return;
+        }
+        target.replaceChildren(...parts.map((part, index) => {
+            if (index % 2 === 0) return document.createTextNode(part);
+            const strong = document.createElement("strong");
+            strong.textContent = part;
+            return strong;
+        }));
     }
 })();
 
@@ -402,6 +427,44 @@ window.CamsToast = (function () {
         history: function () { return history.slice(); },
         clearHistory: function () { history.length = 0; renderHistory(); }
     };
+})();
+
+// Page notes that only need reading once. A note marked data-auto-dismiss stays
+// for that many milliseconds, then fades and folds away so what is below moves
+// up into its place. Like the toasts, it waits while the pointer is over it, so
+// it cannot vanish mid-read.
+(function () {
+    var DEFAULT_DELAY = 5000;
+
+    function fold(note) {
+        if (note.matches(':hover')) {
+            note.addEventListener('mouseleave', function () { fold(note); }, { once: true });
+            return;
+        }
+        var hide = function () { note.hidden = true; };
+        // A height to fold down from; max-height cannot transition from "none".
+        note.style.maxHeight = note.offsetHeight + 'px';
+        void note.offsetHeight;
+        note.classList.add('is-dismissed');
+        note.addEventListener('transitionend', function (event) {
+            if (event.propertyName === 'max-height') hide();
+        });
+        // Fallback for when the transition is suppressed.
+        window.setTimeout(hide, 1500);
+    }
+
+    function init() {
+        document.querySelectorAll('[data-auto-dismiss]').forEach(function (note) {
+            var delay = parseInt(note.getAttribute('data-auto-dismiss'), 10) || DEFAULT_DELAY;
+            window.setTimeout(function () { fold(note); }, delay);
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 })();
 
 // Sidebar menu button. Below 992px it opens the sidebar as an overlay drawer;

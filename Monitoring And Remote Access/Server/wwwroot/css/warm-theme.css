@@ -184,7 +184,12 @@ body.login-page {
 .app-shell .badge.bg-info { background: var(--bs-info-bg-subtle) !important; color: var(--bs-info-text-emphasis) !important; }
 .app-shell .empty-state { color: var(--text-muted); }
 .app-shell .empty-state-icon { color: var(--accent-emerald); opacity: .7; }
-.app-shell .modal-header:not(.surface-brand) { background: var(--surface-sunk); color: var(--text-on-sage); border-bottom-color: var(--surface-line); }
+/* Every dialog opens on the same pale sage band as the confirmation dialog;
+   the solid green band read heavy next to it. Only the student alert keeps
+   .surface-brand - its script tints the band by how urgent the alert is. */
+.app-shell .modal-header:not(.surface-brand) { background: var(--surface-sunk); color: var(--text-on-sage); border-bottom: 1px solid var(--border-strong); }
+.app-shell .modal-header:not(.surface-brand) .modal-title { color: var(--text-main); font-weight: 750; }
+.app-shell .modal-header:not(.surface-brand) .modal-title .bi { color: var(--accent-emerald); }
 .app-shell .modal-footer { background: var(--surface-raised); border-top-color: var(--surface-line); }
 .app-shell .table > thead > tr > th { font-weight: 650; text-transform: none; letter-spacing: 0; }
 .app-shell .school-logo-img { box-shadow: var(--shadow-card); border-color: var(--card-border); }
@@ -490,3 +495,18 @@ body.login-page {
 
 /* The chevron keeps to the right edge and is not part of the icon column. */
 .nav-group-chevron { flex: 0 0 auto; margin-left: auto; }
+
+/* A single link and a group header are the same kind of row, so they share one
+   size, weight, height and icon. Single links were 0.92rem regular with 1.2rem
+   icons beside 0.8rem bold group headers with small ones, so the sidebar read
+   as two unrelated lists. Nested links stay smaller under their rule. */
+.sidebar-nav > .nav-item-custom,
+.sidebar-group-toggle {
+    font-size: .8rem;
+    font-weight: 650;
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+.sidebar-nav > .nav-item-custom { margin-bottom: 6px; }
+.sidebar-nav > .nav-item-custom > i,
+.sidebar-group-toggle > i:not(.nav-group-chevron) { font-size: 1.05rem; }

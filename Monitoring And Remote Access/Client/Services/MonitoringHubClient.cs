@@ -195,6 +195,31 @@ public class MonitoringHubClient : IMonitoringHubClient
         response.EnsureSuccessStatusCode();
     }
 
+    /// <summary>
+    /// Replaces the signed-in student's password, on the same cookie the sign-in
+    /// issued. Anything but 204 is a refusal; its text is the server's reason,
+    /// written to be shown to the student as it is.
+    /// </summary>
+    public async Task ChangePasswordAsync(string currentPassword, string newPassword, CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (_httpClient is null || _serverUrl is null)
+            throw new InvalidOperationException("Sign in before changing the password.");
+
+        using var response = await _httpClient.PostAsJsonAsync(
+            new Uri(GetRootUri(_serverUrl), "api/client/change-password"),
+            new StudentClientPasswordChangeRequest(currentPassword, newPassword),
+            cancellationToken);
+
+        if (response.StatusCode == HttpStatusCode.NoContent)
+            return;
+
+        var detail = (await response.Content.ReadAsStringAsync(cancellationToken)).Trim();
+        if (string.IsNullOrWhiteSpace(detail))
+            detail = $"The password was not changed (status {(int)response.StatusCode}).";
+        throw new HttpRequestException(detail, null, response.StatusCode);
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_disposed)

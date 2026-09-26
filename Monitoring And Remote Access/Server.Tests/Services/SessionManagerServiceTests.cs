@@ -152,16 +152,19 @@ public class SessionManagerServiceTests
             var hub = Mock.Of<IHubContext<Server.Hubs.RemoteMonitoringHub>>(h =>
                 h.Clients == Mock.Of<IHubClients>(c => c.Group(It.IsAny<string>()) == Mock.Of<IClientProxy>()));
             var before = new SessionManagerService(hub, path);
-            before.StartLab(9);
+            before.StartLab(9, teacherId: 3);
             before.PauseSession();
 
             var after = new SessionManagerService(hub, path);
             Assert.Equal("Paused", after.Snapshot().Status);
             Assert.Equal(9, after.LabRuleId);
+            Assert.Equal(3, after.LabTeacherId);
             Assert.True(after.IsLabOpen);
 
             after.EndSession();
-            Assert.False(new SessionManagerService(hub, path).IsLabOpen);
+            var reopened = new SessionManagerService(hub, path);
+            Assert.False(reopened.IsLabOpen);
+            Assert.Null(reopened.LabTeacherId);
         }
         finally
         {

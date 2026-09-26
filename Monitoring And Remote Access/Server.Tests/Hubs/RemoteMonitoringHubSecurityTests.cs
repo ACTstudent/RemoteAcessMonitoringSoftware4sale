@@ -195,6 +195,53 @@ public sealed class RemoteMonitoringHubSecurityTests
         Assert.DoesNotContain(delivered!, rule => rule.Target == "teacher-two.test");
     }
 
+    // A newcomer - no class, no adviser - had a session tied to no teacher, so a
+    // teacher's own restriction rules never reached them and they could browse
+    // sites that teacher had blocked. The teacher running the lab now covers
+    // everyone in it; with no lab open, their rules stay with their own students.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task FetchRestrictions_GivesANewcomerTheRulesOfTheTeacherRunningTheLab(bool labRunning)
+    {
+        await using var provider = CreateProvider();
+        await using (var scope = provider.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var newcomer = new Server.Models.Student { StudentNumber = "newcomer-1", FullName = "New Comer", Username = "newcomer-1" };
+            db.Students.Add(newcomer);
+            await db.SaveChangesAsync();
+            db.LabSessions.Add(new Server.Models.LabSession { StudentId = newcomer.Id, TeacherId = null,
+                StartTime = DateTime.UtcNow, Status = "Running", IsActive = true, PCName = "PC-07" });
+            db.RestrictionRules.Add(new Server.Models.RestrictionRule { RuleType = "Website", Target = "blocked-by-teacher-two.test",
+                Mode = "Block", TeacherId = 2, IsGlobal = false, IsActive = true });
+            await db.SaveChangesAsync();
+        }
+
+        IReadOnlyList<RestrictionRuleMessage>? delivered = null;
+        var clients = new Mock<IHubCallerClients>();
+        var target = new Mock<ISingleClientProxy>();
+        target.Setup(proxy => proxy.SendCoreAsync(HubEventNames.RestrictionsReceived, It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object?[], CancellationToken>((_, args, _) =>
+                delivered = Assert.IsAssignableFrom<IReadOnlyList<RestrictionRuleMessage>>(args[0]))
+            .Returns(Task.CompletedTask);
+        clients.Setup(value => value.Client("newcomer-connection")).Returns(target.Object);
+        var monitoring = new MonitoringService();
+        monitoring.RegisterStudent("newcomer-connection", "newcomer-1", "PC-07");
+        var labClients = new Mock<IHubClients>();
+        labClients.Setup(c => c.Group(It.IsAny<string>())).Returns(Mock.Of<IClientProxy>());
+        var labHub = new Mock<IHubContext<RemoteMonitoringHub>>();
+        labHub.SetupGet(h => h.Clients).Returns(labClients.Object);
+        var lab = new SessionManagerService(labHub.Object);
+        if (labRunning) lab.StartLab(null, teacherId: 2);
+        var hub = CreateHub(provider, monitoring, "newcomer-connection", "Student", "1", clients, clientAgent: true, lab: lab);
+
+        await hub.FetchRestrictions();
+
+        Assert.NotNull(delivered);
+        Assert.Equal(labRunning, delivered!.Any(rule => rule.Target == "blocked-by-teacher-two.test"));
+    }
+
     [Fact]
     public async Task ForceLogout_EndsLabSessionBeforeDisconnectingStudent()
     {
@@ -493,7 +540,7 @@ public sealed class RemoteMonitoringHubSecurityTests
 
     private static RemoteMonitoringHub CreateHub(IServiceProvider provider, IMonitoringService monitoring,
         string connectionId, string role, string userId, Mock<IHubCallerClients>? clients = null,
-        bool clientAgent = false, ITelemetryService? telemetryService = null)
+        bool clientAgent = false, ITelemetryService? telemetryService = null, SessionManagerService? lab = null)
     {
         var context = new Mock<HubCallerContext>();
         var claims = new List<Claim>
@@ -517,7 +564,7 @@ public sealed class RemoteMonitoringHubSecurityTests
             clients.Setup(c => c.Groups(It.IsAny<IReadOnlyList<string>>())).Returns(groupProxy.Object);
         }
         var hub = new RemoteMonitoringHub(monitoring, telemetryService ?? Mock.Of<ITelemetryService>(),
-            new SessionManagerService(Mock.Of<IHubContext<RemoteMonitoringHub>>()),
+            lab ?? new SessionManagerService(Mock.Of<IHubContext<RemoteMonitoringHub>>()),
             provider.GetRequiredService<IServiceScopeFactory>())
         {
             Context = context.Object,

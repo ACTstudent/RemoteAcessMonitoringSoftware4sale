@@ -115,7 +115,7 @@
                                 <a class="btn btn-sm btn-outline-primary crud-action" asp-action="StudentDetails" asp-route-id="@s.Id" title="Student analytics" aria-label="View analytics for @s.FullName">
                                     <i class="bi bi-graph-up" aria-hidden="true"></i>
                                 </a>
-                                <form method="post" action="/Teacher/DeleteStudent" class="form-inline-action" data-confirm="Remove @s.FullName? They disappear from the student lists and can no longer sign in. Their session history is kept, and an administrator can restore the account." data-confirm-title="Remove student" data-confirm-label="Remove"><input type="hidden" name="search" value="@ViewBag.Search" />
+                                <form method="post" action="/Teacher/DeleteStudent" class="form-inline-action" data-confirm-subject="@s.FullName" data-confirm="Remove this student from CAMS? They disappear from the student lists and can no longer log in. **Their session history is kept**, and an administrator can restore the account." data-confirm-title="Remove student" data-confirm-label="Remove"><input type="hidden" name="search" value="@ViewBag.Search" />
                                     <input type="hidden" name="studentId" value="@s.Id" />
                                     @Html.AntiForgeryToken()
                                     <button class="btn btn-sm btn-outline-danger crud-action" title="Remove student" aria-label="Remove @s.FullName">
@@ -145,11 +145,11 @@
     <div class="modal fade" id="editStudentModal-@s.Id" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                <div class="modal-header border-0 text-white surface-brand">
+                <div class="modal-header">
                     <h5 class="modal-title fw-bold">
                         <i class="bi bi-pencil-square me-2"></i> Edit Student - @s.FullName
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form method="post" action="/Teacher/UpdateStudent"><input type="hidden" name="search" value="@ViewBag.Search" />
                     <input type="hidden" name="Id" value="@s.Id" />
@@ -193,11 +193,11 @@
 <div class="modal fade" id="addStudentModal" tabindex="-1" aria-labelledby="addStudentModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 text-white surface-brand">
+            <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="addStudentModalLabel">
                     <i class="bi bi-person-plus me-2"></i> Add Student
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" action="/Teacher/CreateStudent">
                 @Html.AntiForgeryToken()

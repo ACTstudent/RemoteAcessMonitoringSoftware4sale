@@ -54,6 +54,7 @@ namespace Client
         private bool _trayMenuOpen;
         private Form? _broadcastForm;
         private PictureBox? _broadcastPicture;
+        private Form? _passwordDialog;
         private string _studentId = "";
         private string _studentName = "";
 
@@ -447,6 +448,39 @@ namespace Client
                 Height = Dp(42)
             };
 
+        /// <summary>
+        /// A password box with the eye that shows what was typed, so a pupil can
+        /// check their typing before pressing the button rather than finding out
+        /// from a refusal.
+        /// </summary>
+        private RoundedField PasswordField(TextBox box, int width)
+        {
+            int eyeSize = Dp(20);
+            var field = SignInField(box, Dp(12) + eyeSize + Dp(12));
+            field.Width = width;
+            var eye = new LineIcon
+            {
+                Glyph = LineGlyph.Eye,
+                ForeColor = SignInInk,
+                BackColor = SurfaceCard,
+                Size = new Size(eyeSize, eyeSize),
+                Location = new Point(width - Dp(12) - eyeSize, (field.Height - eyeSize) / 2),
+                Cursor = Cursors.Hand,
+                AccessibleName = "Show password",
+                AccessibleRole = AccessibleRole.PushButton
+            };
+            eye.Click += (_, _) =>
+            {
+                bool reveal = box.UseSystemPasswordChar;
+                box.UseSystemPasswordChar = !reveal;
+                eye.Glyph = reveal ? LineGlyph.EyeOff : LineGlyph.Eye;
+                eye.AccessibleName = reveal ? "Hide password" : "Show password";
+                box.Focus();
+            };
+            field.Controls.Add(eye);
+            return field;
+        }
+
         /// <summary>The icon and caption that sit above a sign-in field.</summary>
         private Control[] SignInCaption(LineGlyph glyph, string text, int left, int top)
         {
@@ -598,33 +632,9 @@ namespace Client
 
             body.Controls.AddRange(SignInCaption(LineGlyph.Lock, "Password", inset + Dp(4), y));
             y += Dp(26);
-            int eyeSize = Dp(20);
-            var passwordField = SignInField(txtPassword, Dp(12) + eyeSize + Dp(12));
+            var passwordField = PasswordField(txtPassword, fieldWidth);
             passwordField.Location = new Point(inset, y);
-            passwordField.Width = fieldWidth;
             passwordField.TabIndex = 1;
-            var eye = new LineIcon
-            {
-                Glyph = LineGlyph.Eye,
-                ForeColor = SignInInk,
-                BackColor = SurfaceCard,
-                Size = new Size(eyeSize, eyeSize),
-                Location = new Point(fieldWidth - Dp(12) - eyeSize, (passwordField.Height - eyeSize) / 2),
-                Cursor = Cursors.Hand,
-                AccessibleName = "Show password",
-                AccessibleRole = AccessibleRole.PushButton
-            };
-            // Lets a pupil check what they typed before pressing Login, rather
-            // than finding out from a refused sign-in.
-            eye.Click += (_, _) =>
-            {
-                bool reveal = txtPassword.UseSystemPasswordChar;
-                txtPassword.UseSystemPasswordChar = !reveal;
-                eye.Glyph = reveal ? LineGlyph.EyeOff : LineGlyph.Eye;
-                eye.AccessibleName = reveal ? "Hide password" : "Show password";
-                txtPassword.Focus();
-            };
-            passwordField.Controls.Add(eye);
             y += passwordField.Height + Dp(28);
 
             btnLogin = new RoundedButton
@@ -856,21 +866,37 @@ namespace Client
             };
 
             var btnLogout = BrandButton("Log out", BrandDark);
-            btnLogout.Dock = DockStyle.Bottom;
-            btnLogout.Width = 150;
-            btnLogout.Height = 38;
+            btnLogout.Size = new Size(150, 46);
+            btnLogout.Margin = Padding.Empty;
             btnLogout.FlatAppearance.BorderSize = 0;
             btnLogout.FlatAppearance.MouseOverBackColor = BrandDarker;
             btnLogout.Click += async (_, _) => await ForceLogout(true, quit: false);
 
-            var logoutHost = new Panel { Dock = DockStyle.Bottom, Height = 46, BackColor = SurfaceBody };
-            btnLogout.Dock = DockStyle.Left;
-            logoutHost.Controls.Add(btnLogout);
+            // The one account task a student can do for themselves; the web
+            // portal does not let students in.
+            var btnPassword = BrandButton("Change password", SurfaceCard);
+            btnPassword.ForeColor = BrandDark;
+            btnPassword.Size = new Size(170, 46);
+            btnPassword.Margin = new Padding(10, 0, 0, 0);
+            btnPassword.FlatAppearance.BorderSize = 1;
+            btnPassword.FlatAppearance.BorderColor = SignInFieldBorder;
+            btnPassword.FlatAppearance.MouseOverBackColor = SignInTint;
+            btnPassword.Click += (_, _) => ShowChangePasswordDialog();
+
+            var actions = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 46,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                BackColor = SurfaceBody
+            };
+            actions.Controls.AddRange(new Control[] { btnLogout, btnPassword });
 
             // Added last-to-first so docking stacks in the intended order.
             content.Controls.Add(lblInfo);
             content.Controls.Add(card);
-            content.Controls.Add(logoutHost);
+            content.Controls.Add(actions);
 
             Controls.Add(content);
             Controls.Add(bar);
@@ -1647,6 +1673,8 @@ namespace Client
         /// <param name="gateStatus">What the gate's status line says afterwards.</param>
         private async Task ForceLogout(bool manual, bool quit = true, string? gateStatus = null)
         {
+            // A password dialog must not outlive the session it belongs to.
+            if (_passwordDialog is { IsDisposed: false } passwordDialog) passwordDialog.Close();
             _isClosing = true;
             _sessionPaused = false;
             _sessionScreen.Hide();
@@ -2026,6 +2054,262 @@ namespace Client
             footer.Controls.Add(ok);
             dialog.AcceptButton = ok;
             dialog.Show(this);
+        }
+
+        /// <summary>Lets the signed-in student replace their own password.</summary>
+        private void ShowChangePasswordDialog()
+        {
+            if (_hubClient is null || _passwordDialog is { IsDisposed: false }) return;
+
+            var dialog = BuildChangePasswordDialog();
+            _passwordDialog = dialog;
+            DialogResult result;
+            try
+            {
+                result = dialog.ShowDialog(this);
+            }
+            finally
+            {
+                _passwordDialog = null;
+                dialog.Dispose();
+            }
+
+            if (result == DialogResult.OK && !IsDisposed && _hubClient is not null)
+                ShowMessage("Password changed",
+                    "Your password has been changed. Use your new password the next time you log in.");
+        }
+
+        /// <summary>
+        /// The change-password dialog, built from the sign-in screen's parts - same
+        /// account, same pupils typing. The rules are checked here first so a slip
+        /// is caught at once; the server checks the current password and the rules
+        /// again, and its answer is the one that counts. Closes itself with OK once
+        /// the server has accepted the change.
+        /// </summary>
+        private Form BuildChangePasswordDialog()
+        {
+            int width = Dp(420);
+            int inset = Dp(28);
+            int fieldWidth = width - inset * 2;
+
+            var dialog = new Form
+            {
+                Text = "Change password",
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                ShowIcon = false,
+                ShowInTaskbar = false,
+                BackColor = SurfaceCard,
+                Font = new Font("Segoe UI", 9.75f),
+                TopMost = TopMost
+            };
+
+            // --- Header: what this is, and the one rule to know -------------------
+            int headerHeight = Dp(82);
+            var header = new Panel { Dock = DockStyle.Top, Height = headerHeight, BackColor = SignInTint };
+            int iconSize = Dp(28);
+            var icon = new LineIcon
+            {
+                Glyph = LineGlyph.Lock,
+                ForeColor = SignInInk,
+                Bounds = new Rectangle(inset, (headerHeight - iconSize) / 2, iconSize, iconSize)
+            };
+            var title = new Label
+            {
+                Text = "Change your password",
+                AutoSize = true,
+                ForeColor = SignInInk,
+                Font = new Font("Segoe UI", 13f, FontStyle.Bold)
+            };
+            var subtitle = new Label
+            {
+                Text = $"Use at least {StudentPasswordRules.MinimumLength} characters.",
+                AutoSize = true,
+                MaximumSize = new Size(width - inset - (icon.Right + Dp(14)), 0),
+                ForeColor = SignInMuted,
+                Font = new Font("Segoe UI", 9f)
+            };
+            int textLeft = icon.Right + Dp(14);
+            int blockTop = (headerHeight - (title.PreferredHeight + Dp(2) + subtitle.PreferredHeight)) / 2;
+            title.Location = new Point(textLeft, blockTop);
+            subtitle.Location = new Point(textLeft + Dp(1), blockTop + title.PreferredHeight + Dp(2));
+            header.Controls.AddRange(new Control[] { icon, title, subtitle });
+
+            // --- Body: current, new, and the new one again -------------------------
+            TextBox PasswordBox(string placeholder) => new()
+            {
+                Font = new Font("Segoe UI", 10f),
+                ForeColor = TextMain,
+                PlaceholderText = placeholder,
+                UseSystemPasswordChar = true,
+                MaxLength = StudentPasswordRules.MaximumLength
+            };
+            var txtCurrent = PasswordBox("Enter your current password");
+            var txtNew = PasswordBox("Enter a new password");
+            var txtConfirm = PasswordBox("Type the new password again");
+
+            var body = new Panel { Dock = DockStyle.Fill, BackColor = SurfaceCard, TabIndex = 0 };
+            int y = Dp(22);
+            void AddRow(string caption, TextBox box, int tabIndex)
+            {
+                body.Controls.AddRange(SignInCaption(LineGlyph.Lock, caption, inset + Dp(4), y));
+                y += Dp(26);
+                var field = PasswordField(box, fieldWidth);
+                field.Location = new Point(inset, y);
+                field.TabIndex = tabIndex;
+                body.Controls.Add(field);
+                y += field.Height + Dp(16);
+            }
+            AddRow("Current password", txtCurrent, 0);
+            AddRow("New password", txtNew, 1);
+            AddRow("Confirm new password", txtConfirm, 2);
+
+            // Space kept for a line or two of explanation, so the dialog does not
+            // jump when something needs fixing.
+            var lblProblem = new Label
+            {
+                AutoSize = true,
+                MaximumSize = new Size(fieldWidth, 0),
+                ForeColor = StatusDanger,
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
+                Location = new Point(inset, y - Dp(4))
+            };
+            body.Controls.Add(lblProblem);
+            y += Dp(40);
+
+            // --- Footer: Cancel, and the one primary action ------------------------
+            int footerHeight = Dp(74);
+            var footer = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Bottom,
+                Height = footerHeight,
+                FlowDirection = FlowDirection.RightToLeft,   // first added sits rightmost
+                WrapContents = false,
+                Padding = new Padding(inset, Dp(15), inset, 0),
+                BackColor = SignInTint,
+                TabIndex = 1
+            };
+            var btnSave = new RoundedButton
+            {
+                Text = "Change password",
+                BackColor = SignInButton,
+                HoverColor = SignInButtonHover,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
+                Radius = Dp(8),
+                Size = new Size(Dp(178), Dp(44)),
+                Margin = new Padding(Dp(10), 0, 0, 0),
+                TabIndex = 0
+            };
+            var btnCancel = new RoundedButton
+            {
+                Text = "Cancel",
+                BackColor = SurfaceCard,
+                HoverColor = Color.FromArgb(244, 249, 245),
+                BorderColor = SignInFieldBorder,
+                ForeColor = SignInInk,
+                Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
+                Radius = Dp(8),
+                Size = new Size(Dp(112), Dp(44)),
+                Margin = Padding.Empty,
+                DialogResult = DialogResult.Cancel,
+                TabIndex = 1
+            };
+            footer.Controls.AddRange(new Control[] { btnSave, btnCancel });
+
+            dialog.Controls.Add(body);
+            dialog.Controls.Add(footer);
+            dialog.Controls.Add(header);
+            dialog.ClientSize = new Size(width, headerHeight + y + footerHeight);
+            dialog.AcceptButton = btnSave;    // Enter changes it
+            dialog.CancelButton = btnCancel;  // Esc does the safe thing
+            dialog.ActiveControl = txtCurrent;
+            CenterDialogOnScreen(dialog);
+
+            void ShowProblem(string message, TextBox? fix)
+            {
+                if (dialog.IsDisposed) return;
+                lblProblem.Text = message;
+                if (fix is null) return;
+                fix.Focus();
+                fix.SelectAll();
+            }
+
+            void SetBusy(bool busy)
+            {
+                if (dialog.IsDisposed) return;
+                foreach (var box in new[] { txtCurrent, txtNew, txtConfirm }) box.ReadOnly = busy;
+                btnSave.Enabled = !busy;
+                btnCancel.Enabled = !busy;
+                btnSave.Text = busy ? "Saving…" : "Change password";
+                dialog.UseWaitCursor = busy;
+            }
+
+            btnSave.Click += async (_, _) =>
+            {
+                string current = txtCurrent.Text, next = txtNew.Text, confirm = txtConfirm.Text;
+                if (current.Length == 0)
+                {
+                    ShowProblem("Enter your current password.", txtCurrent);
+                    return;
+                }
+                if (next.Length < StudentPasswordRules.MinimumLength)
+                {
+                    ShowProblem($"Your new password must be at least {StudentPasswordRules.MinimumLength} characters long.", txtNew);
+                    return;
+                }
+                if (next == current)
+                {
+                    ShowProblem("Your new password must be different from your current one.", txtNew);
+                    return;
+                }
+                if (next != confirm)
+                {
+                    ShowProblem("The new passwords do not match.", txtConfirm);
+                    return;
+                }
+
+                var client = _hubClient;
+                if (client is null)
+                {
+                    dialog.Close();
+                    return;
+                }
+
+                lblProblem.Text = "";
+                SetBusy(true);
+                try
+                {
+                    using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+                    await client.ChangePasswordAsync(current, next, timeout.Token);
+                    if (!dialog.IsDisposed) dialog.DialogResult = DialogResult.OK;
+                }
+                catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+                {
+                    SetBusy(false);
+                    ShowProblem("Your sign-in has expired. Log out and log in again, then try once more.", null);
+                }
+                catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.BadRequest)
+                {
+                    // The server's own words: a wrong current password, or a rule.
+                    SetBusy(false);
+                    ShowProblem(ex.Message,
+                        ex.Message.Contains("current password", StringComparison.OrdinalIgnoreCase) ? txtCurrent : txtNew);
+                }
+                catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests)
+                {
+                    SetBusy(false);
+                    ShowProblem(ex.Message, null);
+                }
+                catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or InvalidOperationException)
+                {
+                    SetBusy(false);
+                    ShowProblem("CAMS could not change your password right now. Try again in a moment.", null);
+                }
+            };
+
+            return dialog;
         }
 
 

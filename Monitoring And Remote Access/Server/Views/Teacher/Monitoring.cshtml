@@ -64,9 +64,9 @@
 <div class="modal fade" id="liveViewModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 text-white surface-brand">
+            <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="liveViewTitle">Live workstation view</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center p-2 bg-black">
                 <img id="liveViewImage" class="img-fluid" alt="Selected workstation screen" style="max-height: 78vh; object-fit: contain;" />
@@ -88,7 +88,7 @@
 
 <div class="modal fade" id="warningModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
-        <div class="modal-header"><h5 class="modal-title">Send Student Warning</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+        <div class="modal-header"><h5 class="modal-title"><i class="bi bi-megaphone me-2"></i>Send Student Warning</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
         <div class="modal-body">
             <input type="hidden" id="warningTarget" />
             <label class="form-label" for="warningTitle">Title</label><input id="warningTitle" class="form-control mb-3" maxlength="120" value="Teacher Warning" />

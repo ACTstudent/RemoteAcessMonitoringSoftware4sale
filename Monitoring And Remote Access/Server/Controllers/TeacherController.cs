@@ -190,7 +190,7 @@ namespace Server.Controllers
                 return RedirectToAction(nameof(Sessions));
             }
 
-            var started = await _sessionLifecycle.StartAllSessionsAsync(rule);
+            var started = await _sessionLifecycle.StartAllSessionsAsync(rule, teacherId.Value);
 
             var ruleName = rule is null ? "no time limit" : $"{rule.Name} ({rule.MaxDurationMinutes} min)";
             await AuditAsync("StartSession", $"Started the lab session for all students on all computers under {ruleName}; restarted {started} signed-in session(s)");

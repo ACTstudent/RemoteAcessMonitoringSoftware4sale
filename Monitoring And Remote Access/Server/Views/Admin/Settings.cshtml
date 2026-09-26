@@ -100,7 +100,7 @@
                                                 <button class="btn btn-sm btn-outline-warning crud-action" title="Unlock account" aria-label="Unlock @admin.FullName"><i class="bi bi-unlock" aria-hidden="true"></i></button>
                                             </form>
                                         }
-                                        <form method="post" action="/Admin/SetAccountActive" class="form-inline-action" data-confirm="@(admin.IsActive ? "Deactivate" : "Activate") this administrator account?" data-confirm-title="@(admin.IsActive ? "Deactivate" : "Activate") administrator" data-confirm-label="@(admin.IsActive ? "Deactivate" : "Activate")" data-confirm-variant="@(admin.IsActive ? "danger" : "success")">
+                                        <form method="post" action="/Admin/SetAccountActive" class="form-inline-action" data-confirm-subject="@admin.FullName (@admin.Username)" data-confirm="@(admin.IsActive ? "Deactivate this administrator account? **They can no longer log in** until the account is activated again." : "Activate this administrator account? **They can log in again.**")" data-confirm-title="@(admin.IsActive ? "Deactivate" : "Activate") administrator" data-confirm-label="@(admin.IsActive ? "Deactivate" : "Activate")" data-confirm-variant="@(admin.IsActive ? "danger" : "success")">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="accountRole" value="Admin" />
                                             <input type="hidden" name="id" value="@admin.Id" />
@@ -110,7 +110,7 @@
                                             </button>
                                         </form>
                                         <button type="button" class="btn btn-sm btn-outline-emerald crud-action" data-bs-toggle="modal" data-bs-target="#editAdminModal-@admin.Id" title="Edit administrator" aria-label="Edit @admin.FullName"><i class="bi bi-pencil-square" aria-hidden="true"></i></button>
-                                        <form method="post" action="/Admin/DeleteAdmin" class="form-inline-action" data-confirm="Delete this administrator account? This action cannot be undone." data-confirm-title="Delete administrator" data-confirm-label="Delete">
+                                        <form method="post" action="/Admin/DeleteAdmin" class="form-inline-action" data-confirm-subject="@admin.FullName (@admin.Username)" data-confirm="Delete this administrator account? **This cannot be undone.**" data-confirm-title="Delete administrator" data-confirm-label="Delete">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="id" value="@admin.Id" />
                                             <button class="btn btn-sm btn-outline-danger crud-action" disabled="@(isCurrent ? "disabled" : null)" title="@(isCurrent ? "You cannot delete the account you are signed in as." : "Delete administrator")" aria-label="Delete @admin.FullName"><i class="bi bi-trash" aria-hidden="true"></i></button>
@@ -165,9 +165,9 @@
 <div class="modal fade" id="createAdminModal" tabindex="-1" aria-labelledby="createAdminModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 text-white surface-brand">
+            <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="createAdminModalLabel"><i class="bi bi-person-plus me-2"></i>Add administrator</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" action="/Admin/CreateAdmin">
                 @Html.AntiForgeryToken()
@@ -199,9 +199,9 @@
     <div class="modal fade" id="editAdminModal-@admin.Id" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                <div class="modal-header border-0 text-white surface-brand">
+                <div class="modal-header">
                     <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Edit Administrator - @admin.FullName</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form method="post" action="/Admin/UpdateAdmin">
                     @Html.AntiForgeryToken()

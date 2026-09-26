@@ -100,6 +100,7 @@
                     var isActive = string.IsNullOrWhiteSpace(t.Status) || string.Equals(t.Status, "Active", StringComparison.OrdinalIgnoreCase);
                     var isLocked = t.LockoutEndUtc.HasValue && t.LockoutEndUtc.Value > DateTime.UtcNow;
                     var isSelf = actorTeacherId.HasValue && actorTeacherId.Value == t.TeacherId;
+                    var teacherName = string.IsNullOrWhiteSpace($"{t.FirstName}{t.LastName}") ? t.Username : $"{t.FirstName} {t.LastName}".Trim();
                     <tr data-crud-item data-status="@(isActive ? "Active" : "Inactive")">
                         <td class="fw-semibold text-dark">@t.FirstName</td>
                         <td>@t.LastName</td>
@@ -130,7 +131,7 @@
                                 }
                                 else
                                 {
-                                    <form method="post" action="/Admin/SetAccountActive" class="form-inline-action" data-confirm="@(isActive ? "Deactivate" : "Activate") this teacher account across CAMS?" data-confirm-title="@(isActive ? "Deactivate" : "Activate") teacher" data-confirm-label="@(isActive ? "Deactivate" : "Activate")" data-confirm-variant="@(isActive ? "danger" : "success")">
+                                    <form method="post" action="/Admin/SetAccountActive" class="form-inline-action" data-confirm-subject="@teacherName" data-confirm="@(isActive ? "Deactivate this teacher account across CAMS? **They can no longer log in** until the account is activated again." : "Activate this teacher account across CAMS? **They can log in again.**")" data-confirm-title="@(isActive ? "Deactivate" : "Activate") teacher" data-confirm-label="@(isActive ? "Deactivate" : "Activate")" data-confirm-variant="@(isActive ? "danger" : "success")">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="accountRole" value="Teacher" />
                                         <input type="hidden" name="id" value="@t.TeacherId" />
@@ -138,7 +139,7 @@
                                         <button class="btn btn-sm @(isActive ? "btn-outline-secondary" : "btn-outline-success") crud-action" title="@(isActive ? "Deactivate account" : "Activate account")" aria-label="@(isActive ? "Deactivate" : "Activate") @t.FirstName @t.LastName"><i class="bi @(isActive ? "bi-person-dash" : "bi-person-check")" aria-hidden="true"></i></button>
                                     </form>
                                     <button type="button" class="btn btn-sm btn-outline-emerald crud-action" data-bs-toggle="modal" data-bs-target="#editTeacherModal-@t.TeacherId" title="Edit teacher" aria-label="Edit @t.FirstName @t.LastName"><i class="bi bi-pencil-square" aria-hidden="true"></i></button>
-                                    <form method="post" action="/Admin/DeleteTeacher" class="form-inline-action" data-confirm="Deactivate this teacher across CAMS while retaining historical records?" data-confirm-title="Deactivate teacher" data-confirm-label="Deactivate">
+                                    <form method="post" action="/Admin/DeleteTeacher" class="form-inline-action" data-confirm-subject="@teacherName" data-confirm="Deactivate this teacher across CAMS **while retaining historical records**?" data-confirm-title="Deactivate teacher" data-confirm-label="Deactivate">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@t.TeacherId" />
                                         <button class="btn btn-sm btn-outline-danger crud-action" title="Archive teacher" aria-label="Archive @t.FirstName @t.LastName"><i class="bi bi-archive" aria-hidden="true"></i></button>
@@ -165,11 +166,11 @@
 <div class="modal fade" id="createTeacherModal" tabindex="-1" aria-labelledby="createTeacherModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 text-white surface-brand">
+            <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="createTeacherModalLabel">
                     <i class="bi bi-person-plus me-2"></i> Register New Teacher
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" action="/Admin/CreateTeacher">
                 @Html.AntiForgeryToken()
@@ -230,11 +231,11 @@
     <div class="modal fade" id="editTeacherModal-@t.TeacherId" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                <div class="modal-header border-0 text-white surface-brand">
+                <div class="modal-header">
                     <h5 class="modal-title fw-bold">
                         <i class="bi bi-pencil-square me-2"></i> Edit Teacher - @t.FirstName @t.LastName
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form method="post" action="/Admin/UpdateTeacher">
                     @Html.AntiForgeryToken()

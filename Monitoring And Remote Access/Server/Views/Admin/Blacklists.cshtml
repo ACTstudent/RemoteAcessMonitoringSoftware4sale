@@ -13,7 +13,7 @@
         </div>
     </div>
 </div>
-<div class="alert alert-warning">Application and process entries are kept here but are not enforced on workstations: CAMS does not close anything on the desktop. Application activity is still monitored, so teachers can see what was opened.</div>
+<div class="alert alert-warning" data-auto-dismiss="5000">Application and process entries are kept here but are not enforced on workstations: CAMS does not close anything on the desktop. Application activity is still monitored, so teachers can see what was opened.</div>
 
 <!-- Blacklist Items Card -->
 <div class="row g-3 mb-4">
@@ -59,7 +59,7 @@
                         </td>
                         <td class="text-end">
                             <div class="crud-actions d-flex justify-content-end gap-1"><button class="btn btn-sm btn-outline-emerald crud-action" data-bs-toggle="modal" data-bs-target="#editBlacklist-@b.BlacklistItemId" title="Edit blacklist item"><i class="bi bi-pencil-square" aria-hidden="true"></i><span class="visually-hidden">Edit blacklist item</span></button>
-                            <form method="post" action="/Admin/DeleteBlacklist" class="form-inline-action" data-confirm="Remove this item from the blacklist?" data-confirm-title="Remove blacklist item" data-confirm-label="Remove">
+                            <form method="post" action="/Admin/DeleteBlacklist" class="form-inline-action" data-confirm-subject="@b.Value" data-confirm="Remove this item from the blacklist? **Student computers stop blocking it** unless another rule still does." data-confirm-title="Remove blacklist item" data-confirm-label="Remove">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@b.BlacklistItemId" />
                                 <button class="btn btn-sm btn-outline-danger crud-action" title="Remove from the blacklist"><i class="bi bi-trash" aria-hidden="true"></i><span class="visually-hidden">Remove this blacklist item</span></button>
@@ -82,18 +82,18 @@
 
 @foreach (var b in Model)
 {
-    <div class="modal fade" id="editBlacklist-@b.BlacklistItemId" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post" action="/Admin/UpdateBlacklist">@Html.AntiForgeryToken()<input type="hidden" name="BlacklistItemId" value="@b.BlacklistItemId" /><div class="modal-header"><h5>Edit Blacklist Item</h5></div><div class="modal-body"><label for="blacklists-target-type-@b.BlacklistItemId">Target Type</label><select id="blacklists-target-type-@b.BlacklistItemId" name="TargetType" class="form-select mb-2"><option value="Application" selected="@(b.TargetType == "Application" ? "selected" : null)">Application</option><option value="Website" selected="@(b.TargetType == "Website" ? "selected" : null)">Website</option><option value="Domain" selected="@(b.TargetType == "Domain" ? "selected" : null)">Domain</option><option value="Process" selected="@(b.TargetType == "Process" ? "selected" : null)">Process</option></select><label for="blacklists-value-@b.BlacklistItemId">Value</label><input id="blacklists-value-@b.BlacklistItemId" name="Value" value="@b.Value" required maxlength="300" class="form-control mb-2" /><label for="blacklists-reason-@b.BlacklistItemId">Reason</label><input id="blacklists-reason-@b.BlacklistItemId" name="Reason" value="@b.Reason" maxlength="500" class="form-control mb-2" /><label><input type="checkbox" name="IsActive" value="true" class="form-check-input" @(b.IsActive ? "checked" : "") /> Active</label><input type="hidden" name="IsActive" value="false" /></div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div>
+    <div class="modal fade" id="editBlacklist-@b.BlacklistItemId" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post" action="/Admin/UpdateBlacklist">@Html.AntiForgeryToken()<input type="hidden" name="BlacklistItemId" value="@b.BlacklistItemId" /><div class="modal-header"><h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Edit Blacklist Item</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><label for="blacklists-target-type-@b.BlacklistItemId">Target Type</label><select id="blacklists-target-type-@b.BlacklistItemId" name="TargetType" class="form-select mb-2"><option value="Application" selected="@(b.TargetType == "Application" ? "selected" : null)">Application</option><option value="Website" selected="@(b.TargetType == "Website" ? "selected" : null)">Website</option><option value="Domain" selected="@(b.TargetType == "Domain" ? "selected" : null)">Domain</option><option value="Process" selected="@(b.TargetType == "Process" ? "selected" : null)">Process</option></select><label for="blacklists-value-@b.BlacklistItemId">Value</label><input id="blacklists-value-@b.BlacklistItemId" name="Value" value="@b.Value" required maxlength="300" class="form-control mb-2" /><label for="blacklists-reason-@b.BlacklistItemId">Reason</label><input id="blacklists-reason-@b.BlacklistItemId" name="Reason" value="@b.Reason" maxlength="500" class="form-control mb-2" /><label><input type="checkbox" name="IsActive" value="true" class="form-check-input" @(b.IsActive ? "checked" : "") /> Active</label><input type="hidden" name="IsActive" value="false" /></div><div class="modal-footer"><button class="btn btn-emerald">Save</button></div></form></div></div></div>
 }
 
 <!-- Modal: Create Blacklist Item -->
 <div class="modal fade" id="createBlacklistModal" tabindex="-1" aria-labelledby="createBlacklistModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 text-white surface-brand">
+            <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="createBlacklistModalLabel">
                     <i class="bi bi-ban me-2"></i> Add Blacklist Item
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" action="/Admin/CreateBlacklist">
                 @Html.AntiForgeryToken()

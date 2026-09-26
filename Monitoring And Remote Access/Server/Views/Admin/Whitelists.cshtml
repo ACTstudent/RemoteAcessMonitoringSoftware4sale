@@ -43,7 +43,7 @@
                         <td class="text-end">
                             <div class="d-flex justify-content-end gap-2">
                                 <button type="button" class="btn btn-sm btn-outline-emerald crud-action" data-bs-toggle="modal" data-bs-target="#editWhitelist-@rule.RestrictionRuleId" title="Edit rule"><i class="bi bi-pencil-square" aria-hidden="true"></i><span class="visually-hidden">Edit rule</span></button>
-                                <form method="post" action="/Admin/DeleteRestriction" data-confirm="Delete this global whitelist rule? This can affect every student workstation." data-confirm-title="Delete whitelist rule" data-confirm-label="Delete">
+                                <form method="post" action="/Admin/DeleteRestriction" data-confirm-subject="@rule.Target" data-confirm="Delete this global whitelist rule? **This can affect every student workstation.**" data-confirm-title="Delete whitelist rule" data-confirm-label="Delete">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@rule.RestrictionRuleId" />
                                     <button class="btn btn-sm btn-outline-danger crud-action" title="Delete rule"><i class="bi bi-trash" aria-hidden="true"></i><span class="visually-hidden">Delete rule</span></button>
@@ -66,9 +66,9 @@
 <div class="modal fade" id="createWhitelistModal" tabindex="-1" aria-labelledby="createWhitelistModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header modal-header-themed">
+            <div class="modal-header">
                 <h5 class="modal-title" id="createWhitelistModalLabel"><i class="bi bi-check-circle-fill me-2"></i>Add whitelist rule</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" action="/Admin/CreateWhitelist">
                 @Html.AntiForgeryToken()
@@ -77,7 +77,7 @@
                     <div class="mb-3"><label class="form-label" for="whitelists-type">Type</label><select id="whitelists-type" name="RuleType" class="form-select"><option>Application</option><option>Website</option></select></div>
                     <div class="mb-3"><label class="form-label" for="whitelists-target">Target</label><input id="whitelists-target" name="Target" required maxlength="200" class="form-control" placeholder="e.g. learning.example.org or app.exe" /></div>
                     <div class="mb-3"><label class="form-label" for="whitelists-description">Description</label><textarea id="whitelists-description" name="Description" maxlength="500" class="form-control" rows="3" placeholder="Why this target is allowed"></textarea></div>
-                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="IsActive" value="true" id="createWhitelistActive" checked /><label class="form-check-label" for="createWhitelistActive">Rule is active</label></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="IsActive" value="true" id="createWhitelistActive" checked /><input type="hidden" name="IsActive" value="false" /><label class="form-check-label" for="createWhitelistActive">Rule is active</label></div>
                 </div>
                 <div class="modal-footer"><button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-emerald rounded-pill px-4">Add rule</button></div>
             </form>
@@ -90,7 +90,7 @@
     <div class="modal fade" id="editWhitelist-@rule.RestrictionRuleId" tabindex="-1" aria-labelledby="editWhitelistLabel-@rule.RestrictionRuleId" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header modal-header-themed"><h5 class="modal-title" id="editWhitelistLabel-@rule.RestrictionRuleId"><i class="bi bi-pencil-square me-2"></i>Edit whitelist rule</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button></div>
+                <div class="modal-header"><h5 class="modal-title" id="editWhitelistLabel-@rule.RestrictionRuleId"><i class="bi bi-pencil-square me-2"></i>Edit whitelist rule</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
                 <form method="post" action="/Admin/UpdateWhitelist">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="RestrictionRuleId" value="@rule.RestrictionRuleId" />
@@ -99,7 +99,7 @@
                         <div class="mb-3"><label class="form-label" for="whitelists-type-@rule.RestrictionRuleId">Type</label><select id="whitelists-type-@rule.RestrictionRuleId" name="RuleType" class="form-select"><option selected="@(rule.RuleType == "Application" ? "selected" : null)">Application</option><option selected="@(rule.RuleType == "Website" ? "selected" : null)">Website</option></select></div>
                         <div class="mb-3"><label class="form-label" for="whitelists-target-@rule.RestrictionRuleId">Target</label><input id="whitelists-target-@rule.RestrictionRuleId" name="Target" value="@rule.Target" required maxlength="200" class="form-control" /></div>
                         <div class="mb-3"><label class="form-label" for="whitelists-description-@rule.RestrictionRuleId">Description</label><textarea id="whitelists-description-@rule.RestrictionRuleId" name="Description" maxlength="500" class="form-control" rows="3">@rule.Description</textarea></div>
-                        <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="IsActive" value="true" id="editWhitelistActive-@rule.RestrictionRuleId" @(rule.IsActive ? "checked" : "") /><label class="form-check-label" for="editWhitelistActive-@rule.RestrictionRuleId">Rule is active</label></div>
+                        <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="IsActive" value="true" id="editWhitelistActive-@rule.RestrictionRuleId" @(rule.IsActive ? "checked" : "") /><input type="hidden" name="IsActive" value="false" /><label class="form-check-label" for="editWhitelistActive-@rule.RestrictionRuleId">Rule is active</label></div>
                     </div>
                     <div class="modal-footer"><button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-emerald rounded-pill px-4">Save changes</button></div>
                 </form>

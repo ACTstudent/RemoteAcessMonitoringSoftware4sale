@@ -516,4 +516,31 @@ public class AuthenticationServiceTests
         Assert.Equal(admin.Id, audit.UserId);
         Assert.Equal("10.0.0.1", audit.IpAddress);
     }
+
+    // A student now changes their password from a lab workstation, so the audit
+    // entry records which address the change came from, as it does for staff.
+    [Fact]
+    public async Task ChangeStudentPasswordAsync_RecordsTheWorkstationAddress()
+    {
+        var context = CreateContext();
+        var hasher = new PasswordHasher<object>();
+        var student = new Student
+        {
+            Username = "password-student",
+            StudentNumber = "S-PW-1",
+            PasswordHash = hasher.HashPassword(new object(), "old-password")
+        };
+        context.Students.Add(student);
+        await context.SaveChangesAsync();
+        var service = new AuthenticationService(context);
+
+        Assert.True(await service.ChangeStudentPasswordAsync(student.Id, "old-password", "new-password", "192.168.1.33"));
+
+        Assert.Equal(
+            PasswordVerificationResult.Success,
+            hasher.VerifyHashedPassword(new object(), student.PasswordHash, "new-password"));
+        var audit = await context.AuditLogs.SingleAsync(log => log.UserType == "Student" && log.Action == "PasswordChanged");
+        Assert.Equal(student.Id, audit.UserId);
+        Assert.Equal("192.168.1.33", audit.IpAddress);
+    }
 }

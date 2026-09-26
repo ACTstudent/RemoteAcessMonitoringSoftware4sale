@@ -85,6 +85,53 @@ public sealed class ClientAuthController : ControllerBase
             result.DisplayName ?? request.Username.Trim()));
     }
 
+    /// <summary>
+    /// Lets a signed-in student replace their own password from the agent. The
+    /// web portal turns students away, so this is the only place they can.
+    ///
+    /// The current password is still required: a classmate at a workstation left
+    /// signed in must not be able to take the account over. Wrong guesses are
+    /// capped per student, not per address, because a classroom shares one.
+    /// </summary>
+    [Authorize(Roles = RoleNames.Student)]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword(StudentClientPasswordChangeRequest request)
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var studentId))
+            return Unauthorized();
+
+        if (request is null ||
+            string.IsNullOrEmpty(request.CurrentPassword) ||
+            string.IsNullOrEmpty(request.NewPassword) ||
+            request.CurrentPassword.Length > StudentPasswordRules.MaximumLength ||
+            request.NewPassword.Length > StudentPasswordRules.MaximumLength)
+        {
+            return BadRequest("Enter your current password and a new password.");
+        }
+
+        if (request.NewPassword.Length < StudentPasswordRules.MinimumLength)
+            return BadRequest($"Your new password must be at least {StudentPasswordRules.MinimumLength} characters long.");
+
+        if (request.NewPassword == request.CurrentPassword)
+            return BadRequest("Your new password must be different from your current one.");
+
+        var cacheKey = $"client-password:{studentId}";
+        var failures = LoginCache.Get<int>(cacheKey);
+        if (failures >= 5)
+            return StatusCode(StatusCodes.Status429TooManyRequests, "Too many attempts. Wait a minute, then try again.");
+
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
+        if (!await _authenticationService.ChangeStudentPasswordAsync(
+                studentId, request.CurrentPassword, request.NewPassword, ipAddress))
+        {
+            LoginCache.Set(cacheKey, failures + 1, TimeSpan.FromMinutes(1));
+            return BadRequest("Your current password is incorrect.");
+        }
+
+        LoginCache.Remove(cacheKey);
+        return NoContent();
+    }
+
     [Authorize(Roles = RoleNames.Student)]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()

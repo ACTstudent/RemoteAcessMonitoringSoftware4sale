@@ -17,9 +17,9 @@
         </div>
     </div>
     <div class="d-flex flex-wrap gap-2 justify-content-end">
-        <form asp-action="GlobalStartSession" method="post" data-confirm="Resume all paused sessions and restore student access to their computers?" data-confirm-title="Resume all sessions" data-confirm-label="Resume" data-confirm-variant="success">@Html.AntiForgeryToken()<button class="btn btn-success rounded-pill px-3"><i class="bi bi-play-fill"></i> Resume all sessions</button></form>
-        <form asp-action="GlobalPauseSession" method="post" data-confirm="Pause every active session and freeze student PCs with a full-screen waiting message until you resume?" data-confirm-title="Pause all sessions" data-confirm-label="Pause PCs" data-confirm-variant="warning">@Html.AntiForgeryToken()<button class="btn btn-warning rounded-pill px-3"><i class="bi bi-pause-fill"></i> Pause all sessions</button></form>
-        <form asp-action="GlobalEndSession" method="post" data-confirm="End all sessions and restart every connected student PC in 10 seconds? Open applications will close and unsaved work can be lost. Ended sessions cannot be resumed." data-confirm-title="End sessions and restart PCs" data-confirm-label="End and restart PCs">@Html.AntiForgeryToken()<button class="btn btn-danger rounded-pill px-3"><i class="bi bi-arrow-clockwise"></i> End &amp; restart PCs</button></form>
+        <form asp-action="GlobalStartSession" method="post" data-confirm-subject="All students &middot; All computers" data-confirm="Resume all paused sessions and **restore student access to their computers**?" data-confirm-title="Resume all sessions" data-confirm-label="Resume" data-confirm-variant="success">@Html.AntiForgeryToken()<button class="btn btn-success rounded-pill px-3"><i class="bi bi-play-fill"></i> Resume all sessions</button></form>
+        <form asp-action="GlobalPauseSession" method="post" data-confirm-subject="All students &middot; All computers" data-confirm="Pause every active session? **Student PCs freeze behind a full-screen waiting message** until you resume." data-confirm-title="Pause all sessions" data-confirm-label="Pause PCs" data-confirm-variant="warning">@Html.AntiForgeryToken()<button class="btn btn-warning rounded-pill px-3"><i class="bi bi-pause-fill"></i> Pause all sessions</button></form>
+        <form asp-action="GlobalEndSession" method="post" data-confirm-subject="All students &middot; All computers" data-confirm="End all sessions and restart every connected student PC in 10 seconds? Open applications close and **unsaved work can be lost**. Ended sessions cannot be resumed." data-confirm-title="End sessions and restart PCs" data-confirm-label="End and restart PCs">@Html.AntiForgeryToken()<button class="btn btn-danger rounded-pill px-3"><i class="bi bi-arrow-clockwise"></i> End &amp; restart PCs</button></form>
 
     </div>
 </div>
@@ -149,7 +149,7 @@
                                             @(s.Status == "Paused" ? "Resume" : "Pause")
                                         </button>
                                     </form>
-                                    <form method="post" action="/Teacher/EndSession" class="form-inline-action" data-confirm="End this session and restart the student's connected PC in 10 seconds? Unsaved work can be lost. This session cannot be resumed." data-confirm-title="End session and restart PC" data-confirm-label="End and restart">
+                                    <form method="post" action="/Teacher/EndSession" class="form-inline-action" data-confirm-subject="@(string.IsNullOrWhiteSpace(s.Student?.FullName) ? s.Student?.Username ?? "Student" : s.Student.FullName) &middot; @(s.Computer?.LaboratoryStation ?? s.PCName)" data-confirm="End this session and restart the student's computer in 10 seconds? **Unsaved work can be lost**, and this session cannot be resumed." data-confirm-title="End session and restart PC" data-confirm-label="End and restart">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@s.Id" />
                                         <button class="btn btn-sm btn-outline-danger rounded-pill px-3">End &amp; restart</button>
@@ -176,11 +176,11 @@
 <div class="modal fade" id="startSessionModal" tabindex="-1" aria-labelledby="startSessionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 text-white surface-brand">
+            <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="startSessionModalLabel">
                     <i class="bi bi-play-circle me-2"></i> Start Laboratory Session
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" action="/Teacher/StartSession">
                 @Html.AntiForgeryToken()

@@ -17,8 +17,8 @@
     </div>
     <div class="d-flex align-items-center gap-2 flex-wrap">
         <span class="badge @(Model.IsArchived ? "bg-secondary" : "badge-active") fs-6 px-3 py-2">@(Model.IsArchived ? "Archived" : "Active")</span>
-        <form method="post" asp-controller="Teacher" asp-action="ArchiveClass" class="m-0"><input type="hidden" name="id" value="@Model.ClassId" />@Html.AntiForgeryToken()<button type="submit" class="btn btn-outline-secondary rounded-pill">@(Model.IsArchived ? "Restore" : "Archive")</button></form>
-        <form method="post" asp-controller="Teacher" asp-action="DeleteClass" class="m-0" data-confirm="Delete this class and its enrollment links? Student accounts will be preserved." data-confirm-title="Delete class" data-confirm-label="Delete"><input type="hidden" name="classId" value="@Model.ClassId" />@Html.AntiForgeryToken()<button type="submit" class="btn btn-outline-danger rounded-pill">Delete</button></form>
+        <form method="post" asp-controller="Teacher" asp-action="ArchiveClass" class="m-0" data-confirm-subject="@Model.ClassName" data-confirm="@(Model.IsArchived ? "" : "Archive this class? **Its roster and history are kept**, and you can restore it later.")" data-confirm-title="Archive class" data-confirm-label="Archive"><input type="hidden" name="id" value="@Model.ClassId" />@Html.AntiForgeryToken()<button type="submit" class="btn btn-outline-secondary rounded-pill">@(Model.IsArchived ? "Restore" : "Archive")</button></form>
+        <form method="post" asp-controller="Teacher" asp-action="DeleteClass" class="m-0" data-confirm-subject="@Model.ClassName" data-confirm="Delete this class and its enrollment links? Student accounts are kept. **This cannot be undone.**" data-confirm-title="Delete class" data-confirm-label="Delete"><input type="hidden" name="classId" value="@Model.ClassId" />@Html.AntiForgeryToken()<button type="submit" class="btn btn-outline-danger rounded-pill">Delete</button></form>
     </div>
 </div>
 
@@ -35,7 +35,7 @@
     <div class="table-responsive"><table class="table custom-table align-middle mb-0"><thead><tr><th>Student ID</th><th>Full Name</th><th>Username</th><th>Date Enrolled</th><th class="text-end">Actions</th></tr></thead><tbody>
         @foreach (var membership in roster)
         {
-            <tr data-crud-item><td class="fw-bold text-muted font-monospace">@membership.Student!.StudentNumber</td><td><div class="d-flex align-items-center gap-2"><div class="user-avatar-circle user-avatar-sm"><i class="bi bi-person-fill"></i></div><span class="fw-bold text-dark">@membership.Student.FullName</span></div></td><td class="font-monospace text-emerald-700">&#64;@membership.Student.Username</td><td>@membership.EnrolledAt.ToDisplayLocal().ToString("MMM dd, yyyy")</td><td class="text-end"><form method="post" asp-controller="Teacher" asp-action="RemoveStudent" class="m-0" data-confirm="Remove this student from the class? The account will be preserved." data-confirm-title="Remove student" data-confirm-label="Remove"><input type="hidden" name="classId" value="@Model.ClassId" /><input type="hidden" name="studentId" value="@membership.StudentId" />@Html.AntiForgeryToken()<button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"><i class="bi bi-person-x me-1"></i>Remove</button></form></td></tr>
+            <tr data-crud-item><td class="fw-bold text-muted font-monospace">@membership.Student!.StudentNumber</td><td><div class="d-flex align-items-center gap-2"><div class="user-avatar-circle user-avatar-sm"><i class="bi bi-person-fill"></i></div><span class="fw-bold text-dark">@membership.Student.FullName</span></div></td><td class="font-monospace text-emerald-700">&#64;@membership.Student.Username</td><td>@membership.EnrolledAt.ToDisplayLocal().ToString("MMM dd, yyyy")</td><td class="text-end"><form method="post" asp-controller="Teacher" asp-action="RemoveStudent" class="m-0" data-confirm-subject="@membership.Student.FullName" data-confirm="Remove this student from @(Model.ClassName)? **Their student account is kept.**" data-confirm-title="Remove student" data-confirm-label="Remove"><input type="hidden" name="classId" value="@Model.ClassId" /><input type="hidden" name="studentId" value="@membership.StudentId" />@Html.AntiForgeryToken()<button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"><i class="bi bi-person-x me-1"></i>Remove</button></form></td></tr>
         }
         @if (roster.Count == 0)
         {
@@ -87,9 +87,9 @@
 <div class="modal fade" id="createStudentForClassModal" tabindex="-1" aria-labelledby="createStudentForClassModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header modal-header-themed">
+            <div class="modal-header">
                 <h5 class="modal-title" id="createStudentForClassModalLabel"><i class="bi bi-person-plus-fill me-2"></i>Create students</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <ul class="nav segmented-tabs mb-4" role="tablist">
@@ -164,9 +164,9 @@
 <div class="modal fade" id="enrollStudentModal" tabindex="-1" aria-labelledby="enrollStudentModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header modal-header-themed">
+            <div class="modal-header">
                 <h5 class="modal-title" id="enrollStudentModalLabel"><i class="bi bi-person-check-fill me-2"></i>Enroll students</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <ul class="nav segmented-tabs mb-4" role="tablist">
@@ -248,9 +248,9 @@
 <div class="modal fade" id="importStudentsModal" tabindex="-1" aria-labelledby="importStudentsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header modal-header-themed">
+            <div class="modal-header">
                 <h5 class="modal-title" id="importStudentsModalLabel"><i class="bi bi-filetype-csv me-2"></i>Import from CSV</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" enctype="multipart/form-data" asp-controller="Teacher" asp-action="BulkPreviewCsv">
                 @Html.AntiForgeryToken()

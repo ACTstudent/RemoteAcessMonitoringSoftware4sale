@@ -185,7 +185,9 @@ public sealed class WorkstationRegistrationService : IWorkstationRegistrationSer
             var session = new LabSession
             {
                 StudentId = studentId,
-                TeacherId = student.AdviserId ?? student.Class?.TeacherId,
+                // A newcomer with no adviser or class belongs to the teacher running
+                // the lab, so that teacher's restriction rules reach them too.
+                TeacherId = student.AdviserId ?? student.Class?.TeacherId ?? _lab?.LabTeacherId,
                 ComputerId = computer.ComputerId,
                 Computer = computer,
                 SessionRuleId = rule?.SessionRuleId,

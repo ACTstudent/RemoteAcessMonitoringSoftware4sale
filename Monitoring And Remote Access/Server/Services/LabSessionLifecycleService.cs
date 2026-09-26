@@ -167,9 +167,12 @@ public sealed class LabSessionLifecycleService
     /// one tells the student client the session is over, which closes it, so the
     /// whole room would be signed out by the very action meant to start them.
     /// </remarks>
-    public async Task<int> StartAllSessionsAsync(Server.Models.SessionRule? rule, CancellationToken cancellationToken = default)
+    public async Task<int> StartAllSessionsAsync(
+        Server.Models.SessionRule? rule,
+        int? teacherId = null,
+        CancellationToken cancellationToken = default)
     {
-        _lab?.StartLab(rule?.SessionRuleId);
+        _lab?.StartLab(rule?.SessionRuleId, teacherId);
         var sessions = await _db.LabSessions
             .Where(s => s.IsActive && s.Status != LabSessionStatus.Ended)
             .ToListAsync(cancellationToken);
@@ -182,12 +185,19 @@ public sealed class LabSessionLifecycleService
             session.Status = LabSessionStatus.Running;
             session.SessionRuleId = rule?.SessionRuleId;
             session.MaxDurationMinutes = rule?.MaxDurationMinutes;
+            // A student with no class or adviser had a session tied to no teacher;
+            // it now belongs to the teacher running the lab, in the records too.
+            session.TeacherId ??= teacherId;
         }
         if (sessions.Count > 0)
         {
             await _db.SaveChangesAsync(cancellationToken);
             await NotifyStatesAsync(sessions, cancellationToken);
         }
+        // The teacher running the lab now decides which of their rules apply to
+        // everyone, so every connected student fetches its rules again.
+        await _hub.Clients.Group(HubEventNames.StudentsGroup)
+            .SendAsync(HubEventNames.PolicyRefreshRequired, cancellationToken);
         return sessions.Count;
     }
 

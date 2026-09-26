@@ -355,6 +355,137 @@ public class ClientAuthControllerTests
             Times.Never);
     }
 
+    // ---------- Change password ----------
+
+    // The attempt cache is static and shared, so each test uses its own student.
+    private static int UniqueStudentId() => Random.Shared.Next(1_000_000, int.MaxValue);
+
+    private static void SignInAs(ClientAuthController controller, string studentId) =>
+        controller.ControllerContext.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, studentId),
+            new Claim(ClaimTypes.Role, "Student")
+        }, "TestScheme"));
+
+    [Fact]
+    public void ChangePassword_IsOnlyOpenToASignedInStudent()
+    {
+        var action = typeof(ClientAuthController).GetMethod(nameof(ClientAuthController.ChangePassword))!;
+
+        var authorize = Assert.Single(action.GetCustomAttributes(typeof(Microsoft.AspNetCore.Authorization.AuthorizeAttribute), true)
+            .Cast<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>());
+        Assert.Equal(RoleNames.Student, authorize.Roles);
+        Assert.Empty(action.GetCustomAttributes(typeof(Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute), true));
+    }
+
+    [Fact]
+    public async Task ChangePassword_ChangesTheSignedInStudentsOwnPassword()
+    {
+        var ip = UniqueIp();
+        var studentId = UniqueStudentId();
+        var (controller, auth, _) = CreateController(ip);
+        SignInAs(controller, studentId.ToString());
+        auth.Setup(a => a.ChangeStudentPasswordAsync(studentId, "OldPass123", "NewPass456", ip)).ReturnsAsync(true);
+
+        var result = await controller.ChangePassword(new StudentClientPasswordChangeRequest("OldPass123", "NewPass456"));
+
+        Assert.IsType<NoContentResult>(result);
+        auth.Verify(a => a.ChangeStudentPasswordAsync(studentId, "OldPass123", "NewPass456", ip), Times.Once);
+    }
+
+    [Fact]
+    public async Task ChangePassword_SaysWhenTheCurrentPasswordIsWrong()
+    {
+        var studentId = UniqueStudentId();
+        var (controller, auth, _) = CreateController(UniqueIp());
+        SignInAs(controller, studentId.ToString());
+        auth.Setup(a => a.ChangeStudentPasswordAsync(studentId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(false);
+
+        var result = await controller.ChangePassword(new StudentClientPasswordChangeRequest("NotMyPass1", "NewPass456"));
+
+        var rejected = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal("Your current password is incorrect.", rejected.Value);
+    }
+
+    [Theory]
+    [InlineData("", "NewPass456")]
+    [InlineData("OldPass123", "")]
+    [InlineData("OldPass123", "Short7!")]          // one under the minimum
+    [InlineData("SamePass123", "SamePass123")]    // not a change at all
+    public async Task ChangePassword_RejectsUnusableInputWithoutTouchingTheAccount(string current, string next)
+    {
+        var (controller, auth, _) = CreateController(UniqueIp());
+        SignInAs(controller, UniqueStudentId().ToString());
+
+        var result = await controller.ChangePassword(new StudentClientPasswordChangeRequest(current, next));
+
+        Assert.IsType<BadRequestObjectResult>(result);
+        auth.Verify(a => a.ChangeStudentPasswordAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()),
+            Times.Never);
+    }
+
+    [Theory]
+    [InlineData(StudentPasswordRules.MaximumLength + 1, 10)]
+    [InlineData(10, StudentPasswordRules.MaximumLength + 1)]
+    public async Task ChangePassword_RejectsOversizedPasswords(int currentLength, int newLength)
+    {
+        var (controller, auth, _) = CreateController(UniqueIp());
+        SignInAs(controller, UniqueStudentId().ToString());
+
+        var result = await controller.ChangePassword(new StudentClientPasswordChangeRequest(
+            new string('c', currentLength), new string('n', newLength)));
+
+        Assert.IsType<BadRequestObjectResult>(result);
+        auth.Verify(a => a.ChangeStudentPasswordAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ChangePassword_RefusesAnIdentityThatIsNotAStudentNumber()
+    {
+        var (controller, auth, _) = CreateController(UniqueIp());
+        SignInAs(controller, "not-a-number");
+
+        var result = await controller.ChangePassword(new StudentClientPasswordChangeRequest("OldPass123", "NewPass456"));
+
+        Assert.IsType<UnauthorizedResult>(result);
+        auth.Verify(a => a.ChangeStudentPasswordAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()),
+            Times.Never);
+    }
+
+    // Guessing at the current password from a workstation someone left signed
+    // in stops after five tries - for that student only. The whole class shares
+    // one address, so a per-address ceiling would lock out everyone else.
+    [Fact]
+    public async Task ChangePassword_StopsAfterFiveWrongGuessesForThatStudentOnly()
+    {
+        var ip = UniqueIp();
+        var guessedAt = UniqueStudentId();
+        var (controller, auth, _) = CreateController(ip);
+        SignInAs(controller, guessedAt.ToString());
+        auth.Setup(a => a.ChangeStudentPasswordAsync(guessedAt, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(false);
+
+        for (var attempt = 1; attempt <= 5; attempt++)
+            Assert.IsType<BadRequestObjectResult>(await controller.ChangePassword(
+                new StudentClientPasswordChangeRequest($"Guess{attempt}xyz", "NewPass456")));
+
+        var blocked = await controller.ChangePassword(new StudentClientPasswordChangeRequest("Guess6xyz", "NewPass456"));
+
+        var status = Assert.IsType<ObjectResult>(blocked);
+        Assert.Equal(StatusCodes.Status429TooManyRequests, status.StatusCode);
+        auth.Verify(a => a.ChangeStudentPasswordAsync(guessedAt, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()),
+            Times.Exactly(5));
+
+        // A classmate behind the same address is unaffected.
+        var classmate = UniqueStudentId();
+        var (other, otherAuth, _) = CreateController(ip);
+        SignInAs(other, classmate.ToString());
+        otherAuth.Setup(a => a.ChangeStudentPasswordAsync(classmate, "OldPass123", "NewPass456", ip)).ReturnsAsync(true);
+        Assert.IsType<NoContentResult>(await other.ChangePassword(new StudentClientPasswordChangeRequest("OldPass123", "NewPass456")));
+    }
+
     // ---------- Logout ----------
 
     [Fact]
