@@ -71,7 +71,8 @@ public class AccountControllerTests
     }
 
     [Fact]
-    public async Task LoginPost_TeacherRole_RedirectsToTeacherDashboard()
+    // A teacher lands on the lab-wide Dashboard, not My Classroom.
+    public async Task LoginPost_TeacherRole_RedirectsToTheDashboard()
     {
         _authMock.Setup(a => a.LoginAsync("teacher", "pass", It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new LoginResult(AccountRole.Teacher, 1, "Ms. Jane"));
@@ -79,8 +80,8 @@ public class AccountControllerTests
         var result = await _controller.Login("teacher", "pass");
 
         var redirect = Assert.IsType<RedirectToActionResult>(result);
-        Assert.Equal("Teacher", redirect.ControllerName);
-        Assert.Equal("Dashboard", redirect.ActionName);
+        Assert.Equal("Admin", redirect.ControllerName);
+        Assert.Equal("Index", redirect.ActionName);
     }
 
     /// <summary>

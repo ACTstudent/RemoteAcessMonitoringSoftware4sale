@@ -178,6 +178,9 @@
     --surface-line: #E7EDE5;
     --surface-raised: #FCFDF9;
     --surface-stripe: #FBFCF8;
+    /* The row under the pointer: a step past the stripe, well short of the
+       header band, so a hovered row never reads as a heading. */
+    --surface-hover: #F0F5EF;
     /* Foreground for anything sitting on --surface-sunk. */
     --text-on-sage: #294635;
     /* A border with enough weight to read as an outline on a pale ground. */
@@ -623,13 +626,10 @@ body {
     padding: 1.35rem 1.5rem;
     border: 1px solid var(--card-border);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.metric-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
-}
+/* Metric and class cards are read, not clicked, so they do not move under
+   the pointer. Only something that does something on click answers hover. */
 
 .metric-card-active {
     border-left: 5px solid var(--sidebar-bg);
@@ -716,12 +716,6 @@ body {
     padding: 1.5rem;
     border: 1px solid var(--card-border);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.class-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
 }
 
 .badge-active {
@@ -853,8 +847,12 @@ body {
     border-bottom: none;
 }
 
-.custom-table tbody tr:hover td {
-    background-color: var(--surface-sunk);
+/* One quiet tint on the row under the pointer - its own cells only. This was
+   `tr:hover td`, which also reached every cell of a table nested in the row,
+   so hovering one event in an expanded group turned the whole group green.
+   Rows that only frame detail or an empty state are not highlighted. */
+.custom-table > tbody > tr:not(.log-group-detail):not(:has(> td.empty-state)):hover > td {
+    background-color: var(--surface-hover);
 }
 
 /* Workstation Card Container */
@@ -863,12 +861,14 @@ body {
     border: 1px solid var(--card-border);
     border-radius: var(--card-border-radius);
     overflow: hidden;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
+/* It opens the live view, so it answers the pointer - by its edge, not by
+   jumping. */
 .workstation-card:hover {
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-    transform: translateY(-3px);
+    border-color: var(--border-strong);
+    box-shadow: 0 4px 14px rgba(32, 59, 40, 0.08);
 }
 
 .stream-container {
@@ -1847,7 +1847,6 @@ summary:focus-visible,
    --------------------------------------------------------------------------- */
 
 .log-group-table [data-log-group] { cursor: pointer; }
-.log-group-table [data-log-group]:hover { background: var(--body-bg); }
 
 .log-group-toggle-cell { width: 46px; padding-right: 0 !important; }
 

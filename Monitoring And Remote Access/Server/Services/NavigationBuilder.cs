@@ -62,14 +62,6 @@ public static class NavigationBuilder
         new NavItem("Session Rules", "hourglass-split", "SessionRules", "Admin")
     });
 
-    private static IEnumerable<NavSection> GlobalSections() => new[]
-    {
-        new NavSection("Overview", new[] { LabDashboard }),
-        PeopleSection(),
-        new NavSection("Laboratory", new[] { LabComputers }),
-        PoliciesSection()
-    };
-
     // ---------- Teacher ----------
 
     private static NavigationModel BuildTeacher(HttpContext context) => new(
@@ -96,8 +88,8 @@ public static class NavigationBuilder
             // wanted.
             new NavSection(null, new[]
             {
-                new NavItem("My Classroom", "speedometer2", "Dashboard", "Teacher"),
-                LabDashboard
+                LabDashboard,
+                new NavItem("My Classroom", "speedometer2", "Dashboard", "Teacher")
             }),
             new NavSection("Laboratory Control", new[]
             {
@@ -147,19 +139,30 @@ public static class NavigationBuilder
             return BuildTeacher(context);
         }
 
-        var sections = new List<NavSection>(GlobalSections());
-
-        sections.Add(new NavSection("Administrator Only", new[]
+        // Computers had a section to itself, so it drew as a lone link between
+        // two dropdowns. It sits with the other pages about the lab's machines:
+        // the network they reach the server on, and the installer they run.
+        var sections = new List<NavSection>
         {
-            new NavItem("Admin Accounts", "person-gear", "Settings", "Admin"),
-            new NavItem("Roles", "key-fill", "Roles", "Admin"),
-            new NavItem("LAN Status", "router-fill", "LanConfig", "Admin"),
-            new NavItem("Deployment", "box-seam-fill", "Index", "AdminDeployment"),
-            new NavItem("Database", "database-gear", "Index", "AdminDatabase"),
-            new NavItem("Reports", "bar-chart-line-fill", "Reports", "Admin"),
-            new NavItem("Audit Trail", "journal-text", "AuditLogs", "Admin"),
-            new NavItem("System Logs", "bug-fill", "SystemLogs", "Admin")
-        }));
+            new NavSection("Overview", new[] { LabDashboard }),
+            PeopleSection(),
+            new NavSection("Laboratory", new[]
+            {
+                LabComputers,
+                new NavItem("LAN Status", "router-fill", "LanConfig", "Admin"),
+                new NavItem("Deployment", "box-seam-fill", "Index", "AdminDeployment")
+            }),
+            PoliciesSection(),
+            new NavSection("Administrator Only", new[]
+            {
+                new NavItem("Admin Accounts", "person-gear", "Settings", "Admin"),
+                new NavItem("Roles", "key-fill", "Roles", "Admin"),
+                new NavItem("Database", "database-gear", "Index", "AdminDatabase"),
+                new NavItem("Reports", "bar-chart-line-fill", "Reports", "Admin"),
+                new NavItem("Audit Trail", "journal-text", "AuditLogs", "Admin"),
+                new NavItem("System Logs", "bug-fill", "SystemLogs", "Admin")
+            })
+        };
 
         return new NavigationModel(
             BrandText: "CAMS Admin",

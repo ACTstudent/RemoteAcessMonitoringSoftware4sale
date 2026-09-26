@@ -12,7 +12,6 @@
 .crud-page .icon-box-primary { width: 52px; height: 52px; border-radius: var(--radius-md); background: var(--surface-sunk); color: var(--accent-emerald); box-shadow: none; }
 .crud-page .icon-box-primary .fs-3 { font-size: 1.55rem !important; }
 .crud-page .metric-card { padding: 18px 20px; min-height: 94px; }
-.crud-page .metric-card:hover { transform: none; }
 .crud-page .metric-title { color: var(--text-muted); font-size: .76rem; font-weight: 500; text-transform: none; letter-spacing: 0; margin-bottom: 6px; }
 .crud-page .metric-value { font-size: 1.7rem; line-height: 1.1; color: var(--text-main) !important; font-weight: 700; }
 .crud-page .metric-icon-box { width: 36px; height: 36px; border-radius: 50%; background: var(--surface-sunk); color: var(--accent-emerald); }
@@ -51,7 +50,6 @@
 .crud-page .crud-panel .custom-table .user-avatar-circle { width: 28px !important; height: 28px !important; font-size: .75rem !important; background: var(--surface-sunk); color: var(--accent-emerald); box-shadow: none; }
 .crud-page .crud-grid { padding: 0 0 16px; }
 .crud-page .class-card { padding: 18px; }
-.crud-page .class-card:hover { transform: none; border-color: var(--border-strong); }
 .crud-page .class-card h5 { font-size: 1rem; }
 .crud-page .class-card .info-list { margin-bottom: 16px !important; }
 .crud-page .class-card .small { font-size: .77rem; }

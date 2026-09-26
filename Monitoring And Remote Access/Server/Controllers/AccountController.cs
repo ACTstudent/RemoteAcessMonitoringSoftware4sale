@@ -114,7 +114,9 @@ namespace Server.Controllers
                     HttpContext.Session.SetString("TeacherName", result.DisplayName ?? "");
                     HttpContext.Session.SetString("Role", RoleNames.Teacher);
                     _loginCache.Remove(key);
-                    return RedirectToAction("Dashboard", "Teacher");
+                    // The lab-wide Dashboard first, the same page an administrator
+                    // opens on; My Classroom is one click away beneath it.
+                    return RedirectToAction("Index", "Admin");
 
                 case AccountRole.Admin:
                     await SignInAsync(result, string.Empty);

@@ -8,7 +8,7 @@ namespace Server.Controllers
         public IActionResult Index()
         {
             // Route to the appropriate dashboard by role
-            if (HttpContext.IsTeacher()) return RedirectToAction("Dashboard", "Teacher");
+            if (HttpContext.IsTeacher()) return RedirectToAction("Index", "Admin");
             if (HttpContext.IsAdmin()) return RedirectToAction("Index", "Admin");
             return RedirectToAction("Index", "Student");
         }

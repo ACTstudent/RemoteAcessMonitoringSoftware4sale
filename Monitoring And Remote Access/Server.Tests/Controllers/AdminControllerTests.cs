@@ -183,6 +183,24 @@ public class AdminControllerTests
         Assert.IsType<ViewResult>(result);
     }
 
+    // The dashboard said 3 students while Student Profiles listed 1: it was
+    // counting the two that had been removed. Both pages leave them out now.
+    [Fact]
+    public async Task Index_DoesNotCountRemovedStudents()
+    {
+        using var db = GetDbContext();
+        db.Students.AddRange(
+            new Student { StudentNumber = "S-1", Username = "active", FullName = "Still Here", PasswordHash = "h", Status = "Active" },
+            new Student { StudentNumber = "S-2", Username = "inactive", FullName = "Deactivated", PasswordHash = "h", Status = "Inactive" },
+            new Student { StudentNumber = "S-3", Username = "removed", FullName = "Removed", PasswordHash = "h", Status = RecordStatus.Archived });
+        await db.SaveChangesAsync();
+        var controller = CreateController(db);
+
+        var view = Assert.IsType<ViewResult>(await controller.Index());
+
+        Assert.Equal(2, view.ViewData["StudentCount"]);
+    }
+
     [Fact]
     public async Task Admins_CRUD_WorksFlawlessly()
     {

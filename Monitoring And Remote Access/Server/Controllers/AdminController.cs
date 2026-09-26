@@ -369,7 +369,9 @@ namespace Server.Controllers
         {
             if (!CheckAccess()) return Denied();
 
-            ViewBag.StudentCount = await _context.Students.CountAsync();
+            // Removed students keep their history but are not counted - the same
+            // rule Student Profiles uses, so the two pages agree.
+            ViewBag.StudentCount = await _context.Students.CountAsync(s => s.Status != RecordStatus.Archived);
             ViewBag.TeacherCount = await _context.Teachers.CountAsync();
             ViewBag.ComputerCount = await _context.Computers.CountAsync();
             ViewBag.ActiveSessions = await _context.LabSessions.CountAsync(s => s.IsActive);

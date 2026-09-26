@@ -23,7 +23,7 @@ public class MonitoringControllerTests
     }
 
     [Theory]
-    [InlineData("Teacher", 3, "Dashboard", "Teacher")]
+    [InlineData("Teacher", 3, "Index", "Admin")]
     [InlineData("Admin", 1, "Index", "Admin")]
     [InlineData("Student", 9, "Index", "Student")]
     public void Index_SendsEachRoleToItsOwnDashboard(string role, int id, string action, string controllerName)

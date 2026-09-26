@@ -27,10 +27,6 @@
     .app-shell .row > :nth-child(3) .metric-card { animation-delay: 80ms; }
     .app-shell .row > :nth-child(4) .metric-card { animation-delay: 120ms; }
 
-    .app-shell .nav-item-custom > i {
-        transition: transform 180ms ease;
-    }
-
     .app-shell .app-sidebar {
         transition: width 220ms ease, left 220ms ease, margin-left 220ms ease, box-shadow 220ms ease;
     }
@@ -57,11 +53,6 @@
         transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
     }
 
-    .app-shell .metric-card,
-    .app-shell .class-card {
-        transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
-    }
-
     .app-shell .custom-table tbody td {
         transition: background-color 140ms ease;
     }
@@ -76,17 +67,9 @@
         transition-duration: 180ms;
     }
 
-    @media (hover: hover) and (pointer: fine) {
-        .app-shell .metric-card:hover,
-        .app-shell .class-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 20px rgb(24 92 60 / 13%);
-        }
-
-        .app-shell .nav-item-custom:hover > i {
-            transform: translateX(3px);
-        }
-    }
+    /* Hover is colour, never movement. Cards that lifted 4px and sidebar
+       icons that slid sideways under the pointer made a page used all lesson
+       feel jumpy, and the lifting cards were not even clickable. */
 }
 
 /* Also suppress existing Bootstrap and site motion when the OS requests it. */
@@ -96,11 +79,5 @@
         animation: none !important;
         transition: none !important;
         scroll-behavior: auto !important;
-    }
-
-    .app-shell .metric-card:hover,
-    .app-shell .class-card:hover,
-    .app-shell .workstation-card:hover {
-        transform: none !important;
     }
 }

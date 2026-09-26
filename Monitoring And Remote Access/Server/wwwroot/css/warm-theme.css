@@ -110,7 +110,6 @@ body.login-page {
    sage. site.css sets the head's colours from the same tokens, so a table
    outside a CRUD panel looks the same as one inside it. */
 .custom-table tbody tr:nth-child(odd) { background-color: var(--surface-stripe); }
-.custom-table tbody tr:hover > td { background-color: var(--surface-sunk); }
 .table-responsive { border-radius: var(--radius-lg); }
 
 /* -------------------------------------------------- buttons and forms --- */
@@ -194,7 +193,7 @@ body.login-page {
 .app-shell .table > thead > tr > th { font-weight: 650; text-transform: none; letter-spacing: 0; }
 .app-shell .school-logo-img { box-shadow: var(--shadow-card); border-color: var(--card-border); }
 .app-shell .modal-content { border-radius: var(--radius-xl) !important; }
-.table { --bs-table-color: var(--text-main); --bs-table-border-color: var(--surface-line); --bs-table-hover-bg: var(--surface-sunk); --bs-table-striped-bg: var(--surface-stripe); }
+.table { --bs-table-color: var(--text-main); --bs-table-border-color: var(--surface-line); --bs-table-hover-bg: var(--surface-hover); --bs-table-striped-bg: var(--surface-stripe); }
 .table > thead > tr > th { background: var(--surface-sunk); color: var(--text-on-sage); }
 .form-control:disabled, .form-select:disabled { background-color: var(--surface-line); color: var(--text-muted); }
 .form-check-input { accent-color: var(--accent-emerald); }
