@@ -17,8 +17,24 @@ public sealed class WebsiteRestrictionProxy : IDisposable
     private readonly ConcurrentDictionary<TcpClient, string> _connections = new();
     private readonly ConcurrentDictionary<string, byte> _blocked = new(StringComparer.OrdinalIgnoreCase);
     private RestrictionRuleMessage[] _rules = Array.Empty<RestrictionRuleMessage>();
+    private readonly HashSet<string> _alwaysAllowed = new(StringComparer.OrdinalIgnoreCase);
     private Task? _acceptTask;
     private bool _disposed;
+
+    /// <param name="camsServerHost">
+    /// The CAMS server this client talks to. It is never blocked, whatever the
+    /// rules say - a website whitelist blocks everything else, and the CAMS
+    /// portal must stay reachable. When the server is this same PC, every
+    /// loopback name counts, since a browser may use any of them.
+    /// </param>
+    public WebsiteRestrictionProxy(string? camsServerHost = null)
+    {
+        var host = camsServerHost?.Trim().TrimEnd('.').ToLowerInvariant();
+        if (string.IsNullOrEmpty(host)) return;
+        _alwaysAllowed.Add(host);
+        if (host == "localhost" || (IPAddress.TryParse(host.Trim('[', ']'), out var address) && IPAddress.IsLoopback(address)))
+            _alwaysAllowed.UnionWith(new[] { "localhost", "127.0.0.1", "::1", "[::1]" });
+    }
 
     public int Port { get; private set; }
     public bool IsRunning => _acceptTask is { IsCompleted: false };
@@ -54,6 +70,7 @@ public sealed class WebsiteRestrictionProxy : IDisposable
     // Was: an unmatched domain counted as blocked whenever any allow rule
     // existed, so whitelisting one site cut off the rest of the web.
     public bool IsBlocked(string domain) =>
+        !_alwaysAllowed.Contains(domain) &&
         PolicyDecision.IsBlocked(Volatile.Read(ref _rules), domain, isDomain: true);
 
     public IReadOnlyList<string> DrainBlockedDomains()
@@ -87,10 +104,77 @@ public sealed class WebsiteRestrictionProxy : IDisposable
         catch (SocketException) { /* No DIRECT fallback: browsers fail closed. */ }
     }
 
+    /// <summary>How long one address gets before the next is tried.</summary>
+    public static readonly TimeSpan PerAddressTimeout = TimeSpan.FromSeconds(3);
+
+    /// <summary>
+    /// The order a site's addresses are tried in: IPv4 first, then IPv6,
+    /// alternating when a name has several of each.
+    /// </summary>
+    /// <remarks>
+    /// A network can hand out IPv6 addresses without routing IPv6 - common on
+    /// school and home Wi-Fi. An IPv6 connect then hangs until Windows gives up,
+    /// some 20 seconds, which outlasted this proxy's 15-second setup budget:
+    /// every site with an IPv6 address (facebook.com, google.com) reached the
+    /// browser as an empty response, while IPv4-only sites loaded. Browsers
+    /// avoid it by racing the two families (RFC 8305); the proxy connects for
+    /// the browser, so it has to do the same.
+    /// </remarks>
+    public static IReadOnlyList<IPAddress> ConnectionOrder(IEnumerable<IPAddress> addresses)
+    {
+        var all = addresses.ToList();
+        var v4 = all.Where(address => address.AddressFamily == AddressFamily.InterNetwork).ToList();
+        var v6 = all.Where(address => address.AddressFamily == AddressFamily.InterNetworkV6).ToList();
+        var ordered = new List<IPAddress>();
+        for (var i = 0; i < Math.Max(v4.Count, v6.Count); i++)
+        {
+            if (i < v4.Count) ordered.Add(v4[i]);
+            if (i < v6.Count) ordered.Add(v6[i]);
+        }
+        return ordered;
+    }
+
+    /// <summary>
+    /// Connects to the first of <paramref name="addresses"/> that answers,
+    /// giving each <paramref name="perAddress"/> before moving on.
+    /// </summary>
+    public static async Task<Socket> ConnectToFirstAvailableAsync(
+        IEnumerable<IPAddress> addresses, int port, TimeSpan perAddress, CancellationToken token)
+    {
+        Exception? last = null;
+        foreach (var address in ConnectionOrder(addresses))
+        {
+            token.ThrowIfCancellationRequested();
+            var socket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            using var attempt = CancellationTokenSource.CreateLinkedTokenSource(token);
+            attempt.CancelAfter(perAddress);
+            try
+            {
+                await socket.ConnectAsync(address, port, attempt.Token);
+                return socket;
+            }
+            catch (Exception ex) when (ex is SocketException || (ex is OperationCanceledException && !token.IsCancellationRequested))
+            {
+                socket.Dispose();
+                last = ex;
+            }
+        }
+        throw last as SocketException ?? new SocketException((int)SocketError.TimedOut);
+    }
+
+    private static async Task<Socket> ConnectUpstreamAsync(string host, int port, CancellationToken token)
+    {
+        var addresses = IPAddress.TryParse(host, out var literal)
+            ? new[] { literal }
+            : await Dns.GetHostAddressesAsync(host, token);
+        if (addresses.Length == 0) throw new SocketException((int)SocketError.HostNotFound);
+        return await ConnectToFirstAvailableAsync(addresses, port, PerAddressTimeout, token);
+    }
+
     private async Task HandleConnectionAsync(TcpClient client, CancellationToken token)
     {
+        Socket? upstream = null;
         using (client)
-        using (var upstream = new TcpClient())
         using (var relay = CancellationTokenSource.CreateLinkedTokenSource(token))
         {
             try
@@ -127,10 +211,10 @@ public sealed class WebsiteRestrictionProxy : IDisposable
                 // the same domain rules when the browser sends them to this proxy.
                 if (uri.IsLoopback && uri.Port == Port)
                     throw new InvalidDataException("Recursive proxy request.");
-                await upstream.ConnectAsync(domain, uri.Port, setup.Token);
+                upstream = await ConnectUpstreamAsync(domain, uri.Port, setup.Token);
                 // A policy refresh may have arrived while DNS/connect was pending.
                 if (IsBlocked(domain)) { RecordBlock(domain); return; }
-                var origin = upstream.GetStream();
+                using var origin = new NetworkStream(upstream, ownsSocket: false);
                 if (tunnel)
                 {
                     await downstream.WriteAsync("HTTP/1.1 200 Connection Established\r\n\r\n"u8.ToArray(), setup.Token);
@@ -170,7 +254,7 @@ public sealed class WebsiteRestrictionProxy : IDisposable
                     {
                         // A client may finish sending while still awaiting the
                         // response. Preserve that TCP half-close until download ends.
-                        upstream.Client.Shutdown(SocketShutdown.Send);
+                        upstream.Shutdown(SocketShutdown.Send);
                         await download;
                     }
                 }
@@ -190,6 +274,7 @@ public sealed class WebsiteRestrictionProxy : IDisposable
             }
             finally
             {
+                upstream?.Dispose();
                 _connections.TryRemove(client, out _);
             }
         }

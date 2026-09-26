@@ -624,8 +624,11 @@ public sealed class RemoteMonitoringHub : Hub
         rules.AddRange(applicationCategories);
         rules.AddRange(websiteCategories);
 
+        // A whitelisted website means only whitelisted websites: everything
+        // else is blocked for this student, with blacklist entries still
+        // blocking inside the whitelist.
         await Clients.Client(Context.ConnectionId)
-            .SendAsync(HubEventNames.RestrictionsReceived, rules);
+            .SendAsync(HubEventNames.RestrictionsReceived, PolicyDecision.WithWebsiteAllowlist(rules));
     }
 
     public async Task ReportInfraction(InfractionMessage infraction)

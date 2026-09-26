@@ -195,6 +195,46 @@ public sealed class RemoteMonitoringHubSecurityTests
         Assert.DoesNotContain(delivered!, rule => rule.Target == "teacher-two.test");
     }
 
+    // A whitelisted website reaches the student's PC as "only whitelisted
+    // websites": the rules arrive with a catch-all block beneath them. An allow
+    // rule saved as an application does not switch that on.
+    [Theory]
+    [InlineData("Website", true)]
+    [InlineData("Application", false)]
+    public async Task FetchRestrictions_TurnsAWhitelistedWebsiteIntoAllowOnly(string allowType, bool allowOnly)
+    {
+        await using var provider = CreateProvider();
+        var student = await SeedStudentAsync(provider, "student-1", classTeacherId: 1);
+        await SeedLabSessionAsync(provider, student.Id, allowRemoteControl: false);
+        await using (var scope = provider.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.RestrictionRules.Add(new Server.Models.RestrictionRule { RuleType = allowType, Target = "khanacademy.org",
+                Mode = "Allow", IsGlobal = true, IsActive = true });
+            await db.SaveChangesAsync();
+        }
+
+        IReadOnlyList<RestrictionRuleMessage>? delivered = null;
+        var clients = new Mock<IHubCallerClients>();
+        var target = new Mock<ISingleClientProxy>();
+        target.Setup(proxy => proxy.SendCoreAsync(HubEventNames.RestrictionsReceived, It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object?[], CancellationToken>((_, args, _) =>
+                delivered = Assert.IsAssignableFrom<IReadOnlyList<RestrictionRuleMessage>>(args[0]))
+            .Returns(Task.CompletedTask);
+        clients.Setup(value => value.Client("student-connection")).Returns(target.Object);
+        var monitoring = new MonitoringService();
+        monitoring.RegisterStudent("student-connection", "student-1", "PC-01");
+        var hub = CreateHub(provider, monitoring, "student-connection", "Student", "1", clients, clientAgent: true);
+
+        await hub.FetchRestrictions();
+
+        Assert.NotNull(delivered);
+        Assert.Equal(allowOnly, delivered!.Any(rule => rule.Target == PolicyDecision.EveryWebsite && rule.Mode == "Block"));
+        var websiteRules = delivered.Where(rule => rule.RuleType == "Website").ToList();
+        Assert.Equal(allowOnly, PolicyDecision.IsBlocked(websiteRules, "facebook.com", isDomain: true));
+        Assert.False(PolicyDecision.IsBlocked(websiteRules, "khanacademy.org", isDomain: true));
+    }
+
     // A newcomer - no class, no adviser - had a session tied to no teacher, so a
     // teacher's own restriction rules never reached them and they could browse
     // sites that teacher had blocked. The teacher running the lab now covers

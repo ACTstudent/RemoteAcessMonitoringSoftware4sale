@@ -69,6 +69,18 @@ namespace Server.Controllers
             _ => type.Trim()
         };
 
+        /// <summary>
+        /// Refuses a web address saved as an application rule, with the reason.
+        /// Application rules are not enforced, so such a rule - a whitelisted
+        /// "facebook.com", for one - silently did nothing.
+        /// </summary>
+        private bool WebsiteSavedAsApplication(string ruleType, string target)
+        {
+            if (ruleType != "Application" || !PolicyPatternMatcher.LooksLikeWebsite(target)) return false;
+            TempData["ErrorMessage"] = $"'{target}' is a website address. Choose Website as the type - application rules are not enforced on student PCs.";
+            return true;
+        }
+
         protected override ApplicationDbContext Db => _context;
 
         // The admin portal is reachable by a teacher through
@@ -759,6 +771,7 @@ namespace Server.Controllers
             }
             rule.RuleType = NormalizeRuleType(rule.RuleType);
             rule.Target = rule.Target.Trim();
+            if (WebsiteSavedAsApplication(rule.RuleType, rule.Target)) return RedirectToAction("Restrictions");
             rule.Description = rule.Description?.Trim() ?? "";
             if (IsTeacherActor)
             {
@@ -781,6 +794,7 @@ namespace Server.Controllers
             var rule = await _context.RestrictionRules.FindAsync(input.RestrictionRuleId);
             if (rule == null || !ValidRuleType(input.RuleType) || string.IsNullOrWhiteSpace(input.Target) || !ValidMode(input.Mode))
                 return RedirectToAction("Restrictions");
+            if (WebsiteSavedAsApplication(NormalizeRuleType(input.RuleType), input.Target.Trim())) return RedirectToAction("Restrictions");
 
             rule.RuleType = NormalizeRuleType(input.RuleType);
             rule.Target = input.Target.Trim();

@@ -8,7 +8,7 @@
     <div class="page-header-main">
         <div>
             <h2>Whitelist Directory</h2>
-            <p>Allow rules are exceptions that take precedence over matching categories and blacklist entries. Only website rules are enforced on workstations.</p>
+            <p>While any website is whitelisted, student PCs open only whitelisted websites and block everything else. A blacklist entry for a more specific address still blocks it. Application entries are kept but not enforced. Well-known sites bring the helper domains they need to display; for any other site that looks broken, whitelist the domains it loads from too.</p>
         </div>
     </div>
 </div>
@@ -37,7 +37,10 @@
                 {
                     <tr data-crud-item data-status="@(rule.IsActive ? "Active" : "Inactive")">
                         <td><span class="badge bg-success-subtle text-success-emphasis rounded-pill px-3">@rule.RuleType</span></td>
-                        <td><code>@rule.Target</code></td>
+                        <td><code>@rule.Target</code>@if (rule.RuleType == "Website" && Shared.Contracts.PolicyDecision.CompanionsFor(rule.Target) is { Count: > 0 } helpers)
+                            {
+                                <small class="d-block text-muted">Also allows @string.Join(", ", helpers), which the site needs to display.</small>
+                            }</td>
                         <td>@(string.IsNullOrWhiteSpace(rule.Description) ? "No description" : rule.Description)</td>
                         <td><span class="badge @(rule.IsActive ? "bg-success" : "bg-secondary") rounded-pill">@(rule.IsActive ? "Active" : "Inactive")</span></td>
                         <td class="text-end">
@@ -74,7 +77,7 @@
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="IsGlobal" value="true" />
                 <div class="modal-body">
-                    <div class="mb-3"><label class="form-label" for="whitelists-type">Type</label><select id="whitelists-type" name="RuleType" class="form-select"><option>Application</option><option>Website</option></select></div>
+                    <div class="mb-3"><label class="form-label" for="whitelists-type">Type</label><select id="whitelists-type" name="RuleType" class="form-select"><option selected>Website</option><option>Application</option></select></div>
                     <div class="mb-3"><label class="form-label" for="whitelists-target">Target</label><input id="whitelists-target" name="Target" required maxlength="200" class="form-control" placeholder="e.g. learning.example.org or app.exe" /></div>
                     <div class="mb-3"><label class="form-label" for="whitelists-description">Description</label><textarea id="whitelists-description" name="Description" maxlength="500" class="form-control" rows="3" placeholder="Why this target is allowed"></textarea></div>
                     <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="IsActive" value="true" id="createWhitelistActive" checked /><input type="hidden" name="IsActive" value="false" /><label class="form-check-label" for="createWhitelistActive">Rule is active</label></div>

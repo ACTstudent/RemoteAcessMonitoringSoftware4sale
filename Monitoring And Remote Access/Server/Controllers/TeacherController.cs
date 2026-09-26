@@ -362,6 +362,15 @@ namespace Server.Controllers
         // ---------- Policy management ----------
         private static bool ValidMode(string? mode) => mode is "Block" or "Allow";
         private static bool ValidRuleType(string? type) => type is "Application" or "Website";
+
+        // A web address saved as an application rule is never enforced; say so
+        // instead of saving a rule that silently does nothing.
+        private bool WebsiteSavedAsApplication(string ruleType, string target)
+        {
+            if (ruleType != "Application" || !PolicyPatternMatcher.LooksLikeWebsite(target)) return false;
+            TempData["ErrorMessage"] = $"'{target}' is a website address. Choose Website as the type - application rules are not enforced on student PCs.";
+            return true;
+        }
         private static bool ValidBlacklistType(string? type) => type is "Application" or "Website" or "Domain" or "Process";
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -374,6 +383,7 @@ namespace Server.Controllers
                 return RedirectToAction(nameof(Restrictions));
             }
             rule.RuleType = rule.RuleType.Trim(); rule.Target = rule.Target.Trim(); rule.Description = rule.Description?.Trim() ?? "";
+            if (WebsiteSavedAsApplication(rule.RuleType, rule.Target)) return RedirectToAction(nameof(Restrictions));
             rule.TeacherId = HttpContext.Session.GetInt32("TeacherId");
             rule.IsGlobal = false;
             rule.CreatedAt = DateTime.UtcNow;
@@ -393,6 +403,7 @@ namespace Server.Controllers
                 : null;
             if (rule == null || !ValidRuleType(input.RuleType) || string.IsNullOrWhiteSpace(input.Target) || !ValidMode(input.Mode))
                 return RedirectToAction(nameof(Restrictions));
+            if (WebsiteSavedAsApplication(input.RuleType.Trim(), input.Target.Trim())) return RedirectToAction(nameof(Restrictions));
             rule.RuleType = input.RuleType.Trim(); rule.Target = input.Target.Trim(); rule.Description = input.Description?.Trim() ?? "";
             rule.Mode = input.Mode; rule.IsGlobal = false; rule.IsActive = input.IsActive;
             await _context.SaveChangesAsync();

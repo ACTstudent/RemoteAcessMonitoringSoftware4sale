@@ -41,6 +41,38 @@ public static class PolicyPatternMatcher
         return candidate.TrimEnd('.').ToLowerInvariant();
     }
 
+    // Generic suffixes seen on school and everyday sites; any two-letter
+    // suffix counts as a country code.
+    private static readonly HashSet<string> CommonDomainSuffixes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "com", "net", "org", "edu", "gov", "mil", "int", "info", "biz", "app", "dev", "io", "ai",
+        "online", "site", "xyz", "tech", "store", "shop", "blog", "news", "live", "media", "cloud",
+        "games", "school", "academy", "education", "art", "page", "world", "top"
+    };
+
+    /// <summary>
+    /// True when a rule target is plainly a web address - a scheme, a "www."
+    /// prefix, or a dotted name ending in a domain suffix - so it cannot mean an
+    /// application. "facebook.com" saved as an application whitelist entry did
+    /// nothing at all, and read as a whitelist that did not work.
+    /// Program names such as "chrome.exe", "notepad" or "Microsoft.Photos" are not.
+    /// </summary>
+    public static bool LooksLikeWebsite(string? target)
+    {
+        var candidate = target?.Trim();
+        if (string.IsNullOrEmpty(candidate)) return false;
+        if (candidate.Contains("://", StringComparison.Ordinal) ||
+            candidate.StartsWith("www.", StringComparison.OrdinalIgnoreCase)) return true;
+        if (candidate.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ||
+            candidate.IndexOfAny(new[] { '\\', ' ' }) >= 0) return false;
+
+        var host = candidate.TrimStart('*', '.').Split('/', '?', '#')[0];
+        var lastDot = host.LastIndexOf('.');
+        if (lastDot <= 0 || lastDot == host.Length - 1) return false;
+        var suffix = host[(lastDot + 1)..];
+        return suffix.All(char.IsLetter) && (suffix.Length == 2 || CommonDomainSuffixes.Contains(suffix));
+    }
+
     private static bool MatchesWildcard(string? value, string? pattern, bool requireDomainBoundary)
     {
         value = value?.Trim().ToLowerInvariant();

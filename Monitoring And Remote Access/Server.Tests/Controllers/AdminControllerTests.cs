@@ -625,6 +625,52 @@ public class AdminControllerTests
         Assert.Null(await db.RestrictionRules.FindAsync(rule.RestrictionRuleId));
     }
 
+    // "facebook.com" whitelisted as an Application was saved, and did nothing -
+    // application rules are not enforced - so the whitelist looked broken.
+    [Fact]
+    public async Task CreateWhitelist_RefusesAWebsiteSavedAsAnApplication()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+
+        var result = await controller.CreateWhitelist(new RestrictionRule { RuleType = "Application", Target = "facebook.com", IsActive = true });
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.Empty(db.RestrictionRules);
+        Assert.Contains("is a website address", controller.TempData["ErrorMessage"]?.ToString());
+    }
+
+    [Theory]
+    [InlineData("Website", "facebook.com")]
+    [InlineData("Application", "chrome.exe")]
+    [InlineData("Application", "Microsoft.Photos")]
+    public async Task CreateWhitelist_KeepsSensibleTypeAndTargetPairs(string ruleType, string target)
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+
+        await controller.CreateWhitelist(new RestrictionRule { RuleType = ruleType, Target = target, IsActive = true });
+
+        var rule = await db.RestrictionRules.SingleAsync();
+        Assert.Equal(ruleType, rule.RuleType);
+        Assert.Equal("Allow", rule.Mode);
+    }
+
+    [Fact]
+    public async Task UpdateWhitelist_RefusesTurningAWebsiteIntoAnApplication()
+    {
+        using var db = GetDbContext();
+        var existing = new RestrictionRule { RuleType = "Website", Target = "facebook.com", Mode = "Allow", IsGlobal = true, IsActive = true };
+        db.RestrictionRules.Add(existing);
+        await db.SaveChangesAsync();
+        var controller = CreateController(db);
+
+        await controller.UpdateWhitelist(new RestrictionRule { RestrictionRuleId = existing.RestrictionRuleId, RuleType = "Application", Target = "facebook.com", IsGlobal = true, IsActive = true });
+
+        Assert.Equal("Website", (await db.RestrictionRules.SingleAsync()).RuleType);
+        Assert.Contains("is a website address", controller.TempData["ErrorMessage"]?.ToString());
+    }
+
     [Fact]
     public async Task TeacherCreatedRestriction_IsForcedGlobalAndOwnerless()
     {

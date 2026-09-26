@@ -1420,7 +1420,7 @@ namespace Client
 
         private void StartWebsiteFiltering(Uri server)
         {
-            var proxy = new WebsiteRestrictionProxy();
+            var proxy = new WebsiteRestrictionProxy(server.IdnHost);
             WindowsSessionProxy? windowsProxy = null;
             try
             {

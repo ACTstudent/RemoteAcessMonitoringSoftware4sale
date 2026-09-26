@@ -13,7 +13,7 @@
         </div>
     </div>
 </div>
-<div class="alert alert-info" data-auto-dismiss="5000">Allow rules are the whitelist. More-specific allow rules override broader matching blocks, and nothing is blocked for being absent from these rules.</div>
+<div class="alert alert-info" data-auto-dismiss="5000">Allow rules are the whitelist: while any website is allowed, student PCs open only allowed websites and block everything else. A block rule for a more specific address still applies inside it.</div>
 <div class="alert alert-warning" data-auto-dismiss="5000">Application rules are kept here but are not enforced on workstations: CAMS does not close anything on the desktop. Application activity is still monitored, so teachers can see what was opened.</div>
 
 @foreach (var categoryType in new[] { "Application", "Website" })
@@ -158,8 +158,8 @@
                         <div class="col-md-6">
                             <label class="form-label fw-semibold text-muted small" for="restrictions-rule-type">Rule Type</label>
                             <select id="restrictions-rule-type" name="RuleType" class="form-select filter-control">
+                                <option value="Website" selected>Website Domain (URL)</option>
                                 <option value="Application">Application (.exe)</option>
-                                <option value="Website">Website Domain (URL)</option>
                             </select>
                         </div>
                         <div class="col-md-6">

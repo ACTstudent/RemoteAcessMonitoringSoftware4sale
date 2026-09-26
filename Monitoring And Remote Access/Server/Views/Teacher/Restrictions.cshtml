@@ -10,7 +10,7 @@
     <div class="d-flex align-items-center gap-3">
         <div>
             <h2 class="page-title">Session Restriction Policies</h2>
-            <p class="text-muted mb-0 small">Your rules apply to every student in a lab session you start, and to your own students. Administrator global rules are read-only.</p>
+            <p class="text-muted mb-0 small">Your rules apply to every student in a lab session you start, and to your own students. Allowing a website limits those students to allowed websites only. Administrator global rules are read-only.</p>
         </div>
     </div>
 </div>
@@ -76,8 +76,8 @@
         return new HtmlString(
             $"<label for='{Id("type")}'>Type</label>" +
             $"<select id='{Id("type")}' name='RuleType' class='form-select mb-2'>" +
-            $"<option {(rule?.RuleType == "Application" ? "selected" : "")}>Application</option>" +
-            $"<option {(rule?.RuleType == "Website" ? "selected" : "")}>Website</option></select>" +
+            $"<option {(rule is null || rule.RuleType == "Website" ? "selected" : "")}>Website</option>" +
+            $"<option {(rule?.RuleType == "Application" ? "selected" : "")}>Application</option></select>" +
             $"<label for='{Id("mode")}'>Mode</label>" +
             $"<select id='{Id("mode")}' name='Mode' class='form-select mb-2'>" +
             $"<option {(rule?.Mode != "Allow" ? "selected" : "")}>Block</option>" +
