@@ -29,3 +29,7 @@ client-dist/
 
 # Test result files written by build-everything.ps1 and CI
 test-results/
+
+# Local Word-layout QA workspace for the manuscript: scripts, PDFs and page
+# renders. Kept on this PC only - the repository is public.
+doc-layout-qa/
