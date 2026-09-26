@@ -388,7 +388,7 @@ private static IEnumerable<NavSection> GlobalSections() => new[]
 | Document | What it holds |
 |---|---|
 | [`Use-Case-Diagram.md`](Use-Case-Diagram.md) | The use case model and its coverage check |
-| [`CAMS-Use-Case-Specifications.pdf`](CAMS-Use-Case-Specifications.pdf) | 201 written use cases, ten fields each |
+| [`CAMS-Use-Case-Specifications.pdf`](CAMS-Use-Case-Specifications.pdf) | 195 written use cases, ten fields each |
 | [`ERD.md`](ERD.md) | Entity relationship model and database schema |
 | [`CAMS-User-Interface.pdf`](CAMS-User-Interface.pdf) | The same 31 screens as a printable PDF |
 | [`Flowchart.md`](Flowchart.md) | Deployment and login flow in more detail |

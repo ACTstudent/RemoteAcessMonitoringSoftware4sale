@@ -2,13 +2,13 @@
 
 A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio), set out in the ten fields the course handout uses: use case name, purpose, actors, input parameters, output parameters, pre-condition, post-condition, successful scenario, exception scenario and additional remarks.
 
-**201 use cases** across 28 modules. Each name is strict verb-noun and still maps to the function that implements it; where the identifier and the behaviour disagree the behaviour decides the name, so `DeleteComputer`, which archives, reads ARCHIVE COMPUTER. The inputs, HTTP verb and authorisation rule in each specification are read out of that function rather than written from memory, so a specification cannot claim a parameter the action does not take.
+**195 use cases** across 27 modules. Each name is strict verb-noun and still maps to the function that implements it; where the identifier and the behaviour disagree the behaviour decides the name, so `DeleteComputer`, which archives, reads ARCHIVE COMPUTER. The inputs, HTTP verb and authorisation rule in each specification are read out of that function rather than written from memory, so a specification cannot claim a parameter the action does not take.
 
 | Actor | Use cases | Modules |
 | --- | ---: | ---: |
 | Admin | 85 | 17 |
 | Teacher | 101 | 18 |
-| Student | 15 | 3 |
+| Student | 9 | 3 |
 
 ---
 
@@ -55,8 +55,8 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **STUDENT**  
 - LOG IN AT WORKSTATION — S-187, S-188, S-189, S-190, S-191
-- WORK AT MONITORED WORKSTATION — S-192, S-193, S-194, S-195, S-196, S-197, S-198
-- USE THE CLIENT AGENT — S-199, S-200, S-201
+- MANAGE OWN ACCOUNT — S-192
+- USE THE CLIENT AGENT — S-193, S-194, S-195
 
 ---
 
@@ -8821,325 +8821,57 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *LOG IN AT WORKSTATION* module of the use case diagram.
 - Drawn as `<<extend>>` to **AUTHENTICATE WORKSTATION**.
 
-## WORK AT MONITORED WORKSTATION  ·  `RemoteMonitoringHub`
+## MANAGE OWN ACCOUNT  ·  `ClientAuthController`
 
-![WORK AT MONITORED WORKSTATION](usecase-images/student-work-at-monitored-workstation.png)
+![MANAGE OWN ACCOUNT](usecase-images/student-manage-own-account.png)
 
-*Figure 3.37: System Use Case for work at monitored workstation*
+*Figure 3.37: System Use Case for manage own account*
 
-### S-192  ·  FETCH RESTRICTIONS
+### S-192  ·  CHANGE PASSWORD
 
-**Use Case Name:** FETCH RESTRICTIONS  
-**Purpose:** Give the client the restriction rules that apply to the student signed in at that workstation.  
+**Use Case Name:** CHANGE PASSWORD
+**Purpose:** Let the student signed in at a workstation replace their own password from the CAMS client, after proving they know the current one. The web portal does not admit students, so the client is the only place a student can do this.
 **Actors:**
 
 - Student (Primary Actor)
-- The CAMS client on the target workstation (Secondary Actor)
 
 **Input Parameters:**
 
-- None beyond the signed-in identity carried on the authentication cookie.
+- `request` : `StudentClientPasswordChangeRequest`
 
 **Output Parameters:**
 
-- A SignalR message delivered to the target workstation or group; no HTTP response.
+- No content when the password has been changed, or the reason it was refused, which the client shows in its change-password dialog.
 
 **Pre-Condition:**
 
-- The caller is signed in.
+- The caller is signed in as a student at the workstation.
 
 **Post-Condition:**
 
-- The workstation has acted on the command and the console shows its new state.
+- The new password is stored as a hash and the old one no longer signs in.
+- The change is recorded in the audit log together with the workstation's address.
 
 **Successful Scenario:**
 
-1. The Student triggers the command from the monitoring console.
-2. The browser invokes `FetchRestrictions` on the SignalR hub over the open connection.
-3. The server checks the caller’s role and resolves the target connection.
-4. The server relays the instruction to the workstation client.
-5. The client carries it out and the console reflects the new state.
+1. The student chooses Change password in the CAMS client window.
+2. The student enters the current password and the new password twice.
+3. The client checks that the new password has at least eight characters, differs from the current one and matches its confirmation.
+4. The client posts the current and new passwords on the student's sign-in cookie.
+5. The server verifies the current password and stores the new one.
+6. The client confirms the change, and the student uses the new password at the next log in.
 
 **Exception Scenario:**
 
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **The workstation is not connected** — the command cannot be delivered and the console reports the workstation as offline.
+- **The current password is wrong** — nothing changes and the dialog says the current password is incorrect.
+- **The new password breaks a rule** — it is too short, the same as the current one, or does not match its confirmation; nothing is written and the dialog says which.
+- **Five wrong current passwords in a row** — further attempts for that student are refused for a minute. The count is kept per student, so classmates behind the same address are not affected.
+- **The sign-in has expired** — the request is refused and the student is asked to log out and log in again.
 
 **Additional Remarks:**
 
-- Implemented by `RemoteMonitoringHub.FetchRestrictions` (GET).
-- Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
-- Pulls in **REPORT ACTIVE APP** (`<<include>>`), **REPORT WEBSITE ACTIVITY** (`<<include>>`), **REPORT IDLE STATUS** (`<<include>>`), **REPORT BROWSER STATUS** (`<<include>>`), **REPORT TELEMETRY BATCH** (`<<include>>`), **REPORT INFRACTION** (`<<extend>>`).
-
-### S-193  ·  REPORT ACTIVE APP
-
-**Use Case Name:** REPORT ACTIVE APP  
-**Purpose:** Report which application is in the foreground on the workstation.  
-**Actors:**
-
-- Student (Primary Actor)
-- The CAMS client on the target workstation (Secondary Actor)
-
-**Input Parameters:**
-
-- `app` : `ActiveAppMessage`
-
-**Output Parameters:**
-
-- A SignalR message delivered to the target workstation or group; no HTTP response.
-
-**Pre-Condition:**
-
-- The caller is signed in.
-- **FETCH RESTRICTIONS** has reached the point where this is always performed.
-
-**Post-Condition:**
-
-- The workstation has acted on the command and the console shows its new state.
-
-**Successful Scenario:**
-
-1. The Student triggers the command from the monitoring console.
-2. The browser invokes `ReportActiveApp` on the SignalR hub over the open connection.
-3. The server checks the caller’s role and resolves the target connection.
-4. The server relays the instruction to the workstation client.
-5. The client carries it out and the console reflects the new state.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **The workstation is not connected** — the command cannot be delivered and the console reports the workstation as offline.
-
-**Additional Remarks:**
-
-- Implemented by `RemoteMonitoringHub.ReportActiveApp` (GET).
-- Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
-- Drawn as `<<include>>` from **FETCH RESTRICTIONS**.
-
-### S-194  ·  REPORT WEBSITE ACTIVITY
-
-**Use Case Name:** REPORT WEBSITE ACTIVITY  
-**Purpose:** Report the website the student is viewing in the browser.  
-**Actors:**
-
-- Student (Primary Actor)
-- The CAMS client on the target workstation (Secondary Actor)
-
-**Input Parameters:**
-
-- `website` : `WebsiteActivityMessage`
-
-**Output Parameters:**
-
-- A SignalR message delivered to the target workstation or group; no HTTP response.
-
-**Pre-Condition:**
-
-- The caller is signed in.
-- **FETCH RESTRICTIONS** has reached the point where this is always performed.
-
-**Post-Condition:**
-
-- The workstation has acted on the command and the console shows its new state.
-
-**Successful Scenario:**
-
-1. The Student triggers the command from the monitoring console.
-2. The browser invokes `ReportWebsiteActivity` on the SignalR hub over the open connection.
-3. The server checks the caller’s role and resolves the target connection.
-4. The server relays the instruction to the workstation client.
-5. The client carries it out and the console reflects the new state.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **The workstation is not connected** — the command cannot be delivered and the console reports the workstation as offline.
-
-**Additional Remarks:**
-
-- Implemented by `RemoteMonitoringHub.ReportWebsiteActivity` (GET).
-- Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
-- Drawn as `<<include>>` from **FETCH RESTRICTIONS**.
-
-### S-195  ·  REPORT IDLE STATUS
-
-**Use Case Name:** REPORT IDLE STATUS  
-**Purpose:** Report whether the workstation has gone idle.  
-**Actors:**
-
-- Student (Primary Actor)
-- The CAMS client on the target workstation (Secondary Actor)
-
-**Input Parameters:**
-
-- `status` : `IdleStatusMessage`
-
-**Output Parameters:**
-
-- A SignalR message delivered to the target workstation or group; no HTTP response.
-
-**Pre-Condition:**
-
-- The caller is signed in.
-- **FETCH RESTRICTIONS** has reached the point where this is always performed.
-
-**Post-Condition:**
-
-- The workstation has acted on the command and the console shows its new state.
-
-**Successful Scenario:**
-
-1. The Student triggers the command from the monitoring console.
-2. The browser invokes `ReportIdleStatus` on the SignalR hub over the open connection.
-3. The server checks the caller’s role and resolves the target connection.
-4. The server relays the instruction to the workstation client.
-5. The client carries it out and the console reflects the new state.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **The workstation is not connected** — the command cannot be delivered and the console reports the workstation as offline.
-
-**Additional Remarks:**
-
-- Implemented by `RemoteMonitoringHub.ReportIdleStatus` (GET).
-- Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
-- Drawn as `<<include>>` from **FETCH RESTRICTIONS**.
-
-### S-196  ·  REPORT BROWSER STATUS
-
-**Use Case Name:** REPORT BROWSER STATUS  
-**Purpose:** Report whether browser monitoring is working on the workstation.  
-**Actors:**
-
-- Student (Primary Actor)
-- The CAMS client on the target workstation (Secondary Actor)
-
-**Input Parameters:**
-
-- `status` : `BrowserMonitoringStatusMessage`
-
-**Output Parameters:**
-
-- A SignalR message delivered to the target workstation or group; no HTTP response.
-
-**Pre-Condition:**
-
-- The caller is signed in.
-- **FETCH RESTRICTIONS** has reached the point where this is always performed.
-
-**Post-Condition:**
-
-- The workstation has acted on the command and the console shows its new state.
-
-**Successful Scenario:**
-
-1. The Student triggers the command from the monitoring console.
-2. The browser invokes `ReportBrowserMonitoringStatus` on the SignalR hub over the open connection.
-3. The server checks the caller’s role and resolves the target connection.
-4. The server relays the instruction to the workstation client.
-5. The client carries it out and the console reflects the new state.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **The workstation is not connected** — the command cannot be delivered and the console reports the workstation as offline.
-
-**Additional Remarks:**
-
-- Implemented by `RemoteMonitoringHub.ReportBrowserMonitoringStatus` (GET).
-- Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
-- Drawn as `<<include>>` from **FETCH RESTRICTIONS**.
-
-### S-197  ·  REPORT TELEMETRY BATCH
-
-**Use Case Name:** REPORT TELEMETRY BATCH  
-**Purpose:** Send a batch of buffered telemetry, so a brief disconnection does not lose the record.  
-**Actors:**
-
-- Student (Primary Actor)
-- The CAMS client on the target workstation (Secondary Actor)
-
-**Input Parameters:**
-
-- `batch` : `TelemetryBatchMessage`
-
-**Output Parameters:**
-
-- A SignalR message delivered to the target workstation or group; no HTTP response.
-
-**Pre-Condition:**
-
-- The caller is signed in.
-- **FETCH RESTRICTIONS** has reached the point where this is always performed.
-
-**Post-Condition:**
-
-- The workstation has acted on the command and the console shows its new state.
-
-**Successful Scenario:**
-
-1. The Student triggers the command from the monitoring console.
-2. The browser invokes `ReportTelemetryBatch` on the SignalR hub over the open connection.
-3. The server checks the caller’s role and resolves the target connection.
-4. The server relays the instruction to the workstation client.
-5. The client carries it out and the console reflects the new state.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **The workstation is not connected** — the command cannot be delivered and the console reports the workstation as offline.
-
-**Additional Remarks:**
-
-- Implemented by `RemoteMonitoringHub.ReportTelemetryBatch` (GET).
-- Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
-- Drawn as `<<include>>` from **FETCH RESTRICTIONS**.
-
-### S-198  ·  REPORT INFRACTION
-
-**Use Case Name:** REPORT INFRACTION  
-**Purpose:** Report that the student tried to open something a restriction rule blocks.  
-**Actors:**
-
-- Student (Primary Actor)
-- The CAMS client on the target workstation (Secondary Actor)
-
-**Input Parameters:**
-
-- `infraction` : `InfractionMessage`
-
-**Output Parameters:**
-
-- A SignalR message delivered to the target workstation or group; no HTTP response.
-
-**Pre-Condition:**
-
-- The caller is signed in.
-- **FETCH RESTRICTIONS** has reached the point where this is optionally performed.
-
-**Post-Condition:**
-
-- The workstation has acted on the command and the console shows its new state.
-
-**Successful Scenario:**
-
-1. The Student triggers the command from the monitoring console.
-2. The browser invokes `ReportInfraction` on the SignalR hub over the open connection.
-3. The server checks the caller’s role and resolves the target connection.
-4. The server relays the instruction to the workstation client.
-5. The client carries it out and the console reflects the new state.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **The workstation is not connected** — the command cannot be delivered and the console reports the workstation as offline.
-
-**Additional Remarks:**
-
-- Implemented by `RemoteMonitoringHub.ReportInfraction` (GET).
-- Appears in the *WORK AT MONITORED WORKSTATION* module of the use case diagram.
-- Drawn as `<<extend>>` to **FETCH RESTRICTIONS**.
+- Implemented by `ClientAuthController.ChangePassword` (POST).
+- Appears in the *MANAGE OWN ACCOUNT* module of the use case diagram.
 
 ## USE THE CLIENT AGENT  ·  `MainForm + TrayIconController`
 
@@ -9147,7 +8879,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.38: System Use Case for use the client agent*
 
-### S-199  ·  OPEN CLIENT WINDOW
+### S-193  ·  OPEN CLIENT WINDOW
 
 **Use Case Name:** OPEN CLIENT WINDOW  
 **Purpose:** Bring the CAMS window back from the notification area, where the agent sits while the student works. It reopens in the middle of the screen.  
@@ -9186,7 +8918,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `MainForm.RestoreFromTray` (CAMS client).
 - Appears in the *USE THE CLIENT AGENT* module of the use case diagram.
 
-### S-200  ·  CHECK CONNECTION STATUS
+### S-194  ·  CHECK CONNECTION STATUS
 
 **Use Case Name:** CHECK CONNECTION STATUS  
 **Purpose:** Show who is signed in at this workstation, whether the agent is connected to the server, and how much of the lab session is left, without leaving what the student is doing.  
@@ -9225,7 +8957,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `MainForm.ShowTrayStatus` (CAMS client).
 - Appears in the *USE THE CLIENT AGENT* module of the use case diagram.
 
-### S-201  ·  EXIT CLIENT AGENT
+### S-195  ·  EXIT CLIENT AGENT
 
 **Use Case Name:** EXIT CLIENT AGENT  
 **Purpose:** Close the agent from the notification area. Any lab session still open is signed out first, so the workstation is released rather than left showing an occupant who has gone.  

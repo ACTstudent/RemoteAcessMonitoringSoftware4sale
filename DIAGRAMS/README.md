@@ -12,7 +12,7 @@ Open any `.drawio` file at [app.diagrams.net](https://app.diagrams.net) with **F
 
 | File | Notation | Contents |
 | --- | --- | --- |
-| [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio) | UML use case | 38 module boxes, 201 use cases, 3 actors, one page |
+| [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio) | UML use case | 38 module boxes, 195 use cases, 3 actors, one page |
 | [`CAMS-Class-Model.drawio`](CAMS-Class-Model.drawio) | UML class | 23 classes, 119 attributes, 61 operations, 24 connectors |
 | [`CAMS-Database-Schema.drawio`](CAMS-Database-Schema.drawio) | Crow's foot | All 28 tables, every column with its SQLite type |
 | [`CAMS-Crowsfoot-ERD.drawio`](CAMS-Crowsfoot-ERD.drawio) | Crow's foot | The 15 tables the Chen diagram covers, 110 columns, plus a notes page |
@@ -36,7 +36,7 @@ It deliberately names two or three attributes per entity. The full attribute lis
 
 | File | Contents |
 | --- | --- |
-| [`CAMS-Use-Case-Specifications.pdf`](CAMS-Use-Case-Specifications.pdf) | The written use cases, ready to read or print. 394 pages, US Letter, Times New Roman, double spaced, each module drawn with a numbered figure caption |
+| [`CAMS-Use-Case-Specifications.pdf`](CAMS-Use-Case-Specifications.pdf) | The written use cases, ready to read or print. 297 pages, US Letter, Times New Roman, double spaced, each module drawn with a numbered figure caption |
 | [`CAMS-Use-Case-Specifications.docx`](CAMS-Use-Case-Specifications.docx) | The same document in Word, for pasting into a manuscript |
 | [`Use-Case-Specifications.md`](Use-Case-Specifications.md) | The same content in Markdown, so it renders on GitHub and diffs cleanly |
 | [`usecase-images/`](usecase-images) | The 38 module drawings the documents embed, one PNG per module |
@@ -47,7 +47,7 @@ It deliberately names two or three attributes per entity. The full attribute lis
 | [`Menu-Structure-Diagram.md`](Menu-Structure-Diagram.md) | The navigation tree behind each role |
 | [`CAMS-Appendices.md`](CAMS-Appendices.md) | Appendices | Flow of the system, the application prototype with 17 screens, and sample program code |
 
-Each specification follows the ten fields the course handout sets out: **use case name, purpose, actors, input parameters, output parameters, pre-condition, post-condition, successful scenario, exception scenario, additional remarks.** All three files carry the same 201 written use cases, laid out the way the course handout lays out its worked example: no tables, a bold field label ending in a colon, the value on the same line where it is short and an indented list where it is not, in Times New Roman twelve point, double spaced and justified on US Letter, which is how a thesis chapter is set. Each module is drawn first, with an italic numbered caption beneath the drawing - *Figure 3.1: System Use Case for Process Log In* - and the use cases inside that module follow. Actors are listed and marked primary or secondary.
+Each specification follows the ten fields the course handout sets out: **use case name, purpose, actors, input parameters, output parameters, pre-condition, post-condition, successful scenario, exception scenario, additional remarks.** All three files carry the same 195 written use cases, laid out the way the course handout lays out its worked example: no tables, a bold field label ending in a colon, the value on the same line where it is short and an indented list where it is not, in Times New Roman twelve point, double spaced and justified on US Letter, which is how a thesis chapter is set. Each module is drawn first, with an italic numbered caption beneath the drawing - *Figure 3.1: System Use Case for Process Log In* - and the use cases inside that module follow. Actors are listed and marked primary or secondary.
 
 The parts that can be got wrong are read out of the source rather than written from memory. Input parameters come from the action signature and its `[Bind]` list, so a specification cannot name a field the form does not submit. The pre-condition comes from the `[Authorize]` attribute, including the `[TeacherSharedAction]` marker. The antiforgery step appears only where the controller validates one, and a hub method is described as a SignalR relay rather than a form post.
 
@@ -84,8 +84,8 @@ Nothing here is hand-placed. The drawings are emitted from the source by generat
 | Check | What it asserts |
 | --- | --- |
 | Structural | The XML parses in a real browser, no connector points at a shape that does not exist, no two shapes overlap |
-| Coverage | Every controller action and hub method appears in the use case diagram — 180 examined, four excluded as error pages or SignalR lifecycle callbacks |
-| Naming | All 156 distinct use case captions resolve to a real function in the source, and none is a single word |
+| Coverage | Every controller action and hub method a person starts appears in the use case diagram — 175 accounted for; error pages, SignalR lifecycle callbacks, the closed student web portal, one unreachable export and the client agent's own background calls are excluded |
+| Naming | All 140 distinct use case captions resolve to a real function in the source, and none is a single word |
 | Cardinality | Every relationship in both ERDs matches the nullability of the foreign key behind it |
 | Attributes | Every column in the schema diagrams and every attribute in the class model exists in the model, and none is missing |
 | Arrows | Every `<<extend>>` terminates on its base case, every `<<include>>` on the included behaviour |
