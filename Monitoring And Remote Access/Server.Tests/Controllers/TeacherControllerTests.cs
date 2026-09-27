@@ -564,6 +564,51 @@ public class TeacherControllerTests
     }
 
     [Fact]
+    public async Task BulkDeleteStudents_RemovesEveryTickedStudentFromTheList()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var first = new Student { StudentNumber = "T-1", FullName = "First Pick", Username = "tfirst", PasswordHash = "hash", Status = "Active" };
+        var second = new Student { StudentNumber = "T-2", FullName = "Second Pick", Username = "tsecond", PasswordHash = "hash", Status = "Active" };
+        var stays = new Student { StudentNumber = "T-3", FullName = "Not Ticked", Username = "tstays", PasswordHash = "hash", Status = "Active" };
+        db.Students.AddRange(first, second, stays);
+        await db.SaveChangesAsync();
+
+        var redirect = Assert.IsType<RedirectToActionResult>(
+            await controller.BulkDeleteStudents(new List<int> { first.Id, second.Id }, search: "Pick"));
+
+        Assert.Equal("Students", redirect.ActionName);
+        Assert.Equal("Pick", redirect.RouteValues?["search"]);
+        var list = Assert.IsAssignableFrom<IEnumerable<Student>>(Assert.IsType<ViewResult>(await controller.Students()).Model).ToList();
+        Assert.Equal(new[] { stays.Id }, list.Select(s => s.Id));
+        Assert.Equal("Archived", (await db.Students.FindAsync(first.Id))?.Status);
+        Assert.StartsWith("2 students removed.", controller.TempData["Message"] as string);
+    }
+
+    [Fact]
+    public async Task BulkRemoveStudents_TakesTheTickedStudentsOutOfTheClassOnly()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        db.Teachers.Add(new Teacher { TeacherId = 1, FirstName = "Maria", LastName = "Santos", Username = "msantos", PasswordHash = "hash", Status = "Active" });
+        var cls = new Class { ClassName = "Grade 4 - Justice", TeacherId = 1 };
+        db.Classes.Add(cls);
+        var leaving = new Student { StudentNumber = "T-4", FullName = "Leaving", Username = "tleaving", PasswordHash = "hash", Status = "Active", AdviserId = 1 };
+        var staying = new Student { StudentNumber = "T-5", FullName = "Staying", Username = "tstaying", PasswordHash = "hash", Status = "Active", AdviserId = 1 };
+        db.Students.AddRange(leaving, staying);
+        await db.SaveChangesAsync();
+        await controller.EnrollStudent(cls.ClassId, leaving.Id);
+        await controller.EnrollStudent(cls.ClassId, staying.Id);
+
+        await controller.BulkRemoveStudents(cls.ClassId, new List<int> { leaving.Id });
+
+        Assert.Null((await db.Students.FindAsync(leaving.Id))?.ClassId);
+        Assert.Equal("Active", (await db.Students.FindAsync(leaving.Id))?.Status);
+        Assert.Equal(cls.ClassId, (await db.Students.FindAsync(staying.Id))?.ClassId);
+        Assert.Equal("1 student removed from the class. Their accounts are kept.", controller.TempData["Message"]);
+    }
+
+    [Fact]
     public async Task Students_SearchReturnsAllMatchingStudentsGlobally()
     {
         using var db = GetDbContext();

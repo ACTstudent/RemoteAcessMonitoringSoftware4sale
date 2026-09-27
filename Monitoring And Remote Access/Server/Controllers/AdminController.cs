@@ -703,6 +703,29 @@ namespace Server.Controllers
             return RedirectToAction("Students");
         }
 
+        // The checkboxes on Students, and "Delete from CAMS" on a class roster:
+        // each selected student is removed exactly as the row's own Remove does.
+        [HttpPost, ValidateAntiForgeryToken]
+        [TeacherSharedAction]
+        public async Task<IActionResult> BulkDeleteStudents(List<int>? studentIds, int? classId = null)
+        {
+            if (!CheckAccess()) return Denied();
+            await RecordForEachStudentAsync(studentIds, RemoveFromCamsAsync, "ArchiveStudents",
+                "Removed students; historical records retained",
+                count => $"{StudentCount(count)} removed. Their history was kept; choose Removed in the status filter on Students to restore them.");
+            return classId.HasValue ? RedirectToAction("ClassDetails", new { id = classId.Value }) : RedirectToAction("Students");
+        }
+
+        private async Task<ClassOperationResult> RemoveFromCamsAsync(int studentId)
+        {
+            var student = await _context.Students.AsNoTracking().FirstOrDefaultAsync(s => s.Id == studentId);
+            if (student == null) return ClassOperationResult.Fail("A selected student was not found.");
+            if (string.Equals(student.Status, RecordStatus.Archived, StringComparison.OrdinalIgnoreCase))
+                return ClassOperationResult.Fail($"{student.FullName} was already removed.");
+            await _sessionLifecycle.EndStudentSessionsAndNotifyAsync(studentId);
+            return await _classManagement.ArchiveStudentAsync(studentId);
+        }
+
         // ---------- Roles & Permissions ----------
         public async Task<IActionResult> Roles()
         {
@@ -1079,7 +1102,43 @@ namespace Server.Controllers
         public async Task<IActionResult> Computers()
         {
             if (!CheckAccess()) return Denied();
+            // A workstation's assignment is the student's record number, which
+            // nobody knows by sight; the page shows and picks students by username.
+            var students = await _context.Students.AsNoTracking()
+                .OrderBy(s => s.Username)
+                .Select(s => new { s.Id, s.Username, s.FirstName, s.LastName, s.Status })
+                .ToListAsync();
+            ViewBag.AssignedStudents = students.ToDictionary(
+                s => s.Id.ToString(), s => (Username: s.Username, FullName: $"{s.FirstName} {s.LastName}".Trim()));
+            ViewBag.AssignableStudents = students
+                .Where(s => s.Status != RecordStatus.Archived)
+                .Select(s => (Id: s.Id.ToString(), Username: s.Username, FullName: $"{s.FirstName} {s.LastName}".Trim()))
+                .ToList();
             return View(await _context.Computers.OrderBy(c => c.LaboratoryStation).ToListAsync());
+        }
+
+        /// <summary>
+        /// The assignment a workstation form asked for: nothing, or a student who
+        /// exists and has not been removed. A student sits at one workstation at a
+        /// time, as signing in already ensures, so any other workstation they
+        /// held is released. Returns false, with the reason set, when the choice
+        /// is not a student.
+        /// </summary>
+        private async Task<(bool Ok, string? AssignedTo)> ResolveAssignmentAsync(string? requested, int? computerId)
+        {
+            if (string.IsNullOrWhiteSpace(requested)) return (true, null);
+            var key = requested.Trim();
+            if (!int.TryParse(key, out var studentId) ||
+                !await _context.Students.AnyAsync(s => s.Id == studentId && s.Status != RecordStatus.Archived))
+            {
+                TempData["ErrorMessage"] = "Choose the assigned student from the list.";
+                return (false, null);
+            }
+            foreach (var other in await _context.Computers
+                         .Where(c => c.AssignedTo == key && (!computerId.HasValue || c.ComputerId != computerId.Value))
+                         .ToListAsync())
+                other.AssignedTo = null;
+            return (true, key);
         }
 
         [TeacherSharedAction]
@@ -1109,6 +1168,9 @@ namespace Server.Controllers
                 return RedirectToAction(nameof(Computers));
             }
             computer.Status = string.IsNullOrWhiteSpace(computer.Status) ? "Available" : computer.Status;
+            var assignment = await ResolveAssignmentAsync(computer.AssignedTo, null);
+            if (!assignment.Ok) return RedirectToAction(nameof(Computers));
+            computer.AssignedTo = assignment.AssignedTo;
             _context.Computers.Add(computer);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateComputer", $"Added {computer.LaboratoryStation}");
@@ -1131,9 +1193,11 @@ namespace Server.Controllers
                     TempData["ErrorMessage"] = "A workstation with that station name already exists.";
                     return RedirectToAction(nameof(Computers));
                 }
+                var assignment = await ResolveAssignmentAsync(computer.AssignedTo, existing.ComputerId);
+                if (!assignment.Ok) return RedirectToAction(nameof(Computers));
                 existing.LaboratoryStation = station;
                 existing.Status = string.IsNullOrWhiteSpace(computer.Status) ? existing.Status : computer.Status.Trim();
-                existing.AssignedTo = computer.AssignedTo;
+                existing.AssignedTo = assignment.AssignedTo;
                 if (!string.Equals(previousStatus, existing.Status, StringComparison.OrdinalIgnoreCase))
                     _context.ComputerStatusHistories.Add(new ComputerStatusHistory
                     {
@@ -1578,6 +1642,19 @@ namespace Server.Controllers
             var result = await _classManagement.RemoveStudentAsync(classId, studentId);
             await RecordAsync(result, "RemoveStudent", $"Removed student {studentId} from class {classId}",
                 "Student removed from class.");
+            return RedirectToAction("ClassDetails", new { id = classId });
+        }
+
+        // The roster's checkboxes: the selected students leave this class and
+        // keep their accounts, as with each row's Remove.
+        [HttpPost, ValidateAntiForgeryToken]
+        [TeacherSharedAction]
+        public async Task<IActionResult> BulkRemoveStudents(int classId, List<int>? studentIds)
+        {
+            if (!CheckAccess()) return Denied();
+            await RecordForEachStudentAsync(studentIds, studentId => _classManagement.RemoveStudentAsync(classId, studentId),
+                "RemoveStudents", $"Removed students from class {classId}",
+                count => $"{StudentCount(count)} removed from the class. Their accounts are kept.");
             return RedirectToAction("ClassDetails", new { id = classId });
         }
 

@@ -896,6 +896,31 @@ namespace Server.Controllers
             return RedirectToAction(nameof(Students), new { search });
         }
 
+        // The checkboxes on Student Profiles, and "Delete from CAMS" on a class
+        // roster: each selected student is removed exactly as the row's own Remove does.
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> BulkDeleteStudents(List<int>? studentIds, int? classId = null, string? search = null)
+        {
+            if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
+
+            await RecordForEachStudentAsync(studentIds, async studentId =>
+                {
+                    var student = await AccessibleStudents(teacherId.Value).AsNoTracking().FirstOrDefaultAsync(s => s.Id == studentId);
+                    if (student == null) return ClassOperationResult.Fail("A selected student was not found.");
+                    if (string.Equals(student.Status, RecordStatus.Archived, StringComparison.OrdinalIgnoreCase))
+                        return ClassOperationResult.Fail($"{student.FullName} was already removed.");
+                    await _sessionLifecycle.EndStudentSessionsAndNotifyAsync(studentId);
+                    return await _classManagement.ArchiveStudentAsync(studentId);
+                },
+                "ArchiveStudents", "Removed students; history retained",
+                count => $"{StudentCount(count)} removed. Their history was kept, and an administrator can restore the accounts.");
+            return classId.HasValue
+                ? RedirectToAction(nameof(ClassDetails), new { id = classId.Value })
+                : RedirectToAction(nameof(Students), new { search });
+        }
+
         // ---------- Computer Management ----------
         public async Task<IActionResult> Computers()
         {
@@ -910,6 +935,7 @@ namespace Server.Controllers
                 .ToListAsync();
             var studentIds = students.Select(student => student.Id).ToList();
             ViewBag.StudentNames = students.ToDictionary(student => student.Id.ToString(), student => student.FullName);
+            ViewBag.StudentUsernames = students.ToDictionary(student => student.Id.ToString(), student => student.Username);
             var computers = await AccessibleComputers(studentIds)
                 .AsNoTracking()
                 .OrderBy(computer => computer.LaboratoryStation)
@@ -1253,6 +1279,24 @@ namespace Server.Controllers
             var result = await _classManagement.RemoveStudentAsync(classId, studentId, teacherId.Value);
             await RecordAsync(result, "RemoveStudent", $"Removed student {studentId} from class {classId}",
                 "Student removed from class.");
+            return RedirectToAction("ClassDetails", new { id = classId });
+        }
+
+        // The roster's checkboxes: the selected students leave this class and
+        // keep their accounts, as with each row's Remove.
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> BulkRemoveStudents(int classId, List<int>? studentIds)
+        {
+            if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return Denied();
+
+            await RecordForEachStudentAsync(studentIds, async studentId =>
+                    await AccessibleStudents(teacherId.Value).AnyAsync(student => student.Id == studentId)
+                        ? await _classManagement.RemoveStudentAsync(classId, studentId, teacherId.Value)
+                        : ClassOperationResult.Fail("A selected student was not found."),
+                "RemoveStudents", $"Removed students from class {classId}",
+                count => $"{StudentCount(count)} removed from the class. Their accounts are kept.");
             return RedirectToAction("ClassDetails", new { id = classId });
         }
     }

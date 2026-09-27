@@ -120,6 +120,35 @@ document.addEventListener('click', function (event) {
     }
 });
 
+// One search rule for every search box in the portal. Each typed word must
+// appear in the record. A word with letters may sit anywhere in it ("reyes"
+// finds "areyes"). A number must start a number: "6" finds "Grade 6", not the
+// 6 inside "2026-2027", and neither the 00 of "10:00". A one- or two-digit
+// number must also be the whole number, so "Grade 1" does not find a class
+// that meets at 1:00 pm or 10:00 am; a longer one may be the start of an ID.
+window.camsSearch = (function () {
+    function normalize(value) {
+        return String(value == null ? '' : value).normalize('NFKD').replace(/[̀-ͯ]/g, '').trim().toLocaleLowerCase();
+    }
+    function wordTest(word) {
+        if (/\p{L}/u.test(word)) {
+            return function (text) { return text.indexOf(word) !== -1; };
+        }
+        var escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        var pattern = new RegExp('(?<!\\p{N}|\\p{N}[:.])' + escaped + (word.length <= 2 ? '(?!\\p{N}|[:.]\\p{N})' : ''), 'u');
+        return function (text) { return pattern.test(text); };
+    }
+    // matcher(query) returns a test for a record's text; an empty query matches everything.
+    function matcher(query) {
+        var tests = normalize(query).split(/\s+/).filter(Boolean).map(wordTest);
+        return function (text) {
+            var value = normalize(text);
+            return tests.every(function (test) { return test(value); });
+        };
+    }
+    return { normalize: normalize, matcher: matcher };
+})();
+
 // Bulk pickers: "Select all" toggle and type-to-filter over a checkbox list.
 document.addEventListener('click', function (event) {
     var toggle = event.target.closest('[data-check-all]');
@@ -148,9 +177,9 @@ document.addEventListener('input', function (event) {
     if (!list) {
         return;
     }
-    var term = field.value.trim().toLowerCase();
+    var matches = window.camsSearch.matcher(field.value);
     Array.prototype.forEach.call(list.querySelectorAll('label'), function (row) {
-        row.hidden = term.length > 0 && row.textContent.toLowerCase().indexOf(term) === -1;
+        row.hidden = !matches(row.textContent);
     });
 });
 

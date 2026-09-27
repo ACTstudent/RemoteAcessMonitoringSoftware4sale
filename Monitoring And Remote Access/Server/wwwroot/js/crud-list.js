@@ -64,14 +64,19 @@
         let page = 1;
         let matchingItems = items;
         // Only visible record text is indexed; field values, credentials and action labels are excluded.
+        // A row's picker shows its current choice - a student's class or
+        // workstation - so that one option is indexed too, never the rest of the list.
         const records = items.map(item => {
+            const chosen = Array.from(item.querySelectorAll('select'))
+                .filter(select => !select.closest('.modal, .crud-card-actions, .crud-actions'))
+                .map(select => select.selectedOptions[0]?.textContent || '');
             const clone = item.cloneNode(true);
             clone.querySelectorAll('input, select, textarea, button, form, .crud-card-actions, .modal').forEach(el => el.remove());
             if (clone.matches('tr')) {
                 const last = clone.lastElementChild;
                 if (item.lastElementChild?.querySelector('button, form, a')) last?.remove();
             }
-            return { element: item, text: normalize(item.dataset.crudSearchText || clone.textContent) };
+            return { element: item, text: normalize(item.dataset.crudSearchText || [clone.textContent, ...chosen].join(' ')) };
         });
         // Server-rendered zero-row messages are replaced by one shared empty state.
         own('tbody > tr').filter(row => !row.hasAttribute('data-crud-item') && row.querySelector('td[colspan]')).forEach(row => { row.hidden = true; });
@@ -107,14 +112,20 @@
         const askedFor = record => filters.some(filter => filter.value && filterMatches(filter, record));
 
         function render() {
-            const words = normalize(search?.value).split(/\s+/).filter(Boolean);
-            const matches = records.filter(record => words.every(word => record.text.includes(word)) &&
+            // The portal's one search rule (site.js): "Grade 6" must not match
+            // every class through the 6 in its "2026-2027" academic year.
+            const searchMatches = window.camsSearch.matcher(search?.value);
+            const matches = records.filter(record => searchMatches(record.text) &&
                 filters.every(filter => !filter.value || filterMatches(filter, record)) &&
                 (!setAside(record) || askedFor(record)));
             const pages = Math.max(1, Math.ceil(matches.length / pageSize));
             // Set-aside records are not part of the total unless asked for.
             const total = records.filter(record => !setAside(record) || askedFor(record)).length;
             matchingItems = matches.map(record => record.element);
+            // bulk-select.js reads which records the search and filters left,
+            // on every page, to select exactly those and drop the rest.
+            panel.camsMatchingItems = matchingItems;
+            panel.dispatchEvent(new CustomEvent('cams:crud-render'));
             page = Math.min(Math.max(page, 1), pages);
             items.forEach(item => { item.hidden = true; });
             // In scroll mode pageSize is Infinity, and (page - 1) * Infinity is

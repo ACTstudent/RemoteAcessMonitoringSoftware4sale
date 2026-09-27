@@ -8,6 +8,7 @@
     var inUse = Model.Count(c => c.Status == "In Use");
     var maintenance = Model.Count(c => c.Status == "Maintenance");
     var studentNames = ViewBag.StudentNames as IDictionary<string, string> ?? new Dictionary<string, string>();
+    var studentUsernames = ViewBag.StudentUsernames as IDictionary<string, string> ?? new Dictionary<string, string>();
     var statusOptions = new[] { "Available", "Assigned", "In Use", "Maintenance", "Online", "Offline" };
 }
 
@@ -99,7 +100,7 @@
                 <tr>
                     <th>Station Name</th>
                     <th>Status</th>
-                    <th>Assigned Student ID</th>
+                    <th>Assigned Student</th>
                     <th class="text-end">Update Status</th>
                 </tr>
             </thead>
@@ -132,7 +133,7 @@
                             @if (assignedName != null)
                             {
                                 <span class="fw-semibold">@assignedName</span><br />
-                                <span class="small text-muted font-monospace">Student #@c.AssignedTo</span>
+                                <span class="small text-muted font-monospace">@(studentUsernames.TryGetValue(c.AssignedTo!, out var username) ? "@" + username : "")</span>
                             }
                             else
                             {

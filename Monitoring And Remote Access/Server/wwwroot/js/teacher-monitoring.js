@@ -30,7 +30,7 @@ function updateCount() {
 }
 
 function applyStationFilters() {
-    const query = document.getElementById("gridSearch").value.trim().toLowerCase();
+    const searchMatches = window.camsSearch.matcher(document.getElementById("gridSearch").value);
     let visible = 0;
     activeUnits.forEach((unit, connectionId) => {
         const column = document.getElementById(`unit-card-${connectionId}`);
@@ -39,7 +39,7 @@ function applyStationFilters() {
             || (stationFilter === "active" && unit.activityKnown && !unit.isIdle)
             || (stationFilter === "idle" && unit.isIdle)
             || (stationFilter === "attention" && unit.hasAlert);
-        const matchesSearch = `${unit.pcName} ${unit.studentId} ${unit.applicationName}`.toLowerCase().includes(query);
+        const matchesSearch = searchMatches(`${unit.pcName} ${unit.studentId} ${unit.applicationName}`);
         column.style.display = matchesState && matchesSearch ? "" : "none";
         if (matchesState && matchesSearch) visible++;
     });

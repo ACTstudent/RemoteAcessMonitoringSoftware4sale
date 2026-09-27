@@ -625,6 +625,82 @@ public class AdminControllerTests
         Assert.Null(await db.RestrictionRules.FindAsync(rule.RestrictionRuleId));
     }
 
+    // ---------- Workstation assignment by student ----------
+
+    // A workstation's assignment is the student's record number, which the page
+    // used to print as "Student #3". It shows the username now, and the form
+    // picks from the students instead of taking a number typed by hand.
+    [Fact]
+    public async Task Computers_ShowsTheAssignedStudentByUsername()
+    {
+        using var db = GetDbContext();
+        var student = new Student { StudentNumber = "S-100", Username = "areyes", FirstName = "Andrea", LastName = "Reyes", PasswordHash = "h" };
+        var removed = new Student { StudentNumber = "S-101", Username = "gone", FirstName = "Gone", LastName = "Away", PasswordHash = "h", Status = RecordStatus.Archived };
+        db.Students.AddRange(student, removed);
+        await db.SaveChangesAsync();
+        db.Computers.Add(new Computer { LaboratoryStation = "Lab3-Pc4", AssignedTo = student.Id.ToString() });
+        await db.SaveChangesAsync();
+
+        var view = Assert.IsType<ViewResult>(await CreateController(db).Computers());
+
+        var assigned = Assert.IsAssignableFrom<IDictionary<string, (string Username, string FullName)>>(view.ViewData["AssignedStudents"]);
+        Assert.Equal(("areyes", "Andrea Reyes"), assigned[student.Id.ToString()]);
+        var assignable = Assert.IsAssignableFrom<IReadOnlyList<(string Id, string Username, string FullName)>>(view.ViewData["AssignableStudents"]);
+        Assert.Contains(assignable, s => s.Username == "areyes");
+        Assert.DoesNotContain(assignable, s => s.Username == "gone");
+    }
+
+    [Fact]
+    public async Task UpdateComputer_AssignsTheStudentAndReleasesTheirOtherWorkstation()
+    {
+        using var db = GetDbContext();
+        var student = new Student { StudentNumber = "S-102", Username = "cmendoza", FirstName = "Carlo", LastName = "Mendoza", PasswordHash = "h" };
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+        var key = student.Id.ToString();
+        var previous = new Computer { LaboratoryStation = "Lab3-Pc1", AssignedTo = key, Status = "Available" };
+        var target = new Computer { LaboratoryStation = "Lab3-Pc4", Status = "Available" };
+        db.Computers.AddRange(previous, target);
+        await db.SaveChangesAsync();
+
+        await CreateController(db).UpdateComputer(new Computer { ComputerId = target.ComputerId, LaboratoryStation = "Lab3-Pc4", Status = "Available", AssignedTo = key });
+
+        Assert.Equal(key, (await db.Computers.FindAsync(target.ComputerId))!.AssignedTo);
+        Assert.Null((await db.Computers.FindAsync(previous.ComputerId))!.AssignedTo);
+    }
+
+    [Theory]
+    [InlineData("S-99")]      // a student number typed by hand, not a student
+    [InlineData("424242")]    // no such student
+    public async Task UpdateComputer_RefusesAnAssignmentThatIsNotAStudent(string assignedTo)
+    {
+        using var db = GetDbContext();
+        var computer = new Computer { LaboratoryStation = "Lab3-Pc4", Status = "Available" };
+        db.Computers.Add(computer);
+        await db.SaveChangesAsync();
+        var controller = CreateController(db);
+
+        await controller.UpdateComputer(new Computer { ComputerId = computer.ComputerId, LaboratoryStation = "Lab3-Pc4", Status = "Maintenance", AssignedTo = assignedTo });
+
+        var saved = (await db.Computers.FindAsync(computer.ComputerId))!;
+        Assert.Null(saved.AssignedTo);
+        Assert.Equal("Available", saved.Status);
+        Assert.Equal("Choose the assigned student from the list.", controller.TempData["ErrorMessage"]);
+    }
+
+    [Fact]
+    public async Task CreateComputer_RefusesARemovedStudent()
+    {
+        using var db = GetDbContext();
+        var removed = new Student { StudentNumber = "S-103", Username = "gone", FirstName = "Gone", LastName = "Away", PasswordHash = "h", Status = RecordStatus.Archived };
+        db.Students.Add(removed);
+        await db.SaveChangesAsync();
+
+        await CreateController(db).CreateComputer(new Computer { LaboratoryStation = "Lab3-Pc9", AssignedTo = removed.Id.ToString() });
+
+        Assert.Empty(db.Computers);
+    }
+
     // "facebook.com" whitelisted as an Application was saved, and did nothing -
     // application rules are not enforced - so the whitelist looked broken.
     [Fact]
@@ -852,6 +928,102 @@ public class AdminControllerTests
 
         var removed = await db.Students.FindAsync(student.Id);
         Assert.Null(removed?.ClassId);
+    }
+
+    // ---------- Bulk delete ----------
+
+    [Fact]
+    public async Task BulkDeleteStudents_RemovesEveryTickedStudentAndNoOneElse()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var first = new Student { StudentNumber = "B-1", FullName = "First Pick", Username = "first", PasswordHash = "hash", Status = "Active" };
+        var second = new Student { StudentNumber = "B-2", FullName = "Second Pick", Username = "second", PasswordHash = "hash", Status = "Active" };
+        var stays = new Student { StudentNumber = "B-3", FullName = "Not Ticked", Username = "stays", PasswordHash = "hash", Status = "Active" };
+        db.Students.AddRange(first, second, stays);
+        await db.SaveChangesAsync();
+        db.Computers.Add(new Computer { LaboratoryStation = "PC-21", Status = "Assigned", AssignedTo = first.Id.ToString() });
+        await db.SaveChangesAsync();
+
+        // A double-posted id counts once.
+        var result = await controller.BulkDeleteStudents(new List<int> { first.Id, second.Id, first.Id });
+
+        Assert.Equal("Students", Assert.IsType<RedirectToActionResult>(result).ActionName);
+        Assert.Equal("Archived", (await db.Students.FindAsync(first.Id))?.Status);
+        Assert.Equal("Archived", (await db.Students.FindAsync(second.Id))?.Status);
+        Assert.Equal("Active", (await db.Students.FindAsync(stays.Id))?.Status);
+        Assert.Null((await db.Computers.SingleAsync()).AssignedTo);
+        Assert.StartsWith("2 students removed.", controller.TempData["Message"] as string);
+        var audit = await db.AuditLogs.SingleAsync(a => a.Action == "ArchiveStudents");
+        Assert.Contains("First Pick", audit.Details);
+        Assert.Contains("Second Pick", audit.Details);
+    }
+
+    [Fact]
+    public async Task BulkDeleteStudents_FromAClassRoster_ReturnsToThatClass()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var cls = new Class { ClassName = "Grade 6 - Sampaguita" };
+        db.Classes.Add(cls);
+        await db.SaveChangesAsync();
+        var student = new Student { StudentNumber = "B-4", FullName = "In Class", Username = "inclass", PasswordHash = "hash", Status = "Active", ClassId = cls.ClassId };
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+        await controller.EnrollStudent(cls.ClassId, student.Id);
+
+        var redirect = Assert.IsType<RedirectToActionResult>(await controller.BulkDeleteStudents(new List<int> { student.Id }, cls.ClassId));
+
+        Assert.Equal("ClassDetails", redirect.ActionName);
+        Assert.Equal(cls.ClassId, redirect.RouteValues?["id"]);
+        var archived = await db.Students.FindAsync(student.Id);
+        Assert.Equal("Archived", archived?.Status);
+        Assert.Null(archived?.ClassId);
+        Assert.False(await db.ClassStudents.AnyAsync(cs => cs.StudentId == student.Id));
+    }
+
+    [Fact]
+    public async Task BulkDeleteStudents_WithNothingTicked_ChangesNothing()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        db.Students.Add(new Student { StudentNumber = "B-5", FullName = "Untouched", Username = "untouched", PasswordHash = "hash", Status = "Active" });
+        await db.SaveChangesAsync();
+
+        await controller.BulkDeleteStudents(null);
+
+        Assert.Equal("Select at least one student first.", controller.TempData["ErrorMessage"]);
+        Assert.Equal("Active", (await db.Students.SingleAsync()).Status);
+        Assert.False(await db.AuditLogs.AnyAsync(a => a.Action == "ArchiveStudents"));
+    }
+
+    [Fact]
+    public async Task BulkRemoveStudents_TakesTheTickedStudentsOutOfTheClassAndKeepsTheirAccounts()
+    {
+        using var db = GetDbContext();
+        var controller = CreateController(db);
+        var teacher = new Teacher { FirstName = "Marc", LastName = "Ponce", Username = "mponce", PasswordHash = "hash", Status = "Active" };
+        db.Teachers.Add(teacher);
+        await db.SaveChangesAsync();
+        var cls = new Class { ClassName = "Grade 5 - Opal", TeacherId = teacher.TeacherId };
+        db.Classes.Add(cls);
+        var leaving = new Student { StudentNumber = "R-1", FullName = "Leaving One", Username = "leaving1", PasswordHash = "hash", Status = "Active" };
+        var alsoLeaving = new Student { StudentNumber = "R-2", FullName = "Leaving Two", Username = "leaving2", PasswordHash = "hash", Status = "Active" };
+        var staying = new Student { StudentNumber = "R-3", FullName = "Staying", Username = "staying", PasswordHash = "hash", Status = "Active" };
+        db.Students.AddRange(leaving, alsoLeaving, staying);
+        await db.SaveChangesAsync();
+        foreach (var student in new[] { leaving, alsoLeaving, staying })
+            await controller.EnrollStudent(cls.ClassId, student.Id);
+
+        var redirect = Assert.IsType<RedirectToActionResult>(
+            await controller.BulkRemoveStudents(cls.ClassId, new List<int> { leaving.Id, alsoLeaving.Id }));
+
+        Assert.Equal("ClassDetails", redirect.ActionName);
+        Assert.Null((await db.Students.FindAsync(leaving.Id))?.ClassId);
+        Assert.Null((await db.Students.FindAsync(alsoLeaving.Id))?.ClassId);
+        Assert.Equal(cls.ClassId, (await db.Students.FindAsync(staying.Id))?.ClassId);
+        Assert.All(await db.Students.ToListAsync(), s => Assert.Equal("Active", s.Status));
+        Assert.Equal("2 students removed from the class. Their accounts are kept.", controller.TempData["Message"]);
     }
 
     [Fact]

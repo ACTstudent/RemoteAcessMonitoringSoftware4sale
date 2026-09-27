@@ -69,7 +69,7 @@
 </div>
 
 <!-- Student Roster Table Card -->
-<div class="card crud-panel border-0 shadow-sm rounded-4 overflow-hidden mb-4" data-crud-list data-crud-label="students" data-crud-page-size="6">
+<div class="card crud-panel border-0 shadow-sm rounded-4 overflow-hidden mb-4" data-crud-list data-crud-label="students" data-crud-page-size="6" data-bulk-select data-bulk-noun="student" data-bulk-nouns="students">
     <div class="crud-toolbar">
         <input id="studentSearch" type="search" class="form-control crud-search" data-crud-search aria-label="Search students" placeholder="Search student name, ID, or username..." />
         <select class="form-select" data-crud-filter="status" aria-label="Filter students by status">
@@ -85,10 +85,21 @@
             <i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Add Student
         </button>
     </div>
+    @* Appears once a student is ticked (bulk-select.js). Delete here is the row's
+       own Remove, applied to every ticked student. *@
+    <div class="crud-bulk-bar" data-bulk-bar hidden>
+        <span data-bulk-count></span>
+        <form method="post" action="/Admin/BulkDeleteStudents" data-bulk-form data-bulk-field="studentIds" data-confirm-title="Delete students" data-confirm-label="Delete" data-bulk-confirm="Remove {count} from CAMS? They disappear from the student lists and can no longer log in. **Their session history is kept**, and you can restore them from the Removed filter.">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-danger rounded-pill"><i class="bi bi-trash me-1" aria-hidden="true"></i>Delete selected</button>
+        </form>
+        <button type="button" class="btn btn-light rounded-pill" data-bulk-clear>Clear selection</button>
+    </div>
     <div class="table-responsive">
         <table class="table custom-table align-middle mb-0" id="studentTable">
             <thead>
                 <tr>
+                    <th class="crud-select-cell"><input type="checkbox" class="form-check-input" data-bulk-all aria-label="Select every student in the list" /></th>
                     <th>Student ID</th>
                     <th>Full Name</th>
                     <th>Username</th>
@@ -111,6 +122,12 @@
    even when its value is null, so a conditional value put the marker on
    every row and "All status" showed nothing. *@
 <tr data-crud-item data-status="@(isArchived ? "Archived" : isActive ? "Active" : "Inactive")" @(isArchived ? Html.Raw("data-crud-set-aside") : Html.Raw(string.Empty))>
+                        <td class="crud-select-cell">
+                            @if (!isArchived)
+                            {
+                                <input type="checkbox" class="form-check-input" data-bulk-item value="@s.Id" data-bulk-name="@s.FullName" aria-label="Select @s.FullName" />
+                            }
+                        </td>
                         <td class="fw-bold text-muted font-monospace">@s.StudentNumber</td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
@@ -198,7 +215,7 @@
                 @if (!Model.Any())
                 {
                     <tr>
-                        <td colspan="7" class="text-center empty-state"><i class="bi bi-mortarboard empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No student records registered yet.</span></td>
+                        <td colspan="8" class="text-center empty-state"><i class="bi bi-mortarboard empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No student records registered yet.</span></td>
                     </tr>
                 }
             </tbody>
@@ -351,4 +368,5 @@
 @section Scripts {
     <script src="~/js/student-move-confirm.js" asp-append-version="true"></script>
     <script src="~/js/auto-submit-select.js" asp-append-version="true"></script>
+    <script src="~/js/bulk-select.js" asp-append-version="true"></script>
 }

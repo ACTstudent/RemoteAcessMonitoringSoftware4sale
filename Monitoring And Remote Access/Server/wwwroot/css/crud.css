@@ -75,6 +75,18 @@
 .crud-page .log-filter-options { padding-top: 4px; }
 .crud-page .log-filter-options .log-filter-field { max-width: 220px; }
 .crud-page .log-bulk-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; padding: 0 0 16px; }
+/* Bulk selection (bulk-select.js): a checkbox column and a bar that appears
+   above the table while records are selected. */
+.crud-page .crud-select-cell { width: 44px; padding-right: 0 !important; }
+.crud-page .crud-select-cell .form-check-input { width: 1.05rem; height: 1.05rem; margin: 0; cursor: pointer; border-color: var(--border-strong); }
+.crud-page .crud-select-cell .form-check-input:checked,
+.crud-page .crud-select-cell .form-check-input:indeterminate { background-color: var(--accent-emerald); border-color: var(--accent-emerald); }
+.crud-page .crud-panel .custom-table tbody tr.is-selected > td { background: var(--surface-sunk); }
+.crud-page .crud-bulk-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 0 0 14px; padding: 9px 12px 9px 16px; border: 1px solid var(--border-strong); border-radius: var(--radius-md); background: var(--surface-sunk); color: var(--text-on-sage); font-size: .8rem; }
+.crud-page .crud-bulk-bar [data-bulk-count] { font-weight: 650; margin-right: auto; }
+.crud-page .crud-bulk-bar form { margin: 0; }
+.crud-page .crud-bulk-bar .btn { font-size: .76rem; padding: 6px 12px !important; white-space: nowrap; }
+.crud-page .crud-bulk-bar[hidden] { display: none !important; }
 .crud-page .log-directory-panel .custom-table tbody td.log-empty-state { padding: 28px 12px; }
 .crud-page .log-directory-panel .empty-state-icon { font-size: 1.7rem; margin-bottom: 8px; }
 .crud-page .log-directory-panel .empty-state-message { font-size: .82rem; }

@@ -7,6 +7,8 @@
     var availableComputers = Model.Count(c => c.Status == "Available");
     var inUseComputers = Model.Count(c => c.Status == "In Use");
     var maintenanceComputers = Model.Count(c => c.Status == "Maintenance");
+    var assignedStudents = ViewBag.AssignedStudents as IDictionary<string, (string Username, string FullName)> ?? new Dictionary<string, (string Username, string FullName)>();
+    var assignableStudents = ViewBag.AssignableStudents as IReadOnlyList<(string Id, string Username, string FullName)> ?? Array.Empty<(string Id, string Username, string FullName)>();
 }
 
 <!-- Header Row -->
@@ -91,7 +93,7 @@
                     <th>Unit ID</th>
                     <th>Station Name</th>
                     <th>Status</th>
-                    <th>Assigned Student ID</th>
+                    <th>Assigned Student</th>
                     <th class="text-end">Actions</th>
                 </tr>
             </thead>
@@ -119,7 +121,14 @@
                                 <span class="badge bg-secondary rounded-pill px-3 py-1">@c.Status</span>
                             }
                         </td>
-                        <td class="font-monospace">@(string.IsNullOrEmpty(c.AssignedTo) ? "-" : $"Student #{c.AssignedTo}")</td>
+                        <td>@if (!string.IsNullOrEmpty(c.AssignedTo) && assignedStudents.TryGetValue(c.AssignedTo, out var assigned))
+                        {
+                            <span class="fw-semibold font-monospace">@@@assigned.Username</span><span class="d-block small text-muted">@assigned.FullName</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">-</span>
+                        }</td>
                         <td>
                             <div class="crud-actions d-flex justify-content-end gap-1">
                                 <a asp-controller="Admin" asp-action="ComputerHistory" asp-route-id="@c.ComputerId" class="btn btn-sm btn-outline-secondary crud-action" title="View status history"><i class="bi bi-clock-history" aria-hidden="true"></i><span class="visually-hidden">View status history for @c.LaboratoryStation</span></a>
@@ -184,8 +193,14 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small" for="computers-assigned-student-id-optional">Assigned Student ID (Optional)</label>
-                        <input id="computers-assigned-student-id-optional" type="text" name="AssignedTo" class="form-control filter-control" placeholder="Optional Student ID" />
+                        <label class="form-label fw-semibold text-muted small" for="computers-assigned-student-id-optional">Assigned Student (Optional)</label>
+                        <select id="computers-assigned-student-id-optional" name="AssignedTo" class="form-select filter-control">
+                            <option value="">Not assigned</option>
+                            @foreach (var student in assignableStudents)
+                            {
+                                <option value="@student.Id">@student.Username - @student.FullName</option>
+                            }
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
@@ -229,8 +244,14 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-muted small" for="computers-assigned-student-id-optional-@c.ComputerId">Assigned Student ID (Optional)</label>
-                            <input id="computers-assigned-student-id-optional-@c.ComputerId" type="text" name="AssignedTo" class="form-control filter-control" value="@c.AssignedTo" placeholder="Optional Student ID" />
+                            <label class="form-label fw-semibold text-muted small" for="computers-assigned-student-id-optional-@c.ComputerId">Assigned Student (Optional)</label>
+                            <select id="computers-assigned-student-id-optional-@c.ComputerId" name="AssignedTo" class="form-select filter-control">
+                                <option value="">Not assigned</option>
+                                @foreach (var student in assignableStudents)
+                                {
+                                    <option value="@student.Id" selected="@(student.Id == c.AssignedTo ? "selected" : null)">@student.Username - @student.FullName</option>
+                                }
+                            </select>
                         </div>
                     </div>
                     <div class="modal-footer border-0 pt-0">

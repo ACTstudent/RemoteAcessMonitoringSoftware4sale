@@ -83,6 +83,51 @@ public abstract class PortalController : Controller
     }
 
     /// <summary>
+    /// The bulk actions on Students and on a class roster: applies one student
+    /// operation to each selected student and reports the lot in one notice.
+    /// The students it worked for are audited together; the first refusals
+    /// are shown beside the count, so one bad row does not hide the rest
+    /// having gone through.
+    /// </summary>
+    protected async Task RecordForEachStudentAsync(
+        IEnumerable<int>? studentIds,
+        Func<int, Task<ClassOperationResult>> operation,
+        string auditAction,
+        string auditDetails,
+        Func<int, string> successMessage)
+    {
+        var selected = (studentIds ?? Enumerable.Empty<int>()).Distinct().ToList();
+        if (selected.Count == 0)
+        {
+            TempData["ErrorMessage"] = "Select at least one student first.";
+            return;
+        }
+
+        var done = new List<string>();
+        var failures = new List<string>();
+        foreach (var studentId in selected)
+        {
+            var result = await operation(studentId);
+            if (result.Success) done.Add($"{result.Name} ({studentId})");
+            else failures.Add(result.Error ?? $"Student {studentId} could not be changed.");
+        }
+
+        if (done.Count > 0)
+        {
+            var details = $"{auditDetails}: {string.Join(", ", done)}";
+            await AuditAsync(auditAction, details.Length <= 1000 ? details : details[..997] + "...");
+            TempData["Message"] = successMessage(done.Count);
+        }
+        if (failures.Count > 0)
+        {
+            TempData["ErrorMessage"] = string.Join(" ", failures.Distinct().Take(3));
+        }
+    }
+
+    /// <summary>"1 student", "3 students": for the bulk notices.</summary>
+    protected static string StudentCount(int count) => count == 1 ? "1 student" : $"{count} students";
+
+    /// <summary>
     /// Quotes a value for a CSV cell. One implementation, in
     /// <see cref="CsvExport"/>; the short name is kept because the export
     /// actions read better with it.

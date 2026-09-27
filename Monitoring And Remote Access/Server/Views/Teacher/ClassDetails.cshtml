@@ -29,17 +29,25 @@
     <div class="col-md-3 col-sm-6"><div class="metric-card"><div class="metric-title">Schedule</div><div class="metric-value fs-6">@(string.IsNullOrWhiteSpace(Model.Schedule) ? "Flexible" : Model.Schedule)</div></div></div>
 </div>
 
-<div class="crud-panel" data-crud-list data-crud-label="enrolled students" data-crud-page-size="6">
+<div class="crud-panel" data-crud-list data-crud-label="enrolled students" data-crud-page-size="6" data-bulk-select data-bulk-noun="student" data-bulk-nouns="students">
 <div class="crud-toolbar"><label class="visually-hidden" for="rosterSearch">Search enrolled students</label><input id="rosterSearch" type="search" class="form-control crud-search" data-crud-search placeholder="Search enrolled students..." aria-label="Search enrolled students" />
 <span class="small text-muted ms-auto">@roster.Count enrolled</span></div>
-    <div class="table-responsive"><table class="table custom-table align-middle mb-0"><thead><tr><th>Student ID</th><th>Full Name</th><th>Username</th><th>Date Enrolled</th><th class="text-end">Actions</th></tr></thead><tbody>
+@* Appears once a student is ticked (bulk-select.js): each row's Remove, or the
+   Students page's Delete, applied to every ticked student. *@
+<div class="crud-bulk-bar" data-bulk-bar hidden>
+    <span data-bulk-count></span>
+    <form method="post" asp-controller="Teacher" asp-action="BulkRemoveStudents" data-bulk-form data-bulk-field="studentIds" data-confirm-title="Remove from class" data-confirm-label="Remove" data-bulk-confirm="Remove {count} from @(Model.ClassName)? **Their student accounts are kept.**"><input type="hidden" name="classId" value="@Model.ClassId" />@Html.AntiForgeryToken()<button type="submit" class="btn btn-outline-danger rounded-pill"><i class="bi bi-person-x me-1" aria-hidden="true"></i>Remove from class</button></form>
+    <form method="post" asp-controller="Teacher" asp-action="BulkDeleteStudents" data-bulk-form data-bulk-field="studentIds" data-confirm-title="Delete students" data-confirm-label="Delete" data-bulk-confirm="Remove {count} from CAMS? They leave this class and every student list, and can no longer log in. **Their session history is kept**, and an administrator can restore the accounts."><input type="hidden" name="classId" value="@Model.ClassId" />@Html.AntiForgeryToken()<button type="submit" class="btn btn-danger rounded-pill"><i class="bi bi-trash me-1" aria-hidden="true"></i>Delete from CAMS</button></form>
+    <button type="button" class="btn btn-light rounded-pill" data-bulk-clear>Clear selection</button>
+</div>
+    <div class="table-responsive"><table class="table custom-table align-middle mb-0"><thead><tr><th class="crud-select-cell"><input type="checkbox" class="form-check-input" data-bulk-all aria-label="Select every enrolled student in the list" /></th><th>Student ID</th><th>Full Name</th><th>Username</th><th>Date Enrolled</th><th class="text-end">Actions</th></tr></thead><tbody>
         @foreach (var membership in roster)
         {
-            <tr data-crud-item><td class="fw-bold text-muted font-monospace">@membership.Student!.StudentNumber</td><td><div class="d-flex align-items-center gap-2"><div class="user-avatar-circle user-avatar-sm"><i class="bi bi-person-fill"></i></div><span class="fw-bold text-dark">@membership.Student.FullName</span></div></td><td class="font-monospace text-emerald-700">&#64;@membership.Student.Username</td><td>@membership.EnrolledAt.ToDisplayLocal().ToString("MMM dd, yyyy")</td><td class="text-end"><form method="post" asp-controller="Teacher" asp-action="RemoveStudent" class="m-0" data-confirm-subject="@membership.Student.FullName" data-confirm="Remove this student from @(Model.ClassName)? **Their student account is kept.**" data-confirm-title="Remove student" data-confirm-label="Remove"><input type="hidden" name="classId" value="@Model.ClassId" /><input type="hidden" name="studentId" value="@membership.StudentId" />@Html.AntiForgeryToken()<button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"><i class="bi bi-person-x me-1"></i>Remove</button></form></td></tr>
+            <tr data-crud-item><td class="crud-select-cell"><input type="checkbox" class="form-check-input" data-bulk-item value="@membership.StudentId" data-bulk-name="@membership.Student!.FullName" aria-label="Select @membership.Student.FullName" /></td><td class="fw-bold text-muted font-monospace">@membership.Student.StudentNumber</td><td><div class="d-flex align-items-center gap-2"><div class="user-avatar-circle user-avatar-sm"><i class="bi bi-person-fill"></i></div><span class="fw-bold text-dark">@membership.Student.FullName</span></div></td><td class="font-monospace text-emerald-700">&#64;@membership.Student.Username</td><td>@membership.EnrolledAt.ToDisplayLocal().ToString("MMM dd, yyyy")</td><td class="text-end"><form method="post" asp-controller="Teacher" asp-action="RemoveStudent" class="m-0" data-confirm-subject="@membership.Student.FullName" data-confirm="Remove this student from @(Model.ClassName)? **Their student account is kept.**" data-confirm-title="Remove student" data-confirm-label="Remove"><input type="hidden" name="classId" value="@Model.ClassId" /><input type="hidden" name="studentId" value="@membership.StudentId" />@Html.AntiForgeryToken()<button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"><i class="bi bi-person-x me-1"></i>Remove</button></form></td></tr>
         }
         @if (roster.Count == 0)
         {
-            <tr><td colspan="5" class="text-center empty-state"><i class="bi bi-mortarboard empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No students are enrolled in this class yet.</span></td></tr>
+            <tr><td colspan="6" class="text-center empty-state"><i class="bi bi-mortarboard empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No students are enrolled in this class yet.</span></td></tr>
         }
     </tbody></table></div>
 <div class="crud-no-results" data-crud-empty hidden></div>
@@ -272,4 +280,5 @@
 
 @section Scripts {
     <script src="~/js/student-move-confirm.js" asp-append-version="true"></script>
+    <script src="~/js/bulk-select.js" asp-append-version="true"></script>
 }
