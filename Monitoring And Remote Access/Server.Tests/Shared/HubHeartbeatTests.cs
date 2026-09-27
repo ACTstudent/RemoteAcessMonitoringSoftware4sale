@@ -23,6 +23,7 @@ public class HubHeartbeatTests
     [Theory]
     [InlineData("teacher-alert-badge.js")]
     [InlineData("student-session.js")]
+    [InlineData("lab-status.js")]
     public void BrowserHubConnections_UseTheSharedHeartbeat(string script)
     {
         var source = File.ReadAllText(Path.Combine(FindServerProject(), "wwwroot", "js", script));

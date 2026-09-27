@@ -41,15 +41,22 @@ public class AdminControllerTests
         return new ApplicationDbContext(options);
     }
 
-    private AdminController CreateController(ApplicationDbContext context, bool isAdmin = true, int? teacherId = null)
+    private static Mock<IHubContext<RemoteMonitoringHub>> HubMock()
     {
         var hub = new Mock<IHubContext<RemoteMonitoringHub>>();
         var clients = new Mock<IHubClients>();
         clients.Setup(value => value.User(It.IsAny<string>())).Returns(Mock.Of<IClientProxy>());
         clients.Setup(value => value.Users(It.IsAny<IReadOnlyList<string>>())).Returns(Mock.Of<IClientProxy>());
         clients.Setup(value => value.Client(It.IsAny<string>())).Returns(Mock.Of<ISingleClientProxy>());
+        clients.Setup(value => value.Group(It.IsAny<string>())).Returns(Mock.Of<IClientProxy>());
         hub.SetupGet(value => value.Clients).Returns(clients.Object);
-        var controller = new AdminController(context, new LabSessionLifecycleService(context, hub.Object));
+        return hub;
+    }
+
+    private AdminController CreateController(ApplicationDbContext context, bool isAdmin = true, int? teacherId = null, SessionManagerService? lab = null)
+    {
+        var hub = HubMock();
+        var controller = new AdminController(context, new LabSessionLifecycleService(context, hub.Object, lab: lab));
         var httpContext = new DefaultHttpContext();
         httpContext.Session = new FakeSession();
         if (isAdmin)
@@ -199,6 +206,59 @@ public class AdminControllerTests
         var view = Assert.IsType<ViewResult>(await controller.Index());
 
         Assert.Equal(2, view.ViewData["StudentCount"]);
+    }
+
+    // A teacher started the lab and no student had signed in yet: the Dashboard
+    // counted only students' sessions, so the administrator saw "0" and no sign
+    // of the lab at all.
+    [Fact]
+    public async Task Index_ShowsTheLabATeacherStarted_BeforeAnyStudentSignsIn()
+    {
+        using var db = GetDbContext();
+        var teacher = new Teacher { FirstName = "Marc", LastName = "Ponce", Username = "mponce", PasswordHash = "hash", Status = "Active" };
+        var rule = new SessionRule { Name = "Computer Class", MaxDurationMinutes = 60 };
+        db.Teachers.Add(teacher);
+        db.SessionRules.Add(rule);
+        await db.SaveChangesAsync();
+        var lab = new SessionManagerService(HubMock().Object);
+        lab.StartLab(rule.SessionRuleId, teacher.TeacherId);
+
+        var view = Assert.IsType<ViewResult>(await CreateController(db, lab: lab).Index());
+
+        var summary = Assert.IsType<LabSessionSummary>(view.ViewData["Lab"]);
+        Assert.True(summary.IsOpen);
+        Assert.Equal("Running", summary.Status);
+        Assert.Equal("Marc Ponce", summary.StartedBy);
+        Assert.Equal("Computer Class", summary.Rule?.Name);
+        Assert.Equal(0, summary.SignedInStudents);
+    }
+
+    [Fact]
+    public async Task Index_ShowsTheLabSessionCardToTeachersOnly()
+    {
+        using var db = GetDbContext();
+
+        var asAdmin = Assert.IsType<ViewResult>(await CreateController(db).Index());
+        var asTeacher = Assert.IsType<ViewResult>(await CreateController(db, isAdmin: false, teacherId: 1).Index());
+
+        Assert.Equal(false, asAdmin.ViewData["ShowLabSessionCard"]);
+        Assert.Equal(true, asTeacher.ViewData["ShowLabSessionCard"]);
+    }
+
+    [Fact]
+    public async Task Index_WithNoLabOpen_SaysSo()
+    {
+        using var db = GetDbContext();
+        var lab = new SessionManagerService(HubMock().Object);
+        lab.StartLab(null, teacherId: 7);
+        lab.EndSession();
+
+        var view = Assert.IsType<ViewResult>(await CreateController(db, lab: lab).Index());
+
+        var summary = Assert.IsType<LabSessionSummary>(view.ViewData["Lab"]);
+        Assert.False(summary.IsOpen);
+        Assert.Null(summary.StartedBy);
+        Assert.Null(summary.Rule);
     }
 
     [Fact]

@@ -386,9 +386,12 @@ namespace Server.Controllers
             ViewBag.StudentCount = await _context.Students.CountAsync(s => s.Status != RecordStatus.Archived);
             ViewBag.TeacherCount = await _context.Teachers.CountAsync();
             ViewBag.ComputerCount = await _context.Computers.CountAsync();
-            ViewBag.ActiveSessions = await _context.LabSessions.CountAsync(s => s.IsActive);
-            ViewBag.RunningSessions = await _context.LabSessions.CountAsync(s => s.IsActive && s.Status == LabSessionStatus.Running);
-            ViewBag.PausedSessions = await _context.LabSessions.CountAsync(s => s.IsActive && s.Status == LabSessionStatus.Paused);
+            // The lab a teacher has open, not only the students signed in to it:
+            // counting those alone showed "0" for a lab running with an empty room.
+            ViewBag.Lab = await _sessionLifecycle.DescribeLabAsync();
+            // The Lab Session card is the teacher's; an administrator reads the
+            // lab from the banner above the cards.
+            ViewBag.ShowLabSessionCard = IsTeacherActor;
 
             // FLOW-01. Only for an administrator: a teacher cannot act on any of
             // these steps, so showing them the list would be noise on a page
@@ -1707,9 +1710,6 @@ namespace Server.Controllers
                 .Select(g => new { App = g.Key, Count = g.Count() })
                 .ToList();
             ViewBag.UsageLogs = usage;
-            ViewBag.SessionsByTeacher = summarySessions
-                .GroupBy(s => s.Teacher?.Username ?? "Unknown")
-                .ToDictionary(g => g.Key, g => g.Count());
             ViewBag.SessionsByStation = summarySessions
                 .GroupBy(s => s.Computer?.LaboratoryStation ?? s.PCName ?? "Unknown")
                 .ToDictionary(g => g.Key, g => g.Count());

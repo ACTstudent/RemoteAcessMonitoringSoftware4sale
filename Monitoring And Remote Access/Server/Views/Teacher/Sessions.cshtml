@@ -29,27 +29,11 @@
     // student signs in. The table below lists each student's own session, so
     // without this a freshly started lab looked like nothing had happened.
     var lab = (Shared.Contracts.GlobalSessionMessage)ViewBag.GlobalSession;
-    var labRule = ViewBag.LabRule as Server.Models.SessionRule;
     var labOpen = lab.Status is "Running" or "Paused";
     var labPaused = lab.Status == "Paused";
     var labSignedIn = (int)ViewBag.SignedInStudents;
 }
-@if (labOpen)
-{
-    var labMinutes = lab.ElapsedSeconds / 60;
-    <div class="lab-session-banner d-flex align-items-center gap-3 mb-4 @(labPaused ? "is-paused" : "")" role="status">
-        <i class="bi @(labPaused ? "bi-pause-circle-fill" : "bi-broadcast") fs-3" aria-hidden="true"></i>
-        <div>
-            <div class="fw-bold text-dark">Lab session @(labPaused ? "paused" : "running") for all students</div>
-            <div class="small text-muted">
-                @(labRule is null ? "No time limit" : $"{labRule.Name} ({labRule.MaxDurationMinutes} min)")
-                &middot; @(labMinutes < 1 ? "started just now" : $"{labMinutes} min elapsed")
-                &middot; @(labSignedIn == 1 ? "1 student" : $"{labSignedIn} students") signed in.
-                Students join as they sign in on any computer.
-            </div>
-        </div>
-    </div>
-}
+<partial name="~/Views/Shared/_LabSessionBanner.cshtml" model="(Server.Models.LabSessionSummary)ViewBag.Lab" />
 
 <!-- Metric Summary Cards -->
 <div class="row g-4 mb-4">

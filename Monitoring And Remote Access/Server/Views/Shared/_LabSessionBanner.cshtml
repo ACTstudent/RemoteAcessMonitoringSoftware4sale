@@ -1,0 +1,24 @@
+@model Server.Models.LabSessionSummary
+@* The lab a teacher has open, on the Dashboard and on Sessions. Nothing is
+   shown while no lab is open. [data-lab-elapsed] is counted up by
+   lab-status.js on the Dashboard. *@
+@if (Model.IsOpen)
+{
+    var minutes = Model.ElapsedSeconds / 60;
+    <div class="lab-session-banner d-flex align-items-center gap-3 mb-4 @(Model.IsPaused ? "is-paused" : "")" role="status">
+        <i class="bi @(Model.IsPaused ? "bi-pause-circle-fill" : "bi-broadcast") fs-3" aria-hidden="true"></i>
+        <div>
+            <div class="fw-bold text-dark">Lab session @(Model.IsPaused ? "paused" : "running") for all students</div>
+            <div class="small text-muted">
+                @if (!string.IsNullOrWhiteSpace(Model.StartedBy))
+                {
+                    <span>Started by <strong>@Model.StartedBy</strong> &middot; </span>
+                }
+                @(Model.Rule is null ? "No time limit" : $"{Model.Rule.Name} ({Model.Rule.MaxDurationMinutes} min)")
+                &middot; <span data-lab-elapsed>@(minutes < 1 ? "started just now" : $"{minutes} min elapsed")</span>
+                &middot; @(Model.SignedInStudents == 1 ? "1 student" : $"{Model.SignedInStudents} students") signed in.
+                Students join as they sign in on any computer.
+            </div>
+        </div>
+    </div>
+}

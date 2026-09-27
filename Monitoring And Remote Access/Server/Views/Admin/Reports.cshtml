@@ -49,7 +49,7 @@
 
 <!-- Metric Summary Cards -->
 <div class="row g-4 mb-4">
-    <div class="col-md-4">
+    <div class="col-md-6">
         <div class="metric-card metric-card-emerald d-flex justify-content-between align-items-center">
             <div>
                 <div class="metric-title">Total Sessions Logged</div>
@@ -60,7 +60,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-6">
         <div class="metric-card d-flex justify-content-between align-items-center">
             <div>
                 <div class="metric-title">Total Lab Usage (Minutes)</div>
@@ -68,22 +68,6 @@
             </div>
             <div class="metric-icon-box">
                 <i class="bi bi-clock-history fs-3"></i>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="metric-card d-flex justify-content-between align-items-center">
-            <div>
-                <div class="metric-title">Sessions by Faculty</div>
-                <div class="d-flex flex-wrap gap-1 mt-1">
-                    @foreach (var kv in ViewBag.SessionsByTeacher)
-                    {
-                        <span class="badge bg-dark rounded-pill px-2 py-1 font-monospace">@kv.Key: @kv.Value</span>
-                    }
-                </div>
-            </div>
-            <div class="metric-icon-box">
-                <i class="bi bi-person-badge fs-3"></i>
             </div>
         </div>
     </div>

@@ -6,6 +6,7 @@
     var setupSteps = ViewBag.SetupSteps as IReadOnlyList<SetupStep>;
     var setupIncomplete = setupSteps is not null && !SetupChecklist.IsComplete(setupSteps);
     var nextStep = setupSteps is null ? null : SetupChecklist.NextStep(setupSteps);
+    var lab = (Server.Models.LabSessionSummary)ViewBag.Lab;
 }
 
 @* FLOW-01. Shown only while something is outstanding: a running school does not
@@ -60,11 +61,25 @@
     </div>
 </div>
 
-<div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+<partial name="~/Views/Shared/_LabSessionBanner.cshtml" model="lab" />
+
+@* data-lab-status: lab-status.js reloads the page when a teacher starts,
+   pauses or ends the lab, so an administrator watching it sees the change. *@
+<div class="card border-0 shadow-sm rounded-4 p-4 mb-4" data-lab-status="@lab.Status" data-lab-elapsed="@lab.ElapsedSeconds">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
         <div>
             <h5 class="fw-bold mb-1"><i class="bi bi-stopwatch me-2 text-emerald-700"></i>Lab-Wide Session Control</h5>
-            <div class="text-muted small">@ViewBag.RunningSessions running, @ViewBag.PausedSessions paused. Pause freezes student PCs, Resume restores access, and End restarts connected student PCs.</div>
+            <div class="text-muted small">
+                @if (lab.IsOpen)
+                {
+                    <span>Students signed in: @lab.RunningStudents running, @lab.PausedStudents paused.</span>
+                }
+                else
+                {
+                    <span>No lab session is running. Students can sign in once a teacher starts one from Sessions.</span>
+                }
+                Pause freezes student PCs, Resume restores access, and End restarts connected student PCs.
+            </div>
         </div>
         <div class="d-flex flex-wrap gap-2">
             <form method="post" action="/Admin/PauseAllSessions" data-confirm-subject="All students &middot; All computers" data-confirm="Pause every active session? **Student PCs freeze behind a full-screen waiting message** until you resume." data-confirm-title="Pause all sessions" data-confirm-label="Pause PCs" data-confirm-variant="warning">
@@ -84,51 +99,65 @@
 </div>
 
 <!-- Metric Summary Cards -->
+@* Every card carries a note line and fills its column, so the titles, values
+   and icons line up - the Lab Session card needs its second line. That card is
+   the teacher's; an administrator has three cards across the row. *@
+@{
+    var showLabCard = ViewBag.ShowLabSessionCard is true;
+    var metricColumn = showLabCard ? "col-md-3 col-sm-6" : "col-md-4 col-sm-6";
+}
 <div class="row g-4 mb-4">
-    <div class="col-md-3 col-sm-6">
-        <div class="metric-card metric-card-emerald d-flex justify-content-between align-items-center">
+    <div class="@metricColumn">
+        <div class="metric-card metric-card-emerald h-100 d-flex justify-content-between align-items-center">
             <div>
                 <div class="metric-title">Total Students</div>
                 <div class="metric-value">@ViewBag.StudentCount</div>
+                <div class="metric-note">Removed students not counted</div>
             </div>
             <div class="metric-icon-box">
                 <i class="bi bi-mortarboard-fill fs-3"></i>
             </div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="metric-card metric-card-active d-flex justify-content-between align-items-center">
+    <div class="@metricColumn">
+        <div class="metric-card metric-card-active h-100 d-flex justify-content-between align-items-center">
             <div>
-                <div class="metric-title">Faculty / Teachers</div>
+                <div class="metric-title">Total Teachers</div>
                 <div class="metric-value">@ViewBag.TeacherCount</div>
+                <div class="metric-note">Every teacher account on record</div>
             </div>
             <div class="metric-icon-box">
                 <i class="bi bi-person-badge-fill fs-3"></i>
             </div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="metric-card metric-card-active d-flex justify-content-between align-items-center">
+    <div class="@metricColumn">
+        <div class="metric-card metric-card-active h-100 d-flex justify-content-between align-items-center">
             <div>
                 <div class="metric-title">Lab Workstations</div>
                 <div class="metric-value">@ViewBag.ComputerCount</div>
+                <div class="metric-note">Registered lab computers</div>
             </div>
             <div class="metric-icon-box">
                 <i class="bi bi-pc-display fs-3"></i>
             </div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="metric-card metric-card-emerald d-flex justify-content-between align-items-center">
-            <div>
-                <div class="metric-title">Active Lab Sessions</div>
-                <div class="metric-value text-success">@ViewBag.ActiveSessions</div>
-            </div>
-            <div class="metric-icon-box">
-                <i class="bi bi-play-circle-fill fs-3"></i>
+    @if (showLabCard)
+    {
+        <div class="@metricColumn">
+            <div class="metric-card metric-card-emerald h-100 d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="metric-title">Lab Session</div>
+                    <div class="metric-value @(lab.IsPaused ? "text-warning" : lab.IsOpen ? "text-success" : "text-muted")">@(lab.IsPaused ? "Paused" : lab.IsOpen ? "Running" : "None")</div>
+                    <div class="metric-note">@(lab.IsOpen ? (lab.SignedInStudents == 1 ? "1 student signed in" : $"{lab.SignedInStudents} students signed in") : "No lab open")</div>
+                </div>
+                <div class="metric-icon-box">
+                    <i class="bi bi-play-circle-fill fs-3"></i>
+                </div>
             </div>
         </div>
-    </div>
+    }
 </div>
 
 <!-- Quick Module Navigation Grid (pro Style) -->
@@ -239,3 +268,7 @@
         </div>
     }
 </div>
+
+@section Scripts {
+    <script src="~/js/lab-status.js" asp-append-version="true"></script>
+}

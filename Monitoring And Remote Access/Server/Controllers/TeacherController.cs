@@ -150,12 +150,9 @@ namespace Server.Controllers
                 .CountAsync(s => s.IsActive && s.Status != LabSessionStatus.Ended);
             ViewBag.LabComputers = await _context.Computers
                 .CountAsync(c => c.Status != "Archived");
-            // The rule the running lab is under, for the banner: the one chosen at
-            // start, or the default rule when the teacher left it on the default.
-            var labRuleId = _sessionManager.LabRuleId;
-            ViewBag.LabRule = labRuleId.HasValue
-                ? await _context.SessionRules.AsNoTracking().FirstOrDefaultAsync(r => r.SessionRuleId == labRuleId.Value)
-                : await _context.SessionRules.AsNoTracking().FirstOrDefaultAsync(r => r.IsActive && r.IsDefault);
+            // For the banner: the rule the lab runs under and who started it -
+            // the same banner an administrator sees on the Dashboard.
+            ViewBag.Lab = await _sessionLifecycle.DescribeLabAsync();
             var sessions = await _context.LabSessions
                 .Include(s => s.Student)
                 .Include(s => s.Teacher)

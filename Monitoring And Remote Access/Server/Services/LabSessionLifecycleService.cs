@@ -20,6 +20,34 @@ public sealed class LabSessionLifecycleService
         SessionManagerService? lab = null)
     { _db = db; _hub = hub; _lab = lab; _workstations = workstations ?? new WorkstationRegistrationService(db, lab); }
 
+    /// <summary>
+    /// The lab a teacher has open, for the Dashboard and Sessions pages: its
+    /// state, who started it, under which rule, and how many students have
+    /// signed in to it. The Dashboard used to count only the students'
+    /// sessions, so a lab a teacher had just started read as "0 active" to an
+    /// administrator until someone signed in.
+    /// </summary>
+    public async Task<Server.Models.LabSessionSummary> DescribeLabAsync(CancellationToken cancellationToken = default)
+    {
+        var state = _lab?.Snapshot() ?? new GlobalSessionMessage("None", 0, null);
+        var open = state.Status is "Running" or "Paused";
+
+        // The rule chosen at start, or the default rule when the teacher left it on the default.
+        var ruleId = open ? _lab?.LabRuleId : null;
+        var rule = !open ? null : ruleId.HasValue
+            ? await _db.SessionRules.AsNoTracking().FirstOrDefaultAsync(r => r.SessionRuleId == ruleId.Value, cancellationToken)
+            : await _db.SessionRules.AsNoTracking().FirstOrDefaultAsync(r => r.IsActive && r.IsDefault, cancellationToken);
+        var teacherId = _lab?.LabTeacherId;
+        var startedBy = teacherId.HasValue
+            ? await _db.Teachers.AsNoTracking().Where(t => t.TeacherId == teacherId.Value)
+                .Select(t => (t.FirstName + " " + t.LastName).Trim()).FirstOrDefaultAsync(cancellationToken)
+            : null;
+
+        var running = await _db.LabSessions.CountAsync(s => s.IsActive && s.Status == LabSessionStatus.Running, cancellationToken);
+        var paused = await _db.LabSessions.CountAsync(s => s.IsActive && s.Status == LabSessionStatus.Paused, cancellationToken);
+        return new Server.Models.LabSessionSummary(state.Status, state.ElapsedSeconds, state.StartedAt, rule, startedBy, running, paused);
+    }
+
     public async Task<int> EndExpiredSessionsAsync(CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
