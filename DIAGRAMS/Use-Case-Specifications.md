@@ -2,13 +2,13 @@
 
 A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio), set out in the ten fields the course handout uses: use case name, purpose, actors, input parameters, output parameters, pre-condition, post-condition, successful scenario, exception scenario and additional remarks.
 
-**195 use cases** across 27 modules. Each name is strict verb-noun and still maps to the function that implements it; where the identifier and the behaviour disagree the behaviour decides the name, so `DeleteComputer`, which archives, reads ARCHIVE COMPUTER. The inputs, HTTP verb and authorisation rule in each specification are read out of that function rather than written from memory, so a specification cannot claim a parameter the action does not take.
+**182 use cases** across 27 modules. Only what a person does with the system is written up: a behaviour the system performs on its own - a page polling for fresh data, the client agent reporting a screen frame or discovering the server - is part of the use case a person starts, not a use case of its own. Nothing is deleted: where a record can be taken out of use, the use case is TOGGLE ... STATUS, which keeps the record and its history and can be switched back. Each name is strict verb-noun and maps to the function that implements it; the inputs, HTTP verb and authorisation rule in each specification are read out of that function rather than written from memory, so a specification cannot claim a parameter the action does not take.
 
 | Actor | Use cases | Modules |
 | --- | ---: | ---: |
-| Admin | 85 | 17 |
-| Teacher | 101 | 18 |
-| Student | 9 | 3 |
+| Admin | 82 | 17 |
+| Teacher | 93 | 18 |
+| Student | 7 | 3 |
 
 ---
 
@@ -18,45 +18,45 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - PROCESS LOG IN — A-001, A-002
 - VIEW ADMIN HOME — A-003, A-004, A-005, A-006
 - MANAGE ADMIN ACCOUNT — A-007, A-008, A-009
-- MANAGE TEACHER ACCOUNT — A-010, A-011, A-012, A-013, A-014, A-015
-- MANAGE STUDENT ACCOUNT — A-016, A-017, A-018, A-019, A-020, A-021
-- MANAGE COMPUTER PROFILE — A-022, A-023, A-024, A-025, A-026, A-027, A-028
-- MANAGE CLASS — A-029, A-030, A-031, A-032, A-033, A-034
-- MANAGE CLASS ROSTER — A-035, A-036, A-037, A-038, A-039, A-040
-- MANAGE RESTRICTION RULE — A-041, A-042, A-043, A-044
-- MANAGE BLACKLIST AND WHITELIST — A-045, A-046, A-047, A-048, A-049, A-050, A-051
-- MANAGE CATEGORY — A-052, A-053, A-054, A-055, A-056, A-057
-- MANAGE SESSION RULE — A-058, A-059, A-060, A-061
-- MANAGE ROLE AND PERMISSION — A-062, A-063, A-064
-- CONTROL LABORATORY SESSION — A-065, A-066, A-067
-- VIEW REPORTS AND LOGS — A-068, A-069, A-070, A-071, A-072, A-073, A-074, A-075, A-076
-- MANAGE DATABASE — A-077, A-078, A-079, A-080
-- MANAGE DEPLOYMENT — A-081, A-082, A-083, A-084, A-085
+- MANAGE TEACHER ACCOUNT — A-010, A-011, A-012, A-013, A-014
+- MANAGE STUDENT ACCOUNT — A-015, A-016, A-017, A-018, A-019, A-020
+- MANAGE COMPUTER PROFILE — A-021, A-022, A-023, A-024, A-025, A-026
+- MANAGE CLASS — A-027, A-028, A-029, A-030, A-031
+- MANAGE CLASS ROSTER — A-032, A-033, A-034, A-035, A-036, A-037
+- MANAGE RESTRICTION RULE — A-038, A-039, A-040, A-041
+- MANAGE BLACKLIST AND WHITELIST — A-042, A-043, A-044, A-045, A-046, A-047, A-048, A-049
+- MANAGE CATEGORY — A-050, A-051, A-052, A-053, A-054, A-055
+- MANAGE SESSION RULE — A-056, A-057, A-058, A-059
+- MANAGE ROLE AND PERMISSION — A-060, A-061
+- CONTROL LABORATORY SESSION — A-062, A-063, A-064
+- VIEW REPORTS AND LOGS — A-065, A-066, A-067, A-068, A-069, A-070, A-071, A-072, A-073
+- MANAGE DATABASE — A-074, A-075, A-076, A-077
+- MANAGE DEPLOYMENT — A-078, A-079, A-080, A-081, A-082
 
 **TEACHER**  
-- PROCESS LOG IN — T-086, T-087
-- MANAGE OWN ACCOUNT — T-088, T-089
-- MANAGE PEER TEACHER ACCOUNT — T-090, T-091, T-092, T-093, T-094, T-095
-- MANAGE STUDENT ACCOUNT — T-096, T-097, T-098, T-099, T-100, T-101
-- MANAGE COMPUTER PROFILE — T-102, T-103, T-104, T-105, T-106, T-107, T-108
-- MANAGE CLASS — T-109, T-110, T-111, T-112, T-113, T-114
-- MANAGE CLASS ROSTER — T-115, T-116, T-117, T-118, T-119
-- MANAGE RESTRICTION RULE — T-120, T-121, T-122, T-123
-- MANAGE BLACKLIST AND WHITELIST — T-124, T-125, T-126, T-127, T-128, T-129, T-130
-- MANAGE CATEGORY — T-131, T-132, T-133, T-134, T-135, T-136
-- MANAGE SESSION RULE — T-137, T-138, T-139, T-140
-- CONTROL LABORATORY SESSION — T-141, T-142, T-143, T-144
-- CONTROL STUDENT SESSION — T-145, T-146, T-147, T-148
-- MONITOR STUDENT SCREEN — T-149, T-150, T-151, T-152
-- CONTROL STUDENT WORKSTATION — T-153, T-154, T-155, T-156, T-157, T-158, T-159, T-160, T-161, T-162
-- SEND MESSAGE TO STUDENT — T-163, T-164, T-165, T-166
-- MANAGE MONITORING ALERT — T-167, T-168, T-169, T-170, T-171, T-172, T-173, T-174
-- VIEW TEACHER RECORDS — T-175, T-176, T-177, T-178, T-179, T-180, T-181, T-182, T-183, T-184, T-185, T-186
+- PROCESS LOG IN — T-083, T-084
+- MANAGE OWN ACCOUNT — T-085, T-086
+- MANAGE PEER TEACHER ACCOUNT — T-087, T-088, T-089, T-090, T-091
+- MANAGE STUDENT ACCOUNT — T-092, T-093, T-094, T-095, T-096, T-097
+- MANAGE COMPUTER PROFILE — T-098, T-099, T-100, T-101, T-102, T-103
+- MANAGE CLASS — T-104, T-105, T-106, T-107, T-108
+- MANAGE CLASS ROSTER — T-109, T-110, T-111, T-112, T-113
+- MANAGE RESTRICTION RULE — T-114, T-115, T-116, T-117
+- MANAGE BLACKLIST AND WHITELIST — T-118, T-119, T-120, T-121, T-122, T-123, T-124, T-125
+- MANAGE CATEGORY — T-126, T-127, T-128, T-129, T-130, T-131
+- MANAGE SESSION RULE — T-132, T-133, T-134, T-135
+- CONTROL LABORATORY SESSION — T-136, T-137, T-138
+- CONTROL STUDENT SESSION — T-139, T-140, T-141, T-142
+- MONITOR STUDENT SCREEN — T-143
+- CONTROL STUDENT WORKSTATION — T-144, T-145, T-146, T-147, T-148, T-149, T-150, T-151, T-152, T-153
+- SEND MESSAGE TO STUDENT — T-154, T-155, T-156, T-157
+- MANAGE MONITORING ALERT — T-158, T-159, T-160, T-161, T-162, T-163, T-164
+- VIEW TEACHER RECORDS — T-165, T-166, T-167, T-168, T-169, T-170, T-171, T-172, T-173, T-174, T-175
 
 **STUDENT**  
-- LOG IN AT WORKSTATION — S-187, S-188, S-189, S-190, S-191
-- MANAGE OWN ACCOUNT — S-192
-- USE THE CLIENT AGENT — S-193, S-194, S-195
+- LOG IN AT WORKSTATION — S-176, S-177, S-178
+- MANAGE OWN ACCOUNT — S-179
+- USE THE CLIENT AGENT — S-180, S-181, S-182
 
 ---
 
@@ -423,17 +423,19 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UpdateAdmin` (POST).
 - Appears in the *MANAGE ADMIN ACCOUNT* module of the use case diagram.
 
-### A-009  ·  DELETE ADMIN
+### A-009  ·  TOGGLE ADMIN STATUS
 
-**Use Case Name:** DELETE ADMIN  
-**Purpose:** Remove a administrator account from the system.  
+**Use Case Name:** TOGGLE ADMIN STATUS  
+**Purpose:** Activate or deactivate an administrator account instead of deleting it, so the person can no longer sign in while every record they made is kept.  
 **Actors:**
 
 - Admin (Primary Actor)
 
 **Input Parameters:**
 
+- `accountRole` : `AccountRole` (Admin)
 - `id` : `int`
+- `isActive` : `bool`
 
 **Output Parameters:**
 
@@ -441,34 +443,33 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Pre-Condition:**
 
-- The caller is signed in as an administrator or a teacher.
-- The record named by the identifier exists.
+- The caller is signed in as an administrator. A teacher who names an administrator account is refused.
+- The administrator account named by the identifier exists.
 
 **Post-Condition:**
 
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
+- The new status is committed; a deactivated administrator cannot sign in until reactivated.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
 
 **Successful Scenario:**
 
-1. The Admin opens the page and CAMS confirms the role on the authentication cookie.
-2. The Admin fills the form and submits it.
+1. The Admin opens the Settings page and CAMS confirms the role on the authentication cookie.
+2. The Admin chooses Activate or Deactivate beside an administrator account and confirms the prompt.
 3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
+4. The server sets the account's `IsActive` flag, saves it and writes an audit entry.
+5. The server redirects back to the Settings page, where the new status is shown.
 
 **Exception Scenario:**
 
 - **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
 - **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
 - **The identifier matches no record** — the action reports that the record was not found and makes no change.
-- **The record is still referenced** — the deletion is refused rather than leaving dangling references.
+- **The last active administrator** — deactivation is refused so CAMS is never left without an administrator.
 
 **Additional Remarks:**
 
-- Implemented by `AdminController.DeleteAdmin` (POST).
+- Implemented by `AdminController.SetAccountActive` (POST).
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
 - Appears in the *MANAGE ADMIN ACCOUNT* module of the use case diagram.
 
 ## MANAGE TEACHER ACCOUNT  ·  `AdminController`
@@ -607,55 +608,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UpdateTeacher` (POST).
 - Appears in the *MANAGE TEACHER ACCOUNT* module of the use case diagram.
 
-### A-013  ·  DELETE TEACHER
-
-**Use Case Name:** DELETE TEACHER  
-**Purpose:** Remove a teacher account from the system.  
-**Actors:**
-
-- Admin (Primary Actor)
-
-**Input Parameters:**
-
-- `id` : `int`
-
-**Output Parameters:**
-
-- A redirect back to the listing page, carrying a success or failure message for display.
-
-**Pre-Condition:**
-
-- The caller is signed in as an administrator or a teacher. A teacher reaches this action only because it carries `[TeacherSharedAction]`; the teacher account must also be active.
-- The record named by the identifier exists.
-
-**Post-Condition:**
-
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
-
-**Successful Scenario:**
-
-1. The Admin opens the page and CAMS confirms the role on the authentication cookie.
-2. The Admin fills the form and submits it.
-3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
-- **The identifier matches no record** — the action reports that the record was not found and makes no change.
-- **The record is still referenced** — the deletion is refused rather than leaving dangling references.
-
-**Additional Remarks:**
-
-- Implemented by `AdminController.DeleteTeacher` (POST).
-- Appears in the *MANAGE TEACHER ACCOUNT* module of the use case diagram.
-
-### A-014  ·  UNLOCK ACCOUNT
+### A-013  ·  UNLOCK ACCOUNT
 
 **Use Case Name:** UNLOCK ACCOUNT  
 **Purpose:** Clear the lockout on an account that has been locked by repeated failed sign-in attempts.  
@@ -703,17 +656,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UnlockAccount` (POST).
 - Appears in the *MANAGE TEACHER ACCOUNT* module of the use case diagram.
 
-### A-015  ·  TOGGLE ACCOUNT STATUS
+### A-014  ·  TOGGLE TEACHER STATUS
 
-**Use Case Name:** TOGGLE ACCOUNT STATUS  
-**Purpose:** Activate or deactivate an account without deleting it, so a person can be kept out of the system while their records survive.  
+**Use Case Name:** TOGGLE TEACHER STATUS  
+**Purpose:** Activate or deactivate a teacher account instead of deleting it, so the teacher can no longer sign in while their classes, sessions and records are kept.  
 **Actors:**
 
 - Admin (Primary Actor)
 
 **Input Parameters:**
 
-- `accountRole` : `AccountRole`
+- `accountRole` : `AccountRole` (Teacher)
 - `id` : `int`
 - `isActive` : `bool`
 
@@ -728,28 +681,29 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Post-Condition:**
 
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
+- The new status is committed; an inactive teacher cannot sign in until reactivated.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
 
 **Successful Scenario:**
 
-1. The Admin opens the page and CAMS confirms the role on the authentication cookie.
-2. The Admin fills the form and submits it.
+1. The Admin opens the Teachers page and CAMS confirms the role on the authentication cookie.
+2. The Admin chooses Activate or Deactivate beside a teacher account and confirms the prompt.
 3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
+4. The server sets the account's `Status` to Active or Inactive, saves it and writes an audit entry.
+5. The server redirects back to the Teachers page, where the new status is shown.
 
 **Exception Scenario:**
 
 - **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
 - **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
 - **The identifier matches no record** — the action reports that the record was not found and makes no change.
+- **The teacher still has active classes** — deactivation is refused until those classes are reassigned or archived.
+- **A teacher deactivating their own account, or the last active teacher** — the change is refused and the reason is shown.
 
 **Additional Remarks:**
 
 - Implemented by `AdminController.SetAccountActive` (POST).
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
 - Appears in the *MANAGE TEACHER ACCOUNT* module of the use case diagram.
 
 ## MANAGE STUDENT ACCOUNT  ·  `AdminController`
@@ -758,7 +712,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.5: System Use Case for manage student account*
 
-### A-016  ·  VIEW STUDENTS
+### A-015  ·  VIEW STUDENTS
 
 **Use Case Name:** VIEW STUDENTS  
 **Purpose:** List the students the signed-in user is allowed to see.  
@@ -797,7 +751,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.Students` (GET).
 - Appears in the *MANAGE STUDENT ACCOUNT* module of the use case diagram.
 
-### A-017  ·  CREATE STUDENT
+### A-016  ·  CREATE STUDENT
 
 **Use Case Name:** CREATE STUDENT  
 **Purpose:** Record a new student account in the system.  
@@ -842,7 +796,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.CreateStudent` (POST).
 - Appears in the *MANAGE STUDENT ACCOUNT* module of the use case diagram.
 
-### A-018  ·  UPDATE STUDENT
+### A-017  ·  UPDATE STUDENT
 
 **Use Case Name:** UPDATE STUDENT  
 **Purpose:** Amend the stored details of an existing student account.  
@@ -888,17 +842,19 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UpdateStudent` (POST).
 - Appears in the *MANAGE STUDENT ACCOUNT* module of the use case diagram.
 
-### A-019  ·  DELETE STUDENT
+### A-018  ·  TOGGLE STUDENT STATUS
 
-**Use Case Name:** DELETE STUDENT  
-**Purpose:** Remove a student account from the system.  
+**Use Case Name:** TOGGLE STUDENT STATUS  
+**Purpose:** Activate or deactivate a student account instead of deleting it, so the student cannot sign in at a workstation while their attendance and activity history are kept.  
 **Actors:**
 
 - Admin (Primary Actor)
 
 **Input Parameters:**
 
+- `accountRole` : `AccountRole` (Student)
 - `id` : `int`
+- `isActive` : `bool`
 
 **Output Parameters:**
 
@@ -911,32 +867,30 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Post-Condition:**
 
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
+- The new status is committed; an inactive student cannot sign in at a workstation until reactivated.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
 
 **Successful Scenario:**
 
-1. The Admin opens the page and CAMS confirms the role on the authentication cookie.
-2. The Admin fills the form and submits it.
+1. The Admin opens the Students page and CAMS confirms the role on the authentication cookie.
+2. The Admin chooses Activate or Deactivate beside a student and confirms the prompt.
 3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
+4. The server sets the account's `Status` to Active or Inactive, saves it and writes an audit entry.
+5. The server redirects back to the Students page, where the new status is shown.
 
 **Exception Scenario:**
 
 - **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
 - **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
 - **The identifier matches no record** — the action reports that the record was not found and makes no change.
-- **The record is still referenced** — the deletion is refused rather than leaving dangling references.
 
 **Additional Remarks:**
 
-- Implemented by `AdminController.DeleteStudent` (POST).
+- Implemented by `AdminController.SetAccountActive` (POST).
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
 - Appears in the *MANAGE STUDENT ACCOUNT* module of the use case diagram.
 
-### A-020  ·  IMPORT STUDENT ROSTER
+### A-019  ·  IMPORT STUDENT ROSTER
 
 **Use Case Name:** IMPORT STUDENT ROSTER  
 **Purpose:** Create many student accounts in one operation from pasted or uploaded CSV rows.  
@@ -985,7 +939,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *MANAGE STUDENT ACCOUNT* module of the use case diagram.
 - Pulls in **PREVIEW ROSTER FILE** (`<<include>>`).
 
-### A-021  ·  PREVIEW ROSTER FILE
+### A-020  ·  PREVIEW ROSTER FILE
 
 **Use Case Name:** PREVIEW ROSTER FILE  
 **Purpose:** Parse the submitted CSV and show what would be created, so mistakes are caught before any account exists.  
@@ -1042,7 +996,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.6: System Use Case for manage computer profile*
 
-### A-022  ·  VIEW COMPUTERS
+### A-021  ·  VIEW COMPUTERS
 
 **Use Case Name:** VIEW COMPUTERS  
 **Purpose:** List the computers the signed-in user is allowed to see.  
@@ -1081,7 +1035,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.Computers` (GET).
 - Appears in the *MANAGE COMPUTER PROFILE* module of the use case diagram.
 
-### A-023  ·  REGISTER COMPUTER
+### A-022  ·  REGISTER COMPUTER
 
 **Use Case Name:** REGISTER COMPUTER  
 **Purpose:** Record a new workstation profile in the system.  
@@ -1126,7 +1080,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.CreateComputer` (POST).
 - Appears in the *MANAGE COMPUTER PROFILE* module of the use case diagram.
 
-### A-024  ·  UPDATE COMPUTER
+### A-023  ·  UPDATE COMPUTER
 
 **Use Case Name:** UPDATE COMPUTER  
 **Purpose:** Amend the stored details of an existing workstation profile.  
@@ -1171,17 +1125,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UpdateComputer` (POST).
 - Appears in the *MANAGE COMPUTER PROFILE* module of the use case diagram.
 
-### A-025  ·  ARCHIVE COMPUTER
+### A-024  ·  TOGGLE COMPUTER STATUS
 
-**Use Case Name:** ARCHIVE COMPUTER  
-**Purpose:** Retire a workstation from the laboratory without erasing it. The record is marked archived and unassigned, so past lab sessions and status history still resolve to a named station. Refused while a lab session is running on it.  
+**Use Case Name:** TOGGLE COMPUTER STATUS  
+**Purpose:** Change a workstation's status - Available, In Use or Maintenance - or archive it, instead of deleting it, so past lab sessions and status history still resolve to a named station.  
 **Actors:**
 
 - Admin (Primary Actor)
 
 **Input Parameters:**
 
-- `id` : `int`
+- `computer` : `Computer` (`ComputerId`, `Status`)
 
 **Output Parameters:**
 
@@ -1194,71 +1148,30 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Post-Condition:**
 
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
+- The new status is committed to the database and takes effect on the next read.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
 
 **Successful Scenario:**
 
-1. The Admin opens the page and CAMS confirms the role on the authentication cookie.
-2. The Admin fills the form and submits it.
-3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
+1. The Admin opens the Computers page and CAMS confirms the role on the authentication cookie.
+2. The Admin opens the workstation's edit form, chooses the new status (or chooses Archive) and saves.
+3. The server writes the new status, adds an entry to the workstation's status history and writes an audit entry.
+4. The server redirects back to the Computers page, where the new status is shown.
 
 **Exception Scenario:**
 
 - **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
 - **The identifier matches no record** — the action reports that the record was not found and makes no change.
-- **The record is still referenced** — the deletion is refused rather than leaving dangling references.
+- **A lab session is running on the workstation** — archiving is refused until that session is ended.
+- **Another workstation already has that station name** — the change is refused and nothing is written.
 
 **Additional Remarks:**
 
-- Implemented by `AdminController.DeleteComputer` (POST).
+- Implemented by `AdminController.UpdateComputer` (POST) for the status, and `AdminController.DeleteComputer` (POST), which archives rather than deletes.
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
 - Appears in the *MANAGE COMPUTER PROFILE* module of the use case diagram.
 
-### A-026  ·  DELETE COMPUTER
-
-**Use Case Name:** DELETE COMPUTER  
-**Purpose:** Remove a workstation record outright, for a station entered by mistake or one that has left the laboratory for good. Past lab sessions are kept and merely lose their link to the station; the status history for the station is discarded. Refused while a lab session is running on it.  
-**Actors:**
-
-- Admin (Primary Actor)
-
-**Input Parameters:**
-
-- None beyond the signed-in identity carried on the authentication cookie.
-
-**Output Parameters:**
-
-- The behaviour completes and its effect is visible to the use case that includes it.
-
-**Pre-Condition:**
-
-- The caller is signed in.
-
-**Post-Condition:**
-
-- The caller has the requested information. Nothing in the database has changed.
-
-**Successful Scenario:**
-
-1. The including use case reaches the point where this behaviour is required.
-2. The server runs `PermanentlyDeleteComputer` and applies its result.
-3. Control returns to the including use case, which continues.
-
-**Exception Scenario:**
-
-- The behaviour fails and the including use case reports the failure rather than continuing as if it had succeeded.
-
-**Additional Remarks:**
-
-- Implemented by `PermanentlyDeleteComputer`.
-- Appears in the *MANAGE COMPUTER PROFILE* module of the use case diagram.
-
-### A-027  ·  MAP STUDENT WORKSTATION
+### A-025  ·  MAP STUDENT WORKSTATION
 
 **Use Case Name:** MAP STUDENT WORKSTATION  
 **Purpose:** Map a workstation to a student so the workstation is recognised when that student signs in at it. An archived station cannot be mapped.  
@@ -1306,7 +1219,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.AssignComputer` (POST).
 - Appears in the *MANAGE COMPUTER PROFILE* module of the use case diagram.
 
-### A-028  ·  VIEW COMPUTER HISTORY
+### A-026  ·  VIEW COMPUTER HISTORY
 
 **Use Case Name:** VIEW COMPUTER HISTORY  
 **Purpose:** Show the recorded status changes for a workstation, and who made each one.  
@@ -1353,7 +1266,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.7: System Use Case for manage class*
 
-### A-029  ·  VIEW CLASSES
+### A-027  ·  VIEW CLASSES
 
 **Use Case Name:** VIEW CLASSES  
 **Purpose:** List the classes the signed-in user is allowed to see.  
@@ -1392,7 +1305,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.Classes` (GET).
 - Appears in the *MANAGE CLASS* module of the use case diagram.
 
-### A-030  ·  CREATE CLASS
+### A-028  ·  CREATE CLASS
 
 **Use Case Name:** CREATE CLASS  
 **Purpose:** Record a new class in the system.  
@@ -1437,7 +1350,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.CreateClass` (POST).
 - Appears in the *MANAGE CLASS* module of the use case diagram.
 
-### A-031  ·  UPDATE CLASS
+### A-029  ·  UPDATE CLASS
 
 **Use Case Name:** UPDATE CLASS  
 **Purpose:** Amend the stored details of an existing class.  
@@ -1482,55 +1395,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UpdateClass` (POST).
 - Appears in the *MANAGE CLASS* module of the use case diagram.
 
-### A-032  ·  DELETE CLASS
-
-**Use Case Name:** DELETE CLASS  
-**Purpose:** Remove a class from the system.  
-**Actors:**
-
-- Admin (Primary Actor)
-
-**Input Parameters:**
-
-- `classId` : `int`
-
-**Output Parameters:**
-
-- A redirect back to the listing page, carrying a success or failure message for display.
-
-**Pre-Condition:**
-
-- The caller is signed in as an administrator or a teacher. A teacher reaches this action only because it carries `[TeacherSharedAction]`; the teacher account must also be active.
-- The record named by the identifier exists.
-
-**Post-Condition:**
-
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
-
-**Successful Scenario:**
-
-1. The Admin opens the page and CAMS confirms the role on the authentication cookie.
-2. The Admin fills the form and submits it.
-3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
-- **The identifier matches no record** — the action reports that the record was not found and makes no change.
-- **The record is still referenced** — the deletion is refused rather than leaving dangling references.
-
-**Additional Remarks:**
-
-- Implemented by `AdminController.DeleteClass` (POST).
-- Appears in the *MANAGE CLASS* module of the use case diagram.
-
-### A-033  ·  ASSIGN TEACHER
+### A-030  ·  ASSIGN TEACHER
 
 **Use Case Name:** ASSIGN TEACHER  
 **Purpose:** Put a teacher in charge of a class.  
@@ -1578,10 +1443,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.AssignTeacher` (POST).
 - Appears in the *MANAGE CLASS* module of the use case diagram.
 
-### A-034  ·  ARCHIVE CLASS
+### A-031  ·  TOGGLE CLASS STATUS
 
-**Use Case Name:** ARCHIVE CLASS  
-**Purpose:** Take a class out of active use while keeping its roster and records.  
+**Use Case Name:** TOGGLE CLASS STATUS  
+**Purpose:** Archive an active class, or restore an archived one, instead of deleting it, so its roster, sessions and records are kept.  
 **Actors:**
 
 - Admin (Primary Actor)
@@ -1601,28 +1466,27 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Post-Condition:**
 
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
+- The new status is committed to the database and takes effect on the next read.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
 
 **Successful Scenario:**
 
-1. The Admin opens the page and CAMS confirms the role on the authentication cookie.
-2. The Admin fills the form and submits it.
+1. The Admin opens the Classes page and CAMS confirms the role on the authentication cookie.
+2. The Admin chooses Archive (or Restore) beside the class and confirms the prompt.
 3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
+4. The server flips the class between active and archived, saves it and writes an audit entry.
+5. The server redirects back to the Classes page, where the new status is shown.
 
 **Exception Scenario:**
 
 - **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
 - **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
 - **The identifier matches no record** — the action reports that the record was not found and makes no change.
 
 **Additional Remarks:**
 
 - Implemented by `AdminController.ArchiveClass` (POST).
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
 - Appears in the *MANAGE CLASS* module of the use case diagram.
 
 ## MANAGE CLASS ROSTER  ·  `AdminController`
@@ -1631,7 +1495,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.8: System Use Case for manage class roster*
 
-### A-035  ·  VIEW CLASS DETAILS
+### A-032  ·  VIEW CLASS DETAILS
 
 **Use Case Name:** VIEW CLASS DETAILS  
 **Purpose:** Show one class with its roster and the students enrolled in it.  
@@ -1672,7 +1536,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.ClassDetails` (GET).
 - Appears in the *MANAGE CLASS ROSTER* module of the use case diagram.
 
-### A-036  ·  ENROLL STUDENT
+### A-033  ·  ENROLL STUDENT
 
 **Use Case Name:** ENROLL STUDENT  
 **Purpose:** Add an existing student to a class roster.  
@@ -1721,7 +1585,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.EnrollStudent` (POST).
 - Appears in the *MANAGE CLASS ROSTER* module of the use case diagram.
 
-### A-037  ·  ENROLL STUDENT GROUP
+### A-034  ·  ENROLL STUDENT GROUP
 
 **Use Case Name:** ENROLL STUDENT GROUP  
 **Purpose:** Add several existing students to a class roster in one operation.  
@@ -1770,7 +1634,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.EnrollStudents` (POST).
 - Appears in the *MANAGE CLASS ROSTER* module of the use case diagram.
 
-### A-038  ·  ADD CLASS MEMBER
+### A-035  ·  ADD CLASS MEMBER
 
 **Use Case Name:** ADD CLASS MEMBER  
 **Purpose:** Create a new student account and place it on a class roster in one step.  
@@ -1821,7 +1685,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.AddStudentToClass` (POST).
 - Appears in the *MANAGE CLASS ROSTER* module of the use case diagram.
 
-### A-039  ·  ASSIGN CLASS STUDENT
+### A-036  ·  ASSIGN CLASS STUDENT
 
 **Use Case Name:** ASSIGN CLASS STUDENT  
 **Purpose:** Set the primary class a student belongs to.  
@@ -1870,9 +1734,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.AssignStudentToClass` (POST).
 - Appears in the *MANAGE CLASS ROSTER* module of the use case diagram.
 
-### A-040  ·  REMOVE STUDENT
+### A-037  ·  UNENROLL STUDENT
 
-**Use Case Name:** REMOVE STUDENT  
+**Use Case Name:** UNENROLL STUDENT  
 **Purpose:** Take a student off a class roster while leaving the student account intact.  
 **Actors:**
 
@@ -1924,7 +1788,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.9: System Use Case for manage restriction rule*
 
-### A-041  ·  VIEW RESTRICTIONS
+### A-038  ·  VIEW RESTRICTIONS
 
 **Use Case Name:** VIEW RESTRICTIONS  
 **Purpose:** List the restrictions the signed-in user is allowed to see.  
@@ -1963,7 +1827,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.Restrictions` (GET).
 - Appears in the *MANAGE RESTRICTION RULE* module of the use case diagram.
 
-### A-042  ·  CREATE RESTRICTION
+### A-039  ·  CREATE RESTRICTION
 
 **Use Case Name:** CREATE RESTRICTION  
 **Purpose:** Record a new restriction rule in the system.  
@@ -2008,7 +1872,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.CreateRestriction` (POST).
 - Appears in the *MANAGE RESTRICTION RULE* module of the use case diagram.
 
-### A-043  ·  UPDATE RESTRICTION
+### A-040  ·  UPDATE RESTRICTION
 
 **Use Case Name:** UPDATE RESTRICTION  
 **Purpose:** Amend the stored details of an existing restriction rule.  
@@ -2053,17 +1917,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UpdateRestriction` (POST).
 - Appears in the *MANAGE RESTRICTION RULE* module of the use case diagram.
 
-### A-044  ·  DELETE RESTRICTION
+### A-041  ·  TOGGLE RESTRICTION STATUS
 
-**Use Case Name:** DELETE RESTRICTION  
-**Purpose:** Remove a restriction rule from the system.  
+**Use Case Name:** TOGGLE RESTRICTION STATUS  
+**Purpose:** Switch a restriction rule between active and inactive instead of deleting it, so the client agents stop (or resume) enforcing it while the rule stays on file.  
 **Actors:**
 
 - Admin (Primary Actor)
 
 **Input Parameters:**
 
-- `id` : `int`
+- `input` : `RestrictionRule` (`RestrictionRuleId`, `IsActive`, and the rule's other fields)
 
 **Output Parameters:**
 
@@ -2076,29 +1940,26 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Post-Condition:**
 
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
+- The new status is committed to the database and takes effect on the next read.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
 
 **Successful Scenario:**
 
-1. The Admin opens the page and CAMS confirms the role on the authentication cookie.
-2. The Admin fills the form and submits it.
-3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
+1. The Admin opens the Restrictions page and CAMS confirms the role on the authentication cookie.
+2. The Admin opens the rule's edit form, ticks or clears Active and saves.
+3. The server sets the rule's `IsActive` flag, saves it and writes an audit entry.
+4. The server redirects back to the Restrictions page, where the new status is shown.
 
 **Exception Scenario:**
 
 - **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
 - **The identifier matches no record** — the action reports that the record was not found and makes no change.
-- **The record is still referenced** — the deletion is refused rather than leaving dangling references.
+- **The rule's type, target or mode is not valid** — nothing is written and the listing is shown again.
 
 **Additional Remarks:**
 
-- Implemented by `AdminController.DeleteRestriction` (POST).
+- Implemented by `AdminController.UpdateRestriction` (POST).
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
 - Appears in the *MANAGE RESTRICTION RULE* module of the use case diagram.
 
 ## MANAGE BLACKLIST AND WHITELIST  ·  `AdminController`
@@ -2107,7 +1968,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.10: System Use Case for manage blacklist and whitelist*
 
-### A-045  ·  VIEW BLACKLISTS
+### A-042  ·  VIEW BLACKLISTS
 
 **Use Case Name:** VIEW BLACKLISTS  
 **Purpose:** List the blacklists the signed-in user is allowed to see.  
@@ -2146,7 +2007,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.Blacklists` (GET).
 - Appears in the *MANAGE BLACKLIST AND WHITELIST* module of the use case diagram.
 
-### A-046  ·  VIEW WHITELISTS
+### A-043  ·  VIEW WHITELISTS
 
 **Use Case Name:** VIEW WHITELISTS  
 **Purpose:** List the whitelists the signed-in user is allowed to see.  
@@ -2185,7 +2046,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.Whitelists` (GET).
 - Appears in the *MANAGE BLACKLIST AND WHITELIST* module of the use case diagram.
 
-### A-047  ·  CREATE BLACKLIST
+### A-044  ·  CREATE BLACKLIST
 
 **Use Case Name:** CREATE BLACKLIST  
 **Purpose:** Record a new blacklist entry in the system.  
@@ -2236,7 +2097,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.CreateBlacklist` (POST).
 - Appears in the *MANAGE BLACKLIST AND WHITELIST* module of the use case diagram.
 
-### A-048  ·  UPDATE BLACKLIST
+### A-045  ·  UPDATE BLACKLIST
 
 **Use Case Name:** UPDATE BLACKLIST  
 **Purpose:** Amend the stored details of an existing blacklist entry.  
@@ -2281,17 +2142,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UpdateBlacklist` (POST).
 - Appears in the *MANAGE BLACKLIST AND WHITELIST* module of the use case diagram.
 
-### A-049  ·  DELETE BLACKLIST
+### A-046  ·  TOGGLE BLACKLIST STATUS
 
-**Use Case Name:** DELETE BLACKLIST  
-**Purpose:** Remove a blacklist entry from the system.  
+**Use Case Name:** TOGGLE BLACKLIST STATUS  
+**Purpose:** Switch a blacklist entry between active and inactive instead of deleting it, so the application or website is unblocked (or blocked again) while the entry stays on file.  
 **Actors:**
 
 - Admin (Primary Actor)
 
 **Input Parameters:**
 
-- `id` : `int`
+- `input` : `BlacklistItem` (`BlacklistItemId`, `TargetType`, `Value`, `Reason`, `IsActive`)
 
 **Output Parameters:**
 
@@ -2304,32 +2165,28 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Post-Condition:**
 
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
+- The new status is committed to the database and takes effect on the next read.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
 
 **Successful Scenario:**
 
-1. The Admin opens the page and CAMS confirms the role on the authentication cookie.
-2. The Admin fills the form and submits it.
-3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
+1. The Admin opens the Blacklists page and CAMS confirms the role on the authentication cookie.
+2. The Admin opens the entry's edit form, ticks or clears Active and saves.
+3. The server sets the entry's `IsActive` flag, saves it and writes an audit entry.
+4. The server redirects back to the Blacklists page, where the new status is shown.
 
 **Exception Scenario:**
 
 - **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
 - **The identifier matches no record** — the action reports that the record was not found and makes no change.
-- **The record is still referenced** — the deletion is refused rather than leaving dangling references.
 
 **Additional Remarks:**
 
-- Implemented by `AdminController.DeleteBlacklist` (POST).
+- Implemented by `AdminController.UpdateBlacklist` (POST).
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
 - Appears in the *MANAGE BLACKLIST AND WHITELIST* module of the use case diagram.
 
-### A-050  ·  CREATE WHITELIST
+### A-047  ·  CREATE WHITELIST
 
 **Use Case Name:** CREATE WHITELIST  
 **Purpose:** Record a new whitelist entry in the system.  
@@ -2374,7 +2231,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.CreateWhitelist` (POST).
 - Appears in the *MANAGE BLACKLIST AND WHITELIST* module of the use case diagram.
 
-### A-051  ·  UPDATE WHITELIST
+### A-048  ·  UPDATE WHITELIST
 
 **Use Case Name:** UPDATE WHITELIST  
 **Purpose:** Amend the stored details of an existing whitelist entry.  
@@ -2424,13 +2281,57 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UpdateWhitelist` (POST).
 - Appears in the *MANAGE BLACKLIST AND WHITELIST* module of the use case diagram.
 
+### A-049  ·  TOGGLE WHITELIST STATUS
+
+**Use Case Name:** TOGGLE WHITELIST STATUS  
+**Purpose:** Switch a whitelist rule between active and inactive instead of deleting it, so the website leaves (or rejoins) the allowed list while the rule stays on file.  
+**Actors:**
+
+- Admin (Primary Actor)
+
+**Input Parameters:**
+
+- `rule` : `RestrictionRule` (`RestrictionRuleId`, `RuleType`, `Target`, `Description`, `IsGlobal`, `IsActive`)
+
+**Output Parameters:**
+
+- A redirect back to the listing page, carrying a success or failure message for display.
+
+**Pre-Condition:**
+
+- The caller is signed in as an administrator or a teacher. A teacher reaches this action only because it carries `[TeacherSharedAction]`; the teacher account must also be active.
+- The record named by the identifier exists.
+
+**Post-Condition:**
+
+- The new status is committed to the database and takes effect on the next read.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
+
+**Successful Scenario:**
+
+1. The Admin opens the Whitelists page and CAMS confirms the role on the authentication cookie.
+2. The Admin opens the rule's edit form, switches Rule is active on or off and saves.
+3. The server sets the rule's `IsActive` flag, saves it and writes an audit entry.
+4. The server redirects back to the Whitelists page, where the new status is shown.
+
+**Exception Scenario:**
+
+- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
+- **The identifier matches no record** — the action reports that the record was not found and makes no change.
+
+**Additional Remarks:**
+
+- Implemented by `AdminController.UpdateWhitelist` (POST).
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
+- Appears in the *MANAGE BLACKLIST AND WHITELIST* module of the use case diagram.
+
 ## MANAGE CATEGORY  ·  `AdminController`
 
 ![MANAGE CATEGORY](usecase-images/admin-manage-category.png)
 
 *Figure 3.11: System Use Case for manage category*
 
-### A-052  ·  CREATE APPLICATION CATEGORY
+### A-050  ·  CREATE APPLICATION CATEGORY
 
 **Use Case Name:** CREATE APPLICATION CATEGORY  
 **Purpose:** Record a new application category in the system.  
@@ -2475,7 +2376,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.CreateApplicationCategory` (POST).
 - Appears in the *MANAGE CATEGORY* module of the use case diagram.
 
-### A-053  ·  UPDATE APPLICATION CATEGORY
+### A-051  ·  UPDATE APPLICATION CATEGORY
 
 **Use Case Name:** UPDATE APPLICATION CATEGORY  
 **Purpose:** Amend the stored details of an existing application category.  
@@ -2520,17 +2421,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UpdateApplicationCategory` (POST).
 - Appears in the *MANAGE CATEGORY* module of the use case diagram.
 
-### A-054  ·  DELETE APPLICATION CATEGORY
+### A-052  ·  TOGGLE APPLICATION CATEGORY STATUS
 
-**Use Case Name:** DELETE APPLICATION CATEGORY  
-**Purpose:** Remove a application category from the system.  
+**Use Case Name:** TOGGLE APPLICATION CATEGORY STATUS  
+**Purpose:** Switch an application category between active and inactive instead of deleting it, so its pattern stops (or resumes) matching while the category stays on file.  
 **Actors:**
 
 - Admin (Primary Actor)
 
 **Input Parameters:**
 
-- `id` : `int`
+- `input` : `ApplicationCategory` (`ApplicationCategoryId`, `IsActive`, and the category's other fields)
 
 **Output Parameters:**
 
@@ -2543,32 +2444,28 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Post-Condition:**
 
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
+- The new status is committed to the database and takes effect on the next read.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
 
 **Successful Scenario:**
 
-1. The Admin opens the page and CAMS confirms the role on the authentication cookie.
-2. The Admin fills the form and submits it.
-3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
+1. The Admin opens the Restrictions page and CAMS confirms the role on the authentication cookie.
+2. The Admin opens the application category's edit form, ticks or clears Active and saves.
+3. The server sets the category's `IsActive` flag, saves it and writes an audit entry.
+4. The server redirects back to the Restrictions page, where the new status is shown.
 
 **Exception Scenario:**
 
 - **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
 - **The identifier matches no record** — the action reports that the record was not found and makes no change.
-- **The record is still referenced** — the deletion is refused rather than leaving dangling references.
 
 **Additional Remarks:**
 
-- Implemented by `AdminController.DeleteApplicationCategory` (POST).
+- Implemented by `AdminController.UpdateApplicationCategory` (POST).
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
 - Appears in the *MANAGE CATEGORY* module of the use case diagram.
 
-### A-055  ·  CREATE WEBSITE CATEGORY
+### A-053  ·  CREATE WEBSITE CATEGORY
 
 **Use Case Name:** CREATE WEBSITE CATEGORY  
 **Purpose:** Record a new website category in the system.  
@@ -2613,7 +2510,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.CreateWebsiteCategory` (POST).
 - Appears in the *MANAGE CATEGORY* module of the use case diagram.
 
-### A-056  ·  UPDATE WEBSITE CATEGORY
+### A-054  ·  UPDATE WEBSITE CATEGORY
 
 **Use Case Name:** UPDATE WEBSITE CATEGORY  
 **Purpose:** Amend the stored details of an existing website category.  
@@ -2658,17 +2555,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UpdateWebsiteCategory` (POST).
 - Appears in the *MANAGE CATEGORY* module of the use case diagram.
 
-### A-057  ·  DELETE WEBSITE CATEGORY
+### A-055  ·  TOGGLE WEBSITE CATEGORY STATUS
 
-**Use Case Name:** DELETE WEBSITE CATEGORY  
-**Purpose:** Remove a website category from the system.  
+**Use Case Name:** TOGGLE WEBSITE CATEGORY STATUS  
+**Purpose:** Switch a website category between active and inactive instead of deleting it, so its domain pattern stops (or resumes) matching while the category stays on file.  
 **Actors:**
 
 - Admin (Primary Actor)
 
 **Input Parameters:**
 
-- `id` : `int`
+- `input` : `WebsiteCategory` (`WebsiteCategoryId`, `IsActive`, and the category's other fields)
 
 **Output Parameters:**
 
@@ -2681,29 +2578,25 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Post-Condition:**
 
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
+- The new status is committed to the database and takes effect on the next read.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
 
 **Successful Scenario:**
 
-1. The Admin opens the page and CAMS confirms the role on the authentication cookie.
-2. The Admin fills the form and submits it.
-3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
+1. The Admin opens the Restrictions page and CAMS confirms the role on the authentication cookie.
+2. The Admin opens the website category's edit form, ticks or clears Active and saves.
+3. The server sets the category's `IsActive` flag, saves it and writes an audit entry.
+4. The server redirects back to the Restrictions page, where the new status is shown.
 
 **Exception Scenario:**
 
 - **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
 - **The identifier matches no record** — the action reports that the record was not found and makes no change.
-- **The record is still referenced** — the deletion is refused rather than leaving dangling references.
 
 **Additional Remarks:**
 
-- Implemented by `AdminController.DeleteWebsiteCategory` (POST).
+- Implemented by `AdminController.UpdateWebsiteCategory` (POST).
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
 - Appears in the *MANAGE CATEGORY* module of the use case diagram.
 
 ## MANAGE SESSION RULE  ·  `AdminController`
@@ -2712,7 +2605,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.12: System Use Case for manage session rule*
 
-### A-058  ·  VIEW SESSION RULES
+### A-056  ·  VIEW SESSION RULES
 
 **Use Case Name:** VIEW SESSION RULES  
 **Purpose:** List the session rules the signed-in user is allowed to see.  
@@ -2751,7 +2644,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.SessionRules` (GET).
 - Appears in the *MANAGE SESSION RULE* module of the use case diagram.
 
-### A-059  ·  CREATE SESSION RULE
+### A-057  ·  CREATE SESSION RULE
 
 **Use Case Name:** CREATE SESSION RULE  
 **Purpose:** Record a new session rule in the system.  
@@ -2796,7 +2689,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.CreateSessionRule` (POST).
 - Appears in the *MANAGE SESSION RULE* module of the use case diagram.
 
-### A-060  ·  UPDATE SESSION RULE
+### A-058  ·  UPDATE SESSION RULE
 
 **Use Case Name:** UPDATE SESSION RULE  
 **Purpose:** Amend the stored details of an existing session rule.  
@@ -2841,17 +2734,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UpdateSessionRule` (POST).
 - Appears in the *MANAGE SESSION RULE* module of the use case diagram.
 
-### A-061  ·  DEACTIVATE SESSION RULE
+### A-059  ·  TOGGLE SESSION RULE STATUS
 
-**Use Case Name:** DEACTIVATE SESSION RULE  
-**Purpose:** Take a session rule out of use while keeping it on file. The rule is marked inactive and loses any default flag, and sessions already recorded against it still resolve to a named rule; where the rule allowed remote control, open remote sessions under it are closed.  
+**Use Case Name:** TOGGLE SESSION RULE STATUS  
+**Purpose:** Switch a session rule between active and inactive instead of deleting it. An inactive rule loses any default flag and cannot govern new sessions, and sessions already recorded against it still resolve to a named rule.  
 **Actors:**
 
 - Admin (Primary Actor)
 
 **Input Parameters:**
 
-- `id` : `int`
+- `input` : `SessionRule` (`SessionRuleId`, `Name`, `MaxDurationMinutes`, `AllowPause`, `AllowRemoteControl`, `IsDefault`, `IsActive`)
 
 **Output Parameters:**
 
@@ -2864,29 +2757,25 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Post-Condition:**
 
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
+- The new status is committed to the database and takes effect on the next read.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
 
 **Successful Scenario:**
 
-1. The Admin opens the page and CAMS confirms the role on the authentication cookie.
-2. The Admin fills the form and submits it.
-3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
+1. The Admin opens the Session Rules page and CAMS confirms the role on the authentication cookie.
+2. The Admin opens the rule's edit form, ticks or clears Active and saves.
+3. The server sets the rule's `IsActive` flag, clears the default flag when the rule is made inactive, closes any open remote control session that relied on it, and writes an audit entry.
+4. The server redirects back to the Session Rules page, where the new status is shown.
 
 **Exception Scenario:**
 
 - **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
 - **The identifier matches no record** — the action reports that the record was not found and makes no change.
-- **The record is still referenced** — the deletion is refused rather than leaving dangling references.
 
 **Additional Remarks:**
 
-- Implemented by `AdminController.DeleteSessionRule` (POST).
+- Implemented by `AdminController.UpdateSessionRule` (POST).
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
 - Appears in the *MANAGE SESSION RULE* module of the use case diagram.
 
 ## MANAGE ROLE AND PERMISSION  ·  `AdminController`
@@ -2895,7 +2784,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.13: System Use Case for manage role and permission*
 
-### A-062  ·  VIEW ROLES
+### A-060  ·  VIEW ROLES
 
 **Use Case Name:** VIEW ROLES  
 **Purpose:** Show the seeded roles and the permissions attached to them.  
@@ -2934,7 +2823,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.Roles` (GET).
 - Appears in the *MANAGE ROLE AND PERMISSION* module of the use case diagram.
 
-### A-063  ·  CREATE ROLE
+### A-061  ·  CREATE ROLE
 
 **Use Case Name:** CREATE ROLE  
 **Purpose:** Add a role to the seeded reference data.  
@@ -2979,61 +2868,13 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.CreateRole` (POST).
 - Appears in the *MANAGE ROLE AND PERMISSION* module of the use case diagram.
 
-### A-064  ·  DELETE ROLE
-
-**Use Case Name:** DELETE ROLE  
-**Purpose:** Remove a role from the seeded reference data.  
-**Actors:**
-
-- Admin (Primary Actor)
-
-**Input Parameters:**
-
-- `id` : `int`
-
-**Output Parameters:**
-
-- A redirect back to the listing page, carrying a success or failure message for display.
-
-**Pre-Condition:**
-
-- The caller is signed in as an administrator or a teacher.
-- The record named by the identifier exists.
-
-**Post-Condition:**
-
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
-
-**Successful Scenario:**
-
-1. The Admin opens the page and CAMS confirms the role on the authentication cookie.
-2. The Admin fills the form and submits it.
-3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
-- **The identifier matches no record** — the action reports that the record was not found and makes no change.
-- **The record is still referenced** — the deletion is refused rather than leaving dangling references.
-
-**Additional Remarks:**
-
-- Implemented by `AdminController.DeleteRole` (POST).
-- Appears in the *MANAGE ROLE AND PERMISSION* module of the use case diagram.
-
 ## CONTROL LABORATORY SESSION  ·  `AdminController`
 
 ![CONTROL LABORATORY SESSION](usecase-images/admin-control-laboratory-session.png)
 
 *Figure 3.14: System Use Case for control laboratory session*
 
-### A-065  ·  PAUSE ALL SESSIONS
+### A-062  ·  PAUSE ALL SESSIONS
 
 **Use Case Name:** PAUSE ALL SESSIONS  
 **Purpose:** Pause every active laboratory session at once, freezing the timers across the room.  
@@ -3078,7 +2919,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.PauseAllSessions` (POST).
 - Appears in the *CONTROL LABORATORY SESSION* module of the use case diagram.
 
-### A-066  ·  RESUME ALL SESSIONS
+### A-063  ·  RESUME ALL SESSIONS
 
 **Use Case Name:** RESUME ALL SESSIONS  
 **Purpose:** Resume every paused laboratory session at once.  
@@ -3123,7 +2964,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.ResumeAllSessions` (POST).
 - Appears in the *CONTROL LABORATORY SESSION* module of the use case diagram.
 
-### A-067  ·  END ALL SESSIONS
+### A-064  ·  END ALL SESSIONS
 
 **Use Case Name:** END ALL SESSIONS  
 **Purpose:** End every active laboratory session at once and tell the workstations.  
@@ -3174,7 +3015,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.15: System Use Case for view reports and logs*
 
-### A-068  ·  VIEW REPORTS
+### A-065  ·  VIEW REPORTS
 
 **Use Case Name:** VIEW REPORTS  
 **Purpose:** Show the laboratory reports an administrator uses for oversight.  
@@ -3221,7 +3062,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *VIEW REPORTS AND LOGS* module of the use case diagram.
 - Pulls in **EXPORT REPORTS CSV** (`<<extend>>`), **EXPORT ATTENDANCE CSV** (`<<extend>>`), **EXPORT USAGE CSV** (`<<extend>>`), **EXPORT REMOTE COMMANDS CSV** (`<<extend>>`).
 
-### A-069  ·  VIEW AUDIT LOGS
+### A-066  ·  VIEW AUDIT LOGS
 
 **Use Case Name:** VIEW AUDIT LOGS  
 **Purpose:** Show the audit trail of administrative actions.  
@@ -3261,7 +3102,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *VIEW REPORTS AND LOGS* module of the use case diagram.
 - Pulls in **EXPORT AUDIT CSV** (`<<extend>>`).
 
-### A-070  ·  VIEW SYSTEM LOGS
+### A-067  ·  VIEW SYSTEM LOGS
 
 **Use Case Name:** VIEW SYSTEM LOGS  
 **Purpose:** Show the technical log the server writes.  
@@ -3301,7 +3142,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *VIEW REPORTS AND LOGS* module of the use case diagram.
 - Pulls in **EXPORT SYSTEM LOGS CSV** (`<<extend>>`).
 
-### A-071  ·  EXPORT REPORTS CSV
+### A-068  ·  EXPORT REPORTS CSV
 
 **Use Case Name:** EXPORT REPORTS CSV  
 **Purpose:** Produce the reports view as a CSV file the user can download.  
@@ -3348,7 +3189,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *VIEW REPORTS AND LOGS* module of the use case diagram.
 - Drawn as `<<extend>>` to **VIEW REPORTS**.
 
-### A-072  ·  EXPORT ATTENDANCE CSV
+### A-069  ·  EXPORT ATTENDANCE CSV
 
 **Use Case Name:** EXPORT ATTENDANCE CSV  
 **Purpose:** Produce the attendance view as a CSV file the user can download.  
@@ -3394,7 +3235,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *VIEW REPORTS AND LOGS* module of the use case diagram.
 - Drawn as `<<extend>>` to **VIEW REPORTS**.
 
-### A-073  ·  EXPORT USAGE CSV
+### A-070  ·  EXPORT USAGE CSV
 
 **Use Case Name:** EXPORT USAGE CSV  
 **Purpose:** Produce the usage view as a CSV file the user can download.  
@@ -3437,7 +3278,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *VIEW REPORTS AND LOGS* module of the use case diagram.
 - Drawn as `<<extend>>` to **VIEW REPORTS**.
 
-### A-074  ·  EXPORT REMOTE COMMANDS CSV
+### A-071  ·  EXPORT REMOTE COMMANDS CSV
 
 **Use Case Name:** EXPORT REMOTE COMMANDS CSV  
 **Purpose:** Produce the remote commands view as a CSV file the user can download.  
@@ -3483,7 +3324,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *VIEW REPORTS AND LOGS* module of the use case diagram.
 - Drawn as `<<extend>>` to **VIEW REPORTS**.
 
-### A-075  ·  EXPORT AUDIT CSV
+### A-072  ·  EXPORT AUDIT CSV
 
 **Use Case Name:** EXPORT AUDIT CSV  
 **Purpose:** Produce the audit view as a CSV file the user can download.  
@@ -3525,7 +3366,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *VIEW REPORTS AND LOGS* module of the use case diagram.
 - Drawn as `<<extend>>` to **VIEW AUDIT LOGS**.
 
-### A-076  ·  EXPORT SYSTEM LOGS CSV
+### A-073  ·  EXPORT SYSTEM LOGS CSV
 
 **Use Case Name:** EXPORT SYSTEM LOGS CSV  
 **Purpose:** Produce the system logs view as a CSV file the user can download.  
@@ -3573,7 +3414,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.16: System Use Case for manage database*
 
-### A-077  ·  VIEW DATABASE TOOLS
+### A-074  ·  VIEW DATABASE TOOLS
 
 **Use Case Name:** VIEW DATABASE TOOLS  
 **Purpose:** Show database health: file size, integrity check, applied and pending migrations, and the backups on disk.  
@@ -3612,7 +3453,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminDatabaseController.Index` (GET).
 - Appears in the *MANAGE DATABASE* module of the use case diagram.
 
-### A-078  ·  CREATE BACKUP
+### A-075  ·  CREATE BACKUP
 
 **Use Case Name:** CREATE BACKUP  
 **Purpose:** Take a backup copy of the SQLite database file and store it on the server.  
@@ -3657,7 +3498,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminDatabaseController.CreateBackup` (POST).
 - Appears in the *MANAGE DATABASE* module of the use case diagram.
 
-### A-079  ·  VALIDATE BACKUP
+### A-076  ·  VALIDATE BACKUP
 
 **Use Case Name:** VALIDATE BACKUP  
 **Purpose:** Check that a backup file is a readable, intact database before anybody relies on it.  
@@ -3702,7 +3543,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminDatabaseController.ValidateBackup` (POST).
 - Appears in the *MANAGE DATABASE* module of the use case diagram.
 
-### A-080  ·  STAGE DATABASE RESTORE
+### A-077  ·  STAGE DATABASE RESTORE
 
 **Use Case Name:** STAGE DATABASE RESTORE  
 **Purpose:** Stage a backup so the server restores it on the next restart, rather than swapping the file underneath a running system.  
@@ -3754,7 +3595,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.17: System Use Case for manage deployment*
 
-### A-081  ·  VIEW DEPLOYMENT HUB
+### A-078  ·  VIEW DEPLOYMENT HUB
 
 **Use Case Name:** VIEW DEPLOYMENT HUB  
 **Purpose:** Show the deployment hub: release version, installer and certificate state, and the endpoint clients should use.  
@@ -3793,7 +3634,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminDeploymentController.Index` (GET).
 - Appears in the *MANAGE DEPLOYMENT* module of the use case diagram.
 
-### A-082  ·  DOWNLOAD INSTALLER
+### A-079  ·  DOWNLOAD INSTALLER
 
 **Use Case Name:** DOWNLOAD INSTALLER  
 **Purpose:** Download the client installer for deployment to a workstation.  
@@ -3832,7 +3673,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminDeploymentController.Installer` (GET).
 - Appears in the *MANAGE DEPLOYMENT* module of the use case diagram.
 
-### A-083  ·  DOWNLOAD MANIFEST
+### A-080  ·  DOWNLOAD MANIFEST
 
 **Use Case Name:** DOWNLOAD MANIFEST  
 **Purpose:** Download the release manifest listing the files and their hashes.  
@@ -3871,7 +3712,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminDeploymentController.Manifest` (GET).
 - Appears in the *MANAGE DEPLOYMENT* module of the use case diagram.
 
-### A-084  ·  DOWNLOAD ROOT CERTIFICATE
+### A-081  ·  DOWNLOAD ROOT CERTIFICATE
 
 **Use Case Name:** DOWNLOAD ROOT CERTIFICATE  
 **Purpose:** Download the root certificate a workstation must trust to reach the server over HTTPS.  
@@ -3910,7 +3751,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminDeploymentController.RootCertificate` (GET).
 - Appears in the *MANAGE DEPLOYMENT* module of the use case diagram.
 
-### A-085  ·  CREATE BUNDLE
+### A-082  ·  CREATE BUNDLE
 
 **Use Case Name:** CREATE BUNDLE  
 **Purpose:** Build and download an offline client bundle for a workstation with no access to the server yet.  
@@ -3963,7 +3804,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.18: System Use Case for process log in*
 
-### T-086  ·  AUTHENTICATE USER
+### T-083  ·  AUTHENTICATE USER
 
 **Use Case Name:** AUTHENTICATE USER  
 **Purpose:** Let a person sign in to the CAMS web portal with a username and password, and place them in the part of the system their role allows.  
@@ -4011,7 +3852,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AccountController.Login` (POST).
 - Appears in the *PROCESS LOG IN* module of the use case diagram.
 
-### T-087  ·  SIGN OUT USER
+### T-084  ·  SIGN OUT USER
 
 **Use Case Name:** SIGN OUT USER  
 **Purpose:** End the signed-in session and clear the authentication cookie, so the next visitor to the browser starts as an anonymous user.  
@@ -4059,7 +3900,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.19: System Use Case for manage own account*
 
-### T-088  ·  VIEW SETTINGS
+### T-085  ·  VIEW SETTINGS
 
 **Use Case Name:** VIEW SETTINGS  
 **Purpose:** Show the settings page for the signed-in user.  
@@ -4098,7 +3939,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.Settings` (GET).
 - Appears in the *MANAGE OWN ACCOUNT* module of the use case diagram.
 
-### T-089  ·  CHANGE PASSWORD
+### T-086  ·  CHANGE PASSWORD
 
 **Use Case Name:** CHANGE PASSWORD  
 **Purpose:** Let the signed-in user replace their own password after proving they know the current one.  
@@ -4149,7 +3990,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.20: System Use Case for manage peer teacher account*
 
-### T-090  ·  VIEW TEACHERS
+### T-087  ·  VIEW TEACHERS
 
 **Use Case Name:** VIEW TEACHERS  
 **Purpose:** List the teachers the signed-in user is allowed to see.  
@@ -4188,7 +4029,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.Teachers` (GET).
 - Appears in the *MANAGE PEER TEACHER ACCOUNT* module of the use case diagram.
 
-### T-091  ·  CREATE TEACHER
+### T-088  ·  CREATE TEACHER
 
 **Use Case Name:** CREATE TEACHER  
 **Purpose:** Record a new teacher account in the system.  
@@ -4233,7 +4074,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.CreateTeacher` (POST).
 - Appears in the *MANAGE PEER TEACHER ACCOUNT* module of the use case diagram.
 
-### T-092  ·  UPDATE TEACHER
+### T-089  ·  UPDATE TEACHER
 
 **Use Case Name:** UPDATE TEACHER  
 **Purpose:** Amend the stored details of an existing teacher account.  
@@ -4279,55 +4120,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UpdateTeacher` (POST).
 - Appears in the *MANAGE PEER TEACHER ACCOUNT* module of the use case diagram.
 
-### T-093  ·  DELETE TEACHER
-
-**Use Case Name:** DELETE TEACHER  
-**Purpose:** Remove a teacher account from the system.  
-**Actors:**
-
-- Teacher (Primary Actor)
-
-**Input Parameters:**
-
-- `id` : `int`
-
-**Output Parameters:**
-
-- A redirect back to the listing page, carrying a success or failure message for display.
-
-**Pre-Condition:**
-
-- The caller is signed in as an administrator or a teacher. A teacher reaches this action only because it carries `[TeacherSharedAction]`; the teacher account must also be active.
-- The record named by the identifier exists.
-
-**Post-Condition:**
-
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
-
-**Successful Scenario:**
-
-1. The Teacher opens the page and CAMS confirms the role on the authentication cookie.
-2. The Teacher fills the form and submits it.
-3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
-- **The identifier matches no record** — the action reports that the record was not found and makes no change.
-- **The record is still referenced** — the deletion is refused rather than leaving dangling references.
-
-**Additional Remarks:**
-
-- Implemented by `AdminController.DeleteTeacher` (POST).
-- Appears in the *MANAGE PEER TEACHER ACCOUNT* module of the use case diagram.
-
-### T-094  ·  UNLOCK ACCOUNT
+### T-090  ·  UNLOCK ACCOUNT
 
 **Use Case Name:** UNLOCK ACCOUNT  
 **Purpose:** Clear the lockout on an account that has been locked by repeated failed sign-in attempts.  
@@ -4375,17 +4168,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UnlockAccount` (POST).
 - Appears in the *MANAGE PEER TEACHER ACCOUNT* module of the use case diagram.
 
-### T-095  ·  TOGGLE ACCOUNT STATUS
+### T-091  ·  TOGGLE TEACHER STATUS
 
-**Use Case Name:** TOGGLE ACCOUNT STATUS  
-**Purpose:** Activate or deactivate an account without deleting it, so a person can be kept out of the system while their records survive.  
+**Use Case Name:** TOGGLE TEACHER STATUS  
+**Purpose:** Activate or deactivate a teacher account instead of deleting it, so the teacher can no longer sign in while their classes, sessions and records are kept.  
 **Actors:**
 
 - Teacher (Primary Actor)
 
 **Input Parameters:**
 
-- `accountRole` : `AccountRole`
+- `accountRole` : `AccountRole` (Teacher)
 - `id` : `int`
 - `isActive` : `bool`
 
@@ -4395,33 +4188,34 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Pre-Condition:**
 
-- The caller is signed in as an administrator or a teacher. A teacher reaches this action only because it carries `[TeacherSharedAction]`; the teacher account must also be active.
+- The caller is signed in as a teacher. The shared administration page admits a teacher because the action carries `[TeacherSharedAction]`.
 - The record named by the identifier exists.
 
 **Post-Condition:**
 
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
+- The new status is committed; an inactive teacher cannot sign in until reactivated.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
 
 **Successful Scenario:**
 
-1. The Teacher opens the page and CAMS confirms the role on the authentication cookie.
-2. The Teacher fills the form and submits it.
+1. The Teacher opens the Teachers page and CAMS confirms the role on the authentication cookie.
+2. The Teacher chooses Activate or Deactivate beside a teacher account and confirms the prompt.
 3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
+4. The server sets the account's `Status` to Active or Inactive, saves it and writes an audit entry.
+5. The server redirects back to the Teachers page, where the new status is shown.
 
 **Exception Scenario:**
 
 - **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
 - **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
 - **The identifier matches no record** — the action reports that the record was not found and makes no change.
+- **The teacher still has active classes** — deactivation is refused until those classes are reassigned or archived.
+- **A teacher deactivating their own account, or the last active teacher** — the change is refused and the reason is shown.
 
 **Additional Remarks:**
 
 - Implemented by `AdminController.SetAccountActive` (POST).
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
 - Appears in the *MANAGE PEER TEACHER ACCOUNT* module of the use case diagram.
 
 ## MANAGE STUDENT ACCOUNT  ·  `TeacherController`
@@ -4430,7 +4224,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.21: System Use Case for manage student account*
 
-### T-096  ·  VIEW STUDENTS
+### T-092  ·  VIEW STUDENTS
 
 **Use Case Name:** VIEW STUDENTS  
 **Purpose:** List the students the signed-in user is allowed to see.  
@@ -4469,7 +4263,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.Students` (GET).
 - Appears in the *MANAGE STUDENT ACCOUNT* module of the use case diagram.
 
-### T-097  ·  CREATE STUDENT
+### T-093  ·  CREATE STUDENT
 
 **Use Case Name:** CREATE STUDENT  
 **Purpose:** Record a new student account in the system.  
@@ -4518,7 +4312,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.CreateStudent` (POST).
 - Appears in the *MANAGE STUDENT ACCOUNT* module of the use case diagram.
 
-### T-098  ·  UPDATE STUDENT
+### T-094  ·  UPDATE STUDENT
 
 **Use Case Name:** UPDATE STUDENT  
 **Purpose:** Amend the stored details of an existing student account.  
@@ -4565,18 +4359,19 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.UpdateStudent` (POST).
 - Appears in the *MANAGE STUDENT ACCOUNT* module of the use case diagram.
 
-### T-099  ·  DELETE STUDENT
+### T-095  ·  TOGGLE STUDENT STATUS
 
-**Use Case Name:** DELETE STUDENT  
-**Purpose:** Remove a student account from the system.  
+**Use Case Name:** TOGGLE STUDENT STATUS  
+**Purpose:** Activate or deactivate a student account instead of deleting it, so the student cannot sign in at a workstation while their attendance and activity history are kept.  
 **Actors:**
 
 - Teacher (Primary Actor)
 
 **Input Parameters:**
 
-- `studentId` : `int`
-- `search` : `string?` (optional)
+- `accountRole` : `AccountRole` (Student)
+- `id` : `int`
+- `isActive` : `bool`
 
 **Output Parameters:**
 
@@ -4584,37 +4379,35 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Pre-Condition:**
 
-- The caller is signed in as a teacher.
+- The caller is signed in as a teacher. The shared administration page admits a teacher because the action carries `[TeacherSharedAction]`.
 - The record named by the identifier exists.
 
 **Post-Condition:**
 
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
+- The new status is committed; an inactive student cannot sign in at a workstation until reactivated.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
 
 **Successful Scenario:**
 
-1. The Teacher opens the page and CAMS confirms the role on the authentication cookie.
-2. The Teacher fills the form and submits it.
+1. The Teacher opens the Students page and CAMS confirms the role on the authentication cookie.
+2. The Teacher chooses Activate or Deactivate beside a student and confirms the prompt.
 3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
+4. The server sets the account's `Status` to Active or Inactive, saves it and writes an audit entry.
+5. The server redirects back to the Students page, where the new status is shown.
 
 **Exception Scenario:**
 
 - **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
 - **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
 - **The identifier matches no record** — the action reports that the record was not found and makes no change.
-- **The record is still referenced** — the deletion is refused rather than leaving dangling references.
 
 **Additional Remarks:**
 
-- Implemented by `TeacherController.DeleteStudent` (POST).
+- Implemented by `AdminController.SetAccountActive` (POST).
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
 - Appears in the *MANAGE STUDENT ACCOUNT* module of the use case diagram.
 
-### T-100  ·  IMPORT CLASS ROSTER
+### T-096  ·  IMPORT CLASS ROSTER
 
 **Use Case Name:** IMPORT CLASS ROSTER  
 **Purpose:** Create many student accounts at once and enrol them into a class in the same operation.  
@@ -4666,7 +4459,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *MANAGE STUDENT ACCOUNT* module of the use case diagram.
 - Pulls in **PREVIEW ROSTER FILE** (`<<include>>`).
 
-### T-101  ·  PREVIEW ROSTER FILE
+### T-097  ·  PREVIEW ROSTER FILE
 
 **Use Case Name:** PREVIEW ROSTER FILE  
 **Purpose:** Parse the submitted CSV and show what would be created, so mistakes are caught before any account exists.  
@@ -4723,7 +4516,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.22: System Use Case for manage computer profile*
 
-### T-102  ·  VIEW COMPUTERS
+### T-098  ·  VIEW COMPUTERS
 
 **Use Case Name:** VIEW COMPUTERS  
 **Purpose:** List the computers the signed-in user is allowed to see.  
@@ -4762,7 +4555,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.Computers` (GET).
 - Appears in the *MANAGE COMPUTER PROFILE* module of the use case diagram.
 
-### T-103  ·  REGISTER COMPUTER
+### T-099  ·  REGISTER COMPUTER
 
 **Use Case Name:** REGISTER COMPUTER  
 **Purpose:** Record a new workstation profile in the system.  
@@ -4807,7 +4600,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.CreateComputer` (POST).
 - Appears in the *MANAGE COMPUTER PROFILE* module of the use case diagram.
 
-### T-104  ·  UPDATE COMPUTER
+### T-100  ·  UPDATE COMPUTER
 
 **Use Case Name:** UPDATE COMPUTER  
 **Purpose:** Amend the stored details of an existing workstation profile.  
@@ -4852,17 +4645,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UpdateComputer` (POST).
 - Appears in the *MANAGE COMPUTER PROFILE* module of the use case diagram.
 
-### T-105  ·  ARCHIVE COMPUTER
+### T-101  ·  TOGGLE COMPUTER STATUS
 
-**Use Case Name:** ARCHIVE COMPUTER  
-**Purpose:** Retire a workstation from the laboratory without erasing it. The record is marked archived and unassigned, so past lab sessions and status history still resolve to a named station. Refused while a lab session is running on it.  
+**Use Case Name:** TOGGLE COMPUTER STATUS  
+**Purpose:** Change a workstation's status - Available, In Use or Maintenance - or archive it, instead of deleting it, so past lab sessions and status history still resolve to a named station.  
 **Actors:**
 
 - Teacher (Primary Actor)
 
 **Input Parameters:**
 
-- `id` : `int`
+- `computer` : `Computer` (`ComputerId`, `Status`)
 
 **Output Parameters:**
 
@@ -4870,76 +4663,35 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Pre-Condition:**
 
-- The caller is signed in as an administrator or a teacher. A teacher reaches this action only because it carries `[TeacherSharedAction]`; the teacher account must also be active.
+- The caller is signed in as a teacher. The shared administration page admits a teacher because the action carries `[TeacherSharedAction]`.
 - The record named by the identifier exists.
 
 **Post-Condition:**
 
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
+- The new status is committed to the database and takes effect on the next read.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
 
 **Successful Scenario:**
 
-1. The Teacher opens the page and CAMS confirms the role on the authentication cookie.
-2. The Teacher fills the form and submits it.
-3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
+1. The Teacher opens the Computers page and CAMS confirms the role on the authentication cookie.
+2. The Teacher opens the workstation's edit form, chooses the new status (or chooses Archive) and saves.
+3. The server writes the new status, adds an entry to the workstation's status history and writes an audit entry.
+4. The server redirects back to the Computers page, where the new status is shown.
 
 **Exception Scenario:**
 
 - **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
 - **The identifier matches no record** — the action reports that the record was not found and makes no change.
-- **The record is still referenced** — the deletion is refused rather than leaving dangling references.
+- **A lab session is running on the workstation** — archiving is refused until that session is ended.
+- **Another workstation already has that station name** — the change is refused and nothing is written.
 
 **Additional Remarks:**
 
-- Implemented by `AdminController.DeleteComputer` (POST).
+- Implemented by `AdminController.UpdateComputer` (POST) for the status, and `AdminController.DeleteComputer` (POST), which archives rather than deletes.
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
 - Appears in the *MANAGE COMPUTER PROFILE* module of the use case diagram.
 
-### T-106  ·  DELETE COMPUTER
-
-**Use Case Name:** DELETE COMPUTER  
-**Purpose:** Remove a workstation record outright, for a station entered by mistake or one that has left the laboratory for good. Past lab sessions are kept and merely lose their link to the station; the status history for the station is discarded. Refused while a lab session is running on it.  
-**Actors:**
-
-- Teacher (Primary Actor)
-
-**Input Parameters:**
-
-- None beyond the signed-in identity carried on the authentication cookie.
-
-**Output Parameters:**
-
-- The behaviour completes and its effect is visible to the use case that includes it.
-
-**Pre-Condition:**
-
-- The caller is signed in.
-
-**Post-Condition:**
-
-- The caller has the requested information. Nothing in the database has changed.
-
-**Successful Scenario:**
-
-1. The including use case reaches the point where this behaviour is required.
-2. The server runs `PermanentlyDeleteComputer` and applies its result.
-3. Control returns to the including use case, which continues.
-
-**Exception Scenario:**
-
-- The behaviour fails and the including use case reports the failure rather than continuing as if it had succeeded.
-
-**Additional Remarks:**
-
-- Implemented by `PermanentlyDeleteComputer`.
-- Appears in the *MANAGE COMPUTER PROFILE* module of the use case diagram.
-
-### T-107  ·  MAP STUDENT WORKSTATION
+### T-102  ·  MAP STUDENT WORKSTATION
 
 **Use Case Name:** MAP STUDENT WORKSTATION  
 **Purpose:** Map a workstation to a student so the workstation is recognised when that student signs in at it. An archived station cannot be mapped.  
@@ -4987,7 +4739,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.AssignComputer` (POST).
 - Appears in the *MANAGE COMPUTER PROFILE* module of the use case diagram.
 
-### T-108  ·  VIEW COMPUTER HISTORY
+### T-103  ·  VIEW COMPUTER HISTORY
 
 **Use Case Name:** VIEW COMPUTER HISTORY  
 **Purpose:** Show the recorded status changes for a workstation, and who made each one.  
@@ -5034,7 +4786,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.23: System Use Case for manage class*
 
-### T-109  ·  VIEW CLASSES
+### T-104  ·  VIEW CLASSES
 
 **Use Case Name:** VIEW CLASSES  
 **Purpose:** List the classes the signed-in user is allowed to see.  
@@ -5073,7 +4825,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.Classes` (GET).
 - Appears in the *MANAGE CLASS* module of the use case diagram.
 
-### T-110  ·  CREATE CLASS
+### T-105  ·  CREATE CLASS
 
 **Use Case Name:** CREATE CLASS  
 **Purpose:** Record a new class in the system.  
@@ -5118,7 +4870,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.CreateClass` (POST).
 - Appears in the *MANAGE CLASS* module of the use case diagram.
 
-### T-111  ·  UPDATE CLASS
+### T-106  ·  UPDATE CLASS
 
 **Use Case Name:** UPDATE CLASS  
 **Purpose:** Amend the stored details of an existing class.  
@@ -5163,55 +4915,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.UpdateClass` (POST).
 - Appears in the *MANAGE CLASS* module of the use case diagram.
 
-### T-112  ·  DELETE CLASS
-
-**Use Case Name:** DELETE CLASS  
-**Purpose:** Remove a class from the system.  
-**Actors:**
-
-- Teacher (Primary Actor)
-
-**Input Parameters:**
-
-- `classId` : `int`
-
-**Output Parameters:**
-
-- A redirect back to the listing page, carrying a success or failure message for display.
-
-**Pre-Condition:**
-
-- The caller is signed in as a teacher.
-- The record named by the identifier exists.
-
-**Post-Condition:**
-
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
-
-**Successful Scenario:**
-
-1. The Teacher opens the page and CAMS confirms the role on the authentication cookie.
-2. The Teacher fills the form and submits it.
-3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
-- **The identifier matches no record** — the action reports that the record was not found and makes no change.
-- **The record is still referenced** — the deletion is refused rather than leaving dangling references.
-
-**Additional Remarks:**
-
-- Implemented by `TeacherController.DeleteClass` (POST).
-- Appears in the *MANAGE CLASS* module of the use case diagram.
-
-### T-113  ·  ASSIGN TEACHER
+### T-107  ·  ASSIGN TEACHER
 
 **Use Case Name:** ASSIGN TEACHER  
 **Purpose:** Put a teacher in charge of a class.  
@@ -5259,10 +4963,10 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.AssignTeacher` (POST).
 - Appears in the *MANAGE CLASS* module of the use case diagram.
 
-### T-114  ·  ARCHIVE CLASS
+### T-108  ·  TOGGLE CLASS STATUS
 
-**Use Case Name:** ARCHIVE CLASS  
-**Purpose:** Take a class out of active use while keeping its roster and records.  
+**Use Case Name:** TOGGLE CLASS STATUS  
+**Purpose:** Archive an active class, or restore an archived one, instead of deleting it, so its roster, sessions and records are kept.  
 **Actors:**
 
 - Teacher (Primary Actor)
@@ -5278,32 +4982,32 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 **Pre-Condition:**
 
 - The caller is signed in as a teacher.
-- The record named by the identifier exists.
+- The class exists and is assigned to the teacher.
 
 **Post-Condition:**
 
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
+- The new status is committed to the database and takes effect on the next read.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
 
 **Successful Scenario:**
 
-1. The Teacher opens the page and CAMS confirms the role on the authentication cookie.
-2. The Teacher fills the form and submits it.
+1. The Teacher opens the Classes page and CAMS confirms the role on the authentication cookie.
+2. The Teacher chooses Archive (or Restore) beside the class and confirms the prompt.
 3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
+4. The server flips the class between active and archived, saves it and writes an audit entry.
+5. The server redirects back to the Classes page, where the new status is shown.
 
 **Exception Scenario:**
 
 - **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
 - **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
 - **The identifier matches no record** — the action reports that the record was not found and makes no change.
+- **The class is not assigned to the teacher** — the change is refused and the listing reports it.
 
 **Additional Remarks:**
 
 - Implemented by `TeacherController.ArchiveClass` (POST).
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
 - Appears in the *MANAGE CLASS* module of the use case diagram.
 
 ## MANAGE CLASS ROSTER  ·  `TeacherController`
@@ -5312,7 +5016,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.24: System Use Case for manage class roster*
 
-### T-115  ·  VIEW CLASS DETAILS
+### T-109  ·  VIEW CLASS DETAILS
 
 **Use Case Name:** VIEW CLASS DETAILS  
 **Purpose:** Show one class with its roster and the students enrolled in it.  
@@ -5353,7 +5057,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.ClassDetails` (GET).
 - Appears in the *MANAGE CLASS ROSTER* module of the use case diagram.
 
-### T-116  ·  ENROLL STUDENT
+### T-110  ·  ENROLL STUDENT
 
 **Use Case Name:** ENROLL STUDENT  
 **Purpose:** Add an existing student to a class roster.  
@@ -5402,7 +5106,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.EnrollStudent` (POST).
 - Appears in the *MANAGE CLASS ROSTER* module of the use case diagram.
 
-### T-117  ·  ENROLL STUDENT GROUP
+### T-111  ·  ENROLL STUDENT GROUP
 
 **Use Case Name:** ENROLL STUDENT GROUP  
 **Purpose:** Add several existing students to a class roster in one operation.  
@@ -5451,7 +5155,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.EnrollStudents` (POST).
 - Appears in the *MANAGE CLASS ROSTER* module of the use case diagram.
 
-### T-118  ·  ADD CLASS MEMBER
+### T-112  ·  ADD CLASS MEMBER
 
 **Use Case Name:** ADD CLASS MEMBER  
 **Purpose:** Create a new student account and place it on a class roster in one step.  
@@ -5502,9 +5206,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.AddStudentToClass` (POST).
 - Appears in the *MANAGE CLASS ROSTER* module of the use case diagram.
 
-### T-119  ·  REMOVE STUDENT
+### T-113  ·  UNENROLL STUDENT
 
-**Use Case Name:** REMOVE STUDENT  
+**Use Case Name:** UNENROLL STUDENT  
 **Purpose:** Take a student off a class roster while leaving the student account intact.  
 **Actors:**
 
@@ -5556,7 +5260,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.25: System Use Case for manage restriction rule*
 
-### T-120  ·  VIEW RESTRICTIONS
+### T-114  ·  VIEW RESTRICTIONS
 
 **Use Case Name:** VIEW RESTRICTIONS  
 **Purpose:** List the restrictions the signed-in user is allowed to see.  
@@ -5595,7 +5299,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.Restrictions` (GET).
 - Appears in the *MANAGE RESTRICTION RULE* module of the use case diagram.
 
-### T-121  ·  CREATE RESTRICTION
+### T-115  ·  CREATE RESTRICTION
 
 **Use Case Name:** CREATE RESTRICTION  
 **Purpose:** Record a new restriction rule in the system.  
@@ -5640,7 +5344,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.CreateRestriction` (POST).
 - Appears in the *MANAGE RESTRICTION RULE* module of the use case diagram.
 
-### T-122  ·  UPDATE RESTRICTION
+### T-116  ·  UPDATE RESTRICTION
 
 **Use Case Name:** UPDATE RESTRICTION  
 **Purpose:** Amend the stored details of an existing restriction rule.  
@@ -5685,17 +5389,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.UpdateRestriction` (POST).
 - Appears in the *MANAGE RESTRICTION RULE* module of the use case diagram.
 
-### T-123  ·  DELETE RESTRICTION
+### T-117  ·  TOGGLE RESTRICTION STATUS
 
-**Use Case Name:** DELETE RESTRICTION  
-**Purpose:** Remove a restriction rule from the system.  
+**Use Case Name:** TOGGLE RESTRICTION STATUS  
+**Purpose:** Switch a restriction rule between active and inactive instead of deleting it, so the client agents stop (or resume) enforcing it while the rule stays on file.  
 **Actors:**
 
 - Teacher (Primary Actor)
 
 **Input Parameters:**
 
-- `id` : `int`
+- `input` : `RestrictionRule` (`RestrictionRuleId`, `IsActive`, and the rule's other fields)
 
 **Output Parameters:**
 
@@ -5704,33 +5408,32 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 **Pre-Condition:**
 
 - The caller is signed in as a teacher.
-- The record named by the identifier exists.
+- The rule exists and belongs to the teacher.
 
 **Post-Condition:**
 
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
+- The new status is committed to the database and takes effect on the next read.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
 
 **Successful Scenario:**
 
-1. The Teacher opens the page and CAMS confirms the role on the authentication cookie.
-2. The Teacher fills the form and submits it.
+1. The Teacher opens the Restrictions page and CAMS confirms the role on the authentication cookie.
+2. The Teacher opens the rule's edit form, ticks or clears Active and saves.
 3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
+4. The server sets the rule's `IsActive` flag, saves it and writes an audit entry.
+5. The server redirects back to the Restrictions page, where the new status is shown.
 
 **Exception Scenario:**
 
 - **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
 - **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
 - **The identifier matches no record** — the action reports that the record was not found and makes no change.
-- **The record is still referenced** — the deletion is refused rather than leaving dangling references.
+- **The rule's type, target or mode is not valid** — nothing is written and the listing is shown again.
 
 **Additional Remarks:**
 
-- Implemented by `TeacherController.DeleteRestriction` (POST).
+- Implemented by `TeacherController.UpdateRestriction` (POST).
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
 - Appears in the *MANAGE RESTRICTION RULE* module of the use case diagram.
 
 ## MANAGE BLACKLIST AND WHITELIST  ·  `AdminController`
@@ -5739,7 +5442,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.26: System Use Case for manage blacklist and whitelist*
 
-### T-124  ·  VIEW BLACKLISTS
+### T-118  ·  VIEW BLACKLISTS
 
 **Use Case Name:** VIEW BLACKLISTS  
 **Purpose:** List the blacklists the signed-in user is allowed to see.  
@@ -5778,7 +5481,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.Blacklists` (GET).
 - Appears in the *MANAGE BLACKLIST AND WHITELIST* module of the use case diagram.
 
-### T-125  ·  VIEW WHITELISTS
+### T-119  ·  VIEW WHITELISTS
 
 **Use Case Name:** VIEW WHITELISTS  
 **Purpose:** List the whitelists the signed-in user is allowed to see.  
@@ -5817,7 +5520,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.Whitelists` (GET).
 - Appears in the *MANAGE BLACKLIST AND WHITELIST* module of the use case diagram.
 
-### T-126  ·  CREATE BLACKLIST
+### T-120  ·  CREATE BLACKLIST
 
 **Use Case Name:** CREATE BLACKLIST  
 **Purpose:** Record a new blacklist entry in the system.  
@@ -5868,7 +5571,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.CreateBlacklist` (POST).
 - Appears in the *MANAGE BLACKLIST AND WHITELIST* module of the use case diagram.
 
-### T-127  ·  UPDATE BLACKLIST
+### T-121  ·  UPDATE BLACKLIST
 
 **Use Case Name:** UPDATE BLACKLIST  
 **Purpose:** Amend the stored details of an existing blacklist entry.  
@@ -5913,17 +5616,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UpdateBlacklist` (POST).
 - Appears in the *MANAGE BLACKLIST AND WHITELIST* module of the use case diagram.
 
-### T-128  ·  DELETE BLACKLIST
+### T-122  ·  TOGGLE BLACKLIST STATUS
 
-**Use Case Name:** DELETE BLACKLIST  
-**Purpose:** Remove a blacklist entry from the system.  
+**Use Case Name:** TOGGLE BLACKLIST STATUS  
+**Purpose:** Switch a blacklist entry between active and inactive instead of deleting it, so the application or website is unblocked (or blocked again) while the entry stays on file.  
 **Actors:**
 
 - Teacher (Primary Actor)
 
 **Input Parameters:**
 
-- `id` : `int`
+- `input` : `BlacklistItem` (`BlacklistItemId`, `TargetType`, `Value`, `Reason`, `IsActive`)
 
 **Output Parameters:**
 
@@ -5931,37 +5634,33 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Pre-Condition:**
 
-- The caller is signed in as an administrator or a teacher. A teacher reaches this action only because it carries `[TeacherSharedAction]`; the teacher account must also be active.
+- The caller is signed in as a teacher. The shared administration page admits a teacher because the action carries `[TeacherSharedAction]`.
 - The record named by the identifier exists.
 
 **Post-Condition:**
 
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
+- The new status is committed to the database and takes effect on the next read.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
 
 **Successful Scenario:**
 
-1. The Teacher opens the page and CAMS confirms the role on the authentication cookie.
-2. The Teacher fills the form and submits it.
-3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
+1. The Teacher opens the Blacklists page and CAMS confirms the role on the authentication cookie.
+2. The Teacher opens the entry's edit form, ticks or clears Active and saves.
+3. The server sets the entry's `IsActive` flag, saves it and writes an audit entry.
+4. The server redirects back to the Blacklists page, where the new status is shown.
 
 **Exception Scenario:**
 
 - **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
 - **The identifier matches no record** — the action reports that the record was not found and makes no change.
-- **The record is still referenced** — the deletion is refused rather than leaving dangling references.
 
 **Additional Remarks:**
 
-- Implemented by `AdminController.DeleteBlacklist` (POST).
+- Implemented by `AdminController.UpdateBlacklist` (POST).
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
 - Appears in the *MANAGE BLACKLIST AND WHITELIST* module of the use case diagram.
 
-### T-129  ·  CREATE WHITELIST
+### T-123  ·  CREATE WHITELIST
 
 **Use Case Name:** CREATE WHITELIST  
 **Purpose:** Record a new whitelist entry in the system.  
@@ -6006,7 +5705,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.CreateWhitelist` (POST).
 - Appears in the *MANAGE BLACKLIST AND WHITELIST* module of the use case diagram.
 
-### T-130  ·  UPDATE WHITELIST
+### T-124  ·  UPDATE WHITELIST
 
 **Use Case Name:** UPDATE WHITELIST  
 **Purpose:** Amend the stored details of an existing whitelist entry.  
@@ -6056,13 +5755,57 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UpdateWhitelist` (POST).
 - Appears in the *MANAGE BLACKLIST AND WHITELIST* module of the use case diagram.
 
+### T-125  ·  TOGGLE WHITELIST STATUS
+
+**Use Case Name:** TOGGLE WHITELIST STATUS  
+**Purpose:** Switch a whitelist rule between active and inactive instead of deleting it, so the website leaves (or rejoins) the allowed list while the rule stays on file.  
+**Actors:**
+
+- Teacher (Primary Actor)
+
+**Input Parameters:**
+
+- `rule` : `RestrictionRule` (`RestrictionRuleId`, `RuleType`, `Target`, `Description`, `IsGlobal`, `IsActive`)
+
+**Output Parameters:**
+
+- A redirect back to the listing page, carrying a success or failure message for display.
+
+**Pre-Condition:**
+
+- The caller is signed in as a teacher. The shared administration page admits a teacher because the action carries `[TeacherSharedAction]`.
+- The record named by the identifier exists.
+
+**Post-Condition:**
+
+- The new status is committed to the database and takes effect on the next read.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
+
+**Successful Scenario:**
+
+1. The Teacher opens the Whitelists page and CAMS confirms the role on the authentication cookie.
+2. The Teacher opens the rule's edit form, switches Rule is active on or off and saves.
+3. The server sets the rule's `IsActive` flag, saves it and writes an audit entry.
+4. The server redirects back to the Whitelists page, where the new status is shown.
+
+**Exception Scenario:**
+
+- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
+- **The identifier matches no record** — the action reports that the record was not found and makes no change.
+
+**Additional Remarks:**
+
+- Implemented by `AdminController.UpdateWhitelist` (POST).
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
+- Appears in the *MANAGE BLACKLIST AND WHITELIST* module of the use case diagram.
+
 ## MANAGE CATEGORY  ·  `AdminController`
 
 ![MANAGE CATEGORY](usecase-images/teacher-manage-category.png)
 
 *Figure 3.27: System Use Case for manage category*
 
-### T-131  ·  CREATE APPLICATION CATEGORY
+### T-126  ·  CREATE APPLICATION CATEGORY
 
 **Use Case Name:** CREATE APPLICATION CATEGORY  
 **Purpose:** Record a new application category in the system.  
@@ -6107,7 +5850,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.CreateApplicationCategory` (POST).
 - Appears in the *MANAGE CATEGORY* module of the use case diagram.
 
-### T-132  ·  UPDATE APPLICATION CATEGORY
+### T-127  ·  UPDATE APPLICATION CATEGORY
 
 **Use Case Name:** UPDATE APPLICATION CATEGORY  
 **Purpose:** Amend the stored details of an existing application category.  
@@ -6152,17 +5895,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UpdateApplicationCategory` (POST).
 - Appears in the *MANAGE CATEGORY* module of the use case diagram.
 
-### T-133  ·  DELETE APPLICATION CATEGORY
+### T-128  ·  TOGGLE APPLICATION CATEGORY STATUS
 
-**Use Case Name:** DELETE APPLICATION CATEGORY  
-**Purpose:** Remove a application category from the system.  
+**Use Case Name:** TOGGLE APPLICATION CATEGORY STATUS  
+**Purpose:** Switch an application category between active and inactive instead of deleting it, so its pattern stops (or resumes) matching while the category stays on file.  
 **Actors:**
 
 - Teacher (Primary Actor)
 
 **Input Parameters:**
 
-- `id` : `int`
+- `input` : `ApplicationCategory` (`ApplicationCategoryId`, `IsActive`, and the category's other fields)
 
 **Output Parameters:**
 
@@ -6170,37 +5913,33 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Pre-Condition:**
 
-- The caller is signed in as an administrator or a teacher. A teacher reaches this action only because it carries `[TeacherSharedAction]`; the teacher account must also be active.
+- The caller is signed in as a teacher. The shared administration page admits a teacher because the action carries `[TeacherSharedAction]`.
 - The record named by the identifier exists.
 
 **Post-Condition:**
 
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
+- The new status is committed to the database and takes effect on the next read.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
 
 **Successful Scenario:**
 
-1. The Teacher opens the page and CAMS confirms the role on the authentication cookie.
-2. The Teacher fills the form and submits it.
-3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
+1. The Teacher opens the Restrictions page and CAMS confirms the role on the authentication cookie.
+2. The Teacher opens the application category's edit form, ticks or clears Active and saves.
+3. The server sets the category's `IsActive` flag, saves it and writes an audit entry.
+4. The server redirects back to the Restrictions page, where the new status is shown.
 
 **Exception Scenario:**
 
 - **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
 - **The identifier matches no record** — the action reports that the record was not found and makes no change.
-- **The record is still referenced** — the deletion is refused rather than leaving dangling references.
 
 **Additional Remarks:**
 
-- Implemented by `AdminController.DeleteApplicationCategory` (POST).
+- Implemented by `AdminController.UpdateApplicationCategory` (POST).
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
 - Appears in the *MANAGE CATEGORY* module of the use case diagram.
 
-### T-134  ·  CREATE WEBSITE CATEGORY
+### T-129  ·  CREATE WEBSITE CATEGORY
 
 **Use Case Name:** CREATE WEBSITE CATEGORY  
 **Purpose:** Record a new website category in the system.  
@@ -6245,7 +5984,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.CreateWebsiteCategory` (POST).
 - Appears in the *MANAGE CATEGORY* module of the use case diagram.
 
-### T-135  ·  UPDATE WEBSITE CATEGORY
+### T-130  ·  UPDATE WEBSITE CATEGORY
 
 **Use Case Name:** UPDATE WEBSITE CATEGORY  
 **Purpose:** Amend the stored details of an existing website category.  
@@ -6290,17 +6029,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UpdateWebsiteCategory` (POST).
 - Appears in the *MANAGE CATEGORY* module of the use case diagram.
 
-### T-136  ·  DELETE WEBSITE CATEGORY
+### T-131  ·  TOGGLE WEBSITE CATEGORY STATUS
 
-**Use Case Name:** DELETE WEBSITE CATEGORY  
-**Purpose:** Remove a website category from the system.  
+**Use Case Name:** TOGGLE WEBSITE CATEGORY STATUS  
+**Purpose:** Switch a website category between active and inactive instead of deleting it, so its domain pattern stops (or resumes) matching while the category stays on file.  
 **Actors:**
 
 - Teacher (Primary Actor)
 
 **Input Parameters:**
 
-- `id` : `int`
+- `input` : `WebsiteCategory` (`WebsiteCategoryId`, `IsActive`, and the category's other fields)
 
 **Output Parameters:**
 
@@ -6308,34 +6047,30 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Pre-Condition:**
 
-- The caller is signed in as an administrator or a teacher. A teacher reaches this action only because it carries `[TeacherSharedAction]`; the teacher account must also be active.
+- The caller is signed in as a teacher. The shared administration page admits a teacher because the action carries `[TeacherSharedAction]`.
 - The record named by the identifier exists.
 
 **Post-Condition:**
 
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
+- The new status is committed to the database and takes effect on the next read.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
 
 **Successful Scenario:**
 
-1. The Teacher opens the page and CAMS confirms the role on the authentication cookie.
-2. The Teacher fills the form and submits it.
-3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
+1. The Teacher opens the Restrictions page and CAMS confirms the role on the authentication cookie.
+2. The Teacher opens the website category's edit form, ticks or clears Active and saves.
+3. The server sets the category's `IsActive` flag, saves it and writes an audit entry.
+4. The server redirects back to the Restrictions page, where the new status is shown.
 
 **Exception Scenario:**
 
 - **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
 - **The identifier matches no record** — the action reports that the record was not found and makes no change.
-- **The record is still referenced** — the deletion is refused rather than leaving dangling references.
 
 **Additional Remarks:**
 
-- Implemented by `AdminController.DeleteWebsiteCategory` (POST).
+- Implemented by `AdminController.UpdateWebsiteCategory` (POST).
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
 - Appears in the *MANAGE CATEGORY* module of the use case diagram.
 
 ## MANAGE SESSION RULE  ·  `AdminController`
@@ -6344,7 +6079,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.28: System Use Case for manage session rule*
 
-### T-137  ·  VIEW SESSION RULES
+### T-132  ·  VIEW SESSION RULES
 
 **Use Case Name:** VIEW SESSION RULES  
 **Purpose:** List the session rules the signed-in user is allowed to see.  
@@ -6383,7 +6118,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.SessionRules` (GET).
 - Appears in the *MANAGE SESSION RULE* module of the use case diagram.
 
-### T-138  ·  CREATE SESSION RULE
+### T-133  ·  CREATE SESSION RULE
 
 **Use Case Name:** CREATE SESSION RULE  
 **Purpose:** Record a new session rule in the system.  
@@ -6428,7 +6163,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.CreateSessionRule` (POST).
 - Appears in the *MANAGE SESSION RULE* module of the use case diagram.
 
-### T-139  ·  UPDATE SESSION RULE
+### T-134  ·  UPDATE SESSION RULE
 
 **Use Case Name:** UPDATE SESSION RULE  
 **Purpose:** Amend the stored details of an existing session rule.  
@@ -6473,17 +6208,17 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `AdminController.UpdateSessionRule` (POST).
 - Appears in the *MANAGE SESSION RULE* module of the use case diagram.
 
-### T-140  ·  DEACTIVATE SESSION RULE
+### T-135  ·  TOGGLE SESSION RULE STATUS
 
-**Use Case Name:** DEACTIVATE SESSION RULE  
-**Purpose:** Take a session rule out of use while keeping it on file. The rule is marked inactive and loses any default flag, and sessions already recorded against it still resolve to a named rule; where the rule allowed remote control, open remote sessions under it are closed.  
+**Use Case Name:** TOGGLE SESSION RULE STATUS  
+**Purpose:** Switch a session rule between active and inactive instead of deleting it. An inactive rule loses any default flag and cannot govern new sessions, and sessions already recorded against it still resolve to a named rule.  
 **Actors:**
 
 - Teacher (Primary Actor)
 
 **Input Parameters:**
 
-- `id` : `int`
+- `input` : `SessionRule` (`SessionRuleId`, `Name`, `MaxDurationMinutes`, `AllowPause`, `AllowRemoteControl`, `IsDefault`, `IsActive`)
 
 **Output Parameters:**
 
@@ -6491,34 +6226,30 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 **Pre-Condition:**
 
-- The caller is signed in as an administrator or a teacher. A teacher reaches this action only because it carries `[TeacherSharedAction]`; the teacher account must also be active.
+- The caller is signed in as a teacher. The shared administration page admits a teacher because the action carries `[TeacherSharedAction]`.
 - The record named by the identifier exists.
 
 **Post-Condition:**
 
-- The change is committed to the database and visible to the next read.
-- The caller sees the outcome reported on the page they return to.
+- The new status is committed to the database and takes effect on the next read.
+- The record stays in the database with its history; only its status changes, so it can be switched back at any time.
 
 **Successful Scenario:**
 
-1. The Teacher opens the page and CAMS confirms the role on the authentication cookie.
-2. The Teacher fills the form and submits it.
-3. The server validates the antiforgery token that accompanied the form.
-4. The server validates the submitted values against the model rules.
-5. The change is written to the database through `ApplicationDbContext`.
-6. The server redirects back to the listing, where the result is shown.
+1. The Teacher opens the Session Rules page and CAMS confirms the role on the authentication cookie.
+2. The Teacher opens the rule's edit form, ticks or clears Active and saves.
+3. The server sets the rule's `IsActive` flag, clears the default flag when the rule is made inactive, closes any open remote control session that relied on it, and writes an audit entry.
+4. The server redirects back to the Session Rules page, where the new status is shown.
 
 **Exception Scenario:**
 
 - **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **Missing or stale antiforgery token** — the submission is rejected and must be retried from a freshly loaded form.
-- **Validation fails** — the form is redisplayed with the offending fields marked and nothing is written.
 - **The identifier matches no record** — the action reports that the record was not found and makes no change.
-- **The record is still referenced** — the deletion is refused rather than leaving dangling references.
 
 **Additional Remarks:**
 
-- Implemented by `AdminController.DeleteSessionRule` (POST).
+- Implemented by `AdminController.UpdateSessionRule` (POST).
+- Replaces the delete use case: CAMS keeps the record and changes its status, so history is never lost.
 - Appears in the *MANAGE SESSION RULE* module of the use case diagram.
 
 ## CONTROL LABORATORY SESSION  ·  `TeacherController`
@@ -6527,7 +6258,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.29: System Use Case for control laboratory session*
 
-### T-141  ·  RESUME LAB SESSIONS
+### T-136  ·  RESUME LAB SESSIONS
 
 **Use Case Name:** RESUME LAB SESSIONS  
 **Purpose:** Start a laboratory-wide session so every connected workstation begins at the same moment.  
@@ -6572,7 +6303,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.GlobalStartSession` (POST).
 - Appears in the *CONTROL LABORATORY SESSION* module of the use case diagram.
 
-### T-142  ·  PAUSE LAB SESSIONS
+### T-137  ·  PAUSE LAB SESSIONS
 
 **Use Case Name:** PAUSE LAB SESSIONS  
 **Purpose:** Pause the laboratory-wide session for the whole room.  
@@ -6617,7 +6348,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.GlobalPauseSession` (POST).
 - Appears in the *CONTROL LABORATORY SESSION* module of the use case diagram.
 
-### T-143  ·  END LAB SESSIONS
+### T-138  ·  END LAB SESSIONS
 
 **Use Case Name:** END LAB SESSIONS  
 **Purpose:** End the laboratory-wide session for the whole room.  
@@ -6662,52 +6393,13 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.GlobalEndSession` (POST).
 - Appears in the *CONTROL LABORATORY SESSION* module of the use case diagram.
 
-### T-144  ·  VIEW SESSION STATE
-
-**Use Case Name:** VIEW SESSION STATE  
-**Purpose:** Report the current laboratory-wide session state so the page can show the right timer and controls.  
-**Actors:**
-
-- Teacher (Primary Actor)
-
-**Input Parameters:**
-
-- None beyond the signed-in identity carried on the authentication cookie.
-
-**Output Parameters:**
-
-- The rendered page, or a JSON payload where the caller is the page’s own script.
-
-**Pre-Condition:**
-
-- The caller is signed in as a teacher.
-
-**Post-Condition:**
-
-- The caller has the requested information. Nothing in the database has changed.
-
-**Successful Scenario:**
-
-1. The Teacher opens the page and CAMS confirms the role on the authentication cookie.
-2. The server reads the records the caller is entitled to see.
-3. The page renders with those records.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-
-**Additional Remarks:**
-
-- Implemented by `TeacherController.GlobalSessionState` (GET).
-- Appears in the *CONTROL LABORATORY SESSION* module of the use case diagram.
-
 ## CONTROL STUDENT SESSION  ·  `TeacherController`
 
 ![CONTROL STUDENT SESSION](usecase-images/teacher-control-student-session.png)
 
 *Figure 3.30: System Use Case for control student session*
 
-### T-145  ·  VIEW SESSIONS
+### T-139  ·  VIEW SESSIONS
 
 **Use Case Name:** VIEW SESSIONS  
 **Purpose:** List the lab sessions the teacher may act on.  
@@ -6746,7 +6438,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.Sessions` (GET).
 - Appears in the *CONTROL STUDENT SESSION* module of the use case diagram.
 
-### T-146  ·  START SESSION
+### T-140  ·  START SESSION
 
 **Use Case Name:** START SESSION  
 **Purpose:** Open a lab session for one student at one workstation under a chosen session rule.  
@@ -6795,7 +6487,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.StartSession` (POST).
 - Appears in the *CONTROL STUDENT SESSION* module of the use case diagram.
 
-### T-147  ·  TOGGLE SESSION PAUSE
+### T-141  ·  TOGGLE SESSION PAUSE
 
 **Use Case Name:** TOGGLE SESSION PAUSE  
 **Purpose:** Pause a running session, or resume a paused one, accumulating the paused time so it is not charged against the limit.  
@@ -6842,7 +6534,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.TogglePause` (POST).
 - Appears in the *CONTROL STUDENT SESSION* module of the use case diagram.
 
-### T-148  ·  END SESSION
+### T-142  ·  END SESSION
 
 **Use Case Name:** END SESSION  
 **Purpose:** Close one student lab session and record its end time.  
@@ -6889,13 +6581,13 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.EndSession` (POST).
 - Appears in the *CONTROL STUDENT SESSION* module of the use case diagram.
 
-## MONITOR STUDENT SCREEN  ·  `TeacherController + Hub`
+## MONITOR STUDENT SCREEN  ·  `TeacherController`
 
 ![MONITOR STUDENT SCREEN](usecase-images/teacher-monitor-student-screen.png)
 
 *Figure 3.31: System Use Case for monitor student screen*
 
-### T-149  ·  OPEN MONITORING WALL
+### T-143  ·  OPEN MONITORING WALL
 
 **Use Case Name:** OPEN MONITORING WALL  
 **Purpose:** Open the live monitoring wall showing every connected student workstation.  
@@ -6933,130 +6625,6 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 - Implemented by `TeacherController.Monitoring` (GET).
 - Appears in the *MONITOR STUDENT SCREEN* module of the use case diagram.
-- Pulls in **SEND SCREEN FRAME** (`<<include>>`).
-
-### T-150  ·  VIEW MONITORING GRID
-
-**Use Case Name:** VIEW MONITORING GRID  
-**Purpose:** Serve the monitoring surface the live screen grid is built on.  
-**Actors:**
-
-- Teacher (Primary Actor)
-
-**Input Parameters:**
-
-- None beyond the signed-in identity carried on the authentication cookie.
-
-**Output Parameters:**
-
-- The rendered page, or a JSON payload where the caller is the page’s own script.
-
-**Pre-Condition:**
-
-- The caller is signed in as an administrator or a teacher. A teacher reaches this action only because it carries `[TeacherSharedAction]`; the teacher account must also be active.
-
-**Post-Condition:**
-
-- The caller has the requested information. Nothing in the database has changed.
-
-**Successful Scenario:**
-
-1. The Teacher opens the page and CAMS confirms the role on the authentication cookie.
-2. The server reads the records the caller is entitled to see.
-3. The page renders with those records.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-
-**Additional Remarks:**
-
-- Implemented by `AdminController.Index` (GET).
-- Appears in the *MONITOR STUDENT SCREEN* module of the use case diagram.
-
-### T-151  ·  VIEW LIVE STATE
-
-**Use Case Name:** VIEW LIVE STATE  
-**Purpose:** Report the current state of every connected workstation so the monitoring page can refresh without reloading.  
-**Actors:**
-
-- Teacher (Primary Actor)
-
-**Input Parameters:**
-
-- None beyond the signed-in identity carried on the authentication cookie.
-
-**Output Parameters:**
-
-- The rendered page, or a JSON payload where the caller is the page’s own script.
-
-**Pre-Condition:**
-
-- The caller is signed in as a teacher.
-
-**Post-Condition:**
-
-- The caller has the requested information. Nothing in the database has changed.
-
-**Successful Scenario:**
-
-1. The Teacher opens the page and CAMS confirms the role on the authentication cookie.
-2. The server reads the records the caller is entitled to see.
-3. The page renders with those records.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-
-**Additional Remarks:**
-
-- Implemented by `TeacherController.LiveState` (GET).
-- Appears in the *MONITOR STUDENT SCREEN* module of the use case diagram.
-
-### T-152  ·  SEND SCREEN FRAME
-
-**Use Case Name:** SEND SCREEN FRAME  
-**Purpose:** Send one captured frame of the workstation screen to the watching teacher.  
-**Actors:**
-
-- Teacher (Primary Actor)
-- The CAMS client on the target workstation (Secondary Actor)
-
-**Input Parameters:**
-
-- `frame` : `ScreenFrameMessage`
-
-**Output Parameters:**
-
-- A SignalR message delivered to the target workstation or group; no HTTP response.
-
-**Pre-Condition:**
-
-- The caller is signed in.
-- **OPEN MONITORING WALL** has reached the point where this is always performed.
-
-**Post-Condition:**
-
-- The workstation has acted on the command and the console shows its new state.
-
-**Successful Scenario:**
-
-1. The Teacher triggers the command from the monitoring console.
-2. The browser invokes `SendScreenFrame` on the SignalR hub over the open connection.
-3. The server checks the caller’s role and resolves the target connection.
-4. The server relays the instruction to the workstation client.
-5. The client carries it out and the console reflects the new state.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **The workstation is not connected** — the command cannot be delivered and the console reports the workstation as offline.
-
-**Additional Remarks:**
-
-- Implemented by `RemoteMonitoringHub.SendScreenFrame` (GET).
-- Appears in the *MONITOR STUDENT SCREEN* module of the use case diagram.
-- Drawn as `<<include>>` from **OPEN MONITORING WALL**.
 
 ## CONTROL STUDENT WORKSTATION  ·  `RemoteMonitoringHub`
 
@@ -7064,7 +6632,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.32: System Use Case for control student workstation*
 
-### T-153  ·  START REMOTE CONTROL
+### T-144  ·  START REMOTE CONTROL
 
 **Use Case Name:** START REMOTE CONTROL  
 **Purpose:** Take keyboard and mouse control of a student workstation, with the client showing that remote control is active.  
@@ -7111,7 +6679,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *CONTROL STUDENT WORKSTATION* module of the use case diagram.
 - Pulls in **SEND REMOTE INPUT** (`<<include>>`).
 
-### T-154  ·  STOP REMOTE CONTROL
+### T-145  ·  STOP REMOTE CONTROL
 
 **Use Case Name:** STOP REMOTE CONTROL  
 **Purpose:** Hand control of the workstation back to the student.  
@@ -7157,7 +6725,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `RemoteMonitoringHub.StopRemoteControl` (GET).
 - Appears in the *CONTROL STUDENT WORKSTATION* module of the use case diagram.
 
-### T-155  ·  LOCK WORKSTATION
+### T-146  ·  LOCK WORKSTATION
 
 **Use Case Name:** LOCK WORKSTATION  
 **Purpose:** Lock a student workstation so the student cannot use it until it is unlocked.  
@@ -7203,7 +6771,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `RemoteMonitoringHub.LockStudent` (GET).
 - Appears in the *CONTROL STUDENT WORKSTATION* module of the use case diagram.
 
-### T-156  ·  UNLOCK WORKSTATION
+### T-147  ·  UNLOCK WORKSTATION
 
 **Use Case Name:** UNLOCK WORKSTATION  
 **Purpose:** Release the CAMS lock on a student workstation.  
@@ -7248,7 +6816,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `RemoteMonitoringHub.UnlockStudent` (GET).
 - Appears in the *CONTROL STUDENT WORKSTATION* module of the use case diagram.
 
-### T-157  ·  FORCE STUDENT LOGOUT
+### T-148  ·  FORCE STUDENT LOGOUT
 
 **Use Case Name:** FORCE STUDENT LOGOUT  
 **Purpose:** Sign a student out of the workstation from the teacher console.  
@@ -7294,7 +6862,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `RemoteMonitoringHub.ForceLogout` (GET).
 - Appears in the *CONTROL STUDENT WORKSTATION* module of the use case diagram.
 
-### T-158  ·  SHUT DOWN WORKSTATION
+### T-149  ·  SHUT DOWN WORKSTATION
 
 **Use Case Name:** SHUT DOWN WORKSTATION  
 **Purpose:** Shut a student workstation down remotely.  
@@ -7340,7 +6908,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `RemoteMonitoringHub.ShutdownStudent` (GET).
 - Appears in the *CONTROL STUDENT WORKSTATION* module of the use case diagram.
 
-### T-159  ·  RESTART WORKSTATION
+### T-150  ·  RESTART WORKSTATION
 
 **Use Case Name:** RESTART WORKSTATION  
 **Purpose:** Restart a student workstation remotely.  
@@ -7386,7 +6954,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `RemoteMonitoringHub.RestartStudent` (GET).
 - Appears in the *CONTROL STUDENT WORKSTATION* module of the use case diagram.
 
-### T-160  ·  LOCK ALL WORKSTATIONS
+### T-151  ·  LOCK ALL WORKSTATIONS
 
 **Use Case Name:** LOCK ALL WORKSTATIONS  
 **Purpose:** Lock several student workstations in one action.  
@@ -7430,7 +6998,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `RemoteMonitoringHub.BulkLockStudents` (GET).
 - Appears in the *CONTROL STUDENT WORKSTATION* module of the use case diagram.
 
-### T-161  ·  LOG OUT ALL STUDENTS
+### T-152  ·  LOG OUT ALL STUDENTS
 
 **Use Case Name:** LOG OUT ALL STUDENTS  
 **Purpose:** Sign several students out of their workstations in one action.  
@@ -7474,7 +7042,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `RemoteMonitoringHub.BulkForceLogoutStudents` (GET).
 - Appears in the *CONTROL STUDENT WORKSTATION* module of the use case diagram.
 
-### T-162  ·  SEND REMOTE INPUT
+### T-153  ·  SEND REMOTE INPUT
 
 **Use Case Name:** SEND REMOTE INPUT  
 **Purpose:** Deliver one keyboard or mouse event to the workstation under remote control.  
@@ -7529,7 +7097,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.33: System Use Case for send message to student*
 
-### T-163  ·  SEND NOTIFICATION
+### T-154  ·  SEND NOTIFICATION
 
 **Use Case Name:** SEND NOTIFICATION  
 **Purpose:** Send a message to connected students that appears on their workstation.  
@@ -7572,7 +7140,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `RemoteMonitoringHub.SendNotification` (GET).
 - Appears in the *SEND MESSAGE TO STUDENT* module of the use case diagram.
 
-### T-164  ·  SEND WARNING POPUP
+### T-155  ·  SEND WARNING POPUP
 
 **Use Case Name:** SEND WARNING POPUP  
 **Purpose:** Send a warning dialog to one student, shown on top of whatever they are doing.  
@@ -7618,7 +7186,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `RemoteMonitoringHub.SendWarningPopup` (GET).
 - Appears in the *SEND MESSAGE TO STUDENT* module of the use case diagram.
 
-### T-165  ·  BROADCAST SCREEN
+### T-156  ·  BROADCAST SCREEN
 
 **Use Case Name:** BROADCAST SCREEN  
 **Purpose:** Put the teacher screen on every connected student workstation.  
@@ -7661,7 +7229,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `RemoteMonitoringHub.BroadcastScreen` (GET).
 - Appears in the *SEND MESSAGE TO STUDENT* module of the use case diagram.
 
-### T-166  ·  STOP BROADCAST
+### T-157  ·  STOP BROADCAST
 
 **Use Case Name:** STOP BROADCAST  
 **Purpose:** Stop the teacher screen broadcast and return the workstations to the student view.  
@@ -7710,7 +7278,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.34: System Use Case for manage monitoring alert*
 
-### T-167  ·  VIEW ALERTS
+### T-158  ·  VIEW ALERTS
 
 **Use Case Name:** VIEW ALERTS  
 **Purpose:** List the monitoring alerts raised for the classes the teacher is responsible for.  
@@ -7749,7 +7317,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.Alerts` (GET).
 - Appears in the *MANAGE MONITORING ALERT* module of the use case diagram.
 
-### T-168  ·  VIEW ALERT HISTORY
+### T-159  ·  VIEW ALERT HISTORY
 
 **Use Case Name:** VIEW ALERT HISTORY  
 **Purpose:** Show alerts that have already been acted on, with who acted and when.  
@@ -7791,46 +7359,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *MANAGE MONITORING ALERT* module of the use case diagram.
 - Pulls in **EXPORT ALERTS CSV** (`<<extend>>`).
 
-### T-169  ·  COUNT OPEN ALERTS
-
-**Use Case Name:** COUNT OPEN ALERTS  
-**Purpose:** Report how many alerts are still open, for the badge on the navigation bar.  
-**Actors:**
-
-- Teacher (Primary Actor)
-
-**Input Parameters:**
-
-- None beyond the signed-in identity carried on the authentication cookie.
-
-**Output Parameters:**
-
-- The rendered page, or a JSON payload where the caller is the page’s own script.
-
-**Pre-Condition:**
-
-- The caller is signed in as a teacher.
-
-**Post-Condition:**
-
-- The caller has the requested information. Nothing in the database has changed.
-
-**Successful Scenario:**
-
-1. The Teacher opens the page and CAMS confirms the role on the authentication cookie.
-2. The server reads the records the caller is entitled to see.
-3. The page renders with those records.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-
-**Additional Remarks:**
-
-- Implemented by `TeacherController.OpenAlertCount` (GET).
-- Appears in the *MANAGE MONITORING ALERT* module of the use case diagram.
-
-### T-170  ·  ACKNOWLEDGE ALERT
+### T-160  ·  ACKNOWLEDGE ALERT
 
 **Use Case Name:** ACKNOWLEDGE ALERT  
 **Purpose:** Mark one alert as seen and being handled.  
@@ -7879,7 +7408,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.AcknowledgeAlert` (POST).
 - Appears in the *MANAGE MONITORING ALERT* module of the use case diagram.
 
-### T-171  ·  ACKNOWLEDGE ALL ALERTS
+### T-161  ·  ACKNOWLEDGE ALL ALERTS
 
 **Use Case Name:** ACKNOWLEDGE ALL ALERTS  
 **Purpose:** Acknowledge several alerts in one action.  
@@ -7925,7 +7454,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.BulkAcknowledgeAlerts` (POST).
 - Appears in the *MANAGE MONITORING ALERT* module of the use case diagram.
 
-### T-172  ·  DISMISS ALL ALERTS
+### T-162  ·  DISMISS ALL ALERTS
 
 **Use Case Name:** DISMISS ALL ALERTS  
 **Purpose:** Dismiss several alerts in one action.  
@@ -7972,7 +7501,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.BulkDismissAlerts` (POST).
 - Appears in the *MANAGE MONITORING ALERT* module of the use case diagram.
 
-### T-173  ·  REOPEN ALL ALERTS
+### T-163  ·  REOPEN ALL ALERTS
 
 **Use Case Name:** REOPEN ALL ALERTS  
 **Purpose:** Reopen several alerts that were closed too early.  
@@ -8018,7 +7547,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.BulkReopenAlerts` (POST).
 - Appears in the *MANAGE MONITORING ALERT* module of the use case diagram.
 
-### T-174  ·  EXPORT ALERTS CSV
+### T-164  ·  EXPORT ALERTS CSV
 
 **Use Case Name:** EXPORT ALERTS CSV  
 **Purpose:** Produce the alerts view as a CSV file the user can download.  
@@ -8066,7 +7595,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.35: System Use Case for view teacher records*
 
-### T-175  ·  VIEW DASHBOARD
+### T-165  ·  VIEW DASHBOARD
 
 **Use Case Name:** VIEW DASHBOARD  
 **Purpose:** Show the teacher landing page with the state of the laboratory at a glance.  
@@ -8105,7 +7634,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.Dashboard` (GET).
 - Appears in the *VIEW TEACHER RECORDS* module of the use case diagram.
 
-### T-176  ·  VIEW RECORDS
+### T-166  ·  VIEW RECORDS
 
 **Use Case Name:** VIEW RECORDS  
 **Purpose:** Show captured application and website activity for the teacher’s students.  
@@ -8144,7 +7673,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.Records` (GET).
 - Appears in the *VIEW TEACHER RECORDS* module of the use case diagram.
 
-### T-177  ·  VIEW CLASS ANALYTICS
+### T-167  ·  VIEW CLASS ANALYTICS
 
 **Use Case Name:** VIEW CLASS ANALYTICS  
 **Purpose:** Show usage patterns for a class rather than for one student.  
@@ -8188,7 +7717,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.ClassAnalytics` (GET).
 - Appears in the *VIEW TEACHER RECORDS* module of the use case diagram.
 
-### T-178  ·  VIEW LAB UTILIZATION
+### T-168  ·  VIEW LAB UTILIZATION
 
 **Use Case Name:** VIEW LAB UTILIZATION  
 **Purpose:** Show how heavily the laboratory workstations are being used over time.  
@@ -8232,7 +7761,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.LabUtilization` (GET).
 - Appears in the *VIEW TEACHER RECORDS* module of the use case diagram.
 
-### T-179  ·  VIEW UNIFIED TIMELINE
+### T-169  ·  VIEW UNIFIED TIMELINE
 
 **Use Case Name:** VIEW UNIFIED TIMELINE  
 **Purpose:** Show one student’s activity as a single timeline across applications, websites and idle periods.  
@@ -8281,53 +7810,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `TeacherController.UnifiedTimeline` (GET).
 - Appears in the *VIEW TEACHER RECORDS* module of the use case diagram.
 
-### T-180  ·  VIEW ACTIVITY TIMELINE
-
-**Use Case Name:** VIEW ACTIVITY TIMELINE  
-**Purpose:** Serve the timeline data the unified timeline view is drawn from.  
-**Actors:**
-
-- Teacher (Primary Actor)
-
-**Input Parameters:**
-
-- `id` : `int`
-- `from` : `DateTime?` (optional)
-- `to` : `DateTime?` (optional)
-- `page` : `int` (optional)
-- `pageSize` : `int` (optional)
-- `eventType` : `string?` (optional)
-
-**Output Parameters:**
-
-- The rendered page, or a JSON payload where the caller is the page’s own script.
-
-**Pre-Condition:**
-
-- The caller is signed in as a teacher.
-- The record named by the identifier exists.
-
-**Post-Condition:**
-
-- The caller has the requested information. Nothing in the database has changed.
-
-**Successful Scenario:**
-
-1. The Teacher opens the page and CAMS confirms the role on the authentication cookie.
-2. The server reads the records the caller is entitled to see.
-3. The page renders with those records.
-
-**Exception Scenario:**
-
-- **Not signed in or wrong role** — the request is refused and the caller is sent to the access denied page.
-- **The identifier matches no record** — the action reports that the record was not found and makes no change.
-
-**Additional Remarks:**
-
-- Implemented by `TeacherController.ActivityTimeline` (GET).
-- Appears in the *VIEW TEACHER RECORDS* module of the use case diagram.
-
-### T-181  ·  VIEW BROWSER HISTORY
+### T-170  ·  VIEW BROWSER HISTORY
 
 **Use Case Name:** VIEW BROWSER HISTORY  
 **Purpose:** Show the record of browser activity captured from the workstations.  
@@ -8372,7 +7855,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *VIEW TEACHER RECORDS* module of the use case diagram.
 - Pulls in **EXPORT BROWSER MONITORING CSV** (`<<extend>>`).
 
-### T-182  ·  VIEW REMOTE HISTORY
+### T-171  ·  VIEW REMOTE HISTORY
 
 **Use Case Name:** VIEW REMOTE HISTORY  
 **Purpose:** Show which remote commands were issued, by whom, and against which workstation.  
@@ -8418,7 +7901,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *VIEW TEACHER RECORDS* module of the use case diagram.
 - Pulls in **EXPORT REMOTE HISTORY CSV** (`<<extend>>`).
 
-### T-183  ·  VIEW STUDENT DETAILS
+### T-172  ·  VIEW STUDENT DETAILS
 
 **Use Case Name:** VIEW STUDENT DETAILS  
 **Purpose:** Show one student in full: account, class, sessions and captured activity.  
@@ -8462,7 +7945,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *VIEW TEACHER RECORDS* module of the use case diagram.
 - Pulls in **EXPORT STUDENT ANALYTICS CSV** (`<<extend>>`).
 
-### T-184  ·  EXPORT REMOTE HISTORY CSV
+### T-173  ·  EXPORT REMOTE HISTORY CSV
 
 **Use Case Name:** EXPORT REMOTE HISTORY CSV  
 **Purpose:** Produce the remote history view as a CSV file the user can download.  
@@ -8509,7 +7992,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *VIEW TEACHER RECORDS* module of the use case diagram.
 - Drawn as `<<extend>>` to **VIEW REMOTE HISTORY**.
 
-### T-185  ·  EXPORT BROWSER MONITORING CSV
+### T-174  ·  EXPORT BROWSER MONITORING CSV
 
 **Use Case Name:** EXPORT BROWSER MONITORING CSV  
 **Purpose:** Produce the browser monitoring view as a CSV file the user can download.  
@@ -8554,7 +8037,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Appears in the *VIEW TEACHER RECORDS* module of the use case diagram.
 - Drawn as `<<extend>>` to **VIEW BROWSER HISTORY**.
 
-### T-186  ·  EXPORT STUDENT ANALYTICS CSV
+### T-175  ·  EXPORT STUDENT ANALYTICS CSV
 
 **Use Case Name:** EXPORT STUDENT ANALYTICS CSV  
 **Purpose:** Produce the student analytics view as a CSV file the user can download.  
@@ -8608,7 +8091,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.36: System Use Case for log in at workstation*
 
-### S-187  ·  AUTHENTICATE WORKSTATION
+### S-176  ·  AUTHENTICATE WORKSTATION
 
 **Use Case Name:** AUTHENTICATE WORKSTATION  
 **Purpose:** Let a student sign in from the CAMS client installed on a laboratory workstation, binding the sign-in to the machine the student is sitting at.  
@@ -8652,9 +8135,9 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 - Implemented by `ClientAuthController.Login` (POST).
 - Appears in the *LOG IN AT WORKSTATION* module of the use case diagram.
-- Pulls in **VERIFY ENDPOINT** (`<<include>>`), **DISCOVER LAB SERVER** (`<<include>>`), **SET SERVER ADDRESS** (`<<extend>>`).
+- Can be extended by **SET SERVER ADDRESS** (`<<extend>>`) when the server cannot be found on its own.
 
-### S-188  ·  DISCONNECT WORKSTATION
+### S-177  ·  DISCONNECT WORKSTATION
 
 **Use Case Name:** DISCONNECT WORKSTATION  
 **Purpose:** End the workstation session from the client, releasing the workstation so another student may sign in to it.  
@@ -8695,91 +8178,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `ClientAuthController.Logout` (POST).
 - Appears in the *LOG IN AT WORKSTATION* module of the use case diagram.
 
-### S-189  ·  VERIFY ENDPOINT
-
-**Use Case Name:** VERIFY ENDPOINT  
-**Purpose:** Answer the discovery request a client broadcasts while looking for the CAMS server on the laboratory network.  
-**Actors:**
-
-- Student (Primary Actor)
-- None; this behaviour runs inside **AUTHENTICATE WORKSTATION** (Secondary Actor)
-
-**Input Parameters:**
-
-- None beyond the signed-in identity carried on the authentication cookie.
-
-**Output Parameters:**
-
-- The server endpoint a client should connect to.
-
-**Pre-Condition:**
-
-- None. The endpoint answers an unauthenticated broadcast, so a client can find the server before it has credentials.
-- **AUTHENTICATE WORKSTATION** has reached the point where this is always performed.
-
-**Post-Condition:**
-
-- The caller has the requested information. Nothing in the database has changed.
-
-**Successful Scenario:**
-
-1. A CAMS client broadcasts on the laboratory network looking for a server.
-2. The server answers with the endpoint the client should use.
-3. The client stores the endpoint and proceeds to sign in.
-
-**Exception Scenario:**
-
-- **The broadcast does not reach the server** — no answer is returned and the client falls back to a configured endpoint.
-
-**Additional Remarks:**
-
-- Implemented by `DeploymentPingController.Get` (GET).
-- Appears in the *LOG IN AT WORKSTATION* module of the use case diagram.
-- Drawn as `<<include>>` from **AUTHENTICATE WORKSTATION**.
-
-### S-190  ·  DISCOVER LAB SERVER
-
-**Use Case Name:** DISCOVER LAB SERVER  
-**Purpose:** Find the CAMS server on the laboratory network when no address has been saved, so a workstation can be set up without anyone typing one in. The client asks over the network and takes the first server that answers.  
-**Actors:**
-
-- Student (Primary Actor)
-- None; this behaviour runs inside **AUTHENTICATE WORKSTATION** (Secondary Actor)
-
-**Input Parameters:**
-
-- None beyond the signed-in identity carried on the authentication cookie.
-
-**Output Parameters:**
-
-- The behaviour completes and its effect is visible to the use case that includes it.
-
-**Pre-Condition:**
-
-- The caller is signed in.
-- **AUTHENTICATE WORKSTATION** has reached the point where this is always performed.
-
-**Post-Condition:**
-
-- The caller has the requested information. Nothing in the database has changed.
-
-**Successful Scenario:**
-
-1. The including use case reaches the point where this behaviour is required.
-2. The server runs `DiscoverLabServer` and applies its result.
-3. Control returns to the including use case, which continues.
-
-**Exception Scenario:**
-
-- The behaviour fails and the including use case reports the failure rather than continuing as if it had succeeded.
-
-**Additional Remarks:**
-
-- Implemented by `ServerDiscoveryClient.DiscoverAsync` (CAMS client).
-- Appears in the *LOG IN AT WORKSTATION* module of the use case diagram.
-- Drawn as `<<include>>` from **AUTHENTICATE WORKSTATION**.
-
-### S-191  ·  SET SERVER ADDRESS
+### S-178  ·  SET SERVER ADDRESS
 
 **Use Case Name:** SET SERVER ADDRESS  
 **Purpose:** Point the client at the server by hand, for the case where discovery finds nothing. The address is checked for shape before it is saved, and the client retries the sign-in with it.  
@@ -8827,7 +8226,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.37: System Use Case for manage own account*
 
-### S-192  ·  CHANGE PASSWORD
+### S-179  ·  CHANGE PASSWORD
 
 **Use Case Name:** CHANGE PASSWORD
 **Purpose:** Let the student signed in at a workstation replace their own password from the CAMS client, after proving they know the current one. The web portal does not admit students, so the client is the only place a student can do this.
@@ -8879,7 +8278,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 
 *Figure 3.38: System Use Case for use the client agent*
 
-### S-193  ·  OPEN CLIENT WINDOW
+### S-180  ·  OPEN CLIENT WINDOW
 
 **Use Case Name:** OPEN CLIENT WINDOW  
 **Purpose:** Bring the CAMS window back from the notification area, where the agent sits while the student works. It reopens in the middle of the screen.  
@@ -8918,7 +8317,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `MainForm.RestoreFromTray` (CAMS client).
 - Appears in the *USE THE CLIENT AGENT* module of the use case diagram.
 
-### S-194  ·  CHECK CONNECTION STATUS
+### S-181  ·  CHECK CONNECTION STATUS
 
 **Use Case Name:** CHECK CONNECTION STATUS  
 **Purpose:** Show who is signed in at this workstation, whether the agent is connected to the server, and how much of the lab session is left, without leaving what the student is doing.  
@@ -8957,7 +8356,7 @@ A written specification for every use case in [`CAMS-Use-Case-Diagram.drawio`](C
 - Implemented by `MainForm.ShowTrayStatus` (CAMS client).
 - Appears in the *USE THE CLIENT AGENT* module of the use case diagram.
 
-### S-195  ·  EXIT CLIENT AGENT
+### S-182  ·  EXIT CLIENT AGENT
 
 **Use Case Name:** EXIT CLIENT AGENT  
 **Purpose:** Close the agent from the notification area. Any lab session still open is signed out first, so the workstation is released rather than left showing an occupant who has gone.  
