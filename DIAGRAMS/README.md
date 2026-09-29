@@ -12,7 +12,7 @@ Open any `.drawio` file at [app.diagrams.net](https://app.diagrams.net) with **F
 
 | File | Notation | Contents |
 | --- | --- | --- |
-| [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio) | UML use case | 38 module boxes, 195 use cases, 3 actors, one page |
+| [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio) | UML use case | 36 module boxes, 137 use cases, 3 actors, one page |
 | [`CAMS-Class-Model.drawio`](CAMS-Class-Model.drawio) | UML class | 23 classes, 119 attributes, 61 operations, 24 connectors |
 | [`CAMS-Database-Schema.drawio`](CAMS-Database-Schema.drawio) | Crow's foot | All 28 tables, every column with its SQLite type |
 | [`CAMS-Crowsfoot-ERD.drawio`](CAMS-Crowsfoot-ERD.drawio) | Crow's foot | The 15 tables the Chen diagram covers, 110 columns, plus a notes page |
@@ -36,10 +36,10 @@ It deliberately names two or three attributes per entity. The full attribute lis
 
 | File | Contents |
 | --- | --- |
-| [`CAMS-Use-Case-Specifications.pdf`](CAMS-Use-Case-Specifications.pdf) | The written use cases, ready to read or print. 297 pages, US Letter, Times New Roman, double spaced, each module drawn with a numbered figure caption |
+| [`CAMS-Use-Case-Specifications.pdf`](CAMS-Use-Case-Specifications.pdf) | The written use cases, ready to read or print. 255 pages, US Letter, Times New Roman, double spaced, each module drawn with a numbered figure caption |
 | [`CAMS-Use-Case-Specifications.docx`](CAMS-Use-Case-Specifications.docx) | The same document in Word, for pasting into a manuscript |
 | [`Use-Case-Specifications.md`](Use-Case-Specifications.md) | The same content in Markdown, so it renders on GitHub and diffs cleanly |
-| [`usecase-images/`](usecase-images) | The 38 module drawings the documents embed, one PNG per module |
+| [`usecase-images/`](usecase-images) | The 36 module drawings the documents embed, one PNG per module |
 | [`ERD.md`](ERD.md) | The entity model in Mermaid, and the notes explaining both ERDs |
 | [`Use-Case-Diagram.md`](Use-Case-Diagram.md) | Scope, actor boundaries, and how the diagram was derived |
 | [`SignalR-Message-Flow.md`](SignalR-Message-Flow.md) | How the server and the workstation clients talk to each other |
@@ -47,9 +47,9 @@ It deliberately names two or three attributes per entity. The full attribute lis
 | [`Menu-Structure-Diagram.md`](Menu-Structure-Diagram.md) | The navigation tree behind each role |
 | [`CAMS-Appendices.md`](CAMS-Appendices.md) | Appendices | Flow of the system, the application prototype with 17 screens, and sample program code |
 
-Each specification follows the ten fields the course handout sets out: **use case name, purpose, actors, input parameters, output parameters, pre-condition, post-condition, successful scenario, exception scenario, additional remarks.** All three files carry the same 195 written use cases, laid out the way the course handout lays out its worked example: no tables, a bold field label ending in a colon, the value on the same line where it is short and an indented list where it is not, in Times New Roman twelve point, double spaced and justified on US Letter, which is how a thesis chapter is set. Each module is drawn first, with an italic numbered caption beneath the drawing - *Figure 3.1: System Use Case for Process Log In* - and the use cases inside that module follow. Actors are listed and marked primary or secondary.
+Each specification follows the ten fields the course handout sets out: **use case name, purpose, actors, input parameters, output parameters, pre-condition, post-condition, successful scenario, exception scenario, additional remarks.** All three files carry the same 137 written use cases, laid out the way the course handout lays out its worked example: no tables, a bold field label ending in a colon, the value on the same line where it is short and an indented list where it is not, in Times New Roman twelve point, double spaced and justified on US Letter, which is how a thesis chapter is set. Each module is drawn first, with an italic numbered caption beneath the drawing - *Figure 3.1: System Use Case for Process Log In* - and the use cases inside that module follow. Actors are listed and marked primary or secondary.
 
-The parts that can be got wrong are read out of the source rather than written from memory. Input parameters come from the action signature and its `[Bind]` list, so a specification cannot name a field the form does not submit. The pre-condition comes from the `[Authorize]` attribute, including the `[TeacherSharedAction]` marker. The antiforgery step appears only where the controller validates one, and a hub method is described as a SignalR relay rather than a form post.
+The parts that can be got wrong are read out of the source rather than written from memory. Input parameters come from the action signature and its `[Bind]` list, so a specification cannot name a field the form does not submit. A teacher's use of an administrator action is noted wherever the action carries `[TeacherSharedAction]`. The expired-form exception appears only where the controller validates an antiforgery token, a hub method is described as a SignalR call rather than a form post, and the messages quoted in the exception scenarios are the ones the code shows.
 
 ---
 
@@ -59,17 +59,17 @@ The parts that can be got wrong are read out of the source rather than written f
 
 The division between the administrator and the teacher is read off the code rather than assumed. `AdminController` is `[Authorize(Roles = AdminOrTeacher)]`, and its authorization filter admits a teacher only to actions marked `[TeacherSharedAction]`. Fifty-six actions carry that attribute, so the teacher band repeats the whole shared administration surface — peer teacher accounts, student accounts, workstations, classes, rosters, restriction rules, lists, categories, session rules, and laboratory-wide pause, resume and end.
 
-The administrator keeps what is not shared: administrator accounts, roles, LAN configuration, reports, audit and system logs, and everything in `AdminDatabaseController` and `AdminDeploymentController`.
+The administrator keeps what is not shared: administrator accounts, reports, audit and system logs, and everything in `AdminDatabaseController` and `AdminDeploymentController`.
 
-> **One asymmetry looks like a mistake and is not.** The administrator can pause, resume and end a laboratory-wide session but cannot start one. `AdminController` exposes `PauseAllSessions`, `ResumeAllSessions` and `EndAllSessions` and no start; `GlobalStartSession` lives on `TeacherController`. The diagram follows the code.
+> **One asymmetry looks like a mistake and is not.** The administrator can pause, resume and end a laboratory-wide session but cannot start one. `AdminController` exposes `PauseAllSessions`, `ResumeAllSessions` and `EndAllSessions` and no start; starting the lab is `TeacherController.StartSession`, the Teacher's START LAB SESSION. The diagram follows the code.
 
 ---
 
 ## Reading the notation
 
-**Use case diagram.** A plain line from an actor is an association. A dashed arrow with an open head marked `<<include>>` runs **from** the base case to behaviour it always performs. One marked `<<extend>>` runs the other way — **from** the optional case back **at** the base — because the base is complete and meaningful without it, and the extension is what only sometimes happens. Locking an account extends verifying credentials; it does not replace it.
+**Use case diagram.** A plain line from an actor is an association. A dashed arrow with an open head marked `<<include>>` runs **from** the base case to behaviour it always performs. One marked `<<extend>>` runs the other way — **from** the optional case back **at** the base — because the base is complete and meaningful without it, and the extension is what only sometimes happens. Exporting the audit log as a CSV file extends viewing it; the audit log is complete without the file.
 
-Every use case is strict verb-noun: an imperative verb first, then the noun it acts on. Each one still maps to the function that implements it, and the module caption names the declaring type - an ellipse reading `CREATE STUDENT` is `AdminController.CreateStudent` - but where the identifier is a bare noun, a noun phrase, or puts its modifier in front of the verb, the caption supplies the word order a reader expects: `AdminController.Teachers` reads `VIEW TEACHERS`, `LabUtilization` reads `VIEW LAB UTILIZATION`, and `GlobalEndSession` reads `END LAB SESSIONS`. Where the identifier and the behaviour disagree the behaviour wins: `AdminController.DeleteComputer` archives the workstation rather than deleting it, so it reads `ARCHIVE COMPUTER`, and `PermanentlyDeleteComputer` is the one that reads `DELETE COMPUTER`. Captions run from two to four words; none is a single word, and none names a threading convention - the `*Async` service methods that used to appear as `<<include>>` of their own callers have been removed.
+Every use case names what the actor gets done, verb first, and still maps to the functions that implement it; the module caption names the declaring type. A page that only shows information is drawn only where an export extends it. Nothing is deleted: where the code has a delete, the diagram has TOGGLE … STATUS, the deactivation or archive that keeps the record and its history - `AdminController.DeleteComputer` archives a workstation and `UpdateComputer` brings it back, so the two together are TOGGLE COMPUTER STATUS. Actions that reach the same goal are one use case: enrolling one student, several, or a brand-new one is ENROLL STUDENTS. Captions run from two to five words, and none is a single word.
 
 **Crow's foot.** The parent end is a double bar when the child's foreign key is `NOT NULL` and a bar with a circle when it is nullable. The child end is always a crow's foot with a circle, because no foreign key can oblige a parent to have children — a teacher with no classes yet is perfectly valid. Six of the twenty-five relationships have a mandatory parent end.
 
@@ -84,8 +84,8 @@ Nothing here is hand-placed. The drawings are emitted from the source by generat
 | Check | What it asserts |
 | --- | --- |
 | Structural | The XML parses in a real browser, no connector points at a shape that does not exist, no two shapes overlap |
-| Coverage | Every controller action and hub method a person starts appears in the use case diagram — 175 accounted for; error pages, SignalR lifecycle callbacks, the closed student web portal, one unreachable export and the client agent's own background calls are excluded |
-| Naming | All 140 distinct use case captions resolve to a real function in the source, and none is a single word |
+| Coverage | Every controller action and hub method a person starts that changes something or produces a file appears in the use case diagram. Left out, and named in [`Use-Case-Diagram.md`](Use-Case-Diagram.md): pages that only show information, the hard deletes the status toggles replace, the fixed roles, actions nothing in the interface calls, error pages, SignalR lifecycle callbacks, the closed student web portal and the client agent's own background calls |
+| Naming | All 99 distinct use case captions resolve to real functions in the source, and none is a single word |
 | Cardinality | Every relationship in both ERDs matches the nullability of the foreign key behind it |
 | Attributes | Every column in the schema diagrams and every attribute in the class model exists in the model, and none is missing |
 | Arrows | Every `<<extend>>` terminates on its base case, every `<<include>>` on the included behaviour |
