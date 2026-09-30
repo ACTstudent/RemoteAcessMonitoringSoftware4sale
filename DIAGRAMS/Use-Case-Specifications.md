@@ -2,7 +2,7 @@
 
 The written use cases for [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio). Each one has ten parts: use case name, purpose, actors, input parameters, output parameters, pre-condition, post-condition, successful scenario, exception scenario and additional remarks.
 
-**84 use cases** in 23 modules.
+**84 use cases** in 25 modules.
 
 - The admin and the teacher share many use cases, so these are shown only once, under **PORTAL USER**. ADMIN and TEACHER both inherit them (generalization).
 - DELETE is used only for restriction rules, the blacklist and the whitelist, because these are really deleted. Other records are turned on or off with TOGGLE … STATUS, so their records are kept.
@@ -10,17 +10,18 @@ The written use cases for [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram
 
 | Actor | Use cases | Modules |
 | --- | ---: | ---: |
-| Portal User (Admin and Teacher) | 41 | 11 |
+| Portal User (Admin and Teacher) | 41 | 12 |
 | Admin only | 14 | 4 |
 | Teacher only | 23 | 6 |
-| Student | 6 | 2 |
+| Student | 6 | 3 |
 
 ---
 
 ## Contents
 
 **PORTAL USER**  
-- PROCESS LOG IN — P-001, P-002
+- PROCESS LOG IN — P-001
+- PROCESS SIGN OUT — P-002
 - MANAGE OWN ACCOUNT — P-003
 - MANAGE TEACHER ACCOUNT — P-004, P-005, P-006, P-007
 - MANAGE STUDENT ACCOUNT — P-008, P-009, P-010, P-011, P-012
@@ -47,7 +48,8 @@ The written use cases for [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram
 - EXPORT TEACHER RECORDS — T-073, T-074, T-075, T-076, T-077, T-078
 
 **STUDENT**  
-- LOG IN AT WORKSTATION — S-079, S-080, S-081, S-082, S-083
+- LOG IN AT WORKSTATION — S-079, S-080, S-081
+- LOG OUT AT WORKSTATION — S-082, S-083
 - MANAGE OWN ACCOUNT — S-084
 
 ---
@@ -93,15 +95,21 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 **Additional Remarks:** After too many wrong tries, the account is locked for a while.
 
+## PROCESS SIGN OUT  ·  `AccountController`
+
+![PROCESS SIGN OUT](usecase-images/portal-process-sign-out.png)
+
+*Figure 3.3: System Use Case for process sign out*
+
 ### P-002  ·  SIGN OUT USER
 
 **Use Case Name:** SIGN OUT USER  
-**Purpose:** Let the user log out of the CAMS website.  
+**Purpose:** Let the user sign out of the CAMS website when they are done.  
 **Actors:** Portal User (Admin or Teacher)  
 **Input Parameters:** None  
 **Output Parameters:** The login page  
 **Pre-Condition:** The user is logged in.  
-**Post-Condition:** The user is logged out.
+**Post-Condition:** The user is signed out.
 
 **Successful Scenario:**
 
@@ -119,7 +127,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![MANAGE OWN ACCOUNT](usecase-images/portal-manage-own-account.png)
 
-*Figure 3.3: System Use Case for manage own account*
+*Figure 3.4: System Use Case for manage own account*
 
 ### P-003  ·  CHANGE PASSWORD
 
@@ -149,7 +157,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![MANAGE TEACHER ACCOUNT](usecase-images/portal-manage-teacher-account.png)
 
-*Figure 3.4: System Use Case for manage teacher account*
+*Figure 3.5: System Use Case for manage teacher account*
 
 ### P-004  ·  CREATE TEACHER
 
@@ -249,7 +257,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![MANAGE STUDENT ACCOUNT](usecase-images/portal-manage-student-account.png)
 
-*Figure 3.5: System Use Case for manage student account*
+*Figure 3.6: System Use Case for manage student account*
 
 ### P-008  ·  CREATE STUDENT
 
@@ -373,7 +381,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![MANAGE COMPUTER PROFILE](usecase-images/portal-manage-computer-profile.png)
 
-*Figure 3.6: System Use Case for manage computer profile*
+*Figure 3.7: System Use Case for manage computer profile*
 
 ### P-013  ·  REGISTER COMPUTER
 
@@ -471,7 +479,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![MANAGE CLASS](usecase-images/portal-manage-class.png)
 
-*Figure 3.7: System Use Case for manage class*
+*Figure 3.8: System Use Case for manage class*
 
 ### P-017  ·  CREATE CLASS
 
@@ -618,7 +626,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![MANAGE RESTRICTION RULE](usecase-images/portal-manage-restriction-rule.png)
 
-*Figure 3.8: System Use Case for manage restriction rule*
+*Figure 3.9: System Use Case for manage restriction rule*
 
 ### P-023  ·  CREATE RESTRICTION
 
@@ -694,7 +702,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![MANAGE BLACKLIST AND WHITELIST](usecase-images/portal-manage-blacklist-and-whitelist.png)
 
-*Figure 3.9: System Use Case for manage blacklist and whitelist*
+*Figure 3.10: System Use Case for manage blacklist and whitelist*
 
 ### P-026  ·  ADD BLACKLIST ENTRY
 
@@ -838,7 +846,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![MANAGE CATEGORY](usecase-images/portal-manage-category.png)
 
-*Figure 3.10: System Use Case for manage category*
+*Figure 3.11: System Use Case for manage category*
 
 ### P-032  ·  CREATE CATEGORY
 
@@ -913,7 +921,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![MANAGE SESSION RULE](usecase-images/portal-manage-session-rule.png)
 
-*Figure 3.11: System Use Case for manage session rule*
+*Figure 3.12: System Use Case for manage session rule*
 
 ### P-035  ·  CREATE SESSION RULE
 
@@ -988,7 +996,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![CONTROL LABORATORY SESSION](usecase-images/portal-control-laboratory-session.png)
 
-*Figure 3.12: System Use Case for control laboratory session*
+*Figure 3.13: System Use Case for control laboratory session*
 
 ### P-038  ·  START LAB SESSION
 
@@ -1086,7 +1094,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![MANAGE ADMIN ACCOUNT](usecase-images/admin-manage-admin-account.png)
 
-*Figure 3.13: System Use Case for manage admin account*
+*Figure 3.14: System Use Case for manage admin account*
 
 ### A-042  ·  CREATE ADMIN
 
@@ -1161,7 +1169,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![EXPORT REPORTS AND LOGS](usecase-images/admin-export-reports-and-logs.png)
 
-*Figure 3.14: System Use Case for export reports and logs*
+*Figure 3.15: System Use Case for export reports and logs*
 
 ### A-045  ·  VIEW REPORTS
 
@@ -1297,7 +1305,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![MANAGE DATABASE](usecase-images/admin-manage-database.png)
 
-*Figure 3.15: System Use Case for manage database*
+*Figure 3.16: System Use Case for manage database*
 
 ### A-051  ·  CREATE BACKUP
 
@@ -1371,7 +1379,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![MANAGE DEPLOYMENT](usecase-images/admin-manage-deployment.png)
 
-*Figure 3.16: System Use Case for manage deployment*
+*Figure 3.17: System Use Case for manage deployment*
 
 ### A-054  ·  DOWNLOAD DEPLOYMENT FILES
 
@@ -1424,7 +1432,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![CONTROL STUDENT SESSION](usecase-images/teacher-control-student-session.png)
 
-*Figure 3.17: System Use Case for control student session*
+*Figure 3.18: System Use Case for control student session*
 
 ### T-056  ·  PAUSE OR RESUME STUDENT SESSION
 
@@ -1475,7 +1483,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![MONITOR STUDENT SCREEN](usecase-images/teacher-monitor-student-screen.png)
 
-*Figure 3.18: System Use Case for monitor student screen*
+*Figure 3.19: System Use Case for monitor student screen*
 
 ### T-058  ·  OPEN MONITORING WALL
 
@@ -1525,7 +1533,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![CONTROL STUDENT WORKSTATION](usecase-images/teacher-control-student-workstation.png)
 
-*Figure 3.19: System Use Case for control student workstation*
+*Figure 3.20: System Use Case for control student workstation*
 
 ### T-060  ·  START REMOTE CONTROL
 
@@ -1712,7 +1720,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![SEND MESSAGE TO STUDENT](usecase-images/teacher-send-message-to-student.png)
 
-*Figure 3.20: System Use Case for send message to student*
+*Figure 3.21: System Use Case for send message to student*
 
 ### T-068  ·  SEND WARNING POPUP
 
@@ -1762,7 +1770,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![MANAGE MONITORING ALERT](usecase-images/teacher-manage-monitoring-alert.png)
 
-*Figure 3.21: System Use Case for manage monitoring alert*
+*Figure 3.22: System Use Case for manage monitoring alert*
 
 ### T-070  ·  UPDATE ALERT STATUS
 
@@ -1835,7 +1843,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![EXPORT TEACHER RECORDS](usecase-images/teacher-export-teacher-records.png)
 
-*Figure 3.22: System Use Case for export teacher records*
+*Figure 3.23: System Use Case for export teacher records*
 
 ### T-073  ·  VIEW REMOTE HISTORY
 
@@ -1975,7 +1983,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![LOG IN AT WORKSTATION](usecase-images/student-log-in-at-workstation.png)
 
-*Figure 3.23: System Use Case for log in at workstation*
+*Figure 3.24: System Use Case for log in at workstation*
 
 ### S-079  ·  LOG IN TO WORKSTATION
 
@@ -2047,6 +2055,12 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 **Additional Remarks:** Extends LOG IN TO WORKSTATION (optional).
 
+## LOG OUT AT WORKSTATION  ·  `ClientAuthController + MainForm`
+
+![LOG OUT AT WORKSTATION](usecase-images/student-log-out-at-workstation.png)
+
+*Figure 3.25: System Use Case for log out at workstation*
+
 ### S-082  ·  LOG OUT OF WORKSTATION
 
 **Use Case Name:** LOG OUT OF WORKSTATION  
@@ -2095,7 +2109,7 @@ Two use cases belong to only one of them: ASSIGN CLASS TEACHER (Admin) and START
 
 ![MANAGE OWN ACCOUNT](usecase-images/student-manage-own-account.png)
 
-*Figure 3.24: System Use Case for manage own account*
+*Figure 3.26: System Use Case for manage own account*
 
 ### S-084  ·  CHANGE PASSWORD
 

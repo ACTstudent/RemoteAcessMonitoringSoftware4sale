@@ -12,7 +12,7 @@ Open any `.drawio` file at [app.diagrams.net](https://app.diagrams.net) with **F
 
 | File | Notation | Contents |
 | --- | --- | --- |
-| [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio) | UML use case | 23 module boxes, 84 use cases, 3 actors and the Portal User they generalize, one page |
+| [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio) | UML use case | 25 module boxes, 84 use cases, 3 actors and the Portal User they generalize, one page |
 | [`CAMS-Class-Model.drawio`](CAMS-Class-Model.drawio) | UML class | 23 classes, 119 attributes, 61 operations, 24 connectors |
 | [`CAMS-Database-Schema.drawio`](CAMS-Database-Schema.drawio) | Crow's foot | All 28 tables, every column with its SQLite type |
 | [`CAMS-Crowsfoot-ERD.drawio`](CAMS-Crowsfoot-ERD.drawio) | Crow's foot | The 15 tables the Chen diagram covers, 110 columns, plus a notes page |
@@ -36,10 +36,10 @@ It deliberately names two or three attributes per entity. The full attribute lis
 
 | File | Contents |
 | --- | --- |
-| [`CAMS-Use-Case-Specifications.pdf`](CAMS-Use-Case-Specifications.pdf) | The written use cases, ready to read or print. 87 pages, US Letter, Times New Roman, double spaced, each module drawn with a numbered figure caption |
+| [`CAMS-Use-Case-Specifications.pdf`](CAMS-Use-Case-Specifications.pdf) | The written use cases, ready to read or print. 89 pages, US Letter, Times New Roman, double spaced, each module drawn with a numbered figure caption |
 | [`CAMS-Use-Case-Specifications.docx`](CAMS-Use-Case-Specifications.docx) | The same document in Word, for pasting into a manuscript |
 | [`Use-Case-Specifications.md`](Use-Case-Specifications.md) | The same content in Markdown, so it renders on GitHub and diffs cleanly |
-| [`usecase-images/`](usecase-images) | The 23 module drawings and the Portal User generalization the documents embed, one PNG each |
+| [`usecase-images/`](usecase-images) | The 25 module drawings and the Portal User generalization the documents embed, one PNG each |
 | [`ERD.md`](ERD.md) | The entity model in Mermaid, and the notes explaining both ERDs |
 | [`Use-Case-Diagram.md`](Use-Case-Diagram.md) | Scope, actor boundaries, and how the diagram was derived |
 | [`SignalR-Message-Flow.md`](SignalR-Message-Flow.md) | How the server and the workstation clients talk to each other |
