@@ -66,8 +66,9 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.1: System Use Case for Process Log In*
 
-**Use Case Name:** Process Log In  
-**Purpose:** To allow the admin or teacher to log in to the CAMS website using their username and password.  
+**Written Use Case:** Process Log In  
+**Use Case Name:** Log In User  
+**Purpose:** To allow the Admin and Teacher to log in to CAMS using their username and password.  
 **Actors:** Admin, Teacher
 
 **Input Parameters:**
@@ -77,39 +78,44 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Output Parameters:**
 
-- Login success or error message
-- The dashboard for the user's role
+- User dashboard
+- Login error message
 
 **Pre-Condition:**
 
-- The user has an active account in CAMS.
+- The user must have an active account in the system.
 
 **Post-Condition:**
 
-- The user is logged in and sees the Admin or Teacher dashboard.
+- The user is directed to the Admin or Teacher dashboard based on their role.
+- If the user enters a wrong password 5 times, the account is locked for 15 minutes.
 
 **Successful Scenario:**
 
-1. The user opens the CAMS login page.
-2. The user enters the username and password.
-3. The user clicks Sign in.
-4. The system checks the username and password (Log In User):
-    - If valid, the system opens the Admin or Teacher dashboard.
-    - If not valid, the system shows an error and the user can try again.
+1. The user navigates to the login page.
+2. The user enters their username and password.
+3. The user clicks the "Sign in" button.
+4. The system validates the entered username and password.
+5. The system checks the role of the account.
+6. The user is logged in and directed to the Admin or Teacher dashboard.
 
 **Exception Scenario:**
 
+- If the user enters an incorrect username or password:
+    - The system displays an error message.
+    - The user is allowed to enter their username and password again.
 - If the user enters a wrong password 5 times:
     - The system locks the account for 15 minutes.
-- If the account is turned off (inactive):
-    - The system does not let the user log in.
+    - After 15 minutes, the user is allowed to log in again.
+- If the account is inactive:
+    - The system does not allow the user to log in.
 - If a student tries to log in on the website:
     - The system tells the student to use the CAMS student app on the lab computer.
 
 **Additional Remarks:**
 
 - The Teacher inherits this use case from the Admin (generalization).
-- A locked teacher account can be unlocked early on the Teachers page (Manage Teacher Account).
+- A locked teacher account can also be unlocked early on the Teachers page (Manage Teacher Account).
 
 ## Process Sign Out
 
@@ -117,36 +123,38 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.2: System Use Case for Process Sign Out*
 
-**Use Case Name:** Process Sign Out  
-**Purpose:** To allow the admin or teacher to sign out of the CAMS website when they are done.  
+**Written Use Case:** Process Sign Out  
+**Use Case Name:** Sign Out User  
+**Purpose:** To allow the Admin and Teacher to sign out of CAMS when they are done.  
 **Actors:** Admin, Teacher
 
 **Input Parameters:**
 
-- None (the user clicks Sign out)
+- None
 
 **Output Parameters:**
 
-- The login page
+- Login page
 
 **Pre-Condition:**
 
-- The user is logged in.
+- The user must be logged in to the system.
 
 **Post-Condition:**
 
-- The user is signed out, and the next person must log in again.
+- The user is signed out of the system.
+- The next person using the browser must log in again.
 
 **Successful Scenario:**
 
-1. The user clicks Sign out (Sign Out User).
+1. The user clicks the "Sign out" button.
 2. The system ends the user's session.
-3. The system shows the login page.
+3. The system displays the login page.
 
 **Exception Scenario:**
 
 - If the session has already ended:
-    - The system just shows the login page.
+    - The system displays the login page.
 
 **Additional Remarks:**
 
@@ -159,42 +167,47 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.3: System Use Case for Manage Own Account*
 
-**Use Case Name:** Manage Own Account  
-**Purpose:** To allow the admin or teacher to change their own password.  
+**Written Use Case:** Manage Own Account  
+**Use Case Name:** Change Password  
+**Purpose:** To allow the Admin and Teacher to change their own password.  
 **Actors:** Admin, Teacher
 
 **Input Parameters:**
 
 - Current password
 - New password
-- New password again, to confirm
+- Confirm new password
 
 **Output Parameters:**
 
-- A message that the password was changed
+- Success or error message
 
 **Pre-Condition:**
 
-- The user is logged in.
+- The user must be logged in to the system.
 
 **Post-Condition:**
 
-- The new password is saved and must be used at the next login.
+- The new password is saved.
+- The user must use the new password at the next login.
 
 **Successful Scenario:**
 
-1. The user opens the Settings page.
-2. The user enters the current password and the new password twice.
-3. The user clicks Change password (Change Password).
-4. The system checks the passwords:
-    - If correct, the system saves the new password and shows a message.
+1. The user navigates to the Settings page.
+2. The user enters the current password.
+3. The user enters the new password and enters it again to confirm.
+4. The user clicks the "Change password" button.
+5. The system validates the passwords.
+6. The system saves the new password and displays a success message.
 
 **Exception Scenario:**
 
-- If the current password is wrong:
-    - The system shows an error and keeps the old password.
+- If the current password is incorrect:
+    - The system displays an error message.
+    - The password is not changed.
 - If the new password has fewer than 8 characters, or the two new passwords do not match:
-    - The system asks the user to enter them again.
+    - The system displays an error message.
+    - The user is asked to enter the new password again.
 
 **Additional Remarks:**
 
@@ -207,49 +220,58 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.4: System Use Case for Manage Teacher Account*
 
-**Use Case Name:** Manage Teacher Account  
-**Purpose:** To allow the user to add, edit, turn on or off, and unlock teacher accounts.  
+**Written Use Case:** Manage Teacher Account  
+**Use Case Name:** Create Teacher, Update Teacher, Toggle Teacher Status, Unlock Teacher Account  
+**Purpose:** To allow the Admin and Teacher to manage teacher accounts in CAMS by adding, editing, activating or deactivating, and unlocking accounts.  
 **Actors:** Admin, Teacher
 
 **Input Parameters:**
 
-- Teacher details: name, email, contact number, username and password
-- The teacher account to edit, turn on or off, or unlock
+- Name
+- Email
+- Contact number
+- Username
+- Password
+- Selected teacher account
 
 **Output Parameters:**
 
-- The updated teacher list
-- A success or error message
+- Teacher list
+- Updated teacher information
+- Success or error message
 
 **Pre-Condition:**
 
-- The user is logged in.
-- To edit, turn off or unlock an account, the account must exist.
+- The user must be logged in to the system.
+- To edit, deactivate or unlock an account, the teacher account must exist.
 
 **Post-Condition:**
 
-- The teacher account is added, updated, turned on or off, or unlocked.
+- A teacher account is added, updated, activated or deactivated, or unlocked based on the action performed.
 - The change is saved in the audit trail.
+- The updated teacher list is displayed in the system.
 
 **Successful Scenario:**
 
-1. The user opens the Teachers page.
-2. The user chooses what to do:
-    - Create Teacher: clicks Add, fills in the details and clicks Save.
-    - Update Teacher: clicks Edit, changes the details and clicks Save.
-    - Toggle Teacher Status: clicks Deactivate or Activate and confirms.
-    - Unlock Teacher Account: clicks Unlock on a locked account.
-3. The system checks the details and saves the change.
-4. The system shows the updated teacher list.
+1. The user navigates to the Teachers page.
+2. The system displays the list of teacher accounts.
+3. To add a teacher, the user clicks Add.
+4. The user enters the teacher information and clicks Save.
+5. To edit a teacher, the user clicks Edit, updates the information and clicks Save.
+6. To deactivate or activate a teacher, the user clicks Deactivate or Activate and confirms.
+7. To unlock a locked account, the user clicks Unlock.
+8. The system validates the information and saves the changes.
+9. The system displays the updated teacher list.
 
 **Exception Scenario:**
 
 - If the username or password is missing, or the username is already used:
-    - The system does not save and shows an error.
+    - The system displays an error message.
+    - The teacher account is not saved.
 - If the teacher still has active classes, or is the last active teacher:
-    - The system does not turn the account off.
-- If a teacher tries to edit, turn off or unlock their own account on this page:
-    - The system does not allow it.
+    - The system does not deactivate the account.
+- If a teacher tries to edit, deactivate or unlock their own account on this page:
+    - The system does not allow the action.
 
 **Additional Remarks:**
 
@@ -263,47 +285,58 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.5: System Use Case for Manage Student Account*
 
-**Use Case Name:** Manage Student Account  
-**Purpose:** To allow the user to add, edit, and turn on or off student accounts, one at a time or many at once.  
+**Written Use Case:** Manage Student Account  
+**Use Case Name:** Create Student, Update Student, Toggle Student Status, Import Student Roster  
+**Purpose:** To allow the Admin and Teacher to manage student accounts in CAMS by adding, editing, activating or deactivating, and importing many students at once.  
 **Actors:** Admin, Teacher
 
 **Input Parameters:**
 
-- Student details: student number, first name, last name, username and password
-- A list of students, typed in or uploaded as a CSV file (for an import)
+- Student number
+- First name
+- Last name
+- Username
+- Password
+- Selected student account
+- Student list typed in or uploaded as a CSV file
 
 **Output Parameters:**
 
-- The updated student list
-- A list of the wrong rows, if an import fails
+- Student list
+- Updated student information
+- List of wrong rows, if an import fails
+- Success or error message
 
 **Pre-Condition:**
 
-- The user is logged in.
+- The user must be logged in to the system.
 - A class that receives imported students must be active and have a teacher.
 
 **Post-Condition:**
 
-- The student accounts are added or updated, or turned on or off.
+- A student account is added, updated, activated or deactivated, or imported based on the action performed.
 - Active students can log in on a lab computer.
+- The updated student list is displayed in the system.
 
 **Successful Scenario:**
 
-1. The user opens the Students page.
-2. The user chooses what to do:
-    - Create Student: clicks Add, fills in the details and clicks Save.
-    - Update Student: clicks Edit, changes the details and clicks Save.
-    - Toggle Student Status: clicks Deactivate or Activate and confirms.
-    - Import Student Roster: types the students or uploads a CSV file and clicks Save.
-3. For an import, the system first checks every row (Validate Roster Rows).
-4. The system saves the students and shows the updated list.
+1. The user navigates to the Students page.
+2. The system displays the list of student accounts.
+3. To add a student, the user clicks Add, enters the student information and clicks Save.
+4. To edit a student, the user clicks Edit, updates the information and clicks Save.
+5. To deactivate or activate a student, the user clicks Deactivate or Activate and confirms.
+6. To import many students, the user types the students or uploads a CSV file and clicks Save.
+7. For an import, the system first checks every row (Validate Roster Rows).
+8. The system saves the students and displays the updated student list.
 
 **Exception Scenario:**
 
 - If a required detail is missing, or the student number or username is already used:
-    - The system does not save and shows an error.
+    - The system displays an error message.
+    - The student account is not saved.
 - If any row of the import is wrong (no name, a password shorter than 8 characters, or a username used twice):
-    - No student is added, and the system shows the wrong rows.
+    - No student is added.
+    - The system displays the wrong rows.
 - If the import list is empty:
     - The system asks for at least one student.
 
@@ -319,49 +352,55 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.6: System Use Case for Manage Computer Profile*
 
-**Use Case Name:** Manage Computer Profile  
-**Purpose:** To allow the user to add lab computers, change their details, archive or bring them back, and reserve a computer for a student.  
+**Written Use Case:** Manage Computer Profile  
+**Use Case Name:** Register Computer, Update Computer, Toggle Computer Status, Assign Student Workstation  
+**Purpose:** To allow the Admin and Teacher to manage the lab computers in CAMS by registering, editing, archiving or restoring computers, and reserving a computer for a student.  
 **Actors:** Admin, Teacher
 
 **Input Parameters:**
 
-- Computer details: station name and status
-- The student and the computer to reserve
+- Station name
+- Status
+- Selected computer
+- Selected student
 
 **Output Parameters:**
 
-- The updated computer list
-- A success or error message
+- Computer list
+- Updated computer information
+- Success or error message
 
 **Pre-Condition:**
 
-- The user is logged in.
-- To edit, archive or reserve a computer, it must exist.
+- The user must be logged in to the system.
+- To edit, archive or reserve a computer, the computer must exist.
 
 **Post-Condition:**
 
-- The computer is added, updated, archived or brought back, or reserved for the student.
+- A computer is added, updated, archived or restored, or reserved for a student based on the action performed.
 - Status changes are kept in the computer's history.
+- The updated computer list is displayed in the system.
 
 **Successful Scenario:**
 
-1. The user opens the Computers page, or the Students page to reserve a computer.
-2. The user chooses what to do:
-    - Register Computer: clicks Add, fills in the details and clicks Save.
-    - Update Computer: clicks Edit, changes the name or status and clicks Save.
-    - Toggle Computer Status: clicks Archive; to bring it back, edits it and sets the status to Available.
-    - Assign Student Workstation: picks a computer for the student and clicks Save.
-3. The system checks the details and saves the change.
-4. The system shows the updated list.
+1. The user navigates to the Computers page.
+2. The system displays the list of lab computers.
+3. To register a computer, the user clicks Add, enters the computer information and clicks Save.
+4. To edit a computer, the user clicks Edit, changes the name or status and clicks Save.
+5. To archive a computer, the user clicks Archive. To restore it, the user edits it and sets the status to Available.
+6. To reserve a computer for a student, the user opens the Students page, selects a computer for the student and clicks Save.
+7. The system validates the information and saves the changes.
+8. The system displays the updated list.
 
 **Exception Scenario:**
 
 - If the station name is missing or already used:
-    - The system does not save.
+    - The system displays an error message.
+    - The computer is not saved.
 - If a lab session is running on the computer:
-    - The system does not archive it.
+    - The system does not archive the computer.
 - If the computer is archived, already reserved or in use:
-    - The system does not reserve it for the student.
+    - The system does not reserve the computer for the student.
 
 **Additional Remarks:**
 
@@ -375,58 +414,68 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.7: System Use Case for Manage Class*
 
-**Use Case Name:** Manage Class  
-**Purpose:** To allow the user to create, edit, archive and restore classes, and to put students in or out of a class.  
+**Written Use Case:** Manage Class  
+**Use Case Name:** Create Class, Update Class, Toggle Class Status, Enroll Students, Remove Student from Class  
+**Purpose:** To allow the Admin and Teacher to manage classes in CAMS by creating, editing, archiving or restoring classes, and by enrolling or removing students.  
 **Actors:** Admin, Teacher
 
 **Input Parameters:**
 
-- Class details: class name, grade level, section, subject, schedule and school year
-- The students to enroll or remove
+- Class name
+- Grade level
+- Section
+- Subject
+- Schedule
+- School year
+- Selected students
 
 **Output Parameters:**
 
-- The updated class list or class page
-- A success or error message
+- Class list
+- Updated class information
+- Updated list of students in the class
+- Success or error message
 
 **Pre-Condition:**
 
-- The user is logged in.
+- The user must be logged in to the system.
 - To enroll students, the class must be active and have a teacher.
 
 **Post-Condition:**
 
-- The class is added, updated, archived or restored.
-- The class has the chosen students.
+- A class is added, updated, archived or restored based on the action performed.
+- The chosen students are enrolled in or removed from the class.
+- The updated class is displayed in the system.
 
 **Successful Scenario:**
 
-1. The user opens the Classes page.
-2. The user chooses what to do:
-    - Create Class: clicks Add, fills in the details and clicks Save.
-    - Update Class: clicks Edit, changes the details and clicks Save.
-    - Toggle Class Status: clicks Archive or Restore and confirms.
-    - Enroll Students: opens the class, picks students (or types a new student) and clicks Enroll.
-    - Remove Student from Class: opens the class, clicks Remove on the students and confirms.
-3. The system checks the details and saves the change.
-4. The system shows the updated class.
+1. The user navigates to the Classes page.
+2. The system displays the list of classes.
+3. To create a class, the user clicks Add, enters the class information and clicks Save.
+4. To edit a class, the user clicks Edit, updates the information and clicks Save.
+5. To archive or restore a class, the user clicks Archive or Restore and confirms.
+6. To enroll students, the user opens the class, selects the students (or types a new student) and clicks Enroll.
+7. To remove students, the user opens the class, clicks Remove on the students and confirms.
+8. The system validates the information and saves the changes.
+9. The system displays the updated class.
 
 **Exception Scenario:**
 
 - If the class name is missing, or the same class already exists for that school year:
-    - The system does not save.
+    - The system displays an error message.
+    - The class is not saved.
 - If a teacher tries to change a class that is not theirs:
-    - The system does not allow it.
+    - The system does not allow the action.
 - If a student is already in another class:
     - The system asks the user to confirm the move.
 - If a class to be restored has no active teacher:
-    - The system does not restore it.
+    - The system does not restore the class.
 
 **Additional Remarks:**
 
 - The Teacher inherits this use case from the Admin (generalization).
 - A class made by a teacher belongs to that teacher.
-- Choosing the teacher of a class is for the admin only (Manage Class Teacher).
+- Choosing the teacher of a class is for the Admin only (Manage Class Teacher).
 - Archiving a class or removing a student keeps all records. Nothing is deleted.
 
 ## Manage Restriction Rule
@@ -435,45 +484,54 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.8: System Use Case for Manage Restriction Rule*
 
-**Use Case Name:** Manage Restriction Rule  
-**Purpose:** To allow the user to add, change and delete rules that block or allow websites during lab sessions.  
+**Written Use Case:** Manage Restriction Rule  
+**Use Case Name:** Create Restriction, Update Restriction, Delete Restriction  
+**Purpose:** To allow the Admin and Teacher to manage the rules that block or allow websites during lab sessions by adding, editing and deleting rules.  
 **Actors:** Admin, Teacher
 
 **Input Parameters:**
 
-- Rule details: rule type, target (website or app), block or allow, description and active
-- The rule to change or delete
+- Rule type
+- Target website or app
+- Block or allow
+- Description
+- Active
+- Selected rule
 
 **Output Parameters:**
 
-- The updated rule list
-- A success or error message
+- Rule list
+- Success or error message
 
 **Pre-Condition:**
 
-- The user is logged in.
-- To change or delete a rule, the rule must exist.
+- The user must be logged in to the system.
+- To edit or delete a rule, the rule must exist.
 
 **Post-Condition:**
 
-- Student computers follow the new or changed rule, and stop using a deleted rule.
+- A rule is added, updated or deleted based on the action performed.
+- Student computers follow the new or changed rules.
+- The updated rule list is displayed in the system.
 
 **Successful Scenario:**
 
-1. The user opens the Restriction Rules page.
-2. The user chooses what to do:
-    - Create Restriction: clicks Add, fills in the rule and clicks Save.
-    - Update Restriction: clicks Edit, changes the rule or turns it on or off, and clicks Save.
-    - Delete Restriction: clicks Delete on the rule and confirms.
-3. The system checks the details and saves or deletes the rule.
-4. The system shows the updated rule list.
+1. The user navigates to the Restriction Rules page.
+2. The system displays the list of rules.
+3. To add a rule, the user clicks Add, enters the rule information and clicks Save.
+4. To edit a rule, the user clicks Edit, changes the rule or turns it on or off, and clicks Save.
+5. To delete a rule, the user clicks Delete.
+6. The system asks the user to confirm the deletion.
+7. The user confirms the deletion.
+8. The system saves or deletes the rule and displays the updated rule list.
 
 **Exception Scenario:**
 
 - If the rule type, block or allow, or the target is missing:
-    - The system does not save.
+    - The system displays an error message.
+    - The rule is not saved.
 - If a teacher tries to change or delete a rule that is not theirs:
-    - The system does not allow it.
+    - The system does not allow the action.
 - If the rule is already gone:
     - Nothing changes.
 
@@ -489,43 +547,53 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.9: System Use Case for Manage Blacklist and Whitelist*
 
-**Use Case Name:** Manage Blacklist and Whitelist  
-**Purpose:** To allow the user to keep the list of blocked websites and apps (blacklist) and the list of allowed websites (whitelist).  
+**Written Use Case:** Manage Blacklist and Whitelist  
+**Use Case Name:** Add Blacklist Entry, Update Blacklist Entry, Delete Blacklist Entry, Add Whitelist Entry, Update Whitelist Entry, Delete Whitelist Entry  
+**Purpose:** To allow the Admin and Teacher to manage the blacklist of blocked websites and apps and the whitelist of allowed websites by adding, editing and deleting entries.  
 **Actors:** Admin, Teacher
 
 **Input Parameters:**
 
-- Blacklist entry: type (website, domain, app or process), value and reason
-- Whitelist entry: website and description
-- Active (on or off), when editing an entry
+- Entry type (website, domain, app or process)
+- Value
+- Reason
+- Website
+- Description
+- Active
+- Selected entry
 
 **Output Parameters:**
 
-- The updated blacklist or whitelist
+- Blacklist or whitelist
+- Success or error message
 
 **Pre-Condition:**
 
-- The user is logged in.
+- The user must be logged in to the system.
 - To edit or delete an entry, the entry must exist.
 
 **Post-Condition:**
 
+- An entry is added, updated or deleted based on the action performed.
 - Student computers block what is on the blacklist and follow the whitelist.
+- The updated list is displayed in the system.
 
 **Successful Scenario:**
 
-1. The user opens the Blacklist page or the Whitelist page.
-2. The user chooses what to do:
-    - Add Blacklist Entry or Add Whitelist Entry: clicks Add, fills in the entry and clicks Save.
-    - Update Blacklist Entry or Update Whitelist Entry: clicks Edit, changes the entry or turns it on or off, and clicks Save.
-    - Delete Blacklist Entry or Delete Whitelist Entry: clicks Delete and confirms.
-3. The system checks the details and saves or deletes the entry.
-4. The system shows the updated list.
+1. The user navigates to the Blacklist page or the Whitelist page.
+2. The system displays the list of entries.
+3. To add an entry, the user clicks Add, enters the entry information and clicks Save.
+4. To edit an entry, the user clicks Edit, changes the entry or turns it on or off, and clicks Save.
+5. To delete an entry, the user clicks Delete.
+6. The system asks the user to confirm the deletion.
+7. The user confirms the deletion.
+8. The system saves or deletes the entry and displays the updated list.
 
 **Exception Scenario:**
 
 - If the type, the value or the website is missing:
-    - The system does not save.
+    - The system displays an error message.
+    - The entry is not saved.
 - If the entry is already gone:
     - Nothing changes.
 
@@ -542,42 +610,51 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.10: System Use Case for Manage Category*
 
-**Use Case Name:** Manage Category  
-**Purpose:** To allow the user to group apps or websites, for example all games, so one rule covers them all.  
+**Written Use Case:** Manage Category  
+**Use Case Name:** Create Category, Update Category, Toggle Category Status  
+**Purpose:** To allow the Admin and Teacher to group apps or websites, for example all games, so one rule covers them all.  
 **Actors:** Admin, Teacher
 
 **Input Parameters:**
 
-- Category details: name, pattern (app name or website address), block or allow, and description
-- Active (on or off)
+- Category name
+- Pattern (app name or website address)
+- Block or allow
+- Description
+- Active
+- Selected category
 
 **Output Parameters:**
 
-- The updated category list
+- Category list
+- Success or error message
 
 **Pre-Condition:**
 
-- The user is logged in.
-- To edit or turn off a category, it must exist.
+- The user must be logged in to the system.
+- To edit or turn off a category, the category must exist.
 
 **Post-Condition:**
 
-- Apps or websites that match a category follow it. A category that is off is ignored.
+- A category is added, updated, or turned on or off based on the action performed.
+- Apps or websites that match an active category follow it.
+- The updated category list is displayed in the system.
 
 **Successful Scenario:**
 
-1. The user opens the Restriction Rules page.
-2. The user chooses what to do:
-    - Create Category: clicks Add Category, fills in the details and clicks Save.
-    - Update Category: clicks Edit on the category, changes the details and clicks Save.
-    - Toggle Category Status: clicks Edit on the category, turns Active on or off and clicks Save.
-3. The system checks the details and saves the category.
-4. The system shows the updated categories.
+1. The user navigates to the Restriction Rules page.
+2. The system displays the list of categories.
+3. To add a category, the user clicks Add Category, enters the category information and clicks Save.
+4. To edit a category, the user clicks Edit, changes the information and clicks Save.
+5. To turn a category on or off, the user clicks Edit, turns Active on or off and clicks Save.
+6. The system validates the information and saves the category.
+7. The system displays the updated categories.
 
 **Exception Scenario:**
 
 - If the name or the pattern is missing:
-    - The system does not save.
+    - The system displays an error message.
+    - The category is not saved.
 - If the category is already gone:
     - Nothing changes.
 
@@ -593,41 +670,51 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.11: System Use Case for Manage Session Rule*
 
-**Use Case Name:** Manage Session Rule  
-**Purpose:** To allow the user to set how lab sessions work: the time limit, pausing and remote control.  
+**Written Use Case:** Manage Session Rule  
+**Use Case Name:** Create Session Rule, Update Session Rule, Toggle Session Rule Status  
+**Purpose:** To allow the Admin and Teacher to set how lab sessions work, such as the time limit, pausing and remote control.  
 **Actors:** Admin, Teacher
 
 **Input Parameters:**
 
-- Rule details: name, time limit, allow pause, allow remote control and default
+- Rule name
+- Time limit
+- Allow pause
+- Allow remote control
+- Default rule
+- Selected session rule
 
 **Output Parameters:**
 
-- The updated session rule list
+- Session rule list
+- Success or error message
 
 **Pre-Condition:**
 
-- The user is logged in.
+- The user must be logged in to the system.
 - To edit or turn off a rule, the rule must exist.
 
 **Post-Condition:**
 
-- New lab sessions follow the rule. A rule that is off cannot be used for new sessions.
+- A session rule is added, updated, or turned on or off based on the action performed.
+- New lab sessions follow the active rules.
+- The updated session rule list is displayed in the system.
 
 **Successful Scenario:**
 
-1. The user opens the Session Rules page.
-2. The user chooses what to do:
-    - Create Session Rule: clicks Add, fills in the details and clicks Save.
-    - Update Session Rule: clicks Edit, changes the details and clicks Save.
-    - Toggle Session Rule Status: clicks Deactivate and confirms, or edits the rule and turns Active on.
-3. The system checks the details and saves the rule.
-4. The system shows the updated rule list.
+1. The user navigates to the Session Rules page.
+2. The system displays the list of session rules.
+3. To add a rule, the user clicks Add, enters the rule information and clicks Save.
+4. To edit a rule, the user clicks Edit, changes the information and clicks Save.
+5. To turn a rule off, the user clicks Deactivate and confirms. To turn it on again, the user edits the rule and turns Active on.
+6. The system validates the information and saves the rule.
+7. The system displays the updated rule list.
 
 **Exception Scenario:**
 
 - If the name is missing:
-    - The system does not save.
+    - The system displays an error message.
+    - The rule is not saved.
 - If the rule is already gone:
     - Nothing changes.
 
@@ -643,47 +730,48 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.12: System Use Case for Control Laboratory Session*
 
-**Use Case Name:** Control Laboratory Session  
-**Purpose:** To allow the user to pause, resume or end all the student sessions in the lab at once.  
+**Written Use Case:** Control Laboratory Session  
+**Use Case Name:** Pause Lab Session, Resume Lab Session, End Lab Session  
+**Purpose:** To allow the Admin and Teacher to pause, resume or end all the student sessions in the lab at once.  
 **Actors:** Admin, Teacher
 
 **Input Parameters:**
 
-- None (the user clicks Pause, Resume or End)
+- Pause, Resume or End command
 
 **Output Parameters:**
 
-- The number of sessions paused, resumed or ended
+- Number of sessions paused, resumed or ended
 
 **Pre-Condition:**
 
-- The user is logged in.
-- A lab session is running (to pause or end it) or paused (to resume it).
+- The user must be logged in to the system.
+- A lab session must be running (to pause or end it) or paused (to resume it).
 
 **Post-Condition:**
 
-- All the sessions are paused, running again, or ended.
+- All the sessions are paused, resumed or ended based on the action performed.
 - The change is saved in the audit trail.
 
 **Successful Scenario:**
 
-1. The user opens the dashboard (admin) or the Sessions page (teacher).
-2. The user chooses what to do:
-    - Pause Lab Session: clicks Pause. The student computers show a pause screen and the timers stop.
-    - Resume Lab Session: clicks Resume. The pause screens go away and the timers continue.
-    - End Lab Session: clicks End and confirms. The sessions end and the student computers restart.
-3. The system applies the change to every session in the lab.
-4. The system shows how many sessions were changed.
+1. The user navigates to the dashboard (Admin) or the Sessions page (Teacher).
+2. To pause the lab, the user clicks Pause. The student computers display a pause screen and the timers stop.
+3. To resume the lab, the user clicks Resume. The pause screens close and the timers continue.
+4. To end the lab, the user clicks End and confirms. The sessions end and the student computers restart.
+5. The system applies the change to every session in the lab.
+6. The system displays how many sessions were changed.
 
 **Exception Scenario:**
 
 - If no session is running, paused or open:
-    - Nothing changes and the system shows 0 sessions.
+    - Nothing changes.
+    - The system displays 0 sessions.
 
 **Additional Remarks:**
 
 - The Teacher inherits this use case from the Admin (generalization).
-- Only the teacher can start a lab session (Control Student Session).
+- Only the Teacher can start a lab session (Control Student Session).
 - Paused time is not counted, and the session records are kept.
 
 # ADMIN
@@ -694,47 +782,54 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.13: System Use Case for Manage Admin Account*
 
-**Use Case Name:** Manage Admin Account  
-**Purpose:** To allow the admin to add, edit, and turn on or off admin accounts.  
+**Written Use Case:** Manage Admin Account  
+**Use Case Name:** Create Admin, Update Admin, Toggle Admin Status  
+**Purpose:** To allow the Admin to manage admin accounts in CAMS by adding, editing, and activating or deactivating accounts.  
 **Actors:** Admin
 
 **Input Parameters:**
 
-- Admin details: full name, username and password
-- The admin account to edit or turn on or off
+- Full name
+- Username
+- Password
+- Selected admin account
 
 **Output Parameters:**
 
-- The updated admin list
+- Admin list
+- Success or error message
 
 **Pre-Condition:**
 
-- The admin is logged in.
+- The Admin must be logged in to the system.
 
 **Post-Condition:**
 
-- The admin account is added, updated, or turned on or off.
+- An admin account is added, updated, or activated or deactivated based on the action performed.
 - The change is saved in the audit trail.
+- The updated admin list is displayed in the system.
 
 **Successful Scenario:**
 
-1. The admin opens the Admin Accounts page.
-2. The admin chooses what to do:
-    - Create Admin: clicks Add, fills in the details and clicks Save.
-    - Update Admin: clicks Edit, changes the name or username and clicks Save.
-    - Toggle Admin Status: clicks Deactivate or Activate and confirms.
-3. The system checks the details and saves the change.
-4. The system shows the updated list.
+1. The Admin navigates to the Admin Accounts page.
+2. The system displays the list of admin accounts.
+3. To add an admin, the Admin clicks Add, enters the admin information and clicks Save.
+4. To edit an admin, the Admin clicks Edit, changes the name or username and clicks Save.
+5. To deactivate or activate an admin, the Admin clicks Deactivate or Activate and confirms.
+6. The system validates the information and saves the changes.
+7. The system displays the updated admin list.
 
 **Exception Scenario:**
 
 - If the username or password is missing, or the username is already used:
-    - The system does not save.
-- If the admin tries to turn off the last active admin:
-    - The system does not allow it.
+    - The system displays an error message.
+    - The admin account is not saved.
+- If the Admin tries to deactivate the last active admin:
+    - The system does not allow the action.
 
 **Additional Remarks:**
 
+- Only the Admin can manage admin accounts.
 - An inactive admin cannot log in, but the account is kept. Nothing is deleted.
 
 ## Manage Class Teacher
@@ -743,48 +838,52 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.14: System Use Case for Manage Class Teacher*
 
-**Use Case Name:** Manage Class Teacher  
-**Purpose:** To allow the admin to choose the teacher in charge of a class, change the teacher, or leave the class without one.  
+**Written Use Case:** Manage Class Teacher  
+**Use Case Name:** Assign Class Teacher  
+**Purpose:** To allow the Admin to choose the teacher in charge of a class, change the teacher, or leave the class without one.  
 **Actors:** Admin
 
 **Input Parameters:**
 
-- The class
-- The teacher, or none to leave the class without a teacher
+- Selected class
+- Selected teacher, or none
 
 **Output Parameters:**
 
-- The class page showing its teacher
-- A success or error message
+- Class page showing its teacher
+- Success or error message
 
 **Pre-Condition:**
 
-- The admin is logged in.
-- The class exists.
+- The Admin must be logged in to the system.
+- The class must exist.
 
 **Post-Condition:**
 
-- The chosen teacher is in charge of the class, and the class appears on that teacher's class list.
+- The chosen teacher is in charge of the class.
+- The class appears on that teacher's class list.
 - The change is saved in the audit trail.
 
 **Successful Scenario:**
 
-1. The admin opens the Classes page and opens the class.
-2. The admin picks a teacher for the class (Assign Class Teacher).
-3. The admin clicks Save.
-4. The system checks the teacher:
-    - If the teacher is active, the system saves the teacher for the class and shows the class page.
+1. The Admin navigates to the Classes page and opens the class.
+2. The Admin selects a teacher for the class, or none.
+3. The Admin clicks Save.
+4. The system checks that the teacher is active.
+5. The system saves the teacher for the class and displays the class page.
 
 **Exception Scenario:**
 
 - If the chosen teacher is inactive:
-    - The system does not assign the class and asks for an active teacher.
+    - The system displays an error message.
+    - The Admin is asked to select an active teacher.
 - If the class is not found:
-    - The system shows an error and nothing changes.
+    - The system displays an error message.
+    - Nothing changes.
 
 **Additional Remarks:**
 
-- Only the admin can do this. A teacher who tries is told that only administrators can assign or reassign teachers.
+- Only the Admin can assign the teacher of a class. A teacher who tries is told that only administrators can assign or reassign teachers.
 
 ## Export Reports and Logs
 
@@ -792,45 +891,48 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.15: System Use Case for Export Reports and Logs*
 
-**Use Case Name:** Export Reports and Logs  
-**Purpose:** To allow the admin to see the lab reports, the audit trail and the system logs, and to download them as CSV files.  
+**Written Use Case:** Export Reports and Logs  
+**Use Case Name:** View Reports, View Audit Logs, View System Logs  
+**Purpose:** To allow the Admin to view the lab reports, the audit trail and the system logs, and to download them as CSV files.  
 **Actors:** Admin
 
 **Input Parameters:**
 
-- Filters: date range, and class or computer (optional, for reports)
+- Date range
+- Class or computer (optional)
 
 **Output Parameters:**
 
-- The Reports, Audit Trail or System Logs page
-- A CSV file, when the admin exports
+- Reports, Audit Trail or System Logs page
+- CSV file
 
 **Pre-Condition:**
 
-- The admin is logged in.
+- The Admin must be logged in to the system.
 
 **Post-Condition:**
 
-- The admin sees the records, and has the CSV file if one was exported. Nothing is changed.
+- The records are displayed in the system.
+- The CSV file is downloaded when the Admin exports. Nothing is changed.
 
 **Successful Scenario:**
 
-1. The admin opens the Reports page (View Reports), the Audit Trail page (View Audit Logs) or the System Logs page (View System Logs).
-2. The admin sets the filters (optional).
-3. The system shows the records.
-4. If the admin needs a file, the admin clicks the export button on the page:
-    - Export Reports CSV, Export Audit CSV or Export System Logs CSV.
-5. The system makes the CSV file and the browser downloads it.
+1. The Admin navigates to the Reports page, the Audit Trail page or the System Logs page.
+2. The Admin may set the filters.
+3. The system displays the records.
+4. To download a file, the Admin clicks the export button on the page (Export Reports CSV, Export Audit CSV or Export System Logs CSV).
+5. The system creates the CSV file and the browser downloads it.
 
 **Exception Scenario:**
 
 - If nothing matches the filters:
-    - The page shows an empty list, and the CSV file has only the column names.
+    - The system displays an empty list.
+    - The CSV file contains only the column names.
 
 **Additional Remarks:**
 
 - Each export extends its page: it is optional and happens only while the page is open.
-- The Audit Trail and System Logs pages show the latest 500 records.
+- The Audit Trail and System Logs pages display the latest 500 records.
 
 ## Manage Database
 
@@ -838,26 +940,27 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.16: System Use Case for Manage Database*
 
-**Use Case Name:** Manage Database  
-**Purpose:** To allow the admin to back up the CAMS database, check a backup, and restore the database from a backup.  
+**Written Use Case:** Manage Database  
+**Use Case Name:** Create Backup, Validate Backup, Stage Database Restore  
+**Purpose:** To allow the Admin to back up the CAMS database, check a backup, and restore the database from a backup.  
 **Actors:** Admin
 
 **Input Parameters:**
 
-- A label for the backup (optional)
-- The backup to check or restore
+- Backup label (optional)
+- Selected backup
 - The word RESTORE, to confirm a restore
 
 **Output Parameters:**
 
-- The backup list
-- A message saying whether the backup passed the check
-- A message to restart the server after a restore is set
+- Backup list
+- Backup check result
+- Message to restart the server
 
 **Pre-Condition:**
 
-- The admin is logged in.
-- To check or restore a backup, it must be in the list.
+- The Admin must be logged in to the system.
+- To check or restore a backup, the backup must be in the list.
 
 **Post-Condition:**
 
@@ -865,20 +968,22 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Successful Scenario:**
 
-1. The admin opens the Database page.
-2. The admin chooses what to do:
-    - Create Backup: types a label (optional) and clicks Create backup.
-    - Validate Backup: clicks Validate on a backup.
-    - Stage Database Restore: clicks Restore on a backup and types RESTORE to confirm.
-3. For a restore, the system first checks the backup (Validate Backup) and makes a safety copy of the current database.
-4. The system does the action and shows the result.
+1. The Admin navigates to the Database page.
+2. The system displays the list of backups.
+3. To create a backup, the Admin types a label (optional) and clicks Create backup.
+4. To check a backup, the Admin clicks Validate on the backup.
+5. To restore a backup, the Admin clicks Restore on the backup and types RESTORE to confirm.
+6. For a restore, the system first checks the backup (Validate Backup) and makes a safety copy of the current database.
+7. The system completes the action and displays the result.
 
 **Exception Scenario:**
 
 - If making the backup fails:
-    - The system shows an error and the database is not changed.
+    - The system displays an error message.
+    - The database is not changed.
 - If the backup is damaged, or RESTORE is not typed:
-    - The system does not restore, and nothing is changed.
+    - The system does not restore the backup.
+    - Nothing is changed.
 
 **Additional Remarks:**
 
@@ -891,46 +996,49 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.17: System Use Case for Manage Deployment*
 
-**Use Case Name:** Manage Deployment  
-**Purpose:** To allow the admin to get the files needed to install the CAMS student app on the lab computers.  
+**Written Use Case:** Manage Deployment  
+**Use Case Name:** Download Deployment Files, Build Workstation Bundle  
+**Purpose:** To allow the Admin to get the files needed to install the CAMS student app on the lab computers.  
 **Actors:** Admin
 
 **Input Parameters:**
 
-- The file to download: installer, manifest or certificate
-- The server address, for a workstation bundle
+- Selected file (installer, manifest or certificate)
+- Server address
 
 **Output Parameters:**
 
-- The downloaded file, or a zip file (bundle)
+- Downloaded file
+- Workstation bundle (zip file)
 
 **Pre-Condition:**
 
-- The admin is logged in.
+- The Admin must be logged in to the system.
 
 **Post-Condition:**
 
-- The admin has the setup files. Nothing in CAMS is changed.
+- The Admin has the setup files. Nothing in CAMS is changed.
 
 **Successful Scenario:**
 
-1. The admin opens the Deployment page.
-2. The admin chooses what to do:
-    - Download Deployment Files: clicks the installer, the manifest or the certificate.
-    - Build Workstation Bundle: enters the server address and clicks Build.
-3. The system prepares the file.
-4. The browser downloads it.
+1. The Admin navigates to the Deployment page.
+2. To download a file, the Admin clicks the installer, the manifest or the certificate.
+3. To build a workstation bundle, the Admin enters the server address and clicks Build.
+4. The system prepares the file.
+5. The browser downloads the file.
 
 **Exception Scenario:**
 
 - If a file is missing or damaged:
-    - The download fails and the system shows an error.
+    - The download fails.
+    - The system displays an error message.
 - If the server address is wrong:
-    - The system does not build the bundle and shows an error.
+    - The system does not build the bundle.
+    - The system displays an error message.
 
 **Additional Remarks:**
 
-- The bundle has the installer, the certificate and an install script.
+- The bundle contains the installer, the certificate and an install script.
 - The certificate lets the lab computers connect to the server safely.
 
 # TEACHER
@@ -941,37 +1049,39 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.18: System Use Case for Control Student Session*
 
-**Use Case Name:** Control Student Session  
-**Purpose:** To allow the teacher to start the lab session, and to pause, resume or end one student's session.  
+**Written Use Case:** Control Student Session  
+**Use Case Name:** Start Lab Session, Pause or Resume Student Session, End Student Session  
+**Purpose:** To allow the Teacher to start the lab session, and to pause, resume or end one student's session.  
 **Actors:** Teacher
 
 **Input Parameters:**
 
-- Session rule (optional, when starting the lab session)
-- The student's session, to pause, resume or end
+- Session rule (optional)
+- Selected student session
 
 **Output Parameters:**
 
-- A message that the lab session started, or the session's new status
+- Lab session started message
+- Updated session status
 
 **Pre-Condition:**
 
-- The teacher is logged in.
-- To pause, resume or end a student's session, the session is open.
+- The Teacher must be logged in to the system.
+- To pause, resume or end a student's session, the session must be open.
 
 **Post-Condition:**
 
-- Students can log in on any lab computer and join the lab session, or the student's session is paused, running again, or ended.
+- Students can log in on any lab computer and join the lab session.
+- The selected session is paused, resumed or ended based on the action performed.
 
 **Successful Scenario:**
 
-1. The teacher opens the Sessions page.
-2. The teacher chooses what to do:
-    - Start Lab Session: clicks Start lab session and picks a session rule, or keeps the default.
-    - Pause or Resume Student Session: clicks Pause or Resume on a student's session.
-    - End Student Session: clicks End on a student's session and confirms.
-3. The system saves the change.
-4. When a session ends, the system saves the end time and restarts the student's computer.
+1. The Teacher navigates to the Sessions page.
+2. To start the lab session, the Teacher clicks Start lab session and selects a session rule, or keeps the default.
+3. To pause or resume a student's session, the Teacher clicks Pause or Resume on the session.
+4. To end a student's session, the Teacher clicks End on the session and confirms.
+5. The system saves the change.
+6. When a session ends, the system saves the end time and restarts the student's computer.
 
 **Exception Scenario:**
 
@@ -984,7 +1094,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Additional Remarks:**
 
-- Only the teacher can start a lab session. The admin can only pause, resume or end all sessions (Control Laboratory Session).
+- Only the Teacher can start a lab session. The Admin can only pause, resume or end all sessions (Control Laboratory Session).
 - Paused time is not counted, and the session records are kept.
 
 ## Monitor Student Screen
@@ -993,44 +1103,45 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.19: System Use Case for Monitor Student Screen*
 
-**Use Case Name:** Monitor Student Screen  
-**Purpose:** To allow the teacher to watch all the student screens live on one page.  
+**Written Use Case:** Monitor Student Screen  
+**Use Case Name:** Open Monitoring Wall  
+**Purpose:** To allow the Teacher to watch all the student screens live on one page.  
 **Actors:** Teacher
 
 **Input Parameters:**
 
-- None (the teacher opens the Live Monitoring page)
+- None
 
 **Output Parameters:**
 
-- The live screen of every logged-in student
+- Live screen of every logged-in student
 
 **Pre-Condition:**
 
-- The teacher is logged in.
-- Students are logged in on the lab computers.
+- The Teacher must be logged in to the system.
+- Students must be logged in on the lab computers.
 
 **Post-Condition:**
 
-- The teacher sees the latest screens. Nothing is saved.
+- The Teacher sees the latest screens. Nothing is saved.
 
 **Successful Scenario:**
 
-1. The teacher opens the Live Monitoring page (Open Monitoring Wall).
+1. The Teacher navigates to the Live Monitoring page.
 2. Each student computer sends its screen to the system (Stream Student Screen).
-3. The system shows each screen on the page and keeps it updated.
+3. The system displays each screen on the page and keeps it updated.
 
 **Exception Scenario:**
 
 - If no student is logged in:
-    - The page shows no screens.
+    - The system displays no screens.
 - If a screen picture is empty or too large:
     - The system skips that picture.
 
 **Additional Remarks:**
 
 - Open Monitoring Wall always includes Stream Student Screen.
-- From a screen on this page, the teacher can control that computer (Control Student Workstation).
+- From a screen on this page, the Teacher can control that computer (Control Student Workstation).
 
 ## Control Student Workstation
 
@@ -1038,46 +1149,47 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.20: System Use Case for Control Student Workstation*
 
-**Use Case Name:** Control Student Workstation  
-**Purpose:** To allow the teacher to take control of a student's computer, lock or unlock it, log the student out, or restart or shut down the computer.  
+**Written Use Case:** Control Student Workstation  
+**Use Case Name:** Start Remote Control, Stop Remote Control, Lock Workstation, Unlock Workstation, Force Student Logout, Restart Workstation, Shut Down Workstation  
+**Purpose:** To allow the Teacher to take control of a student's computer, lock or unlock it, log the student out, or restart or shut down the computer.  
 **Actors:** Teacher
 
 **Input Parameters:**
 
-- One student's computer, or all the computers shown (for lock and log out)
-- The teacher's mouse clicks and key presses, during remote control
+- Selected computer, or all the computers shown
+- Mouse clicks and key presses during remote control
 
 **Output Parameters:**
 
-- The result of the command on the monitoring page
+- Command result on the monitoring page
 
 **Pre-Condition:**
 
-- The teacher is logged in and the computer is connected.
+- The Teacher must be logged in to the system.
+- The computer must be connected.
 - For remote control, the session rule must allow it.
 
 **Post-Condition:**
 
-- The student's computer does the command.
+- The student's computer carries out the command.
 - The command is saved in the remote history.
 
 **Successful Scenario:**
 
-1. The teacher opens the Live Monitoring page and picks a computer, or all the computers shown.
-2. The teacher chooses what to do:
-    - Start Remote Control: clicks Start Remote Support. The teacher's mouse and keyboard now work on the student's computer (Send Remote Input).
-    - Stop Remote Control: clicks Stop Remote Support.
-    - Lock Workstation or Unlock Workstation: clicks Lock (or Lock visible for all the computers) or Unlock.
-    - Force Student Logout: clicks Log out (or Log out visible for all) and confirms.
-    - Restart Workstation or Shut Down Workstation: clicks Restart or Shutdown and confirms.
-3. The system sends the command to the student's computer.
-4. The computer does the command, and the page shows the result.
+1. The Teacher navigates to the Live Monitoring page and selects a computer, or all the computers shown.
+2. To control a computer, the Teacher clicks Start Remote Support. The Teacher's mouse and keyboard now work on the student's computer (Send Remote Input).
+3. To give control back, the Teacher clicks Stop Remote Support.
+4. To lock or unlock a computer, the Teacher clicks Lock (or Lock visible for all the computers) or Unlock.
+5. To log a student out, the Teacher clicks Log out (or Log out visible for all) and confirms.
+6. To restart or shut down a computer, the Teacher clicks Restart or Shutdown and confirms.
+7. The system sends the command to the student's computer.
+8. The computer carries out the command, and the system displays the result.
 
 **Exception Scenario:**
 
 - If the computer is not connected:
     - The system does not send the command.
-- If more than 100 computers are chosen at once:
+- If more than 100 computers are selected at once:
     - The system does not send the command.
 - If the session rule does not allow remote control, or the session has ended:
     - The system does not start remote control.
@@ -1085,7 +1197,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Additional Remarks:**
 
 - Start Remote Control always includes Send Remote Input.
-- The student sees a notice while the teacher is in control.
+- The student sees a notice while the Teacher is in control.
 - A restart happens after 10 seconds and a shutdown after 15 seconds. Unsaved work is lost.
 
 ## Send Message to Student
@@ -1094,36 +1206,40 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.21: System Use Case for Send Message to Student*
 
-**Use Case Name:** Send Message to Student  
-**Purpose:** To allow the teacher to send a warning to students, or show the teacher's screen on all the student computers.  
+**Written Use Case:** Send Message to Student  
+**Use Case Name:** Send Warning Popup, Broadcast Teacher Screen  
+**Purpose:** To allow the Teacher to send a warning to students, or show the Teacher's screen on all the student computers.  
 **Actors:** Teacher
 
 **Input Parameters:**
 
-- Warning title and message, and one student or all
-- The teacher's screen to share, for a broadcast
+- Warning title
+- Warning message
+- Selected student, or all
+- Screen to share
 
 **Output Parameters:**
 
-- A warning on the student screens, or the teacher's screen on every student computer
+- Warning on the student screens
+- Teacher's screen on every student computer
 
 **Pre-Condition:**
 
-- The teacher is logged in.
-- Students are logged in on the lab computers.
+- The Teacher must be logged in to the system.
+- Students must be logged in on the lab computers.
 
 **Post-Condition:**
 
-- The students see the warning until they close it, or see the teacher's screen until the broadcast stops.
+- The students see the warning until they close it, or see the Teacher's screen until the broadcast stops.
 
 **Successful Scenario:**
 
-1. The teacher opens the Live Monitoring page.
-2. The teacher chooses what to do:
-    - Send Warning Popup: clicks Send Warning on a student (or Warn all), types the title and message, and sends it.
-    - Broadcast Teacher Screen: clicks Broadcast screen, picks the screen to share, and later clicks Stop Broadcast.
-3. The system sends it to the student computers.
-4. The student computers show the warning or the teacher's screen.
+1. The Teacher navigates to the Live Monitoring page.
+2. To send a warning, the Teacher clicks Send Warning on a student (or Warn all), types the title and message, and sends it.
+3. To share the screen, the Teacher clicks Broadcast screen and selects the screen to share.
+4. The system sends the warning or the screen to the student computers.
+5. The student computers display the warning or the Teacher's screen.
+6. To stop sharing, the Teacher clicks Stop Broadcast.
 
 **Exception Scenario:**
 
@@ -1143,23 +1259,26 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.22: System Use Case for Manage Monitoring Alert*
 
-**Use Case Name:** Manage Monitoring Alert  
-**Purpose:** To allow the teacher to see the alerts about their students, such as blocked websites, mark them as seen, dismissed or open again, and download them.  
+**Written Use Case:** Manage Monitoring Alert  
+**Use Case Name:** Update Alert Status, View Alerts  
+**Purpose:** To allow the Teacher to view the alerts about their students, such as blocked websites, mark them as seen, dismissed or open again, and download them.  
 **Actors:** Teacher
 
 **Input Parameters:**
 
-- Filters: date, student and status (optional)
-- The alerts and their new status, with a reason when dismissing
+- Date, student and status filters (optional)
+- Selected alerts
+- New status
+- Reason, when dismissing
 
 **Output Parameters:**
 
-- The Alerts page with each alert's status
-- A CSV file, when the teacher exports
+- Alerts page with each alert's status
+- CSV file
 
 **Pre-Condition:**
 
-- The teacher is logged in.
+- The Teacher must be logged in to the system.
 
 **Post-Condition:**
 
@@ -1167,19 +1286,20 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Successful Scenario:**
 
-1. The teacher opens the Alerts page and sets the filters (optional).
-2. The system shows the alerts (View Alerts).
-3. The teacher chooses what to do:
-    - Update Alert Status: selects alerts and clicks Acknowledge, Dismiss or Reopen.
-    - Export Alerts CSV: clicks Export CSV.
-4. The system saves the new status, or makes the CSV file and the browser downloads it.
+1. The Teacher navigates to the Alerts page.
+2. The Teacher may set the filters.
+3. The system displays the alerts.
+4. To update alerts, the Teacher selects the alerts and clicks Acknowledge, Dismiss or Reopen.
+5. To download the alerts, the Teacher clicks Export CSV (Export Alerts CSV).
+6. The system saves the new status, or creates the CSV file and the browser downloads it.
 
 **Exception Scenario:**
 
 - If no alert is selected:
     - Nothing changes.
 - If nothing matches the filters:
-    - The list is empty, and the CSV file has only the column names.
+    - The system displays an empty list.
+    - The CSV file contains only the column names.
 
 **Additional Remarks:**
 
@@ -1192,40 +1312,43 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.23: System Use Case for Export Teacher Records*
 
-**Use Case Name:** Export Teacher Records  
-**Purpose:** To allow the teacher to see the remote commands sent, the websites the students opened, and one student's activity, and to download them as CSV files.  
+**Written Use Case:** Export Teacher Records  
+**Use Case Name:** View Remote History, View Browser History, View Student Details  
+**Purpose:** To allow the Teacher to view the remote commands sent, the websites the students opened, and one student's activity, and to download them as CSV files.  
 **Actors:** Teacher
 
 **Input Parameters:**
 
-- Filters: date, command, student or browser (optional)
+- Date, command, student or browser filters (optional)
+- Selected student
 
 **Output Parameters:**
 
-- The Remote History, Browser History or student details page
-- A CSV file, when the teacher exports
+- Remote History, Browser History or student details page
+- CSV file
 
 **Pre-Condition:**
 
-- The teacher is logged in.
+- The Teacher must be logged in to the system.
 
 **Post-Condition:**
 
-- The teacher sees the records, and has the CSV file if one was exported. Nothing is changed.
+- The records are displayed in the system.
+- The CSV file is downloaded when the Teacher exports. Nothing is changed.
 
 **Successful Scenario:**
 
-1. The teacher opens the Remote History page (View Remote History), the Browser History page (View Browser History) or a student's details page (View Student Details).
-2. The teacher sets the filters (optional).
-3. The system shows the records.
-4. If the teacher needs a file, the teacher clicks the export button on the page:
-    - Export Remote History CSV, Export Browser Monitoring CSV or Export Student Analytics CSV.
-5. The system makes the CSV file and the browser downloads it.
+1. The Teacher navigates to the Remote History page, the Browser History page or a student's details page.
+2. The Teacher may set the filters.
+3. The system displays the records.
+4. To download a file, the Teacher clicks the export button on the page (Export Remote History CSV, Export Browser Monitoring CSV or Export Student Analytics CSV).
+5. The system creates the CSV file and the browser downloads it.
 
 **Exception Scenario:**
 
 - If nothing matches the filters:
-    - The page shows an empty list, and the CSV file has only the column names.
+    - The system displays an empty list.
+    - The CSV file contains only the column names.
 
 **Additional Remarks:**
 
@@ -1239,8 +1362,9 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.24: System Use Case for Log In at Workstation*
 
-**Use Case Name:** Log In at Workstation  
-**Purpose:** To allow the student to log in on a lab computer and join the lab session.  
+**Written Use Case:** Log In at Workstation  
+**Use Case Name:** Log In to Workstation  
+**Purpose:** To allow the Student to log in on a lab computer and join the lab session.  
 **Actors:** Student
 
 **Input Parameters:**
@@ -1251,34 +1375,38 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Output Parameters:**
 
-- Login success or error message
-- The session screen in the CAMS student app
+- Session screen in the CAMS student app
+- Login error message
 
 **Pre-Condition:**
 
-- The teacher has started the lab session.
-- The CAMS student app is installed on the lab computer.
+- The Teacher must have started the lab session.
+- The CAMS student app must be installed on the lab computer.
 
 **Post-Condition:**
 
-- The student is in the lab session, and the screen is monitored.
+- The Student is in the lab session, and the screen is monitored.
 
 **Successful Scenario:**
 
-1. The student opens the CAMS student app.
+1. The Student opens the CAMS student app.
 2. The app finds the CAMS server on the school network (Find Lab Server).
-3. The student enters the username and password and clicks Sign in (Log In to Workstation).
-4. The system checks the account:
-    - If valid, the system starts the student's session and the app shows the session screen.
-    - If not valid, the app shows an error and the student can try again.
+3. The Student enters their username and password.
+4. The Student clicks the "Sign in" button.
+5. The system validates the account.
+6. The system starts the Student's session and the app displays the session screen.
 
 **Exception Scenario:**
 
 - If the app cannot find the server:
-    - The student types the address given by the teacher and clicks Save and retry (Set Server Address).
+    - The Student types the address given by the Teacher.
+    - The Student clicks Save and retry (Set Server Address).
+- If the username or password is incorrect:
+    - The app displays an error message.
+    - The Student is allowed to try again.
 - If no lab session is running:
-    - The app tells the student to wait for the teacher.
-- If the student enters a wrong password 5 times:
+    - The app tells the Student to wait for the Teacher.
+- If the Student enters a wrong password 5 times:
     - The system locks the account for 15 minutes.
 
 **Additional Remarks:**
@@ -1292,38 +1420,39 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.25: System Use Case for Log Out at Workstation*
 
-**Use Case Name:** Log Out at Workstation  
-**Purpose:** To allow the student to log out of the lab computer, or close the CAMS student app.  
+**Written Use Case:** Log Out at Workstation  
+**Use Case Name:** Log Out of Workstation, Exit Client Agent  
+**Purpose:** To allow the Student to log out of the lab computer, or close the CAMS student app.  
 **Actors:** Student
 
 **Input Parameters:**
 
-- None (the student clicks Sign out or Exit)
+- None
 
 **Output Parameters:**
 
-- The login screen, or the app closes
+- Login screen, or the app closes
 
 **Pre-Condition:**
 
-- The student is logged in.
+- The Student must be logged in on the lab computer.
 
 **Post-Condition:**
 
-- The student's session ends and the computer is free for the next student.
+- The Student's session ends and the computer is free for the next student.
 
 **Successful Scenario:**
 
-1. The student chooses what to do:
-    - Log Out of Workstation: clicks Sign out in the app.
-    - Exit Client Agent: right-clicks the CAMS icon and clicks Exit.
-2. The system ends the student's session.
-3. The app shows the login screen, or closes if the student chose Exit.
+1. To log out, the Student clicks Sign out in the app.
+2. To close the app, the Student right-clicks the CAMS icon and clicks Exit.
+3. The system ends the Student's session.
+4. The app displays the login screen, or closes if the Student chose Exit.
 
 **Exception Scenario:**
 
 - If the server cannot be reached:
-    - The app still closes, and the teacher can end the session instead.
+    - The app still closes.
+    - The Teacher can end the session instead.
 
 **Additional Remarks:**
 
@@ -1335,42 +1464,47 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 *Figure 3.26: System Use Case for Change Password at Workstation*
 
-**Use Case Name:** Change Password at Workstation  
-**Purpose:** To allow the student to change their own password in the CAMS student app.  
+**Written Use Case:** Change Password at Workstation  
+**Use Case Name:** Change Password  
+**Purpose:** To allow the Student to change their own password in the CAMS student app.  
 **Actors:** Student
 
 **Input Parameters:**
 
 - Current password
-- New password, typed twice
+- New password
+- Confirm new password
 
 **Output Parameters:**
 
-- A message that the password was changed
+- Success or error message
 
 **Pre-Condition:**
 
-- The student is logged in on a lab computer.
+- The Student must be logged in on a lab computer.
 
 **Post-Condition:**
 
-- The new password is saved and must be used at the next login.
+- The new password is saved.
+- The Student must use the new password at the next login.
 
 **Successful Scenario:**
 
-1. The student clicks Change password in the app (Change Password).
-2. The student enters the current password and the new password twice.
-3. The system checks the passwords:
-    - If correct, the system saves the new password and shows a message.
+1. The Student clicks Change password in the app.
+2. The Student enters the current password.
+3. The Student enters the new password and enters it again to confirm.
+4. The system validates the passwords.
+5. The system saves the new password and displays a success message.
 
 **Exception Scenario:**
 
-- If the current password is wrong:
-    - The system shows an error.
+- If the current password is incorrect:
+    - The system displays an error message.
 - If the new password has fewer than 8 characters, or is the same as the old one:
-    - The system asks the student to enter it again.
-- If there are 5 wrong tries:
-    - The student must wait a minute before trying again.
+    - The system displays an error message.
+    - The Student is asked to enter it again.
+- If the Student enters a wrong current password 5 times:
+    - The Student must wait a minute before trying again.
 
 **Additional Remarks:**
 
