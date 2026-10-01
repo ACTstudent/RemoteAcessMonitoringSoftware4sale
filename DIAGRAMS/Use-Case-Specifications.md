@@ -1,17 +1,18 @@
 # CAMS Written Use Cases
 
-The system use cases in [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio): **26 system use cases**, with 84 use cases in their diagrams.
+The system use cases in [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio): **26 system use cases**, with 91 use cases in their diagrams.
 
 - Each system use case is shown first as a diagram, and its written use case follows. The written use case has ten parts: use case name, purpose, actors, input parameters, output parameters, pre-condition, post-condition, successful scenario, exception scenario and additional remarks.
 - The admin and the teacher share many use cases, so these are shown only once, under **ADMIN AND TEACHER**, with one actor named Admin / Teacher.
+- A page with a list is shown as a View … List use case. Adding, editing, turning on or off, or deleting the records on that list extends it.
 - DELETE is used only for restriction rules, the blacklist and the whitelist, because these are really deleted. Other records are turned on or off with Toggle … Status, so their records are kept.
 - «include» means a use case always does the other use case. «extend» means the other use case is optional.
 
 | Actor | System use cases | Use cases in the diagrams |
 | --- | ---: | ---: |
-| Admin and Teacher (shared) | 12 | 39 |
-| Admin only | 5 | 15 |
-| Teacher only | 6 | 24 |
+| Admin and Teacher (shared) | 12 | 49 |
+| Admin only | 5 | 17 |
+| Teacher only | 6 | 19 |
 | Student | 3 | 6 |
 
 ---
@@ -22,30 +23,30 @@ The system use cases in [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.d
 - Process Log In — Log In User
 - Process Sign Out — Sign Out User
 - Manage Own Account — Change Password
-- Manage Teacher Account — Create Teacher, Update Teacher, Toggle Teacher Status, Unlock Teacher Account
-- Manage Student Account — Create Student, Update Student, Toggle Student Status, Import Student Roster, Validate Roster Rows
-- Manage Computer Profile — Register Computer, Update Computer, Toggle Computer Status, Assign Student Workstation
-- Manage Class — Create Class, Update Class, Toggle Class Status, Enroll Students, Remove Student from Class
-- Manage Restriction Rule — Create Restriction, Update Restriction, Delete Restriction
-- Manage Blacklist and Whitelist — Add Blacklist Entry, Update Blacklist Entry, Delete Blacklist Entry, Add Whitelist Entry, Update Whitelist Entry, Delete Whitelist Entry
-- Manage Category — Create Category, Update Category, Toggle Category Status
-- Manage Session Rule — Create Session Rule, Update Session Rule, Toggle Session Rule Status
+- Manage Teacher Account — Create Teacher, View Teacher List, Edit Teacher, Toggle Teacher Status, Unlock Teacher Account
+- Manage Student Account — Create Student, Import Student Roster, View Student List, Edit Student, Toggle Student Status, Validate Roster Rows, Assign Student Workstation
+- Manage Computer Profile — Register Computer, View Computer List, Edit Computer, Toggle Computer Status
+- Manage Class — Create Class, View Class List, View Class Student List, Edit Class, Toggle Class Status, Enroll Students, Remove Student from Class
+- Manage Restriction Rule — Create Restriction, View Restriction Rule List, Edit Restriction, Delete Restriction
+- Manage Blacklist and Whitelist — Add Blacklist Entry, View Blacklist Entry List, Add Whitelist Entry, View Whitelist Entry List, Edit Blacklist Entry, Delete Blacklist Entry, Edit Whitelist Entry, Delete Whitelist Entry
+- Manage Category — Create Category, View Category List, Edit Category, Toggle Category Status
+- Manage Session Rule — Create Session Rule, View Session Rule List, Edit Session Rule, Toggle Session Rule Status
 - Control Laboratory Session — Pause Lab Session, Resume Lab Session, End Lab Session
 
 **ADMIN**  
-- Manage Admin Account — Create Admin, Update Admin, Toggle Admin Status
+- Manage Admin Account — Create Admin, View Admin List, Edit Admin, Toggle Admin Status
 - Manage Class Teacher — Assign Class Teacher
-- Export Reports and Logs — View Reports, View Audit Logs, View System Logs, Export Reports CSV, Export Audit CSV, Export System Logs CSV
-- Manage Database — Create Backup, Validate Backup, Stage Database Restore
+- Export Reports and Logs — View Report List, View Audit Log List, View System Log List, Export Reports CSV, Export Audit CSV, Export System Logs CSV
+- Manage Database — Create Backup, View Backup List, Validate Backup, Stage Database Restore
 - Manage Deployment — Download Deployment Files, Build Workstation Bundle
 
 **TEACHER**  
-- Control Student Session — Start Lab Session, Pause or Resume Student Session, End Student Session
+- Control Student Session — View Session List, Start Lab Session, Pause or Resume Student Session, End Student Session
 - Monitor Student Screen — Open Monitoring Wall, Stream Student Screen
-- Control Student Workstation — Start Remote Control, Stop Remote Control, Lock Workstation, Unlock Workstation, Force Student Logout, Restart Workstation, Shut Down Workstation, Send Remote Input
+- Control Student Workstation — View Student Live Frame, Control Workstation
 - Send Message to Student — Send Warning Popup, Broadcast Teacher Screen
-- Manage Monitoring Alert — Update Alert Status, View Alerts, Export Alerts CSV
-- Export Teacher Records — View Remote History, View Browser History, View Student Details, Export Remote History CSV, Export Browser Monitoring CSV, Export Student Analytics CSV
+- Manage Monitoring Alert — View Alert List, Edit Alert Status, Export Alerts CSV
+- Manage Records — View Remote History List, View Browser History List, View Student Activity List, Export Remote History CSV, Export Browser Monitoring CSV, Export Student Analytics CSV
 
 **STUDENT**  
 - Log In at Workstation — Log In to Workstation, Find Lab Server, Set Server Address
@@ -221,7 +222,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 *Figure 3.4: System Use Case for Manage Teacher Account*
 
 **Written Use Case:** Manage Teacher Account  
-**Use Case Name:** Create Teacher, Update Teacher, Toggle Teacher Status, Unlock Teacher Account  
+**Use Case Name:** Create Teacher, View Teacher List  
 **Purpose:** To allow the Admin and Teacher to manage teacher accounts in CAMS by adding, editing, activating or deactivating, and unlocking accounts.  
 **Actors:** Admin, Teacher
 
@@ -276,6 +277,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Additional Remarks:**
 
 - The Admin and Teacher share this use case. The diagram shows them as one Admin / Teacher actor.
+- Edit Teacher, Toggle Teacher Status and Unlock Teacher Account extend View Teacher List.
 - An inactive teacher cannot log in, but the account and its records are kept. Nothing is deleted.
 - A locked account also unlocks by itself after 15 minutes.
 
@@ -286,8 +288,8 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 *Figure 3.5: System Use Case for Manage Student Account*
 
 **Written Use Case:** Manage Student Account  
-**Use Case Name:** Create Student, Update Student, Toggle Student Status, Import Student Roster  
-**Purpose:** To allow the Admin and Teacher to manage student accounts in CAMS by adding, editing, activating or deactivating, and importing many students at once.  
+**Use Case Name:** Create Student, Import Student Roster, View Student List  
+**Purpose:** To allow the Admin and Teacher to manage student accounts in CAMS by adding, editing, activating or deactivating, and importing many students at once, and by reserving a computer for a student.  
 **Actors:** Admin, Teacher
 
 **Input Parameters:**
@@ -299,6 +301,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 - Password
 - Selected student account
 - Student list typed in or uploaded as a CSV file
+- Selected computer
 
 **Output Parameters:**
 
@@ -314,7 +317,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Post-Condition:**
 
-- A student account is added, updated, activated or deactivated, or imported based on the action performed.
+- A student account is added, updated, activated or deactivated, or imported, or a computer is reserved for the student, based on the action performed.
 - Active students can log in on a lab computer.
 - The updated student list is displayed in the system.
 
@@ -327,7 +330,8 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 5. To deactivate or activate a student, the user clicks Deactivate or Activate and confirms.
 6. To import many students, the user types the students or uploads a CSV file and clicks Save.
 7. For an import, the system first checks every row (Validate Roster Rows).
-8. The system saves the students and displays the updated student list.
+8. To reserve a computer for a student, the user selects a computer for the student and clicks Save.
+9. The system saves the changes and displays the updated student list.
 
 **Exception Scenario:**
 
@@ -339,11 +343,15 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
     - The system displays the wrong rows.
 - If the import list is empty:
     - The system asks for at least one student.
+- If the computer is archived, already reserved or in use:
+    - The system does not reserve the computer for the student.
 
 **Additional Remarks:**
 
 - The Admin and Teacher share this use case. The diagram shows them as one Admin / Teacher actor.
+- Edit Student, Toggle Student Status and Assign Student Workstation extend View Student List.
 - Import Student Roster always includes Validate Roster Rows.
+- Choosing no computer clears a student's reservation.
 - The Remove button only hides a student. The records are kept and can be restored.
 
 ## Manage Computer Profile
@@ -353,8 +361,8 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 *Figure 3.6: System Use Case for Manage Computer Profile*
 
 **Written Use Case:** Manage Computer Profile  
-**Use Case Name:** Register Computer, Update Computer, Toggle Computer Status, Assign Student Workstation  
-**Purpose:** To allow the Admin and Teacher to manage the lab computers in CAMS by registering, editing, archiving or restoring computers, and reserving a computer for a student.  
+**Use Case Name:** Register Computer, View Computer List  
+**Purpose:** To allow the Admin and Teacher to manage the lab computers in CAMS by registering, editing, and archiving or restoring computers.  
 **Actors:** Admin, Teacher
 
 **Input Parameters:**
@@ -362,7 +370,6 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 - Station name
 - Status
 - Selected computer
-- Selected student
 
 **Output Parameters:**
 
@@ -373,11 +380,11 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Pre-Condition:**
 
 - The user must be logged in to the system.
-- To edit, archive or reserve a computer, the computer must exist.
+- To edit or archive a computer, the computer must exist.
 
 **Post-Condition:**
 
-- A computer is added, updated, archived or restored, or reserved for a student based on the action performed.
+- A computer is added, updated, or archived or restored based on the action performed.
 - Status changes are kept in the computer's history.
 - The updated computer list is displayed in the system.
 
@@ -388,9 +395,8 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 3. To register a computer, the user clicks Add, enters the computer information and clicks Save.
 4. To edit a computer, the user clicks Edit, changes the name or status and clicks Save.
 5. To archive a computer, the user clicks Archive. To restore it, the user edits it and sets the status to Available.
-6. To reserve a computer for a student, the user opens the Students page, selects a computer for the student and clicks Save.
-7. The system validates the information and saves the changes.
-8. The system displays the updated list.
+6. The system validates the information and saves the changes.
+7. The system displays the updated list.
 
 **Exception Scenario:**
 
@@ -399,14 +405,13 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
     - The computer is not saved.
 - If a lab session is running on the computer:
     - The system does not archive the computer.
-- If the computer is archived, already reserved or in use:
-    - The system does not reserve the computer for the student.
 
 **Additional Remarks:**
 
 - The Admin and Teacher share this use case. The diagram shows them as one Admin / Teacher actor.
+- Edit Computer and Toggle Computer Status extend View Computer List.
 - An archived computer is hidden from the active list. Nothing is deleted.
-- Choosing no computer clears a student's reservation.
+- A computer is reserved for a student on the Students page (Manage Student Account).
 
 ## Manage Class
 
@@ -415,7 +420,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 *Figure 3.7: System Use Case for Manage Class*
 
 **Written Use Case:** Manage Class  
-**Use Case Name:** Create Class, Update Class, Toggle Class Status, Enroll Students, Remove Student from Class  
+**Use Case Name:** Create Class, View Class List, View Class Student List  
 **Purpose:** To allow the Admin and Teacher to manage classes in CAMS by creating, editing, archiving or restoring classes, and by enrolling or removing students.  
 **Actors:** Admin, Teacher
 
@@ -454,10 +459,12 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 3. To create a class, the user clicks Add, enters the class information and clicks Save.
 4. To edit a class, the user clicks Edit, updates the information and clicks Save.
 5. To archive or restore a class, the user clicks Archive or Restore and confirms.
-6. To enroll students, the user opens the class, selects the students (or types a new student) and clicks Enroll.
-7. To remove students, the user opens the class, clicks Remove on the students and confirms.
-8. The system validates the information and saves the changes.
-9. The system displays the updated class.
+6. To manage the students of a class, the user opens the class.
+7. The system displays the list of students in the class.
+8. To enroll students, the user selects the students (or types a new student) and clicks Enroll.
+9. To remove students, the user clicks Remove on the students and confirms.
+10. The system validates the information and saves the changes.
+11. The system displays the updated class.
 
 **Exception Scenario:**
 
@@ -474,6 +481,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Additional Remarks:**
 
 - The Admin and Teacher share this use case. The diagram shows them as one Admin / Teacher actor.
+- Edit Class and Toggle Class Status extend View Class List. Enroll Students and Remove Student from Class extend View Class Student List.
 - A class made by a teacher belongs to that teacher.
 - Choosing the teacher of a class is for the Admin only (Manage Class Teacher).
 - Archiving a class or removing a student keeps all records. Nothing is deleted.
@@ -485,7 +493,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 *Figure 3.8: System Use Case for Manage Restriction Rule*
 
 **Written Use Case:** Manage Restriction Rule  
-**Use Case Name:** Create Restriction, Update Restriction, Delete Restriction  
+**Use Case Name:** Create Restriction, View Restriction Rule List  
 **Purpose:** To allow the Admin and Teacher to manage the rules that block or allow websites during lab sessions by adding, editing and deleting rules.  
 **Actors:** Admin, Teacher
 
@@ -538,6 +546,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Additional Remarks:**
 
 - The Admin and Teacher share this use case. The diagram shows them as one Admin / Teacher actor.
+- Edit Restriction and Delete Restriction extend View Restriction Rule List.
 - Websites are blocked. Apps are only watched, never closed.
 - A deleted rule cannot be brought back. A rule that is turned off is kept but ignored.
 
@@ -548,7 +557,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 *Figure 3.9: System Use Case for Manage Blacklist and Whitelist*
 
 **Written Use Case:** Manage Blacklist and Whitelist  
-**Use Case Name:** Add Blacklist Entry, Update Blacklist Entry, Delete Blacklist Entry, Add Whitelist Entry, Update Whitelist Entry, Delete Whitelist Entry  
+**Use Case Name:** Add Blacklist Entry, View Blacklist Entry List, Add Whitelist Entry, View Whitelist Entry List  
 **Purpose:** To allow the Admin and Teacher to manage the blacklist of blocked websites and apps and the whitelist of allowed websites by adding, editing and deleting entries.  
 **Actors:** Admin, Teacher
 
@@ -600,6 +609,8 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Additional Remarks:**
 
 - The Admin and Teacher share this use case. The diagram shows them as one Admin / Teacher actor.
+- Edit Blacklist Entry and Delete Blacklist Entry extend View Blacklist Entry List.
+- Edit Whitelist Entry and Delete Whitelist Entry extend View Whitelist Entry List.
 - A blacklisted website stays blocked even if it is on the whitelist.
 - Apps on the blacklist are only watched, not closed.
 - A deleted entry cannot be brought back.
@@ -611,7 +622,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 *Figure 3.10: System Use Case for Manage Category*
 
 **Written Use Case:** Manage Category  
-**Use Case Name:** Create Category, Update Category, Toggle Category Status  
+**Use Case Name:** Create Category, View Category List  
 **Purpose:** To allow the Admin and Teacher to group apps or websites, for example all games, so one rule covers them all.  
 **Actors:** Admin, Teacher
 
@@ -661,6 +672,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Additional Remarks:**
 
 - The Admin and Teacher share this use case. The diagram shows them as one Admin / Teacher actor.
+- Edit Category and Toggle Category Status extend View Category List.
 - There are app categories and website categories.
 - A category is turned off, not deleted.
 
@@ -671,7 +683,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 *Figure 3.11: System Use Case for Manage Session Rule*
 
 **Written Use Case:** Manage Session Rule  
-**Use Case Name:** Create Session Rule, Update Session Rule, Toggle Session Rule Status  
+**Use Case Name:** Create Session Rule, View Session Rule List  
 **Purpose:** To allow the Admin and Teacher to set how lab sessions work, such as the time limit, pausing and remote control.  
 **Actors:** Admin, Teacher
 
@@ -721,6 +733,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Additional Remarks:**
 
 - The Admin and Teacher share this use case. The diagram shows them as one Admin / Teacher actor.
+- Edit Session Rule and Toggle Session Rule Status extend View Session Rule List.
 - A new default rule replaces the old default.
 - Old sessions keep their rule. Nothing is deleted.
 
@@ -783,7 +796,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 *Figure 3.13: System Use Case for Manage Admin Account*
 
 **Written Use Case:** Manage Admin Account  
-**Use Case Name:** Create Admin, Update Admin, Toggle Admin Status  
+**Use Case Name:** Create Admin, View Admin List  
 **Purpose:** To allow the Admin to manage admin accounts in CAMS by adding, editing, and activating or deactivating accounts.  
 **Actors:** Admin
 
@@ -830,6 +843,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Additional Remarks:**
 
 - Only the Admin can manage admin accounts.
+- Edit Admin and Toggle Admin Status extend View Admin List.
 - An inactive admin cannot log in, but the account is kept. Nothing is deleted.
 
 ## Manage Class Teacher
@@ -892,7 +906,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 *Figure 3.15: System Use Case for Export Reports and Logs*
 
 **Written Use Case:** Export Reports and Logs  
-**Use Case Name:** View Reports, View Audit Logs, View System Logs  
+**Use Case Name:** View Report List, View Audit Log List, View System Log List  
 **Purpose:** To allow the Admin to view the lab reports, the audit trail and the system logs, and to download them as CSV files.  
 **Actors:** Admin
 
@@ -931,7 +945,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Additional Remarks:**
 
-- Each export extends its page: it is optional and happens only while the page is open.
+- Export Reports CSV extends View Report List, Export Audit CSV extends View Audit Log List, and Export System Logs CSV extends View System Log List. Each export is optional.
 - The Audit Trail and System Logs pages display the latest 500 records.
 
 ## Manage Database
@@ -941,8 +955,8 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 *Figure 3.16: System Use Case for Manage Database*
 
 **Written Use Case:** Manage Database  
-**Use Case Name:** Create Backup, Validate Backup, Stage Database Restore  
-**Purpose:** To allow the Admin to back up the CAMS database, check a backup, and restore the database from a backup.  
+**Use Case Name:** Create Backup, View Backup List  
+**Purpose:** To allow the Admin to back up the CAMS database and to restore the database from a backup.  
 **Actors:** Admin
 
 **Input Parameters:**
@@ -954,27 +968,25 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Output Parameters:**
 
 - Backup list
-- Backup check result
 - Message to restart the server
 
 **Pre-Condition:**
 
 - The Admin must be logged in to the system.
-- To check or restore a backup, the backup must be in the list.
+- To restore a backup, the backup must be in the list.
 
 **Post-Condition:**
 
-- A checked backup is saved, or the chosen backup will replace the database when the server restarts.
+- A new backup is saved, or the chosen backup will replace the database when the server restarts.
 
 **Successful Scenario:**
 
 1. The Admin navigates to the Database page.
 2. The system displays the list of backups.
 3. To create a backup, the Admin types a label (optional) and clicks Create backup.
-4. To check a backup, the Admin clicks Validate on the backup.
-5. To restore a backup, the Admin clicks Restore on the backup and types RESTORE to confirm.
-6. For a restore, the system first checks the backup (Validate Backup) and makes a safety copy of the current database.
-7. The system completes the action and displays the result.
+4. To restore a backup, the Admin clicks Restore on the backup and types RESTORE to confirm.
+5. For a restore, the system first checks the backup (Validate Backup) and makes a safety copy of the current database.
+6. The system completes the action and displays the result.
 
 **Exception Scenario:**
 
@@ -987,6 +999,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Additional Remarks:**
 
+- Stage Database Restore extends View Backup List.
 - Stage Database Restore always includes Validate Backup.
 - The restore takes effect only after the server restarts.
 
@@ -1050,7 +1063,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 *Figure 3.18: System Use Case for Control Student Session*
 
 **Written Use Case:** Control Student Session  
-**Use Case Name:** Start Lab Session, Pause or Resume Student Session, End Student Session  
+**Use Case Name:** View Session List  
 **Purpose:** To allow the Teacher to start the lab session, and to pause, resume or end one student's session.  
 **Actors:** Teacher
 
@@ -1077,11 +1090,12 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Successful Scenario:**
 
 1. The Teacher navigates to the Sessions page.
-2. To start the lab session, the Teacher clicks Start lab session and selects a session rule, or keeps the default.
-3. To pause or resume a student's session, the Teacher clicks Pause or Resume on the session.
-4. To end a student's session, the Teacher clicks End on the session and confirms.
-5. The system saves the change.
-6. When a session ends, the system saves the end time and restarts the student's computer.
+2. The system displays the list of student sessions.
+3. To start the lab session, the Teacher clicks Start lab session and selects a session rule, or keeps the default.
+4. To pause or resume a student's session, the Teacher clicks Pause or Resume on the session.
+5. To end a student's session, the Teacher clicks End on the session and confirms.
+6. The system saves the change.
+7. When a session ends, the system saves the end time and restarts the student's computer.
 
 **Exception Scenario:**
 
@@ -1094,6 +1108,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Additional Remarks:**
 
+- Start Lab Session, Pause or Resume Student Session and End Student Session extend View Session List.
 - Only the Teacher can start a lab session. The Admin can only pause, resume or end all sessions (Control Laboratory Session).
 - Paused time is not counted, and the session records are kept.
 
@@ -1150,55 +1165,57 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 *Figure 3.20: System Use Case for Control Student Workstation*
 
 **Written Use Case:** Control Student Workstation  
-**Use Case Name:** Start Remote Control, Stop Remote Control, Lock Workstation, Unlock Workstation, Force Student Logout, Restart Workstation, Shut Down Workstation  
-**Purpose:** To allow the Teacher to take control of a student's computer, lock or unlock it, log the student out, or restart or shut down the computer.  
+**Use Case Name:** View Student Live Frame  
+**Purpose:** To allow the Teacher to view a student's live screen and to control the student's computer from it.  
 **Actors:** Teacher
 
 **Input Parameters:**
 
-- Selected computer, or all the computers shown
-- Mouse clicks and key presses during remote control
+- Selected student screen
+- Command (lock, unlock, log out, restart, shut down or remote support)
+- Mouse clicks and key presses during remote support
 
 **Output Parameters:**
 
-- Command result on the monitoring page
+- Student's live screen
+- Command result
 
 **Pre-Condition:**
 
 - The Teacher must be logged in to the system.
-- The computer must be connected.
-- For remote control, the session rule must allow it.
+- The student's computer must be connected.
+- For remote support, the session rule must allow it.
 
 **Post-Condition:**
 
-- The student's computer carries out the command.
-- The command is saved in the remote history.
+- The Teacher sees the student's live screen.
+- If the Teacher sends a command, the computer carries it out and the command is saved in the remote history.
 
 **Successful Scenario:**
 
-1. The Teacher navigates to the Live Monitoring page and selects a computer, or all the computers shown.
-2. To control a computer, the Teacher clicks Start Remote Support. The Teacher's mouse and keyboard now work on the student's computer (Send Remote Input).
-3. To give control back, the Teacher clicks Stop Remote Support.
-4. To lock or unlock a computer, the Teacher clicks Lock (or Lock visible for all the computers) or Unlock.
-5. To log a student out, the Teacher clicks Log out (or Log out visible for all) and confirms.
-6. To restart or shut down a computer, the Teacher clicks Restart or Shutdown and confirms.
-7. The system sends the command to the student's computer.
-8. The computer carries out the command, and the system displays the result.
+1. The Teacher navigates to the Live Monitoring page.
+2. The Teacher clicks a student's screen.
+3. The system displays the student's live screen.
+4. To control the computer, the Teacher clicks Lock, Unlock, Log out, Restart, Shutdown or Start Remote Support (Control Workstation).
+5. The Teacher confirms when the system asks.
+6. The system sends the command to the student's computer.
+7. The computer carries out the command, and the system displays the result.
 
 **Exception Scenario:**
 
 - If the computer is not connected:
     - The system does not send the command.
-- If more than 100 computers are selected at once:
+- If the session rule does not allow remote support, or the session has ended:
+    - The system does not start remote support.
+- If more than 100 computers are chosen at once (Lock visible or Log out visible on the monitoring page):
     - The system does not send the command.
-- If the session rule does not allow remote control, or the session has ended:
-    - The system does not start remote control.
 
 **Additional Remarks:**
 
-- Start Remote Control always includes Send Remote Input.
-- The student sees a notice while the Teacher is in control.
+- Control Workstation extends View Student Live Frame: it is optional.
+- During remote support, the Teacher's mouse and keyboard work on the student's computer, and the student sees a notice.
 - A restart happens after 10 seconds and a shutdown after 15 seconds. Unsaved work is lost.
+- Lock and Log out can also be sent to all the computers on the monitoring page at once.
 
 ## Send Message to Student
 
@@ -1260,7 +1277,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 *Figure 3.22: System Use Case for Manage Monitoring Alert*
 
 **Written Use Case:** Manage Monitoring Alert  
-**Use Case Name:** Update Alert Status, View Alerts  
+**Use Case Name:** View Alert List  
 **Purpose:** To allow the Teacher to view the alerts about their students, such as blocked websites, mark them as seen, dismissed or open again, and download them.  
 **Actors:** Teacher
 
@@ -1303,17 +1320,17 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Additional Remarks:**
 
-- Export Alerts CSV extends View Alerts: it is optional.
+- Edit Alert Status and Export Alerts CSV extend View Alert List: both are optional.
 - The system saves who changed an alert and when.
 
-## Export Teacher Records
+## Manage Records
 
-![Export Teacher Records](usecase-images/teacher-export-teacher-records.png)
+![Manage Records](usecase-images/teacher-manage-records.png)
 
-*Figure 3.23: System Use Case for Export Teacher Records*
+*Figure 3.23: System Use Case for Manage Records*
 
-**Written Use Case:** Export Teacher Records  
-**Use Case Name:** View Remote History, View Browser History, View Student Details  
+**Written Use Case:** Manage Records  
+**Use Case Name:** View Remote History List, View Browser History List, View Student Activity List  
 **Purpose:** To allow the Teacher to view the remote commands sent, the websites the students opened, and one student's activity, and to download them as CSV files.  
 **Actors:** Teacher
 
@@ -1352,7 +1369,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Additional Remarks:**
 
-- Each export extends its page: it is optional and happens only while the page is open.
+- Export Remote History CSV extends View Remote History List, Export Browser Monitoring CSV extends View Browser History List, and Export Student Analytics CSV extends View Student Activity List. Each export is optional.
 
 # STUDENT
 

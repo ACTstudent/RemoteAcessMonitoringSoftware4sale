@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net">
   <diagram name="Page-1" id="cams-use-case">
-    <mxGraphModel dx="1940" dy="5820" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1940" pageHeight="5820" math="0" shadow="0">
+    <mxGraphModel dx="2630" dy="5170" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2630" pageHeight="5170" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -56,724 +56,757 @@
           <mxGeometry height="60" width="30" x="882" y="262" as="geometry" />
         </mxCell>
         <mxCell id="cams-18" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="604" width="295" x="1375" y="180" as="geometry" />
+          <mxGeometry height="604" width="525" x="1375" y="180" as="geometry" />
         </mxCell>
         <mxCell id="cams-19" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Teacher Account" vertex="1">
-          <mxGeometry height="30" width="255" x="1395" y="198" as="geometry" />
+          <mxGeometry height="30" width="485" x="1395" y="198" as="geometry" />
         </mxCell>
         <mxCell id="cams-20" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Create Teacher" vertex="1">
           <mxGeometry height="84" width="175" x="1435" y="250" as="geometry" />
         </mxCell>
-        <mxCell id="cams-21" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Update Teacher" vertex="1">
-          <mxGeometry height="84" width="175" x="1435" y="380" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-22" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Toggle Teacher Status" vertex="1">
+        <mxCell id="cams-21" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Teacher List" vertex="1">
           <mxGeometry height="84" width="175" x="1435" y="510" as="geometry" />
         </mxCell>
-        <mxCell id="cams-23" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Unlock Teacher Account" vertex="1">
-          <mxGeometry height="84" width="175" x="1435" y="640" as="geometry" />
+        <mxCell id="cams-22" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Edit Teacher" vertex="1">
+          <mxGeometry height="84" width="175" x="1665" y="380" as="geometry" />
         </mxCell>
-        <mxCell id="cams-25" edge="1" parent="1" source="cams-24" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-20">
+        <mxCell id="cams-23" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Toggle Teacher Status" vertex="1">
+          <mxGeometry height="84" width="175" x="1665" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-24" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Unlock Teacher Account" vertex="1">
+          <mxGeometry height="84" width="175" x="1665" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-26" edge="1" parent="1" source="cams-25" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-20">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-26" edge="1" parent="1" source="cams-24" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-21">
+        <mxCell id="cams-27" edge="1" parent="1" source="cams-25" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-21">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-27" edge="1" parent="1" source="cams-24" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-22">
+        <mxCell id="cams-25" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin / Teacher" vertex="1">
+          <mxGeometry height="60" width="30" x="1303" y="392" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-28" edge="1" parent="1" source="cams-22" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-21" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-28" edge="1" parent="1" source="cams-24" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-23">
+        <mxCell id="cams-29" edge="1" parent="1" source="cams-23" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-21" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-24" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin / Teacher" vertex="1">
-          <mxGeometry height="60" width="30" x="1303" y="457" as="geometry" />
+        <mxCell id="cams-30" edge="1" parent="1" source="cams-24" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-21" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-29" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="604" width="525" x="112" y="874" as="geometry" />
+        <mxCell id="cams-31" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="734" width="525" x="112" y="874" as="geometry" />
         </mxCell>
-        <mxCell id="cams-30" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Student Account" vertex="1">
+        <mxCell id="cams-32" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Student Account" vertex="1">
           <mxGeometry height="30" width="485" x="132" y="892" as="geometry" />
         </mxCell>
-        <mxCell id="cams-31" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Create Student" vertex="1">
+        <mxCell id="cams-33" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Create Student" vertex="1">
           <mxGeometry height="84" width="175" x="172" y="944" as="geometry" />
         </mxCell>
-        <mxCell id="cams-32" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Update Student" vertex="1">
+        <mxCell id="cams-34" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Import Student Roster" vertex="1">
           <mxGeometry height="84" width="175" x="172" y="1074" as="geometry" />
         </mxCell>
-        <mxCell id="cams-33" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Toggle Student Status" vertex="1">
-          <mxGeometry height="84" width="175" x="172" y="1204" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-34" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Import Student Roster" vertex="1">
+        <mxCell id="cams-35" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Student List" vertex="1">
           <mxGeometry height="84" width="175" x="172" y="1334" as="geometry" />
         </mxCell>
-        <mxCell id="cams-35" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Validate Roster Rows" vertex="1">
+        <mxCell id="cams-36" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Edit Student" vertex="1">
+          <mxGeometry height="84" width="175" x="402" y="1204" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-37" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Toggle Student Status" vertex="1">
           <mxGeometry height="84" width="175" x="402" y="1334" as="geometry" />
         </mxCell>
-        <mxCell id="cams-37" edge="1" parent="1" source="cams-36" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-31">
+        <mxCell id="cams-38" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Validate Roster Rows" vertex="1">
+          <mxGeometry height="84" width="175" x="402" y="1074" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-39" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Assign Student Workstation" vertex="1">
+          <mxGeometry height="84" width="175" x="402" y="1464" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-41" edge="1" parent="1" source="cams-40" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-33">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-38" edge="1" parent="1" source="cams-36" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-32">
+        <mxCell id="cams-42" edge="1" parent="1" source="cams-40" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-34">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-39" edge="1" parent="1" source="cams-36" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-33">
+        <mxCell id="cams-43" edge="1" parent="1" source="cams-40" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-35">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-40" edge="1" parent="1" source="cams-36" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-34">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-36" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin / Teacher" vertex="1">
+        <mxCell id="cams-40" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin / Teacher" vertex="1">
           <mxGeometry height="60" width="30" x="40" y="1151" as="geometry" />
         </mxCell>
-        <mxCell id="cams-41" edge="1" parent="1" source="cams-34" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-35" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+        <mxCell id="cams-44" edge="1" parent="1" source="cams-34" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-38" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-42" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="604" width="295" x="763" y="874" as="geometry" />
+        <mxCell id="cams-45" edge="1" parent="1" source="cams-36" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-35" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-43" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Computer Profile" vertex="1">
-          <mxGeometry height="30" width="255" x="783" y="892" as="geometry" />
+        <mxCell id="cams-46" edge="1" parent="1" source="cams-37" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-35" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-44" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Register Computer" vertex="1">
+        <mxCell id="cams-47" edge="1" parent="1" source="cams-39" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-35" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-48" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="474" width="525" x="763" y="874" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-49" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Computer Profile" vertex="1">
+          <mxGeometry height="30" width="485" x="783" y="892" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-50" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Register Computer" vertex="1">
           <mxGeometry height="84" width="175" x="823" y="944" as="geometry" />
         </mxCell>
-        <mxCell id="cams-45" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Update Computer" vertex="1">
-          <mxGeometry height="84" width="175" x="823" y="1074" as="geometry" />
+        <mxCell id="cams-51" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Computer List" vertex="1">
+          <mxGeometry height="84" width="175" x="823" y="1139" as="geometry" />
         </mxCell>
-        <mxCell id="cams-46" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Toggle Computer Status" vertex="1">
-          <mxGeometry height="84" width="175" x="823" y="1204" as="geometry" />
+        <mxCell id="cams-52" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Edit Computer" vertex="1">
+          <mxGeometry height="84" width="175" x="1053" y="1074" as="geometry" />
         </mxCell>
-        <mxCell id="cams-47" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Assign Student Workstation" vertex="1">
-          <mxGeometry height="84" width="175" x="823" y="1334" as="geometry" />
+        <mxCell id="cams-53" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Toggle Computer Status" vertex="1">
+          <mxGeometry height="84" width="175" x="1053" y="1204" as="geometry" />
         </mxCell>
-        <mxCell id="cams-49" edge="1" parent="1" source="cams-48" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-44">
+        <mxCell id="cams-55" edge="1" parent="1" source="cams-54" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-50">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-50" edge="1" parent="1" source="cams-48" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-45">
+        <mxCell id="cams-56" edge="1" parent="1" source="cams-54" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-51">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-51" edge="1" parent="1" source="cams-48" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-46">
+        <mxCell id="cams-54" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin / Teacher" vertex="1">
+          <mxGeometry height="60" width="30" x="691" y="1054" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-57" edge="1" parent="1" source="cams-52" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-51" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-52" edge="1" parent="1" source="cams-48" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-47">
+        <mxCell id="cams-58" edge="1" parent="1" source="cams-53" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-51" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-48" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin / Teacher" vertex="1">
-          <mxGeometry height="60" width="30" x="691" y="1151" as="geometry" />
+        <mxCell id="cams-59" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="734" width="525" x="1414" y="874" as="geometry" />
         </mxCell>
-        <mxCell id="cams-53" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="734" width="295" x="1184" y="874" as="geometry" />
+        <mxCell id="cams-60" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Class" vertex="1">
+          <mxGeometry height="30" width="485" x="1434" y="892" as="geometry" />
         </mxCell>
-        <mxCell id="cams-54" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Class" vertex="1">
-          <mxGeometry height="30" width="255" x="1204" y="892" as="geometry" />
+        <mxCell id="cams-61" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Create Class" vertex="1">
+          <mxGeometry height="84" width="175" x="1474" y="944" as="geometry" />
         </mxCell>
-        <mxCell id="cams-55" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Create Class" vertex="1">
-          <mxGeometry height="84" width="175" x="1244" y="944" as="geometry" />
+        <mxCell id="cams-62" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Class List" vertex="1">
+          <mxGeometry height="84" width="175" x="1474" y="1139" as="geometry" />
         </mxCell>
-        <mxCell id="cams-56" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Update Class" vertex="1">
-          <mxGeometry height="84" width="175" x="1244" y="1074" as="geometry" />
+        <mxCell id="cams-63" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Class Student List" vertex="1">
+          <mxGeometry height="84" width="175" x="1474" y="1399" as="geometry" />
         </mxCell>
-        <mxCell id="cams-57" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Toggle Class Status" vertex="1">
-          <mxGeometry height="84" width="175" x="1244" y="1204" as="geometry" />
+        <mxCell id="cams-64" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Edit Class" vertex="1">
+          <mxGeometry height="84" width="175" x="1704" y="1074" as="geometry" />
         </mxCell>
-        <mxCell id="cams-58" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Enroll Students" vertex="1">
-          <mxGeometry height="84" width="175" x="1244" y="1334" as="geometry" />
+        <mxCell id="cams-65" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Toggle Class Status" vertex="1">
+          <mxGeometry height="84" width="175" x="1704" y="1204" as="geometry" />
         </mxCell>
-        <mxCell id="cams-59" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Remove Student from Class" vertex="1">
-          <mxGeometry height="84" width="175" x="1244" y="1464" as="geometry" />
+        <mxCell id="cams-66" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Enroll Students" vertex="1">
+          <mxGeometry height="84" width="175" x="1704" y="1334" as="geometry" />
         </mxCell>
-        <mxCell id="cams-61" edge="1" parent="1" source="cams-60" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-55">
+        <mxCell id="cams-67" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Remove Student from Class" vertex="1">
+          <mxGeometry height="84" width="175" x="1704" y="1464" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-69" edge="1" parent="1" source="cams-68" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-61">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-62" edge="1" parent="1" source="cams-60" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-56">
+        <mxCell id="cams-70" edge="1" parent="1" source="cams-68" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-62">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-63" edge="1" parent="1" source="cams-60" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-57">
+        <mxCell id="cams-71" edge="1" parent="1" source="cams-68" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-63">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-64" edge="1" parent="1" source="cams-60" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-58">
+        <mxCell id="cams-68" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin / Teacher" vertex="1">
+          <mxGeometry height="60" width="30" x="1342" y="1184" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-72" edge="1" parent="1" source="cams-64" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-62" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-65" edge="1" parent="1" source="cams-60" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-59">
+        <mxCell id="cams-73" edge="1" parent="1" source="cams-65" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-62" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-60" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin / Teacher" vertex="1">
-          <mxGeometry height="60" width="30" x="1112" y="1216" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-66" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="474" width="295" x="1605" y="874" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-67" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Restriction Rule" vertex="1">
-          <mxGeometry height="30" width="255" x="1625" y="892" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-68" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Create Restriction" vertex="1">
-          <mxGeometry height="84" width="175" x="1665" y="944" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-69" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Update Restriction" vertex="1">
-          <mxGeometry height="84" width="175" x="1665" y="1074" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-70" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Delete Restriction" vertex="1">
-          <mxGeometry height="84" width="175" x="1665" y="1204" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-72" edge="1" parent="1" source="cams-71" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-68">
+        <mxCell id="cams-74" edge="1" parent="1" source="cams-66" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-63" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-73" edge="1" parent="1" source="cams-71" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-69">
+        <mxCell id="cams-75" edge="1" parent="1" source="cams-67" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-63" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-74" edge="1" parent="1" source="cams-71" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-70">
+        <mxCell id="cams-76" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="474" width="525" x="2065" y="874" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-77" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Restriction Rule" vertex="1">
+          <mxGeometry height="30" width="485" x="2085" y="892" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-78" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Create Restriction" vertex="1">
+          <mxGeometry height="84" width="175" x="2125" y="944" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-79" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Restriction Rule List" vertex="1">
+          <mxGeometry height="84" width="175" x="2125" y="1139" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-80" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Edit Restriction" vertex="1">
+          <mxGeometry height="84" width="175" x="2355" y="1074" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-81" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Delete Restriction" vertex="1">
+          <mxGeometry height="84" width="175" x="2355" y="1204" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-83" edge="1" parent="1" source="cams-82" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-78">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-71" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin / Teacher" vertex="1">
-          <mxGeometry height="60" width="30" x="1533" y="1086" as="geometry" />
+        <mxCell id="cams-84" edge="1" parent="1" source="cams-82" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-79">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-75" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="864" width="295" x="112" y="1698" as="geometry" />
+        <mxCell id="cams-82" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin / Teacher" vertex="1">
+          <mxGeometry height="60" width="30" x="1993" y="1054" as="geometry" />
         </mxCell>
-        <mxCell id="cams-76" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Blacklist and Whitelist" vertex="1">
-          <mxGeometry height="30" width="255" x="132" y="1716" as="geometry" />
+        <mxCell id="cams-85" edge="1" parent="1" source="cams-80" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-79" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-77" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Add Blacklist Entry" vertex="1">
+        <mxCell id="cams-86" edge="1" parent="1" source="cams-81" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-79" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-87" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="864" width="525" x="112" y="1698" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-88" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Blacklist and Whitelist" vertex="1">
+          <mxGeometry height="30" width="485" x="132" y="1716" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-89" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Add Blacklist Entry" vertex="1">
           <mxGeometry height="84" width="175" x="172" y="1768" as="geometry" />
         </mxCell>
-        <mxCell id="cams-78" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Update Blacklist Entry" vertex="1">
-          <mxGeometry height="84" width="175" x="172" y="1898" as="geometry" />
+        <mxCell id="cams-90" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Blacklist Entry List" vertex="1">
+          <mxGeometry height="84" width="175" x="172" y="1963" as="geometry" />
         </mxCell>
-        <mxCell id="cams-79" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Delete Blacklist Entry" vertex="1">
-          <mxGeometry height="84" width="175" x="172" y="2028" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-80" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Add Whitelist Entry" vertex="1">
+        <mxCell id="cams-91" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Add Whitelist Entry" vertex="1">
           <mxGeometry height="84" width="175" x="172" y="2158" as="geometry" />
         </mxCell>
-        <mxCell id="cams-81" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Update Whitelist Entry" vertex="1">
-          <mxGeometry height="84" width="175" x="172" y="2288" as="geometry" />
+        <mxCell id="cams-92" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Whitelist Entry List" vertex="1">
+          <mxGeometry height="84" width="175" x="172" y="2353" as="geometry" />
         </mxCell>
-        <mxCell id="cams-82" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Delete Whitelist Entry" vertex="1">
-          <mxGeometry height="84" width="175" x="172" y="2418" as="geometry" />
+        <mxCell id="cams-93" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Edit Blacklist Entry" vertex="1">
+          <mxGeometry height="84" width="175" x="402" y="1898" as="geometry" />
         </mxCell>
-        <mxCell id="cams-84" edge="1" parent="1" source="cams-83" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-77">
+        <mxCell id="cams-94" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Delete Blacklist Entry" vertex="1">
+          <mxGeometry height="84" width="175" x="402" y="2028" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-95" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Edit Whitelist Entry" vertex="1">
+          <mxGeometry height="84" width="175" x="402" y="2288" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-96" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Delete Whitelist Entry" vertex="1">
+          <mxGeometry height="84" width="175" x="402" y="2418" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-98" edge="1" parent="1" source="cams-97" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-89">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-85" edge="1" parent="1" source="cams-83" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-78">
+        <mxCell id="cams-99" edge="1" parent="1" source="cams-97" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-90">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-86" edge="1" parent="1" source="cams-83" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-79">
+        <mxCell id="cams-100" edge="1" parent="1" source="cams-97" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-91">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-87" edge="1" parent="1" source="cams-83" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-80">
+        <mxCell id="cams-101" edge="1" parent="1" source="cams-97" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-92">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-88" edge="1" parent="1" source="cams-83" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-81">
+        <mxCell id="cams-97" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin / Teacher" vertex="1">
+          <mxGeometry height="60" width="30" x="40" y="2073" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-102" edge="1" parent="1" source="cams-93" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-90" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-89" edge="1" parent="1" source="cams-83" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-82">
+        <mxCell id="cams-103" edge="1" parent="1" source="cams-94" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-90" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-83" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin / Teacher" vertex="1">
-          <mxGeometry height="60" width="30" x="40" y="2105" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-90" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="474" width="295" x="533" y="1698" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-91" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Category" vertex="1">
-          <mxGeometry height="30" width="255" x="553" y="1716" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-92" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Create Category" vertex="1">
-          <mxGeometry height="84" width="175" x="593" y="1768" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-93" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Update Category" vertex="1">
-          <mxGeometry height="84" width="175" x="593" y="1898" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-94" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Toggle Category Status" vertex="1">
-          <mxGeometry height="84" width="175" x="593" y="2028" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-96" edge="1" parent="1" source="cams-95" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-92">
+        <mxCell id="cams-104" edge="1" parent="1" source="cams-95" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-92" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-97" edge="1" parent="1" source="cams-95" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-93">
+        <mxCell id="cams-105" edge="1" parent="1" source="cams-96" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-92" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-98" edge="1" parent="1" source="cams-95" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-94">
+        <mxCell id="cams-106" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="474" width="525" x="763" y="1698" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-107" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Category" vertex="1">
+          <mxGeometry height="30" width="485" x="783" y="1716" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-108" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Create Category" vertex="1">
+          <mxGeometry height="84" width="175" x="823" y="1768" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-109" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Category List" vertex="1">
+          <mxGeometry height="84" width="175" x="823" y="1963" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-110" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Edit Category" vertex="1">
+          <mxGeometry height="84" width="175" x="1053" y="1898" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-111" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Toggle Category Status" vertex="1">
+          <mxGeometry height="84" width="175" x="1053" y="2028" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-113" edge="1" parent="1" source="cams-112" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-108">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-95" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin / Teacher" vertex="1">
-          <mxGeometry height="60" width="30" x="461" y="1910" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-99" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="474" width="295" x="954" y="1698" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-100" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Session Rule" vertex="1">
-          <mxGeometry height="30" width="255" x="974" y="1716" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-101" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Create Session Rule" vertex="1">
-          <mxGeometry height="84" width="175" x="1014" y="1768" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-102" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Update Session Rule" vertex="1">
-          <mxGeometry height="84" width="175" x="1014" y="1898" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-103" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Toggle Session Rule Status" vertex="1">
-          <mxGeometry height="84" width="175" x="1014" y="2028" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-105" edge="1" parent="1" source="cams-104" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-101">
+        <mxCell id="cams-114" edge="1" parent="1" source="cams-112" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-109">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-106" edge="1" parent="1" source="cams-104" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-102">
+        <mxCell id="cams-112" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin / Teacher" vertex="1">
+          <mxGeometry height="60" width="30" x="691" y="1878" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-115" edge="1" parent="1" source="cams-110" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-109" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-107" edge="1" parent="1" source="cams-104" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-103">
+        <mxCell id="cams-116" edge="1" parent="1" source="cams-111" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-109" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-104" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin / Teacher" vertex="1">
-          <mxGeometry height="60" width="30" x="882" y="1910" as="geometry" />
+        <mxCell id="cams-117" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="474" width="525" x="1414" y="1698" as="geometry" />
         </mxCell>
-        <mxCell id="cams-108" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="474" width="295" x="1375" y="1698" as="geometry" />
+        <mxCell id="cams-118" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Session Rule" vertex="1">
+          <mxGeometry height="30" width="485" x="1434" y="1716" as="geometry" />
         </mxCell>
-        <mxCell id="cams-109" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Control Laboratory Session" vertex="1">
-          <mxGeometry height="30" width="255" x="1395" y="1716" as="geometry" />
+        <mxCell id="cams-119" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Create Session Rule" vertex="1">
+          <mxGeometry height="84" width="175" x="1474" y="1768" as="geometry" />
         </mxCell>
-        <mxCell id="cams-110" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Pause Lab Session" vertex="1">
-          <mxGeometry height="84" width="175" x="1435" y="1768" as="geometry" />
+        <mxCell id="cams-120" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Session Rule List" vertex="1">
+          <mxGeometry height="84" width="175" x="1474" y="1963" as="geometry" />
         </mxCell>
-        <mxCell id="cams-111" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Resume Lab Session" vertex="1">
-          <mxGeometry height="84" width="175" x="1435" y="1898" as="geometry" />
+        <mxCell id="cams-121" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Edit Session Rule" vertex="1">
+          <mxGeometry height="84" width="175" x="1704" y="1898" as="geometry" />
         </mxCell>
-        <mxCell id="cams-112" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="End Lab Session" vertex="1">
-          <mxGeometry height="84" width="175" x="1435" y="2028" as="geometry" />
+        <mxCell id="cams-122" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Toggle Session Rule Status" vertex="1">
+          <mxGeometry height="84" width="175" x="1704" y="2028" as="geometry" />
         </mxCell>
-        <mxCell id="cams-114" edge="1" parent="1" source="cams-113" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-110">
+        <mxCell id="cams-124" edge="1" parent="1" source="cams-123" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-119">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-115" edge="1" parent="1" source="cams-113" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-111">
+        <mxCell id="cams-125" edge="1" parent="1" source="cams-123" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-120">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-116" edge="1" parent="1" source="cams-113" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-112">
+        <mxCell id="cams-123" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin / Teacher" vertex="1">
+          <mxGeometry height="60" width="30" x="1342" y="1878" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-126" edge="1" parent="1" source="cams-121" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-120" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-113" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin / Teacher" vertex="1">
-          <mxGeometry height="60" width="30" x="1303" y="1910" as="geometry" />
+        <mxCell id="cams-127" edge="1" parent="1" source="cams-122" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-120" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-117" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;fontSize=22;fontStyle=1;" value="ADMIN" vertex="1">
+        <mxCell id="cams-128" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="474" width="295" x="2065" y="1698" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-129" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Control Laboratory Session" vertex="1">
+          <mxGeometry height="30" width="255" x="2085" y="1716" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-130" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Pause Lab Session" vertex="1">
+          <mxGeometry height="84" width="175" x="2125" y="1768" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-131" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Resume Lab Session" vertex="1">
+          <mxGeometry height="84" width="175" x="2125" y="1898" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-132" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="End Lab Session" vertex="1">
+          <mxGeometry height="84" width="175" x="2125" y="2028" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-134" edge="1" parent="1" source="cams-133" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-130">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-135" edge="1" parent="1" source="cams-133" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-131">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-136" edge="1" parent="1" source="cams-133" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-132">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-133" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin / Teacher" vertex="1">
+          <mxGeometry height="60" width="30" x="1993" y="1910" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-137" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;fontSize=22;fontStyle=1;" value="ADMIN" vertex="1">
           <mxGeometry height="30" width="400" x="40" y="2608" as="geometry" />
         </mxCell>
-        <mxCell id="cams-118" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="474" width="295" x="112" y="2652" as="geometry" />
+        <mxCell id="cams-138" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="474" width="525" x="112" y="2652" as="geometry" />
         </mxCell>
-        <mxCell id="cams-119" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Admin Account" vertex="1">
-          <mxGeometry height="30" width="255" x="132" y="2670" as="geometry" />
+        <mxCell id="cams-139" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Admin Account" vertex="1">
+          <mxGeometry height="30" width="485" x="132" y="2670" as="geometry" />
         </mxCell>
-        <mxCell id="cams-120" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Create Admin" vertex="1">
+        <mxCell id="cams-140" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Create Admin" vertex="1">
           <mxGeometry height="84" width="175" x="172" y="2722" as="geometry" />
         </mxCell>
-        <mxCell id="cams-121" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Update Admin" vertex="1">
-          <mxGeometry height="84" width="175" x="172" y="2852" as="geometry" />
+        <mxCell id="cams-141" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Admin List" vertex="1">
+          <mxGeometry height="84" width="175" x="172" y="2917" as="geometry" />
         </mxCell>
-        <mxCell id="cams-122" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Toggle Admin Status" vertex="1">
-          <mxGeometry height="84" width="175" x="172" y="2982" as="geometry" />
+        <mxCell id="cams-142" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Edit Admin" vertex="1">
+          <mxGeometry height="84" width="175" x="402" y="2852" as="geometry" />
         </mxCell>
-        <mxCell id="cams-124" edge="1" parent="1" source="cams-123" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-120">
+        <mxCell id="cams-143" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Toggle Admin Status" vertex="1">
+          <mxGeometry height="84" width="175" x="402" y="2982" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-145" edge="1" parent="1" source="cams-144" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-140">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-125" edge="1" parent="1" source="cams-123" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-121">
+        <mxCell id="cams-146" edge="1" parent="1" source="cams-144" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-141">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-126" edge="1" parent="1" source="cams-123" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-122">
+        <mxCell id="cams-144" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin" vertex="1">
+          <mxGeometry height="60" width="30" x="66" y="2832" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-147" edge="1" parent="1" source="cams-142" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-141" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-123" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin" vertex="1">
-          <mxGeometry height="60" width="30" x="66" y="2864" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-127" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="214" width="295" x="533" y="2652" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-128" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Class Teacher" vertex="1">
-          <mxGeometry height="30" width="255" x="553" y="2670" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-129" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Assign Class Teacher" vertex="1">
-          <mxGeometry height="84" width="175" x="593" y="2722" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-131" edge="1" parent="1" source="cams-130" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-129">
+        <mxCell id="cams-148" edge="1" parent="1" source="cams-143" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-141" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-130" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin" vertex="1">
-          <mxGeometry height="60" width="30" x="487" y="2734" as="geometry" />
+        <mxCell id="cams-149" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="214" width="295" x="763" y="2652" as="geometry" />
         </mxCell>
-        <mxCell id="cams-132" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="474" width="525" x="954" y="2652" as="geometry" />
+        <mxCell id="cams-150" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Class Teacher" vertex="1">
+          <mxGeometry height="30" width="255" x="783" y="2670" as="geometry" />
         </mxCell>
-        <mxCell id="cams-133" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Export Reports and Logs" vertex="1">
-          <mxGeometry height="30" width="485" x="974" y="2670" as="geometry" />
+        <mxCell id="cams-151" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Assign Class Teacher" vertex="1">
+          <mxGeometry height="84" width="175" x="823" y="2722" as="geometry" />
         </mxCell>
-        <mxCell id="cams-134" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Reports" vertex="1">
-          <mxGeometry height="84" width="175" x="1014" y="2722" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-135" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Audit Logs" vertex="1">
-          <mxGeometry height="84" width="175" x="1014" y="2852" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-136" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View System Logs" vertex="1">
-          <mxGeometry height="84" width="175" x="1014" y="2982" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-137" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Export Reports CSV" vertex="1">
-          <mxGeometry height="84" width="175" x="1244" y="2722" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-138" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Export Audit CSV" vertex="1">
-          <mxGeometry height="84" width="175" x="1244" y="2852" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-139" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Export System Logs CSV" vertex="1">
-          <mxGeometry height="84" width="175" x="1244" y="2982" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-141" edge="1" parent="1" source="cams-140" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-134">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-142" edge="1" parent="1" source="cams-140" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-135">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-143" edge="1" parent="1" source="cams-140" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-136">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-140" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin" vertex="1">
-          <mxGeometry height="60" width="30" x="908" y="2864" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-144" edge="1" parent="1" source="cams-137" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="cams-134" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-145" edge="1" parent="1" source="cams-138" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="cams-135" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-146" edge="1" parent="1" source="cams-139" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="cams-136" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-147" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="474" width="400" x="112" y="3216" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-148" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Database" vertex="1">
-          <mxGeometry height="30" width="360" x="132" y="3234" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-149" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Create Backup" vertex="1">
-          <mxGeometry height="84" width="175" x="172" y="3286" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-150" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Validate Backup" vertex="1">
-          <mxGeometry height="84" width="175" x="172" y="3416" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-151" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Stage Database Restore" vertex="1">
-          <mxGeometry height="84" width="175" x="172" y="3546" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-153" edge="1" parent="1" source="cams-152" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-149">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-154" edge="1" parent="1" source="cams-152" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-150">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-155" edge="1" parent="1" source="cams-152" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-151">
+        <mxCell id="cams-153" edge="1" parent="1" source="cams-152" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-151">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="cams-152" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin" vertex="1">
-          <mxGeometry height="60" width="30" x="66" y="3428" as="geometry" />
+          <mxGeometry height="60" width="30" x="717" y="2734" as="geometry" />
         </mxCell>
-        <mxCell id="cams-156" edge="1" parent="1" source="cams-151" style="html=1;verticalAlign=middle;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="cams-150" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="377" y="3588" />
-              <mxPoint x="377" y="3458" />
-            </Array>
-            <mxPoint x="38" y="0" as="offset" />
-          </mxGeometry>
+        <mxCell id="cams-154" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="474" width="525" x="1184" y="2652" as="geometry" />
         </mxCell>
-        <mxCell id="cams-157" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="344" width="295" x="638" y="3216" as="geometry" />
+        <mxCell id="cams-155" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Export Reports and Logs" vertex="1">
+          <mxGeometry height="30" width="485" x="1204" y="2670" as="geometry" />
         </mxCell>
-        <mxCell id="cams-158" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Deployment" vertex="1">
-          <mxGeometry height="30" width="255" x="658" y="3234" as="geometry" />
+        <mxCell id="cams-156" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Report List" vertex="1">
+          <mxGeometry height="84" width="175" x="1244" y="2722" as="geometry" />
         </mxCell>
-        <mxCell id="cams-159" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Download Deployment Files" vertex="1">
-          <mxGeometry height="84" width="175" x="698" y="3286" as="geometry" />
+        <mxCell id="cams-157" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Audit Log List" vertex="1">
+          <mxGeometry height="84" width="175" x="1244" y="2852" as="geometry" />
         </mxCell>
-        <mxCell id="cams-160" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Build Workstation Bundle" vertex="1">
-          <mxGeometry height="84" width="175" x="698" y="3416" as="geometry" />
+        <mxCell id="cams-158" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View System Log List" vertex="1">
+          <mxGeometry height="84" width="175" x="1244" y="2982" as="geometry" />
         </mxCell>
-        <mxCell id="cams-162" edge="1" parent="1" source="cams-161" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-159">
+        <mxCell id="cams-159" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Export Reports CSV" vertex="1">
+          <mxGeometry height="84" width="175" x="1474" y="2722" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-160" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Export Audit CSV" vertex="1">
+          <mxGeometry height="84" width="175" x="1474" y="2852" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-161" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Export System Logs CSV" vertex="1">
+          <mxGeometry height="84" width="175" x="1474" y="2982" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-163" edge="1" parent="1" source="cams-162" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-156">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-163" edge="1" parent="1" source="cams-161" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-160">
+        <mxCell id="cams-164" edge="1" parent="1" source="cams-162" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-157">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-161" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin" vertex="1">
-          <mxGeometry height="60" width="30" x="592" y="3363" as="geometry" />
+        <mxCell id="cams-165" edge="1" parent="1" source="cams-162" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-158">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-164" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;fontSize=22;fontStyle=1;" value="TEACHER" vertex="1">
-          <mxGeometry height="30" width="400" x="40" y="3736" as="geometry" />
+        <mxCell id="cams-162" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin" vertex="1">
+          <mxGeometry height="60" width="30" x="1138" y="2864" as="geometry" />
         </mxCell>
-        <mxCell id="cams-165" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="474" width="295" x="112" y="3780" as="geometry" />
+        <mxCell id="cams-166" edge="1" parent="1" source="cams-159" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-156" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-166" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Control Student Session" vertex="1">
-          <mxGeometry height="30" width="255" x="132" y="3798" as="geometry" />
+        <mxCell id="cams-167" edge="1" parent="1" source="cams-160" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-157" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-167" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Start Lab Session" vertex="1">
+        <mxCell id="cams-168" edge="1" parent="1" source="cams-161" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-158" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-169" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="344" width="755" x="112" y="3216" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-170" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Database" vertex="1">
+          <mxGeometry height="30" width="715" x="132" y="3234" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-171" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Create Backup" vertex="1">
+          <mxGeometry height="84" width="175" x="172" y="3286" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-172" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Backup List" vertex="1">
+          <mxGeometry height="84" width="175" x="172" y="3416" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-173" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Validate Backup" vertex="1">
+          <mxGeometry height="84" width="175" x="632" y="3416" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-174" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Stage Database Restore" vertex="1">
+          <mxGeometry height="84" width="175" x="402" y="3416" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-176" edge="1" parent="1" source="cams-175" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-171">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-177" edge="1" parent="1" source="cams-175" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-172">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-175" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin" vertex="1">
+          <mxGeometry height="60" width="30" x="66" y="3363" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-178" edge="1" parent="1" source="cams-174" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-173" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-179" edge="1" parent="1" source="cams-174" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-172" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-180" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="344" width="295" x="993" y="3216" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-181" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Deployment" vertex="1">
+          <mxGeometry height="30" width="255" x="1013" y="3234" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-182" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Download Deployment Files" vertex="1">
+          <mxGeometry height="84" width="175" x="1053" y="3286" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-183" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Build Workstation Bundle" vertex="1">
+          <mxGeometry height="84" width="175" x="1053" y="3416" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-185" edge="1" parent="1" source="cams-184" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-182">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-186" edge="1" parent="1" source="cams-184" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-183">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-184" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Admin" vertex="1">
+          <mxGeometry height="60" width="30" x="947" y="3363" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-187" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;fontSize=22;fontStyle=1;" value="TEACHER" vertex="1">
+          <mxGeometry height="30" width="400" x="40" y="3606" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-188" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="474" width="525" x="112" y="3650" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-189" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Control Student Session" vertex="1">
+          <mxGeometry height="30" width="485" x="132" y="3668" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-190" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Session List" vertex="1">
           <mxGeometry height="84" width="175" x="172" y="3850" as="geometry" />
         </mxCell>
-        <mxCell id="cams-168" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Pause or Resume Student Session" vertex="1">
-          <mxGeometry height="84" width="175" x="172" y="3980" as="geometry" />
+        <mxCell id="cams-191" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Start Lab Session" vertex="1">
+          <mxGeometry height="84" width="175" x="402" y="3720" as="geometry" />
         </mxCell>
-        <mxCell id="cams-169" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="End Student Session" vertex="1">
-          <mxGeometry height="84" width="175" x="172" y="4110" as="geometry" />
+        <mxCell id="cams-192" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Pause or Resume Student Session" vertex="1">
+          <mxGeometry height="84" width="175" x="402" y="3850" as="geometry" />
         </mxCell>
-        <mxCell id="cams-171" edge="1" parent="1" source="cams-170" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-167">
+        <mxCell id="cams-193" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="End Student Session" vertex="1">
+          <mxGeometry height="84" width="175" x="402" y="3980" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-195" edge="1" parent="1" source="cams-194" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-190">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-172" edge="1" parent="1" source="cams-170" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-168">
+        <mxCell id="cams-194" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Teacher" vertex="1">
+          <mxGeometry height="60" width="30" x="66" y="3862" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-196" edge="1" parent="1" source="cams-191" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-190" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-173" edge="1" parent="1" source="cams-170" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-169">
+        <mxCell id="cams-197" edge="1" parent="1" source="cams-192" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-190" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-170" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Teacher" vertex="1">
-          <mxGeometry height="60" width="30" x="66" y="3992" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-174" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="214" width="525" x="533" y="3780" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-175" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Monitor Student Screen" vertex="1">
-          <mxGeometry height="30" width="485" x="553" y="3798" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-176" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Open Monitoring Wall" vertex="1">
-          <mxGeometry height="84" width="175" x="593" y="3850" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-177" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Stream Student Screen" vertex="1">
-          <mxGeometry height="84" width="175" x="823" y="3850" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-179" edge="1" parent="1" source="cams-178" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-176">
+        <mxCell id="cams-198" edge="1" parent="1" source="cams-193" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-190" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-178" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Teacher" vertex="1">
-          <mxGeometry height="60" width="30" x="487" y="3862" as="geometry" />
+        <mxCell id="cams-199" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="214" width="525" x="763" y="3650" as="geometry" />
         </mxCell>
-        <mxCell id="cams-180" edge="1" parent="1" source="cams-176" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-177" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+        <mxCell id="cams-200" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Monitor Student Screen" vertex="1">
+          <mxGeometry height="30" width="485" x="783" y="3668" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-201" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Open Monitoring Wall" vertex="1">
+          <mxGeometry height="84" width="175" x="823" y="3720" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-202" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Stream Student Screen" vertex="1">
+          <mxGeometry height="84" width="175" x="1053" y="3720" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-204" edge="1" parent="1" source="cams-203" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-201">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-181" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="994" width="525" x="1184" y="3780" as="geometry" />
+        <mxCell id="cams-203" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Teacher" vertex="1">
+          <mxGeometry height="60" width="30" x="717" y="3732" as="geometry" />
         </mxCell>
-        <mxCell id="cams-182" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Control Student Workstation" vertex="1">
-          <mxGeometry height="30" width="485" x="1204" y="3798" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-183" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Start Remote Control" vertex="1">
-          <mxGeometry height="84" width="175" x="1244" y="3850" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-184" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Stop Remote Control" vertex="1">
-          <mxGeometry height="84" width="175" x="1244" y="3980" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-185" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Lock Workstation" vertex="1">
-          <mxGeometry height="84" width="175" x="1244" y="4110" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-186" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Unlock Workstation" vertex="1">
-          <mxGeometry height="84" width="175" x="1244" y="4240" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-187" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Force Student Logout" vertex="1">
-          <mxGeometry height="84" width="175" x="1244" y="4370" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-188" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Restart Workstation" vertex="1">
-          <mxGeometry height="84" width="175" x="1244" y="4500" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-189" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Shut Down Workstation" vertex="1">
-          <mxGeometry height="84" width="175" x="1244" y="4630" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-190" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Send Remote Input" vertex="1">
-          <mxGeometry height="84" width="175" x="1474" y="3850" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-192" edge="1" parent="1" source="cams-191" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-183">
+        <mxCell id="cams-205" edge="1" parent="1" source="cams-201" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-202" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-193" edge="1" parent="1" source="cams-191" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-184">
+        <mxCell id="cams-206" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="214" width="525" x="1414" y="3650" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-207" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Control Student Workstation" vertex="1">
+          <mxGeometry height="30" width="485" x="1434" y="3668" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-208" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Student Live Frame" vertex="1">
+          <mxGeometry height="84" width="175" x="1474" y="3720" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-209" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Control Workstation" vertex="1">
+          <mxGeometry height="84" width="175" x="1704" y="3720" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-211" edge="1" parent="1" source="cams-210" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-208">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-194" edge="1" parent="1" source="cams-191" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-185">
+        <mxCell id="cams-210" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Teacher" vertex="1">
+          <mxGeometry height="60" width="30" x="1368" y="3732" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-212" edge="1" parent="1" source="cams-209" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-208" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-195" edge="1" parent="1" source="cams-191" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-186">
+        <mxCell id="cams-213" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="344" width="295" x="112" y="4214" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-214" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Send Message to Student" vertex="1">
+          <mxGeometry height="30" width="255" x="132" y="4232" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-215" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Send Warning Popup" vertex="1">
+          <mxGeometry height="84" width="175" x="172" y="4284" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-216" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Broadcast Teacher Screen" vertex="1">
+          <mxGeometry height="84" width="175" x="172" y="4414" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-218" edge="1" parent="1" source="cams-217" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-215">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-196" edge="1" parent="1" source="cams-191" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-187">
+        <mxCell id="cams-219" edge="1" parent="1" source="cams-217" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-216">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-197" edge="1" parent="1" source="cams-191" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-188">
+        <mxCell id="cams-217" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Teacher" vertex="1">
+          <mxGeometry height="60" width="30" x="66" y="4361" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-220" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="344" width="525" x="533" y="4214" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-221" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Monitoring Alert" vertex="1">
+          <mxGeometry height="30" width="485" x="553" y="4232" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-222" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Alert List" vertex="1">
+          <mxGeometry height="84" width="175" x="593" y="4349" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-223" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Edit Alert Status" vertex="1">
+          <mxGeometry height="84" width="175" x="823" y="4284" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-224" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Export Alerts CSV" vertex="1">
+          <mxGeometry height="84" width="175" x="823" y="4414" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-226" edge="1" parent="1" source="cams-225" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-222">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-198" edge="1" parent="1" source="cams-191" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-189">
+        <mxCell id="cams-225" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Teacher" vertex="1">
+          <mxGeometry height="60" width="30" x="487" y="4361" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-227" edge="1" parent="1" source="cams-223" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-222" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-191" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Teacher" vertex="1">
-          <mxGeometry height="60" width="30" x="1138" y="4252" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-199" edge="1" parent="1" source="cams-183" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-190" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+        <mxCell id="cams-228" edge="1" parent="1" source="cams-224" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-222" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-200" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="344" width="295" x="112" y="4864" as="geometry" />
+        <mxCell id="cams-229" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="474" width="525" x="1184" y="4214" as="geometry" />
         </mxCell>
-        <mxCell id="cams-201" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Send Message to Student" vertex="1">
-          <mxGeometry height="30" width="255" x="132" y="4882" as="geometry" />
+        <mxCell id="cams-230" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Records" vertex="1">
+          <mxGeometry height="30" width="485" x="1204" y="4232" as="geometry" />
         </mxCell>
-        <mxCell id="cams-202" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Send Warning Popup" vertex="1">
-          <mxGeometry height="84" width="175" x="172" y="4934" as="geometry" />
+        <mxCell id="cams-231" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Remote History List" vertex="1">
+          <mxGeometry height="84" width="175" x="1244" y="4284" as="geometry" />
         </mxCell>
-        <mxCell id="cams-203" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Broadcast Teacher Screen" vertex="1">
-          <mxGeometry height="84" width="175" x="172" y="5064" as="geometry" />
+        <mxCell id="cams-232" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Browser History List" vertex="1">
+          <mxGeometry height="84" width="175" x="1244" y="4414" as="geometry" />
         </mxCell>
-        <mxCell id="cams-205" edge="1" parent="1" source="cams-204" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-202">
+        <mxCell id="cams-233" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Student Activity List" vertex="1">
+          <mxGeometry height="84" width="175" x="1244" y="4544" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-234" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Export Remote History CSV" vertex="1">
+          <mxGeometry height="84" width="175" x="1474" y="4284" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-235" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Export Browser Monitoring CSV" vertex="1">
+          <mxGeometry height="84" width="175" x="1474" y="4414" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-236" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Export Student Analytics CSV" vertex="1">
+          <mxGeometry height="84" width="175" x="1474" y="4544" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-238" edge="1" parent="1" source="cams-237" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-231">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-206" edge="1" parent="1" source="cams-204" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-203">
+        <mxCell id="cams-239" edge="1" parent="1" source="cams-237" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-232">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-204" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Teacher" vertex="1">
-          <mxGeometry height="60" width="30" x="66" y="5011" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-207" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="344" width="525" x="533" y="4864" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-208" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Manage Monitoring Alert" vertex="1">
-          <mxGeometry height="30" width="485" x="553" y="4882" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-209" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Update Alert Status" vertex="1">
-          <mxGeometry height="84" width="175" x="593" y="4934" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-210" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Alerts" vertex="1">
-          <mxGeometry height="84" width="175" x="593" y="5064" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-211" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Export Alerts CSV" vertex="1">
-          <mxGeometry height="84" width="175" x="823" y="5064" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-213" edge="1" parent="1" source="cams-212" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-209">
+        <mxCell id="cams-240" edge="1" parent="1" source="cams-237" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-233">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-214" edge="1" parent="1" source="cams-212" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-210">
+        <mxCell id="cams-237" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Teacher" vertex="1">
+          <mxGeometry height="60" width="30" x="1138" y="4426" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-241" edge="1" parent="1" source="cams-234" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-231" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-212" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Teacher" vertex="1">
-          <mxGeometry height="60" width="30" x="487" y="5011" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-215" edge="1" parent="1" source="cams-211" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="cams-210" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+        <mxCell id="cams-242" edge="1" parent="1" source="cams-235" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-232" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-216" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="474" width="525" x="1184" y="4864" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-217" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Export Teacher Records" vertex="1">
-          <mxGeometry height="30" width="485" x="1204" y="4882" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-218" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Remote History" vertex="1">
-          <mxGeometry height="84" width="175" x="1244" y="4934" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-219" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Browser History" vertex="1">
-          <mxGeometry height="84" width="175" x="1244" y="5064" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-220" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="View Student Details" vertex="1">
-          <mxGeometry height="84" width="175" x="1244" y="5194" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-221" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Export Remote History CSV" vertex="1">
-          <mxGeometry height="84" width="175" x="1474" y="4934" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-222" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Export Browser Monitoring CSV" vertex="1">
-          <mxGeometry height="84" width="175" x="1474" y="5064" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-223" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Export Student Analytics CSV" vertex="1">
-          <mxGeometry height="84" width="175" x="1474" y="5194" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-225" edge="1" parent="1" source="cams-224" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-218">
+        <mxCell id="cams-243" edge="1" parent="1" source="cams-236" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-233" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-226" edge="1" parent="1" source="cams-224" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-219">
+        <mxCell id="cams-244" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;fontSize=22;fontStyle=1;" value="STUDENT" vertex="1">
+          <mxGeometry height="30" width="400" x="40" y="4734" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-245" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="344" width="525" x="112" y="4778" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-246" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Log In at Workstation" vertex="1">
+          <mxGeometry height="30" width="485" x="132" y="4796" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-247" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Log In to Workstation" vertex="1">
+          <mxGeometry height="84" width="175" x="172" y="4913" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-248" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Find Lab Server" vertex="1">
+          <mxGeometry height="84" width="175" x="402" y="4848" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-249" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Set Server Address" vertex="1">
+          <mxGeometry height="84" width="175" x="402" y="4978" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-251" edge="1" parent="1" source="cams-250" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-247">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-227" edge="1" parent="1" source="cams-224" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-220">
+        <mxCell id="cams-250" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Student" vertex="1">
+          <mxGeometry height="60" width="30" x="66" y="4925" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-252" edge="1" parent="1" source="cams-247" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-248" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-224" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Teacher" vertex="1">
-          <mxGeometry height="60" width="30" x="1138" y="5076" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-228" edge="1" parent="1" source="cams-221" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="cams-218" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+        <mxCell id="cams-253" edge="1" parent="1" source="cams-249" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="cams-247" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-229" edge="1" parent="1" source="cams-222" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="cams-219" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+        <mxCell id="cams-254" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="344" width="400" x="763" y="4778" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-255" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Log Out at Workstation" vertex="1">
+          <mxGeometry height="30" width="360" x="783" y="4796" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-256" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Log Out of Workstation" vertex="1">
+          <mxGeometry height="84" width="175" x="823" y="4848" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-257" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Exit Client Agent" vertex="1">
+          <mxGeometry height="84" width="175" x="823" y="4978" as="geometry" />
+        </mxCell>
+        <mxCell id="cams-259" edge="1" parent="1" source="cams-258" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-256">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-230" edge="1" parent="1" source="cams-223" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="cams-220" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+        <mxCell id="cams-260" edge="1" parent="1" source="cams-258" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-257">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-231" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;fontSize=22;fontStyle=1;" value="STUDENT" vertex="1">
-          <mxGeometry height="30" width="400" x="40" y="5384" as="geometry" />
+        <mxCell id="cams-258" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Student" vertex="1">
+          <mxGeometry height="60" width="30" x="717" y="4925" as="geometry" />
         </mxCell>
-        <mxCell id="cams-232" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="344" width="525" x="112" y="5428" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-233" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Log In at Workstation" vertex="1">
-          <mxGeometry height="30" width="485" x="132" y="5446" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-234" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Log In to Workstation" vertex="1">
-          <mxGeometry height="84" width="175" x="172" y="5563" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-235" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Find Lab Server" vertex="1">
-          <mxGeometry height="84" width="175" x="402" y="5498" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-236" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Set Server Address" vertex="1">
-          <mxGeometry height="84" width="175" x="402" y="5628" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-238" edge="1" parent="1" source="cams-237" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-234">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-237" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Student" vertex="1">
-          <mxGeometry height="60" width="30" x="66" y="5575" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-239" edge="1" parent="1" source="cams-234" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-235" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-240" edge="1" parent="1" source="cams-236" style="html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="cams-234" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-241" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="344" width="400" x="763" y="5428" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-242" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Log Out at Workstation" vertex="1">
-          <mxGeometry height="30" width="360" x="783" y="5446" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-243" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Log Out of Workstation" vertex="1">
-          <mxGeometry height="84" width="175" x="823" y="5498" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-244" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Exit Client Agent" vertex="1">
-          <mxGeometry height="84" width="175" x="823" y="5628" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-246" edge="1" parent="1" source="cams-245" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-243">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-247" edge="1" parent="1" source="cams-245" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-244">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-245" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Student" vertex="1">
-          <mxGeometry height="60" width="30" x="717" y="5575" as="geometry" />
-        </mxCell>
-        <mxCell id="cams-248" edge="1" parent="1" source="cams-244" style="html=1;verticalAlign=middle;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="cams-243" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+        <mxCell id="cams-261" edge="1" parent="1" source="cams-257" style="html=1;verticalAlign=middle;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="cams-256" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="1028" y="5670" />
-              <mxPoint x="1028" y="5540" />
+              <mxPoint x="1028" y="5020" />
+              <mxPoint x="1028" y="4890" />
             </Array>
             <mxPoint x="38" y="0" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="cams-249" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
-          <mxGeometry height="214" width="295" x="1289" y="5428" as="geometry" />
+        <mxCell id="cams-262" parent="1" style="html=1;whiteSpace=wrap;" value="" vertex="1">
+          <mxGeometry height="214" width="295" x="1289" y="4778" as="geometry" />
         </mxCell>
-        <mxCell id="cams-250" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Change Password at Workstation" vertex="1">
-          <mxGeometry height="30" width="255" x="1309" y="5446" as="geometry" />
+        <mxCell id="cams-263" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;fontSize=14;" value="Change Password at Workstation" vertex="1">
+          <mxGeometry height="30" width="255" x="1309" y="4796" as="geometry" />
         </mxCell>
-        <mxCell id="cams-251" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Change Password" vertex="1">
-          <mxGeometry height="84" width="175" x="1349" y="5498" as="geometry" />
+        <mxCell id="cams-264" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Change Password" vertex="1">
+          <mxGeometry height="84" width="175" x="1349" y="4848" as="geometry" />
         </mxCell>
-        <mxCell id="cams-253" edge="1" parent="1" source="cams-252" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-251">
+        <mxCell id="cams-266" edge="1" parent="1" source="cams-265" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cams-264">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cams-252" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Student" vertex="1">
-          <mxGeometry height="60" width="30" x="1243" y="5510" as="geometry" />
+        <mxCell id="cams-265" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;labelBackgroundColor=#ffffff;" value="Student" vertex="1">
+          <mxGeometry height="60" width="30" x="1243" y="4860" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
