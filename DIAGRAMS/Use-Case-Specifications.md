@@ -3,7 +3,7 @@
 The system use cases in [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio): **26 system use cases**, with 84 use cases in their diagrams.
 
 - Each system use case is shown first as a diagram, and its written use case follows. The written use case has ten parts: use case name, purpose, actors, input parameters, output parameters, pre-condition, post-condition, successful scenario, exception scenario and additional remarks.
-- The admin and the teacher share many use cases, so these are shown only once, under **ADMIN AND TEACHER**. The use cases are joined to Admin, and Teacher points to Admin with a hollow triangle (generalization), so the teacher inherits them.
+- The admin and the teacher share many use cases, so these are shown only once, under **ADMIN AND TEACHER**, with one actor named Admin / Teacher.
 - DELETE is used only for restriction rules, the blacklist and the whitelist, because these are really deleted. Other records are turned on or off with Toggle … Status, so their records are kept.
 - «include» means a use case always does the other use case. «extend» means the other use case is optional.
 
@@ -56,7 +56,7 @@ The system use cases in [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.d
 
 # ADMIN AND TEACHER
 
-The admin and the teacher can both do the use cases in these system use cases. The use cases are joined to Admin, and the line with a hollow triangle from Teacher to Admin is a generalization: the teacher inherits the admin's use cases here.
+The admin and the teacher can both do the use cases in these system use cases, so each diagram shows one actor named Admin / Teacher.
 
 A use case only one of them has is in that actor's own section: Assign Class Teacher is under ADMIN (Manage Class Teacher), and Start Lab Session is under TEACHER (Control Student Session).
 
@@ -114,7 +114,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Additional Remarks:**
 
-- The Teacher inherits this use case from the Admin (generalization).
+- The Admin and Teacher share this use case. The diagram shows them as one Admin / Teacher actor.
 - A locked teacher account can also be unlocked early on the Teachers page (Manage Teacher Account).
 
 ## Process Sign Out
@@ -158,7 +158,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Additional Remarks:**
 
-- The Teacher inherits this use case from the Admin (generalization).
+- The Admin and Teacher share this use case. The diagram shows them as one Admin / Teacher actor.
 - Signing out is separate from logging in (Process Log In).
 
 ## Manage Own Account
@@ -211,7 +211,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Additional Remarks:**
 
-- The Teacher inherits this use case from the Admin (generalization).
+- The Admin and Teacher share this use case. The diagram shows them as one Admin / Teacher actor.
 - The password is saved in a protected form, not as plain text.
 
 ## Manage Teacher Account
@@ -275,7 +275,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Additional Remarks:**
 
-- The Teacher inherits this use case from the Admin (generalization).
+- The Admin and Teacher share this use case. The diagram shows them as one Admin / Teacher actor.
 - An inactive teacher cannot log in, but the account and its records are kept. Nothing is deleted.
 - A locked account also unlocks by itself after 15 minutes.
 
@@ -342,7 +342,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Additional Remarks:**
 
-- The Teacher inherits this use case from the Admin (generalization).
+- The Admin and Teacher share this use case. The diagram shows them as one Admin / Teacher actor.
 - Import Student Roster always includes Validate Roster Rows.
 - The Remove button only hides a student. The records are kept and can be restored.
 
@@ -404,7 +404,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Additional Remarks:**
 
-- The Teacher inherits this use case from the Admin (generalization).
+- The Admin and Teacher share this use case. The diagram shows them as one Admin / Teacher actor.
 - An archived computer is hidden from the active list. Nothing is deleted.
 - Choosing no computer clears a student's reservation.
 
@@ -473,7 +473,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Additional Remarks:**
 
-- The Teacher inherits this use case from the Admin (generalization).
+- The Admin and Teacher share this use case. The diagram shows them as one Admin / Teacher actor.
 - A class made by a teacher belongs to that teacher.
 - Choosing the teacher of a class is for the Admin only (Manage Class Teacher).
 - Archiving a class or removing a student keeps all records. Nothing is deleted.
@@ -537,7 +537,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Additional Remarks:**
 
-- The Teacher inherits this use case from the Admin (generalization).
+- The Admin and Teacher share this use case. The diagram shows them as one Admin / Teacher actor.
 - Websites are blocked. Apps are only watched, never closed.
 - A deleted rule cannot be brought back. A rule that is turned off is kept but ignored.
 
@@ -599,7 +599,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Additional Remarks:**
 
-- The Teacher inherits this use case from the Admin (generalization).
+- The Admin and Teacher share this use case. The diagram shows them as one Admin / Teacher actor.
 - A blacklisted website stays blocked even if it is on the whitelist.
 - Apps on the blacklist are only watched, not closed.
 - A deleted entry cannot be brought back.
@@ -660,7 +660,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Additional Remarks:**
 
-- The Teacher inherits this use case from the Admin (generalization).
+- The Admin and Teacher share this use case. The diagram shows them as one Admin / Teacher actor.
 - There are app categories and website categories.
 - A category is turned off, not deleted.
 
@@ -720,7 +720,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Additional Remarks:**
 
-- The Teacher inherits this use case from the Admin (generalization).
+- The Admin and Teacher share this use case. The diagram shows them as one Admin / Teacher actor.
 - A new default rule replaces the old default.
 - Old sessions keep their rule. Nothing is deleted.
 
@@ -770,7 +770,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Additional Remarks:**
 
-- The Teacher inherits this use case from the Admin (generalization).
+- The Admin and Teacher share this use case. The diagram shows them as one Admin / Teacher actor.
 - Only the Teacher can start a lab session (Control Student Session).
 - Paused time is not counted, and the session records are kept.
 
