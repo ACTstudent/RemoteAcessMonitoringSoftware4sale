@@ -419,6 +419,22 @@ body {
     color: var(--text-main);
 }
 
+/* The name and avatar are a link to Account Settings. It keeps the look of the
+   label it replaced and only shows that it can be pressed on hover and focus. */
+.user-profile-link {
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.user-profile-link:hover,
+.user-profile-link:focus-visible {
+    color: var(--text-main);
+    background-color: var(--surface-line);
+    text-decoration: none;
+}
+
 .user-avatar-circle {
     width: 38px;
     height: 38px;

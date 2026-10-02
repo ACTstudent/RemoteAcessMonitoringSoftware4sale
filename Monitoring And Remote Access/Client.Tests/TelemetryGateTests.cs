@@ -52,27 +52,27 @@ public class TelemetryGateTests
         Assert.False(gate.ShouldReportIdle(false));
     }
 
-    // ---- active application ----
+    // ---- the foreground sample (the website in front; applications are not reported) ----
 
     [Fact]
-    public void ActiveApp_IsReportedOnceTheIntervalHasPassed()
+    public void Foreground_IsSampledOnceTheIntervalHasPassed()
     {
         var gate = new TelemetryGate();
 
-        Assert.True(gate.ShouldReportActiveApp(T0));
-        Assert.False(gate.ShouldReportActiveApp(T0.AddSeconds(4)));
-        Assert.True(gate.ShouldReportActiveApp(T0.AddSeconds(6)));
+        Assert.True(gate.ShouldSampleForeground(T0));
+        Assert.False(gate.ShouldSampleForeground(T0.AddSeconds(4)));
+        Assert.True(gate.ShouldSampleForeground(T0.AddSeconds(6)));
     }
 
     [Fact]
-    public void ActiveApp_TreatsExactlyTheIntervalAsTooSoon()
+    public void Foreground_TreatsExactlyTheIntervalAsTooSoon()
     {
         var gate = new TelemetryGate();
-        gate.ShouldReportActiveApp(T0);
+        gate.ShouldSampleForeground(T0);
 
         // The original compared with > rather than >=. Recorded so a later
-        // tidy-up does not flip it and double the reporting rate.
-        Assert.False(gate.ShouldReportActiveApp(T0.Add(TelemetryGate.ActiveAppInterval)));
+        // tidy-up does not flip it and double the sampling rate.
+        Assert.False(gate.ShouldSampleForeground(T0.Add(TelemetryGate.ForegroundSampleInterval)));
     }
 
     // ---- website ----
@@ -197,7 +197,7 @@ public class TelemetryGateTests
     {
         var gate = new TelemetryGate();
         gate.ShouldReportIdle(true);
-        gate.ShouldReportActiveApp(T0);
+        gate.ShouldSampleForeground(T0);
         gate.ShouldReportWebsite("chrome", "example.org");
         gate.ShouldReportBrowserStatus("chrome", "x");
         gate.ShouldReportInfraction("app", "game.exe", T0);
@@ -205,7 +205,7 @@ public class TelemetryGateTests
         gate.Reset();
 
         Assert.True(gate.ShouldReportIdle(true));
-        Assert.True(gate.ShouldReportActiveApp(T0));
+        Assert.True(gate.ShouldSampleForeground(T0));
         Assert.True(gate.ShouldReportWebsite("chrome", "example.org"));
         Assert.True(gate.ShouldReportBrowserStatus("chrome", "x"));
         Assert.True(gate.ShouldReportInfraction("app", "game.exe", T0));

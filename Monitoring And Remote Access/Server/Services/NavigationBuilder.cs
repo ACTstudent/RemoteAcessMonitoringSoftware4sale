@@ -11,6 +11,12 @@ namespace Server.Services;
 /// as data means the shell can be written once, and it makes the link set for a
 /// role something you can read in twenty lines instead of reconstructing from
 /// Razor conditionals.
+///
+/// A group holds the pages that do one kind of job, in the order the job is
+/// done. People are accounts; classes are not people, so Classes stands on its
+/// own. The records a teacher reads back - alerts, histories, the timeline -
+/// are together rather than under "My Classes", and a person's own Account
+/// Settings closes each menu, which the name in the page header also opens.
 /// </summary>
 public static class NavigationBuilder
 {
@@ -43,16 +49,20 @@ public static class NavigationBuilder
     /// it gets one name and one icon wherever it is listed.
     /// </summary>
     private static readonly NavItem LabDashboard = new("Dashboard", "grid-fill", "Index", "Admin");
+
+    /// <summary>
+    /// The laboratory's computers, one page for both portals. A teacher used
+    /// to have a "Workstations" page of their own beside this one - the same
+    /// machines under a second name, listing only the ones in use.
+    /// </summary>
     private static readonly NavItem LabComputers = new("Computers", "pc-display", "Computers", "Admin",
         AlsoActiveOn: new[] { "ComputerHistory" });
 
-    private static NavSection PeopleSection() => new("People", new[]
-    {
-        new NavItem("Teachers", "person-badge-fill", "Teachers", "Admin"),
-        new NavItem("Students", "mortarboard-fill", "Students", "Admin"),
-        new NavItem("Classes", "folder-fill", "Classes", "Admin",
-            AlsoActiveOn: new[] { "ClassDetails" })
-    });
+    private static readonly NavItem LabClasses = new("Classes", "folder-fill", "Classes", "Admin",
+        AlsoActiveOn: new[] { "ClassDetails" });
+
+    private static readonly NavItem Teachers = new("Teachers", "person-badge-fill", "Teachers", "Admin");
+    private static readonly NavItem Students = new("Students", "mortarboard-fill", "Students", "Admin");
 
     private static NavSection PoliciesSection() => new("Policies", new[]
     {
@@ -61,6 +71,9 @@ public static class NavigationBuilder
         new NavItem("Whitelist", "check-circle-fill", "Whitelists", "Admin"),
         new NavItem("Session Rules", "hourglass-split", "SessionRules", "Admin")
     });
+
+    private static NavItem AccountSettings(string controller) =>
+        new("Account Settings", "person-gear", "Settings", controller);
 
     // ---------- Teacher ----------
 
@@ -75,11 +88,10 @@ public static class NavigationBuilder
         AvatarIcon: "person-badge",
         ScriptPartial: "_TeacherAlertBadgeScript",
         // Arranged as one menu rather than the teacher's sections with the
-        // lab-wide ones appended: that alternated single links and dropdowns
-        // (My Classroom, a group, a group, Dashboard, a group, Computers, a
-        // group), so the rows never lined up into anything. Single links come
-        // first, then the groups, and the lone Computers row joins the rest of
-        // the laboratory pages.
+        // lab-wide ones appended: single links first, then the groups in the
+        // order a lab period runs - control the lab, the teacher's own
+        // classes, what was recorded - and then the lab-wide pages the
+        // teacher shares with the administrator.
         Sections: new NavSection[]
         {
             // "My Classroom" rather than a bare "Dashboard": the lab-wide
@@ -95,29 +107,37 @@ public static class NavigationBuilder
             {
                 new NavItem("Sessions", "play-circle-fill", "Sessions", "Teacher"),
                 new NavItem("Live Monitoring", "camera-video-fill", "Monitoring", "Teacher"),
-                new NavItem("Remote History", "terminal-fill", "RemoteHistory", "Teacher"),
-                new NavItem("Workstations", "pc-display", "Computers", "Teacher"),
                 LabComputers
             }),
             new NavSection("My Classes", new[]
             {
-                new NavItem("My Class List", "folder-fill", "Classes", "Teacher",
+                // Its own icon: with the folder, this group and the lab-wide
+                // Classes link were the same picture in the collapsed sidebar.
+                new NavItem("My Class List", "collection-fill", "Classes", "Teacher",
                     AlsoActiveOn: new[] { "ClassDetails", "ClassAnalytics" }),
                 new NavItem("My Students", "people-fill", "Students", "Teacher",
                     AlsoActiveOn: new[] { "StudentDetails" }),
-                new NavItem("Class Restrictions", "slash-circle-fill", "Restrictions", "Teacher"),
-                new NavItem("Records", "journal-check", "Records", "Teacher"),
-                new NavItem("Lab Utilization", "bar-chart-fill", "LabUtilization", "Teacher"),
-                new NavItem("Timeline", "clock-history", "UnifiedTimeline", "Teacher",
-                    AlsoActiveOn: new[] { "ActivityTimeline" }),
-                new NavItem("Browser History", "browser-chrome", "BrowserMonitoringHistory", "Teacher"),
+                new NavItem("Class Restrictions", "slash-circle-fill", "Restrictions", "Teacher")
+            }),
+            new NavSection("Monitoring Records", new[]
+            {
                 new NavItem("Alerts", "bell-fill", "Alerts", "Teacher",
                     AlsoActiveOn: new[] { "AlertHistory" }, BadgeViewComponent: "OpenAlertCount"),
-                new NavItem("Settings", "person-gear", "Settings", "Teacher")
+                new NavItem("Records", "journal-check", "Records", "Teacher"),
+                new NavItem("Browser History", "browser-chrome", "BrowserMonitoringHistory", "Teacher"),
+                new NavItem("Remote History", "terminal-fill", "RemoteHistory", "Teacher"),
+                new NavItem("Timeline", "clock-history", "UnifiedTimeline", "Teacher",
+                    AlsoActiveOn: new[] { "ActivityTimeline" }),
+                new NavItem("Lab Utilization", "bar-chart-fill", "LabUtilization", "Teacher")
             }),
-            PeopleSection(),
-            PoliciesSection()
-        });
+            new NavSection("People", new[] { Teachers, Students }),
+            new NavSection(null, new[] { LabClasses }),
+            PoliciesSection(),
+            new NavSection(null, new[] { AccountSettings(Teacher) })
+        })
+    {
+        SettingsController = Teacher
+    };
 
     // ---------- Admin ----------
     //
@@ -139,13 +159,20 @@ public static class NavigationBuilder
             return BuildTeacher(context);
         }
 
-        // Computers had a section to itself, so it drew as a lone link between
-        // two dropdowns. It sits with the other pages about the lab's machines:
-        // the network they reach the server on, and the installer they run.
+        // Grouped by the job each page does rather than by who may open it.
+        // "Administrator Only" used to hold six unrelated pages - accounts,
+        // roles, the database, reports and two logs - because they shared an
+        // audience, which told an administrator nothing about where to look.
         var sections = new List<NavSection>
         {
-            new NavSection("Overview", new[] { LabDashboard }),
-            PeopleSection(),
+            new NavSection(null, new[] { LabDashboard }),
+            new NavSection("People", new[]
+            {
+                Teachers,
+                Students,
+                new NavItem("Admin Accounts", "shield-lock-fill", "AdminAccounts", "Admin")
+            }),
+            new NavSection(null, new[] { LabClasses }),
             new NavSection("Laboratory", new[]
             {
                 LabComputers,
@@ -153,15 +180,18 @@ public static class NavigationBuilder
                 new NavItem("Deployment", "box-seam-fill", "Index", "AdminDeployment")
             }),
             PoliciesSection(),
-            new NavSection("Administrator Only", new[]
+            new NavSection("Reports & Logs", new[]
             {
-                new NavItem("Admin Accounts", "person-gear", "Settings", "Admin"),
-                new NavItem("Roles", "key-fill", "Roles", "Admin"),
-                new NavItem("Database", "database-gear", "Index", "AdminDatabase"),
                 new NavItem("Reports", "bar-chart-line-fill", "Reports", "Admin"),
                 new NavItem("Audit Trail", "journal-text", "AuditLogs", "Admin"),
                 new NavItem("System Logs", "bug-fill", "SystemLogs", "Admin")
-            })
+            }),
+            new NavSection("System", new[]
+            {
+                new NavItem("Roles", "key-fill", "Roles", "Admin"),
+                new NavItem("Database", "database-gear", "Index", "AdminDatabase")
+            }),
+            new NavSection(null, new[] { AccountSettings(Admin) })
         };
 
         return new NavigationModel(
@@ -173,7 +203,10 @@ public static class NavigationBuilder
             RoleBadge: "Administrator",
             RoleBadgeCss: "bg-primary",
             AvatarIcon: "shield-check",
-            Sections: sections);
+            Sections: sections)
+        {
+            SettingsController = Admin
+        };
     }
 
     // ---------- Student ----------
@@ -197,5 +230,8 @@ public static class NavigationBuilder
                 new NavItem("Alerts", "bell-fill", "Alerts", "Student"),
                 new NavItem("Settings", "gear-fill", "Settings", "Student")
             })
-        });
+        })
+    {
+        SettingsController = Student
+    };
 }

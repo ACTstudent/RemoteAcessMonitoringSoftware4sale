@@ -39,8 +39,16 @@ public sealed record NavigationModel(
     string AvatarIcon,
     IReadOnlyList<NavSection> Sections,
     string? TopbarPartial = null,
-    string? ScriptPartial = null)
+    string? ScriptPartial = null,
+    string SettingsAction = "Settings")
 {
+    /// <summary>
+    /// The controller that holds this portal's Account Settings page, which
+    /// the name and avatar in the page header open. Each portal names it
+    /// <c>Settings</c>; they differ only in whose controller it is.
+    /// </summary>
+    public required string SettingsController { get; init; }
+
     /// <summary>
     /// Whether <paramref name="item"/> is the page being shown.
     ///

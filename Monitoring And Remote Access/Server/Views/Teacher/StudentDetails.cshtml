@@ -9,16 +9,15 @@
     <div class="d-flex gap-2"><a class="btn btn-outline-secondary rounded-pill" href="@Url.Action("Students")">Back to student profiles</a><a class="btn btn-emerald rounded-pill" href="@Url.Action("ExportStudentAnalyticsCsv", new { id = Model.Student.Id, from = Model.From, to = Model.To })">Export CSV</a></div>
 </div>
 <div class="row g-3 mb-4">
-    <div class="col-sm-6 col-xl-3"><div class="metric-card"><div class="metric-title">Active</div><div class="metric-value">@Math.Round(d.ActiveMinutes, 1) min</div></div></div>
-    <div class="col-sm-6 col-xl-3"><div class="metric-card"><div class="metric-title">Idle</div><div class="metric-value">@Math.Round(d.IdleMinutes, 1) min</div></div></div>
-    <div class="col-sm-6 col-xl-3"><div class="metric-card"><div class="metric-title">Applications</div><div class="metric-value">@Math.Round(d.ApplicationMinutes, 1) min</div></div></div>
-    <div class="col-sm-6 col-xl-3"><div class="metric-card"><div class="metric-title">Websites</div><div class="metric-value">@Math.Round(d.WebsiteMinutes, 1) min</div></div></div>
+    <div class="col-sm-6 col-xl-4"><div class="metric-card"><div class="metric-title">Active</div><div class="metric-value">@Math.Round(d.ActiveMinutes, 1) min</div></div></div>
+    <div class="col-sm-6 col-xl-4"><div class="metric-card"><div class="metric-title">Idle</div><div class="metric-value">@Math.Round(d.IdleMinutes, 1) min</div></div></div>
+    <div class="col-sm-6 col-xl-4"><div class="metric-card"><div class="metric-title">Websites</div><div class="metric-value">@Math.Round(d.WebsiteMinutes, 1) min</div></div></div>
 </div>
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
     <div class="card-header bg-white py-3"><h5 class="mb-0 fw-bold">Activity Timeline</h5></div>
-    <div class="table-responsive"><table data-crud-table="activity events" class="table custom-table align-middle mb-0"><thead><tr><th>Time</th><th>Event</th><th>Application</th><th>Details</th><th>Station</th></tr></thead><tbody>
-    @foreach (var item in Model.Timeline) { <tr><td>@item.Timestamp.ToLocalTime().ToString("MMM dd, HH:mm:ss")</td><td>@item.EventType</td><td>@item.ApplicationName</td><td>@item.Details</td><td>@item.PcName</td></tr> }
-    @if (!Model.Timeline.Any()) { <tr><td colspan="5" class="text-center empty-state"><i class="bi bi-bar-chart empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No activity recorded in this period.</span></td></tr> }
+    <div class="table-responsive"><table data-crud-table="activity events" class="table custom-table align-middle mb-0"><thead><tr><th>Time</th><th>Event</th><th>Details</th><th>Station</th></tr></thead><tbody>
+    @foreach (var item in Model.Timeline) { <tr><td>@item.Timestamp.ToLocalTime().ToString("MMM dd, HH:mm:ss")</td><td>@item.EventType</td><td>@item.Details</td><td>@item.PcName</td></tr> }
+    @if (!Model.Timeline.Any()) { <tr><td colspan="4" class="text-center empty-state"><i class="bi bi-bar-chart empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No activity recorded in this period.</span></td></tr> }
     </tbody></table></div>
 </div>
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden"><div class="card-header bg-white py-3"><h5 class="mb-0 fw-bold">Alerts</h5></div><div class="table-responsive"><table data-crud-table="alerts" class="table custom-table align-middle mb-0"><thead><tr><th scope="col">Alert</th><th scope="col">Severity</th><th scope="col">Status</th></tr></thead><tbody>

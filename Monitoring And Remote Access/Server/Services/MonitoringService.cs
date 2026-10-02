@@ -7,12 +7,10 @@ namespace Server.Services
     {
         private readonly ConcurrentDictionary<string, StudentConnectionMessage> _students = new();
         private readonly ConcurrentDictionary<string, IdleStatusMessage> _idleStatus = new();
-        private readonly ConcurrentDictionary<string, ActiveAppMessage> _activeApps = new();
         private readonly ConcurrentDictionary<string, BrowserMonitoringStatusMessage> _browserMonitoringStatus = new();
 
         public IReadOnlyCollection<StudentConnectionMessage> ActiveStudents => _students.Values.ToList();
         public IReadOnlyCollection<IdleStatusMessage> IdleStatus => _idleStatus.Values.ToList();
-        public IReadOnlyCollection<ActiveAppMessage> ActiveApps => _activeApps.Values.ToList();
         public IReadOnlyCollection<BrowserMonitoringStatusMessage> BrowserMonitoringStatus => _browserMonitoringStatus.Values.ToList();
 
         public StudentConnectionMessage RegisterStudent(string connectionId, string studentId, string pcName, string? displayName = null)
@@ -31,7 +29,6 @@ namespace Server.Services
         public StudentConnectionMessage? UnregisterStudent(string connectionId)
         {
             _idleStatus.TryRemove(connectionId, out _);
-            _activeApps.TryRemove(connectionId, out _);
             foreach (var key in _browserMonitoringStatus.Keys.Where(key => key.StartsWith($"{connectionId}:", StringComparison.Ordinal)))
                 _browserMonitoringStatus.TryRemove(key, out _);
             return _students.TryRemove(connectionId, out var message) ? message : null;
@@ -40,11 +37,6 @@ namespace Server.Services
         public void ReportIdleStatus(IdleStatusMessage status)
         {
             _idleStatus[status.ConnectionId] = status;
-        }
-
-        public void ReportActiveApp(ActiveAppMessage app)
-        {
-            _activeApps[app.ConnectionId] = app;
         }
 
         public void ReportBrowserMonitoringStatus(BrowserMonitoringStatusMessage status)

@@ -1,12 +1,14 @@
 namespace Server.Models;
 
+/// <summary>
+/// How a student's session time divides. Usage is websites only: the time
+/// spent in each application is no longer recorded, so it is not summed here.
+/// </summary>
 public sealed record DurationSummary(
-    TimeSpan Application,
     TimeSpan Website,
     TimeSpan Idle,
     TimeSpan Active)
 {
-    public double ApplicationMinutes => Application.TotalMinutes;
     public double WebsiteMinutes => Website.TotalMinutes;
     public double IdleMinutes => Idle.TotalMinutes;
     public double ActiveMinutes => Active.TotalMinutes;
@@ -15,7 +17,6 @@ public sealed record DurationSummary(
 public sealed record ActivityTimelineItem(
     DateTime Timestamp,
     string EventType,
-    string? ApplicationName,
     string? Details,
     string PcName);
 
@@ -150,6 +151,9 @@ public sealed record ReportSummary(
     IReadOnlyDictionary<string, int> SessionsByClass,
     IReadOnlyDictionary<string, int> SessionsByTeacher,
     IReadOnlyDictionary<string, int> SessionsByStation);
+
+/// <summary>A website and how many times students opened it, for the Reports page.</summary>
+public sealed record TopWebsite(string Website, int Visits);
 
 public sealed record StudentAnalyticsReport(
     Student Student,

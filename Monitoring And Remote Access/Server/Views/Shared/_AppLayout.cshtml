@@ -81,7 +81,10 @@
                 <span id="connectionStatus" class="connection-status" role="status" aria-live="polite" hidden></span>
 
                 <div class="d-flex align-items-center gap-3 ms-auto">
-                    <div class="user-profile-badge">
+                    @* The name and avatar open the signed-in person's own Account
+                       Settings. They used to be a label that did nothing. *@
+                    <a href="@Url.Action(nav.SettingsAction, nav.SettingsController)" class="user-profile-badge user-profile-link"
+                       title="Account settings" aria-label="Account settings for @nav.DisplayName">
                         <div class="user-avatar-circle">
                             <i class="bi bi-@nav.AvatarIcon" aria-hidden="true"></i>
                         </div>
@@ -89,7 +92,7 @@
                             <span class="fw-bold fs-6">@nav.DisplayName</span>
                             <span class="badge @nav.RoleBadgeCss small" style="font-size: 0.7rem;">@nav.RoleBadge</span>
                         </div>
-                    </div>
+                    </a>
                     <a href="@Url.Action("Logout", "Account")" class="btn btn-outline-danger btn-sm rounded-pill px-3 ms-2">
                         <i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i> Log out
                     </a>

@@ -1123,7 +1123,7 @@ public class AdminControllerTests
         var result = await controller.SetAccountActive(AccountRole.Admin, admin.Id, false);
 
         var redirect = Assert.IsType<RedirectToActionResult>(result);
-        Assert.Equal("Settings", redirect.ActionName);
+        Assert.Equal(nameof(AdminController.AdminAccounts), redirect.ActionName);
         Assert.True((await db.Admins.FindAsync(admin.Id))?.IsActive);
         Assert.Empty(await db.AuditLogs.Where(log => log.Action == "DeactivateAccount").ToListAsync());
     }
@@ -1270,5 +1270,203 @@ public class AdminControllerTests
             Microsoft.AspNetCore.Identity.PasswordVerificationResult.Success,
             hasher.VerifyHashedPassword(new object(), admin.PasswordHash, "new-password"));
         Assert.NotNull(await db.AuditLogs.FirstOrDefaultAsync(log => log.Action == "PasswordChanged" && log.UserType == "Admin"));
+    }
+
+
+    // ---------- Account settings: the signed-in administrator's own account ----------
+
+    [Fact]
+    public async Task Settings_ShowsTheSignedInAdministratorsOwnAccount()
+    {
+        using var db = GetDbContext();
+        db.Admins.AddRange(
+            new Admin { Id = 1, Username = "admin", FullName = "The Admin", PasswordHash = "hash" },
+            new Admin { Id = 2, Username = "other", FullName = "Another Admin", PasswordHash = "hash" });
+        await db.SaveChangesAsync();
+
+        var view = Assert.IsType<ViewResult>(await CreateController(db).Settings());
+
+        var settings = Assert.IsType<AccountSettingsViewModel>(view.Model);
+        Assert.False(settings.IsTeacher);
+        Assert.Equal("Admin", settings.Controller);
+        Assert.Equal("The Admin", settings.Profile.FullName);
+        Assert.Equal("admin", settings.Profile.Username);
+    }
+
+    [Fact]
+    public async Task AdminAccounts_ListsEveryAdministrator()
+    {
+        using var db = GetDbContext();
+        db.Admins.AddRange(
+            new Admin { Id = 1, Username = "admin", FullName = "The Admin", PasswordHash = "hash" },
+            new Admin { Id = 2, Username = "other", FullName = "Another Admin", PasswordHash = "hash" });
+        await db.SaveChangesAsync();
+        var controller = CreateController(db);
+
+        Assert.IsType<ViewResult>(await controller.AdminAccounts());
+
+        var admins = Assert.IsAssignableFrom<IEnumerable<Admin>>((object)controller.ViewBag.Admins);
+        Assert.Equal(2, admins.Count());
+    }
+
+    [Theory]
+    [InlineData(nameof(AdminController.AdminAccounts))]
+    [InlineData(nameof(AdminController.UpdateProfile))]
+    [InlineData(nameof(AdminController.ChangePassword))]
+    public void TheAdministratorsOwnPages_AreNotSharedWithATeacher(string actionName)
+    {
+        Assert.Null(typeof(AdminController).GetMethod(actionName)!.GetCustomAttribute<TeacherSharedActionAttribute>());
+    }
+
+    [Fact]
+    public async Task UpdateProfile_SavesTheAdministratorsOwnDetails()
+    {
+        using var db = GetDbContext();
+        db.Admins.Add(new Admin { Id = 1, Username = "admin", FullName = "Old Name", PasswordHash = "hash" });
+        await db.SaveChangesAsync();
+        var controller = CreateController(db);
+
+        var result = await controller.UpdateProfile(new AccountProfileInput { FullName = "  New Name ", Username = " head-admin " });
+
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(AdminController.Settings), redirect.ActionName);
+        var admin = await db.Admins.SingleAsync();
+        Assert.Equal("New Name", admin.FullName);
+        Assert.Equal("head-admin", admin.Username);
+        // The page header shows the session's name, so it follows the change.
+        Assert.Equal("New Name", controller.HttpContext.Session.GetString("AdminName"));
+        Assert.NotNull(await db.AuditLogs.SingleOrDefaultAsync(log => log.Action == "UpdateOwnProfile" && log.UserType == "Admin"));
+    }
+
+    [Theory]
+    [InlineData("", "admin")]
+    [InlineData("A Name", "")]
+    [InlineData("A Name", "taken")]
+    public async Task UpdateProfile_RefusesAnEmptyOrTakenValue(string fullName, string username)
+    {
+        using var db = GetDbContext();
+        db.Admins.Add(new Admin { Id = 1, Username = "admin", FullName = "Old Name", PasswordHash = "hash" });
+        db.Teachers.Add(new Teacher { FirstName = "T", LastName = "One", Username = "taken", PasswordHash = "hash" });
+        await db.SaveChangesAsync();
+        var controller = CreateController(db);
+
+        await controller.UpdateProfile(new AccountProfileInput { FullName = fullName, Username = username });
+
+        var admin = await db.Admins.SingleAsync();
+        Assert.Equal("Old Name", admin.FullName);
+        Assert.Equal("admin", admin.Username);
+        Assert.NotNull(controller.TempData["ErrorMessage"]);
+        Assert.Empty(await db.AuditLogs.ToListAsync());
+    }
+
+    // ---------- Active or inactive is the Deactivate / Activate button's alone ----------
+
+    [Theory]
+    [InlineData(nameof(AdminController.CreateTeacher))]
+    [InlineData(nameof(AdminController.UpdateTeacher))]
+    [InlineData(nameof(AdminController.UpdateStudent))]
+    public void SavingAnAccountForm_DoesNotBindItsStatus(string actionName)
+    {
+        var bound = typeof(AdminController).GetMethod(actionName)!.GetParameters()[0].GetCustomAttribute<BindAttribute>();
+
+        Assert.NotNull(bound);
+        Assert.DoesNotContain("Status", bound!.Include);
+    }
+
+    [Fact]
+    public async Task UpdateTeacher_LeavesTheAccountStatusAlone()
+    {
+        using var db = GetDbContext();
+        var teacher = new Teacher { FirstName = "Was", LastName = "Inactive", Username = "inactive-teacher", PasswordHash = "hash", Status = "Inactive" };
+        db.Teachers.Add(teacher);
+        await db.SaveChangesAsync();
+
+        await CreateController(db).UpdateTeacher(
+            new Teacher { TeacherId = teacher.TeacherId, FirstName = "Renamed", LastName = "Inactive", Username = "inactive-teacher", Status = "Active" }, null);
+
+        Assert.Equal("Renamed", teacher.FirstName);
+        Assert.Equal("Inactive", teacher.Status);
+    }
+
+    [Fact]
+    public async Task CreateTeacher_AlwaysStartsActive()
+    {
+        using var db = GetDbContext();
+
+        await CreateController(db).CreateTeacher(
+            new Teacher { FirstName = "New", LastName = "Teacher", Username = "new-teacher", PasswordHash = "password1", Status = "Inactive" });
+
+        Assert.Equal("Active", (await db.Teachers.SingleAsync()).Status);
+    }
+
+    [Fact]
+    public async Task UpdateStudent_KeepsTheStatusTheClassAndTheAdviser()
+    {
+        using var db = GetDbContext();
+        var teacher = new Teacher { FirstName = "Class", LastName = "Teacher", Username = "class-teacher", PasswordHash = "hash", Status = "Active" };
+        db.Teachers.Add(teacher);
+        await db.SaveChangesAsync();
+        var cls = new Class { ClassName = "Grade 5 - Sampaguita", TeacherId = teacher.TeacherId };
+        db.Classes.Add(cls);
+        await db.SaveChangesAsync();
+        var student = new Student
+        {
+            StudentNumber = "K-1", FullName = "Old Name", Username = "kept", PasswordHash = "hash",
+            Status = "Inactive", ClassId = cls.ClassId, AdviserId = teacher.TeacherId, GradeSection = "Grade 5 - Sampaguita"
+        };
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+
+        // What the Edit Student form posts: the number, the name and the username.
+        await CreateController(db).UpdateStudent(
+            new Student { Id = student.Id, StudentNumber = "K-1", FullName = "New Name", Username = "kept" }, null);
+
+        Assert.Equal("New Name", student.FullName);
+        // Saving a corrected name used to set the account Active again and
+        // take the student out of their class.
+        Assert.Equal("Inactive", student.Status);
+        Assert.Equal(cls.ClassId, student.ClassId);
+        Assert.Equal(teacher.TeacherId, student.AdviserId);
+        Assert.Equal("Grade 5 - Sampaguita", student.GradeSection);
+    }
+
+    // ---------- Usage is the websites students opened ----------
+
+    [Fact]
+    public async Task ExportUsageCsv_ListsWebsiteVisitsAndNoApplications()
+    {
+        using var db = GetDbContext();
+        var student = new Student { StudentNumber = "U-1", FullName = "Usage Student", Username = "usage", PasswordHash = "hash" };
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+        db.UsageLogs.Add(new UsageLog { StudentId = student.Id, AppName = "game.exe", PcName = "PC-1", Timestamp = DateTime.UtcNow });
+        db.WebsiteUsageLogs.Add(new WebsiteUsageLog { StudentId = student.Id, Domain = "example.org", Browser = "chrome", Timestamp = DateTime.UtcNow });
+        await db.SaveChangesAsync();
+
+        var file = Assert.IsType<FileContentResult>(await CreateController(db).ExportUsageCsv(null, null));
+        var csv = System.Text.Encoding.UTF8.GetString(file.FileContents);
+
+        Assert.StartsWith("Timestamp,Student Number,Student Name,Website,Browser", csv);
+        Assert.Contains("\"U-1\",\"Usage Student\",\"example.org\",\"chrome\"", csv);
+        Assert.DoesNotContain("game.exe", csv);
+    }
+
+    [Fact]
+    public async Task Reports_CountsWebsitesNotApplications()
+    {
+        using var db = GetDbContext();
+        db.UsageLogs.Add(new UsageLog { AppName = "game.exe", PcName = "PC-1", Timestamp = DateTime.UtcNow });
+        db.WebsiteUsageLogs.AddRange(
+            new WebsiteUsageLog { Domain = "example.org", Browser = "chrome", Timestamp = DateTime.UtcNow },
+            new WebsiteUsageLog { Domain = "school.edu", Browser = "edge", Timestamp = DateTime.UtcNow },
+            new WebsiteUsageLog { Domain = "example.org", Browser = "edge", Timestamp = DateTime.UtcNow });
+        await db.SaveChangesAsync();
+        var controller = CreateController(db);
+
+        Assert.IsType<ViewResult>(await controller.Reports(null, null));
+
+        var top = Assert.IsAssignableFrom<IReadOnlyList<TopWebsite>>((object)controller.ViewBag.TopWebsites);
+        Assert.Equal(new[] { new TopWebsite("example.org", 2), new TopWebsite("school.edu", 1) }, top);
+        Assert.Null((object?)controller.ViewBag.TopApps);
     }
 }

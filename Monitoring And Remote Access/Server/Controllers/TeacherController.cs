@@ -58,34 +58,87 @@ namespace Server.Controllers
         // Global access: every teacher can monitor and manage every student, regardless of class assignment.
         private IQueryable<Student> AccessibleStudents(int teacherId) => _context.Students;
 
-        private IQueryable<Computer> AccessibleComputers(List<int> studentIds)
-        {
-            var studentKeys = studentIds.Select(id => id.ToString()).ToList();
-            return _context.Computers.Where(computer =>
-                (computer.AssignedTo != null && studentKeys.Contains(computer.AssignedTo)) ||
-                _context.LabSessions.Any(session =>
-                    session.ComputerId == computer.ComputerId &&
-                    session.IsActive &&
-                    studentIds.Contains(session.StudentId)));
-        }
-
-        private static string? NormalizeComputerStatus(string? status) => status?.Trim().ToLowerInvariant() switch
-        {
-            "available" => "Available",
-            "assigned" => "Assigned",
-            "in use" => "In Use",
-            "maintenance" => "Maintenance",
-            "online" => "Online",
-            "offline" => "Offline",
-            _ => null
-        };
-
-
         // ---------- Account settings ----------
-        public IActionResult Settings()
+        // The signed-in teacher's own account: their details and their
+        // password. The page changed a password and nothing else, although the
+        // teacher list refuses a teacher's own row and sends them here to
+        // "edit your own account".
+        public async Task<IActionResult> Settings()
         {
             if (!CheckAccess()) return Denied();
-            return View(new PasswordChangeInput());
+            var settings = await BuildAccountSettingsAsync();
+            return settings is null ? Denied() : View(settings);
+        }
+
+        private async Task<AccountSettingsViewModel?> BuildAccountSettingsAsync(PasswordChangeInput? password = null)
+        {
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            if (!teacherId.HasValue) return null;
+            var teacher = await _context.Teachers.AsNoTracking().FirstOrDefaultAsync(t => t.TeacherId == teacherId.Value);
+            if (teacher is null) return null;
+            return new AccountSettingsViewModel
+            {
+                IsTeacher = true,
+                Profile = new AccountProfileInput
+                {
+                    FirstName = teacher.FirstName,
+                    LastName = teacher.LastName,
+                    Username = teacher.Username,
+                    Email = teacher.Email,
+                    ContactNumber = teacher.ContactNumber
+                },
+                Password = password ?? new PasswordChangeInput()
+            };
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateProfile([Bind("FirstName,LastName,Username,Email,ContactNumber")] AccountProfileInput input)
+        {
+            if (!CheckAccess()) return Denied();
+            var teacherId = HttpContext.Session.GetInt32("TeacherId");
+            var teacher = teacherId.HasValue ? await _context.Teachers.FindAsync(teacherId.Value) : null;
+            if (teacher is null) return Denied();
+
+            var firstName = input.FirstName?.Trim() ?? string.Empty;
+            var lastName = input.LastName?.Trim() ?? string.Empty;
+            var username = input.Username?.Trim() ?? string.Empty;
+            var email = input.Email?.Trim() ?? string.Empty;
+            var contactNumber = input.ContactNumber?.Trim() ?? string.Empty;
+            if (firstName.Length == 0 || lastName.Length == 0 || username.Length == 0)
+            {
+                TempData["ErrorMessage"] = "Enter your first name, your last name and a username.";
+                return RedirectToAction(nameof(Settings));
+            }
+            if (firstName.Length > 100 || lastName.Length > 100 || username.Length > 50 || email.Length > 100 || contactNumber.Length > 50)
+            {
+                TempData["ErrorMessage"] = "One of the details is too long. Shorten it and save again.";
+                return RedirectToAction(nameof(Settings));
+            }
+            if (email.Length > 0 && !new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(email))
+            {
+                TempData["ErrorMessage"] = "Enter a valid email address, or leave it empty.";
+                return RedirectToAction(nameof(Settings));
+            }
+            var wanted = username.ToLower();
+            if (await _context.Admins.AnyAsync(account => account.Username.ToLower() == wanted) ||
+                await _context.Teachers.AnyAsync(account => account.TeacherId != teacher.TeacherId && account.Username.ToLower() == wanted) ||
+                await _context.Students.AnyAsync(account => account.Username.ToLower() == wanted || account.StudentNumber.ToLower() == wanted))
+            {
+                TempData["ErrorMessage"] = $"The username '{username}' is already in use.";
+                return RedirectToAction(nameof(Settings));
+            }
+
+            teacher.FirstName = firstName;
+            teacher.LastName = lastName;
+            teacher.Username = username;
+            teacher.Email = email;
+            teacher.ContactNumber = contactNumber;
+            await _context.SaveChangesAsync();
+            // The page header shows the name the session holds.
+            HttpContext.Session.SetString("TeacherName", $"{teacher.FirstName} {teacher.LastName}".Trim());
+            await AuditAsync("UpdateOwnProfile", $"Teacher {teacher.Username} updated their own account details");
+            TempData["Message"] = "Your account details were saved.";
+            return RedirectToAction(nameof(Settings));
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -97,7 +150,8 @@ namespace Server.Controllers
 
             if (!ModelState.IsValid)
             {
-                return View("Settings", input);
+                var invalid = await BuildAccountSettingsAsync(input);
+                return invalid is null ? Denied() : View("Settings", invalid);
             }
 
             var changed = await _authentication.ChangeTeacherPasswordAsync(
@@ -108,7 +162,8 @@ namespace Server.Controllers
             if (!changed)
             {
                 ModelState.AddModelError(nameof(input.CurrentPassword), "The current password is incorrect.");
-                return View("Settings", input);
+                var refused = await BuildAccountSettingsAsync(input);
+                return refused is null ? Denied() : View("Settings", refused);
             }
 
             TempData["Message"] = "Your password was changed successfully.";
@@ -305,7 +360,6 @@ namespace Server.Controllers
             {
                 Students = students,
                 Idle = svc?.IdleStatus,
-                Apps = svc?.ActiveApps,
                 Browsers = svc?.BrowserMonitoringStatus
             });
         }
@@ -438,12 +492,9 @@ namespace Server.Controllers
             var studentIds = await _context.Students
                 .Select(s => s.Id)
                 .ToListAsync();
-            ViewBag.ApplicationUsage = await _context.UsageLogs
-                .Include(log => log.Student)
-                .Where(log => log.StudentId.HasValue && studentIds.Contains(log.StudentId.Value))
-                .OrderByDescending(log => log.Timestamp)
-                .Take(500)
-                .ToListAsync();
+            // Usage is the websites a student opened. The applications in front
+            // of them are no longer recorded, so there is no application history
+            // to list here.
             ViewBag.WebsiteUsage = await _context.WebsiteUsageLogs
                 .Include(log => log.Student)
                 .Where(log => log.StudentId.HasValue && studentIds.Contains(log.StudentId.Value))
@@ -474,6 +525,31 @@ namespace Server.Controllers
             }
 
             return CsvExport.Result("Classroom-Records", csv.ToString());
+        }
+
+        // ---------- Export website activity as CSV ----------
+        // The Website Activity History on Classroom Records, one row per visit.
+        // The page's only export used to be the browser's Print, which gave a
+        // picture of the page rather than data anyone could open in a sheet.
+        public async Task<IActionResult> ExportWebsiteActivityCsv()
+        {
+            if (!CheckAccess()) return Denied();
+            var visits = await _context.WebsiteUsageLogs
+                .AsNoTracking()
+                .Include(log => log.Student)
+                .Where(log => log.StudentId.HasValue)
+                .OrderByDescending(log => log.Timestamp)
+                .Take(5000)
+                .ToListAsync();
+
+            var csv = new System.Text.StringBuilder();
+            csv.AppendLine("Recorded At,Student Number,Student Name,Username,Website,Browser");
+            foreach (var visit in visits)
+            {
+                csv.AppendLine($"{visit.Timestamp:yyyy-MM-dd HH:mm:ss},{Csv(visit.Student?.StudentNumber)},{Csv(visit.Student?.FullName)},{Csv(visit.Student?.Username)},{Csv(visit.Domain)},{Csv(visit.Browser)}");
+            }
+
+            return CsvExport.Result("Website-Activity", csv.ToString());
         }
 
 
@@ -613,9 +689,9 @@ namespace Server.Controllers
                 from ?? DateTime.UtcNow.Date, to ?? DateTime.UtcNow.Date.AddDays(1).AddTicks(-1));
             if (report is null) return NotFound();
             var csv = new System.Text.StringBuilder();
-            csv.AppendLine("Timestamp,Event,Application,Details,Station");
+            csv.AppendLine("Timestamp,Event,Details,Station");
             foreach (var item in report.Timeline)
-                csv.AppendLine($"{item.Timestamp:O},{Csv(item.EventType)},{Csv(item.ApplicationName)},{Csv(item.Details)},{Csv(item.PcName)}");
+                csv.AppendLine($"{item.Timestamp:O},{Csv(item.EventType)},{Csv(item.Details)},{Csv(item.PcName)}");
             return CsvExport.Result($"Student-{report.Student.StudentNumber}-Activity", csv.ToString());
         }
 
@@ -918,74 +994,16 @@ namespace Server.Controllers
                 : RedirectToAction(nameof(Students), new { search });
         }
 
-        // ---------- Computer Management ----------
-        public async Task<IActionResult> Computers()
+        // ---------- Computers ----------
+        // The laboratory's computers have one page, Admin/Computers, which a
+        // teacher shares with the administrator. A teacher used to have a second
+        // one here, "Workstation Profiles": the same machines under another name,
+        // and only the ones a student was assigned to or sitting at. Old links and
+        // bookmarks to it land on the one page.
+        public IActionResult Computers()
         {
             if (!CheckAccess()) return Denied();
-            var teacherId = HttpContext.Session.GetInt32("TeacherId");
-            if (!teacherId.HasValue) return Denied();
-
-            var students = await AccessibleStudents(teacherId.Value)
-                .AsNoTracking()
-                .OrderBy(student => student.LastName)
-                .ThenBy(student => student.FirstName)
-                .ToListAsync();
-            var studentIds = students.Select(student => student.Id).ToList();
-            ViewBag.StudentNames = students.ToDictionary(student => student.Id.ToString(), student => student.FullName);
-            ViewBag.StudentUsernames = students.ToDictionary(student => student.Id.ToString(), student => student.Username);
-            var computers = await AccessibleComputers(studentIds)
-                .AsNoTracking()
-                .OrderBy(computer => computer.LaboratoryStation)
-                .ToListAsync();
-            return View(computers);
-        }
-
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateComputer([Bind("ComputerId,LaboratoryStation,Status")] Computer computer)
-        {
-            if (!CheckAccess()) return Denied();
-            var teacherId = HttpContext.Session.GetInt32("TeacherId");
-            if (!teacherId.HasValue) return Denied();
-
-            var studentIds = await AccessibleStudents(teacherId.Value)
-                .Select(student => student.Id)
-                .ToListAsync();
-            var existing = await AccessibleComputers(studentIds)
-                .FirstOrDefaultAsync(candidate => candidate.ComputerId == computer.ComputerId);
-            if (existing == null) return NotFound();
-
-            var station = computer.LaboratoryStation?.Trim();
-            if (string.IsNullOrWhiteSpace(station) || station.Length > 50)
-            {
-                TempData["ErrorMessage"] = "A workstation name of 50 characters or fewer is required.";
-                return RedirectToAction(nameof(Computers));
-            }
-
-            var status = NormalizeComputerStatus(computer.Status);
-            if (status == null)
-            {
-                TempData["ErrorMessage"] = "Choose a valid workstation status.";
-                return RedirectToAction(nameof(Computers));
-            }
-
-            var previousStatus = existing.Status;
-            existing.LaboratoryStation = station;
-            existing.Status = status;
-            if (!string.Equals(previousStatus, existing.Status, StringComparison.OrdinalIgnoreCase))
-            {
-                _context.ComputerStatusHistories.Add(new ComputerStatusHistory
-                {
-                    ComputerId = existing.ComputerId,
-                    Status = existing.Status,
-                    ChangedByType = "Teacher",
-                    ChangedById = teacherId.Value
-                });
-            }
-
-            await _context.SaveChangesAsync();
-            await AuditAsync("UpdateComputer", $"Updated computer {existing.ComputerId} ({existing.LaboratoryStation})");
-            TempData["Message"] = $"Workstation '{existing.LaboratoryStation}' updated successfully!";
-            return RedirectToAction(nameof(Computers));
+            return RedirectToAction("Computers", "Admin");
         }
 
         // ---------- Notifications ----------
