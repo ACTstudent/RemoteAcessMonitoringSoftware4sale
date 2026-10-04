@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CAMS | Secure classroom computer management</title>
   <meta name="description" content="CAMS is a local-first classroom monitoring and computer laboratory management system for Windows networks.">
-  <meta name="theme-color" content="#071d15">
-  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#f3f2ef" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0e1011" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
   <meta property="og:title" content="CAMS | Classroom computer management">
   <meta property="og:description" content="Deploy, monitor, and manage classroom Windows workstations on your own local network.">
   <meta property="og:type" content="website">
@@ -15,162 +16,235 @@
   <meta name="twitter:card" content="summary">
   <link rel="canonical" href="https://actstudent.github.io/RemoteAcessMonitoringSoftware4sale/">
   <link rel="icon" href="assets/cams-mark.png" type="image/png">
+  <link rel="preload" href="assets/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/styles.css">
   <script src="assets/app.js" defer></script>
 </head>
 <body>
+  <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+    <!-- Icons: Phosphor Icons (regular weight), MIT licensed, https://phosphoricons.com -->
+    <symbol id="i-arrow-right" viewBox="0 0 256 256"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"/></symbol>
+    <symbol id="i-arrow-up-right" viewBox="0 0 256 256"><path d="M200,64V168a8,8,0,0,1-16,0V83.31L69.66,197.66a8,8,0,0,1-11.32-11.32L172.69,72H88a8,8,0,0,1,0-16H192A8,8,0,0,1,200,64Z"/></symbol>
+    <symbol id="i-certificate" viewBox="0 0 256 256"><path d="M128,136a8,8,0,0,1-8,8H72a8,8,0,0,1,0-16h48A8,8,0,0,1,128,136Zm-8-40H72a8,8,0,0,0,0,16h48a8,8,0,0,0,0-16Zm112,65.47V224A8,8,0,0,1,220,231l-24-13.74L172,231A8,8,0,0,1,160,224V200H40a16,16,0,0,1-16-16V56A16,16,0,0,1,40,40H216a16,16,0,0,1,16,16V86.53a51.88,51.88,0,0,1,0,74.94ZM160,184V161.47A52,52,0,0,1,216,76V56H40V184Zm56-12a51.88,51.88,0,0,1-40,0v38.22l16-9.16a8,8,0,0,1,7.94,0l16,9.16Zm16-48a36,36,0,1,0-36,36A36,36,0,0,0,232,124Z"/></symbol>
+    <symbol id="i-chalkboard-teacher" viewBox="0 0 256 256"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H53.39a8,8,0,0,0,7.23-4.57,48,48,0,0,1,86.76,0,8,8,0,0,0,7.23,4.57H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM80,144a24,24,0,1,1,24,24A24,24,0,0,1,80,144Zm136,56H159.43a64.39,64.39,0,0,0-28.83-26.16,40,40,0,1,0-53.2,0A64.39,64.39,0,0,0,48.57,200H40V56H216ZM56,96V80a8,8,0,0,1,8-8H192a8,8,0,0,1,8,8v96a8,8,0,0,1-8,8H176a8,8,0,0,1,0-16h8V88H72v8a8,8,0,0,1-16,0Z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/></symbol>
+    <symbol id="i-clipboard-text" viewBox="0 0 256 256"><path d="M168,152a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,152Zm-8-40H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16Zm56-64V216a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V48A16,16,0,0,1,56,32H92.26a47.92,47.92,0,0,1,71.48,0H200A16,16,0,0,1,216,48ZM96,64h64a32,32,0,0,0-64,0ZM200,48H173.25A47.93,47.93,0,0,1,176,64v8a8,8,0,0,1-8,8H88a8,8,0,0,1-8-8V64a47.93,47.93,0,0,1,2.75-16H56V216H200Z"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 256 256"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></symbol>
+    <symbol id="i-database" viewBox="0 0 256 256"><path d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64ZM69.61,53.08C85.07,44.65,105.81,40,128,40s42.93,4.65,58.39,13.08C200.12,60.57,208,70.38,208,80s-7.88,19.43-21.61,26.92C170.93,115.35,150.19,120,128,120s-42.93-4.65-58.39-13.08C55.88,99.43,48,89.62,48,80S55.88,60.57,69.61,53.08ZM186.39,202.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z"/></symbol>
+    <symbol id="i-download-simple" viewBox="0 0 256 256"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></symbol>
+    <symbol id="i-github-logo" viewBox="0 0 256 256"><path d="M208.31,75.68A59.78,59.78,0,0,0,202.93,28,8,8,0,0,0,196,24a59.75,59.75,0,0,0-48,24H124A59.75,59.75,0,0,0,76,24a8,8,0,0,0-6.93,4,59.78,59.78,0,0,0-5.38,47.68A58.14,58.14,0,0,0,56,104v8a56.06,56.06,0,0,0,48.44,55.47A39.8,39.8,0,0,0,96,192v8H72a24,24,0,0,1-24-24A40,40,0,0,0,8,136a8,8,0,0,0,0,16,24,24,0,0,1,24,24,40,40,0,0,0,40,40H96v16a8,8,0,0,0,16,0V192a24,24,0,0,1,48,0v40a8,8,0,0,0,16,0V192a39.8,39.8,0,0,0-8.44-24.53A56.06,56.06,0,0,0,216,112v-8A58.14,58.14,0,0,0,208.31,75.68ZM200,112a40,40,0,0,1-40,40H112a40,40,0,0,1-40-40v-8a41.74,41.74,0,0,1,6.9-22.48A8,8,0,0,0,80,73.83a43.81,43.81,0,0,1,.79-33.58,43.88,43.88,0,0,1,32.32,20.06A8,8,0,0,0,119.82,64h32.35a8,8,0,0,0,6.74-3.69,43.87,43.87,0,0,1,32.32-20.06A43.81,43.81,0,0,1,192,73.83a8.09,8.09,0,0,0,1,7.65A41.72,41.72,0,0,1,200,104Z"/></symbol>
+    <symbol id="i-lock-key" viewBox="0 0 256 256"><path d="M128,112a28,28,0,0,0-8,54.83V184a8,8,0,0,0,16,0V166.83A28,28,0,0,0,128,112Zm0,40a12,12,0,1,1,12-12A12,12,0,0,1,128,152Zm80-72H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96ZM208,208H48V96H208V208Z"/></symbol>
+    <symbol id="i-lock-simple" viewBox="0 0 256 256"><path d="M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96ZM208,208H48V96H208V208Z"/></symbol>
+    <symbol id="i-megaphone" viewBox="0 0 256 256"><path d="M248,120a48.05,48.05,0,0,0-48-48H160.2c-2.91-.17-53.62-3.74-101.91-44.24A16,16,0,0,0,32,40V200a16,16,0,0,0,26.29,12.25c37.77-31.68,77-40.76,93.71-43.3v31.72A16,16,0,0,0,159.12,214l11,7.33A16,16,0,0,0,194.5,212l11.77-44.36A48.07,48.07,0,0,0,248,120ZM48,199.93V40h0c42.81,35.91,86.63,45,104,47.24v65.48C134.65,155,90.84,164.07,48,199.93Zm131,8,0,.11-11-7.33V168h21.6ZM200,152H168V88h32a32,32,0,1,1,0,64Z"/></symbol>
+    <symbol id="i-monitor" viewBox="0 0 256 256"><path d="M208,40H48A24,24,0,0,0,24,64V176a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V64A24,24,0,0,0,208,40Zm8,136a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V64a8,8,0,0,1,8-8H208a8,8,0,0,1,8,8Zm-48,48a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,224Z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 256 256"><path d="M200,32H160a16,16,0,0,0-16,16V208a16,16,0,0,0,16,16h40a16,16,0,0,0,16-16V48A16,16,0,0,0,200,32Zm0,176H160V48h40ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Zm0,176H56V48H96Z"/></symbol>
+    <symbol id="i-play" viewBox="0 0 256 256"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/></symbol>
+    <symbol id="i-seal-check" viewBox="0 0 256 256"><path d="M225.86,102.82c-3.77-3.94-7.67-8-9.14-11.57-1.36-3.27-1.44-8.69-1.52-13.94-.15-9.76-.31-20.82-8-28.51s-18.75-7.85-28.51-8c-5.25-.08-10.67-.16-13.94-1.52-3.56-1.47-7.63-5.37-11.57-9.14C146.28,23.51,138.44,16,128,16s-18.27,7.51-25.18,14.14c-3.94,3.77-8,7.67-11.57,9.14C88,40.64,82.56,40.72,77.31,40.8c-9.76.15-20.82.31-28.51,8S41,67.55,40.8,77.31c-.08,5.25-.16,10.67-1.52,13.94-1.47,3.56-5.37,7.63-9.14,11.57C23.51,109.72,16,117.56,16,128s7.51,18.27,14.14,25.18c3.77,3.94,7.67,8,9.14,11.57,1.36,3.27,1.44,8.69,1.52,13.94.15,9.76.31,20.82,8,28.51s18.75,7.85,28.51,8c5.25.08,10.67.16,13.94,1.52,3.56,1.47,7.63,5.37,11.57,9.14C109.72,232.49,117.56,240,128,240s18.27-7.51,25.18-14.14c3.94-3.77,8-7.67,11.57-9.14,3.27-1.36,8.69-1.44,13.94-1.52,9.76-.15,20.82-.31,28.51-8s7.85-18.75,8-28.51c.08-5.25.16-10.67,1.52-13.94,1.47-3.56,5.37-7.63,9.14-11.57C232.49,146.28,240,138.44,240,128S232.49,109.73,225.86,102.82Zm-11.55,39.29c-4.79,5-9.75,10.17-12.38,16.52-2.52,6.1-2.63,13.07-2.73,19.82-.1,7-.21,14.33-3.32,17.43s-10.39,3.22-17.43,3.32c-6.75.1-13.72.21-19.82,2.73-6.35,2.63-11.52,7.59-16.52,12.38S132,224,128,224s-9.15-4.92-14.11-9.69-10.17-9.75-16.52-12.38c-6.1-2.52-13.07-2.63-19.82-2.73-7-.1-14.33-.21-17.43-3.32s-3.22-10.39-3.32-17.43c-.1-6.75-.21-13.72-2.73-19.82-2.63-6.35-7.59-11.52-12.38-16.52S32,132,32,128s4.92-9.15,9.69-14.11,9.75-10.17,12.38-16.52c2.52-6.1,2.63-13.07,2.73-19.82.1-7,.21-14.33,3.32-17.43S70.51,56.9,77.55,56.8c6.75-.1,13.72-.21,19.82-2.73,6.35-2.63,11.52-7.59,16.52-12.38S124,32,128,32s9.15,4.92,14.11,9.69,10.17,9.75,16.52,12.38c6.1,2.52,13.07,2.63,19.82,2.73,7,.1,14.33.21,17.43,3.32s3.22,10.39,3.32,17.43c.1,6.75.21,13.72,2.73,19.82,2.63,6.35,7.59,11.52,12.38,16.52S224,124,224,128,219.08,137.15,214.31,142.11ZM173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34Z"/></symbol>
+    <symbol id="i-shield-check" viewBox="0 0 256 256"><path d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z"/></symbol>
+    <symbol id="i-student" viewBox="0 0 256 256"><path d="M226.53,56.41l-96-32a8,8,0,0,0-5.06,0l-96,32A8,8,0,0,0,24,64v80a8,8,0,0,0,16,0V75.1L73.59,86.29a64,64,0,0,0,20.65,88.05c-18,7.06-33.56,19.83-44.94,37.29a8,8,0,1,0,13.4,8.74C77.77,197.25,101.57,184,128,184s50.23,13.25,65.3,36.37a8,8,0,0,0,13.4-8.74c-11.38-17.46-27-30.23-44.94-37.29a64,64,0,0,0,20.65-88l44.12-14.7a8,8,0,0,0,0-15.18ZM176,120A48,48,0,1,1,89.35,91.55l36.12,12a8,8,0,0,0,5.06,0l36.12-12A47.89,47.89,0,0,1,176,120ZM128,87.57,57.3,64,128,40.43,198.7,64Z"/></symbol>
+    <symbol id="i-users-three" viewBox="0 0 256 256"><path d="M244.8,150.4a8,8,0,0,1-11.2-1.6A51.6,51.6,0,0,0,192,128a8,8,0,0,1-7.37-4.89,8,8,0,0,1,0-6.22A8,8,0,0,1,192,112a24,24,0,1,0-23.24-30,8,8,0,1,1-15.5-4A40,40,0,1,1,219,117.51a67.94,67.94,0,0,1,27.43,21.68A8,8,0,0,1,244.8,150.4ZM190.92,212a8,8,0,1,1-13.84,8,57,57,0,0,0-98.16,0,8,8,0,1,1-13.84-8,72.06,72.06,0,0,1,33.74-29.92,48,48,0,1,1,58.36,0A72.06,72.06,0,0,1,190.92,212ZM128,176a32,32,0,1,0-32-32A32,32,0,0,0,128,176ZM72,120a8,8,0,0,0-8-8A24,24,0,1,1,87.24,82a8,8,0,1,0,15.5-4A40,40,0,1,0,37,117.51,67.94,67.94,0,0,0,9.6,139.19a8,8,0,1,0,12.8,9.61A51.6,51.6,0,0,1,64,128,8,8,0,0,0,72,120Z"/></symbol>
+    <symbol id="i-warning" viewBox="0 0 256 256"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></symbol>
+    <symbol id="i-windows-logo" viewBox="0 0 256 256"><path d="M208,136H128a8,8,0,0,0-8,8v57.45a8,8,0,0,0,6.57,7.88l80,14.54A7.61,7.61,0,0,0,208,224a8,8,0,0,0,8-8V144A8,8,0,0,0,208,136Zm-8,70.41-64-11.63V152h64ZM96,136H32a8,8,0,0,0-8,8v40a8,8,0,0,0,6.57,7.87l64,11.64a8.54,8.54,0,0,0,1.43.13,8,8,0,0,0,8-8V144A8,8,0,0,0,96,136Zm-8,50.05-48-8.73V152H88ZM213.13,33.86a8,8,0,0,0-6.56-1.73l-80,14.55A8,8,0,0,0,120,54.55V112a8,8,0,0,0,8,8h80a8,8,0,0,0,8-8V40A8,8,0,0,0,213.13,33.86ZM200,104H136V61.22l64-11.63ZM101.13,54.22a8,8,0,0,0-6.56-1.73l-64,11.64A8,8,0,0,0,24,72v40a8,8,0,0,0,8,8H96a8,8,0,0,0,8-8V60.36A8,8,0,0,0,101.13,54.22ZM88,104H40V78.68L88,70Z"/></symbol>
+    <symbol id="i-wrench" viewBox="0 0 256 256"><path d="M226.76,69a8,8,0,0,0-12.84-2.88l-40.3,37.19-17.23-3.7-3.7-17.23,37.19-40.3A8,8,0,0,0,187,29.24,72,72,0,0,0,88,96,72.34,72.34,0,0,0,94,124.94L33.79,177c-.15.12-.29.26-.43.39a32,32,0,0,0,45.26,45.26c.13-.13.27-.28.39-.42L131.06,162A72,72,0,0,0,232,96,71.56,71.56,0,0,0,226.76,69ZM160,152a56.14,56.14,0,0,1-27.07-7,8,8,0,0,0-9.92,1.77L67.11,211.51a16,16,0,0,1-22.62-22.62L109.18,133a8,8,0,0,0,1.77-9.93,56,56,0,0,1,58.36-82.31l-31.2,33.81a8,8,0,0,0-1.94,7.1L141.83,108a8,8,0,0,0,6.14,6.14l26.35,5.66a8,8,0,0,0,7.1-1.94l33.81-31.2A56.06,56.06,0,0,1,160,152Z"/></symbol>
+    <symbol id="i-x" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></symbol>
+    <!-- Low-fidelity wireframes of CAMS screens, drawn for this page. Styled by the .wf-* rules in styles.css. -->
+    <symbol id="wf-dashboard" viewBox="0 0 400 260"><rect x="0.75" y="0.75" width="398.5" height="258.5" rx="10" class="wf-bg wf-line"/><path d="M10.75 0.75 H84 V259.25 H10.75 A10 10 0 0 1 0.75 249.25 V10.75 A10 10 0 0 1 10.75 0.75 Z" class="wf-panel"/><line x1="84" y1="0.75" x2="84" y2="259.25" class="wf-line"/><circle cx="42" cy="22" r="9" class="wf-line wf-bg"/><rect x="24" y="38" width="36" height="3" rx="1.5" class="wf-ink"/><rect x="28" y="45" width="28" height="4" rx="2.0" class="wf-bar"/><rect x="8" y="57" width="68" height="14" rx="4" class="wf-acc"/><rect x="26" y="62" width="34" height="4" rx="2.0" class="wf-on-acc"/><rect x="14" y="61" width="6" height="6" rx="1.5" class="wf-on-acc"/><rect x="14" y="80" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="81" width="37" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="99" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="100" width="30" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="118" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="119" width="37" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="137" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="138" width="30" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="156" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="157" width="37" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="175" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="176" width="30" height="4" rx="2.0" class="wf-bar"/><line x1="84" y1="24" x2="399.25" y2="24" class="wf-line"/><rect x="98" y="10" width="10" height="2" rx="1.0" class="wf-ink"/><rect x="98" y="14" width="10" height="2" rx="1.0" class="wf-ink"/><rect x="300" y="9" width="36" height="3" rx="1.5" class="wf-ink"/><rect x="306" y="15" width="24" height="4" rx="2.0" class="wf-bar"/><circle cx="350" cy="12" r="6" class="wf-line wf-bg"/><rect x="362" y="6" width="28" height="12" rx="6" class="wf-line wf-bg"/><text x="98" y="44" class="wf-tb wf-h">Teacher Dashboard</text><rect x="98" y="50" width="120" height="4" rx="2.0" class="wf-bar"/><rect x="98" y="60" width="92" height="40" rx="6" class="wf-panel wf-line"/><text x="106" y="73" class="wf-t">Running sessions</text><text x="106" y="92" class="wf-tb wf-big">0</text><circle cx="177" cy="73" r="6" class="wf-line wf-bg"/><rect x="196" y="60" width="92" height="40" rx="6" class="wf-panel wf-line"/><text x="204" y="73" class="wf-t">Students online</text><text x="204" y="92" class="wf-tb wf-big">0</text><circle cx="275" cy="73" r="6" class="wf-line wf-bg"/><rect x="294" y="60" width="92" height="40" rx="6" class="wf-panel wf-line"/><text x="302" y="73" class="wf-t">System status</text><text x="302" y="92" class="wf-tb wf-big">Active</text><circle cx="373" cy="73" r="6" class="wf-line wf-bg"/><text x="98" y="118" class="wf-tb">Laboratory operations</text><rect x="98" y="126" width="92" height="58" rx="6" class="wf-panel wf-line"/><rect x="105" y="133" width="14" height="14" rx="3" class="wf-bg wf-line"/><text x="124" y="140" class="wf-t">Live monitoring</text><rect x="124" y="144" width="40" height="4" rx="2.0" class="wf-bar"/><rect x="105" y="164" width="78" height="12" rx="6" class="wf-acc"/><rect x="196" y="126" width="92" height="58" rx="6" class="wf-panel wf-line"/><rect x="203" y="133" width="14" height="14" rx="3" class="wf-bg wf-line"/><text x="222" y="140" class="wf-t">Session control</text><rect x="222" y="144" width="40" height="4" rx="2.0" class="wf-bar"/><rect x="203" y="164" width="78" height="12" rx="6" class="wf-ink"/><rect x="294" y="126" width="92" height="58" rx="6" class="wf-panel wf-line"/><rect x="301" y="133" width="14" height="14" rx="3" class="wf-bg wf-line"/><text x="320" y="140" class="wf-t">Student profiles</text><rect x="320" y="144" width="40" height="4" rx="2.0" class="wf-bar"/><rect x="301" y="164" width="78" height="12" rx="6" class="wf-ink"/><rect x="98" y="190" width="92" height="58" rx="6" class="wf-panel wf-line"/><rect x="105" y="197" width="14" height="14" rx="3" class="wf-bg wf-line"/><text x="124" y="204" class="wf-t">Workstation grid</text><rect x="124" y="208" width="40" height="4" rx="2.0" class="wf-bar"/><rect x="105" y="228" width="78" height="12" rx="6" class="wf-ink"/><rect x="196" y="190" width="92" height="58" rx="6" class="wf-panel wf-line"/><rect x="203" y="197" width="14" height="14" rx="3" class="wf-bg wf-line"/><text x="222" y="204" class="wf-t">Restrictions</text><rect x="222" y="208" width="40" height="4" rx="2.0" class="wf-bar"/><rect x="203" y="228" width="78" height="12" rx="6" class="wf-ink"/><rect x="294" y="190" width="92" height="58" rx="6" class="wf-panel wf-line"/><rect x="301" y="197" width="14" height="14" rx="3" class="wf-bg wf-line"/><text x="320" y="204" class="wf-t">Records</text><rect x="320" y="208" width="40" height="4" rx="2.0" class="wf-bar"/><rect x="301" y="228" width="78" height="12" rx="6" class="wf-ink"/></symbol>
+    <symbol id="wf-monitoring" viewBox="0 0 400 260"><rect x="0.75" y="0.75" width="398.5" height="258.5" rx="10" class="wf-bg wf-line"/><path d="M10.75 0.75 H84 V259.25 H10.75 A10 10 0 0 1 0.75 249.25 V10.75 A10 10 0 0 1 10.75 0.75 Z" class="wf-panel"/><line x1="84" y1="0.75" x2="84" y2="259.25" class="wf-line"/><circle cx="42" cy="22" r="9" class="wf-line wf-bg"/><rect x="24" y="38" width="36" height="3" rx="1.5" class="wf-ink"/><rect x="28" y="45" width="28" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="61" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="62" width="30" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="80" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="81" width="37" height="4" rx="2.0" class="wf-bar"/><rect x="8" y="95" width="68" height="14" rx="4" class="wf-acc"/><rect x="26" y="100" width="34" height="4" rx="2.0" class="wf-on-acc"/><rect x="14" y="99" width="6" height="6" rx="1.5" class="wf-on-acc"/><rect x="14" y="118" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="119" width="37" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="137" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="138" width="30" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="156" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="157" width="37" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="175" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="176" width="30" height="4" rx="2.0" class="wf-bar"/><line x1="84" y1="24" x2="399.25" y2="24" class="wf-line"/><rect x="98" y="10" width="10" height="2" rx="1.0" class="wf-ink"/><rect x="98" y="14" width="10" height="2" rx="1.0" class="wf-ink"/><rect x="300" y="9" width="36" height="3" rx="1.5" class="wf-ink"/><rect x="306" y="15" width="24" height="4" rx="2.0" class="wf-bar"/><circle cx="350" cy="12" r="6" class="wf-line wf-bg"/><rect x="362" y="6" width="28" height="12" rx="6" class="wf-line wf-bg"/><text x="98" y="44" class="wf-tb wf-h">Laboratory Control Panel</text><rect x="98" y="50" width="110" height="4" rx="2.0" class="wf-bar"/><rect x="98" y="58" width="67" height="26" rx="6" class="wf-panel wf-line"/><text x="104" y="69" class="wf-t">Units online</text><rect x="104" y="75" width="16" height="4" rx="2.0" class="wf-ink"/><rect x="171" y="58" width="67" height="26" rx="6" class="wf-panel wf-line"/><text x="177" y="69" class="wf-t">Active</text><rect x="177" y="75" width="16" height="4" rx="2.0" class="wf-ink"/><rect x="244" y="58" width="67" height="26" rx="6" class="wf-panel wf-line"/><text x="250" y="69" class="wf-t">Idle</text><rect x="250" y="75" width="16" height="4" rx="2.0" class="wf-ink"/><rect x="317" y="58" width="67" height="26" rx="6" class="wf-panel wf-line"/><text x="323" y="69" class="wf-t">Alerts</text><rect x="323" y="75" width="16" height="4" rx="2.0" class="wf-ink"/><rect x="98" y="92" width="288" height="160" rx="6" class="wf-bg wf-line"/><text x="106" y="106" class="wf-tb">Live station monitor</text><rect x="106" y="112" width="70" height="13" rx="6.5" class="wf-panel wf-line"/><rect x="182" y="111.5" width="42" height="14" rx="7" class="wf-line wf-bg"/><text x="203.0" y="121.5" class="wf-t" text-anchor="middle">Warn all</text><rect x="229" y="111.5" width="46" height="14" rx="7" class="wf-line wf-bg"/><text x="252.0" y="121.5" class="wf-t" text-anchor="middle">Broadcast</text><rect x="280" y="111.5" width="52" height="14" rx="7" class="wf-line wf-bg"/><text x="306.0" y="121.5" class="wf-t" text-anchor="middle">Lock visible</text><rect x="337" y="111.5" width="40" height="14" rx="7" class="wf-line wf-bg"/><text x="357.0" y="121.5" class="wf-t" text-anchor="middle">Log out</text><rect x="106" y="132" width="64" height="52" rx="5" class="wf-panel wf-line"/><rect x="111" y="137" width="54" height="30" rx="3" class="wf-fill"/><path d="M111 167 L131 149 L144 160 L152 154 L165 167" class="wf-stroke"/><text x="111" y="178" class="wf-t">PC-01</text><circle cx="162" cy="175" r="3" class="wf-acc"/><rect x="176" y="132" width="64" height="52" rx="5" class="wf-panel wf-acc-line"/><rect x="181" y="137" width="54" height="30" rx="3" class="wf-fill"/><path d="M181 167 L201 149 L214 160 L222 154 L235 167" class="wf-stroke"/><text x="181" y="178" class="wf-t">PC-02</text><circle cx="232" cy="175" r="3" class="wf-acc"/><rect x="246" y="132" width="64" height="52" rx="5" class="wf-panel wf-line"/><rect x="251" y="137" width="54" height="30" rx="3" class="wf-fill"/><path d="M251 167 L271 149 L284 160 L292 154 L305 167" class="wf-stroke"/><text x="251" y="178" class="wf-t">PC-03</text><circle cx="302" cy="175" r="3" class="wf-bar"/><rect x="316" y="132" width="64" height="52" rx="5" class="wf-panel wf-line"/><rect x="321" y="137" width="54" height="30" rx="3" class="wf-fill"/><path d="M321 167 L341 149 L354 160 L362 154 L375 167" class="wf-stroke"/><text x="321" y="178" class="wf-t">PC-04</text><circle cx="372" cy="175" r="3" class="wf-acc"/><rect x="106" y="190" width="64" height="52" rx="5" class="wf-panel wf-line"/><rect x="111" y="195" width="54" height="30" rx="3" class="wf-fill"/><path d="M111 225 L131 207 L144 218 L152 212 L165 225" class="wf-stroke"/><text x="111" y="236" class="wf-t">PC-05</text><circle cx="162" cy="233" r="3" class="wf-acc"/><rect x="176" y="190" width="64" height="52" rx="5" class="wf-panel wf-line"/><rect x="181" y="195" width="54" height="30" rx="3" class="wf-fill"/><path d="M181 225 L201 207 L214 218 L222 212 L235 225" class="wf-stroke"/><text x="181" y="236" class="wf-t">PC-06</text><circle cx="232" cy="233" r="3" class="wf-bar"/><rect x="246" y="190" width="64" height="52" rx="5" class="wf-panel wf-line"/><rect x="251" y="195" width="54" height="30" rx="3" class="wf-fill"/><path d="M251 225 L271 207 L284 218 L292 212 L305 225" class="wf-stroke"/><text x="251" y="236" class="wf-t">PC-07</text><circle cx="302" cy="233" r="3" class="wf-acc"/><rect x="316" y="190" width="64" height="52" rx="5" class="wf-panel wf-line"/><rect x="321" y="195" width="54" height="30" rx="3" class="wf-fill"/><path d="M321 225 L341 207 L354 218 L362 212 L375 225" class="wf-stroke"/><text x="321" y="236" class="wf-t">PC-08</text><circle cx="372" cy="233" r="3" class="wf-acc"/></symbol>
+    <symbol id="wf-sessions" viewBox="0 0 400 260"><rect x="0.75" y="0.75" width="398.5" height="258.5" rx="10" class="wf-bg wf-line"/><path d="M10.75 0.75 H84 V259.25 H10.75 A10 10 0 0 1 0.75 249.25 V10.75 A10 10 0 0 1 10.75 0.75 Z" class="wf-panel"/><line x1="84" y1="0.75" x2="84" y2="259.25" class="wf-line"/><circle cx="42" cy="22" r="9" class="wf-line wf-bg"/><rect x="24" y="38" width="36" height="3" rx="1.5" class="wf-ink"/><rect x="28" y="45" width="28" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="61" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="62" width="30" height="4" rx="2.0" class="wf-bar"/><rect x="8" y="76" width="68" height="14" rx="4" class="wf-acc"/><rect x="26" y="81" width="34" height="4" rx="2.0" class="wf-on-acc"/><rect x="14" y="80" width="6" height="6" rx="1.5" class="wf-on-acc"/><rect x="14" y="99" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="100" width="30" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="118" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="119" width="37" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="137" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="138" width="30" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="156" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="157" width="37" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="175" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="176" width="30" height="4" rx="2.0" class="wf-bar"/><line x1="84" y1="24" x2="399.25" y2="24" class="wf-line"/><rect x="98" y="10" width="10" height="2" rx="1.0" class="wf-ink"/><rect x="98" y="14" width="10" height="2" rx="1.0" class="wf-ink"/><rect x="300" y="9" width="36" height="3" rx="1.5" class="wf-ink"/><rect x="306" y="15" width="24" height="4" rx="2.0" class="wf-bar"/><circle cx="350" cy="12" r="6" class="wf-line wf-bg"/><rect x="362" y="6" width="28" height="12" rx="6" class="wf-line wf-bg"/><text x="98" y="44" class="wf-tb wf-h">Session Control</text><rect x="98" y="50" width="150" height="4" rx="2.0" class="wf-bar"/><rect x="98" y="58" width="66" height="14" rx="7" class="wf-acc"/><text x="131.0" y="68" class="wf-t wf-on-acc-t" text-anchor="middle">Resume all</text><rect x="170" y="58" width="56" height="14" rx="7" class="wf-line wf-bg"/><text x="198.0" y="68" class="wf-t" text-anchor="middle">Pause all</text><rect x="232" y="58" width="76" height="14" rx="7" class="wf-line wf-bg"/><text x="270.0" y="68" class="wf-t" text-anchor="middle">End &amp; restart</text><rect x="98" y="80" width="92" height="40" rx="6" class="wf-panel wf-line"/><text x="106" y="93" class="wf-t">Running</text><text x="106" y="112" class="wf-tb wf-big">0</text><circle cx="177" cy="93" r="6" class="wf-line wf-bg"/><rect x="196" y="80" width="92" height="40" rx="6" class="wf-panel wf-line"/><text x="204" y="93" class="wf-t">Paused</text><text x="204" y="112" class="wf-tb wf-big">0</text><circle cx="275" cy="93" r="6" class="wf-line wf-bg"/><rect x="294" y="80" width="92" height="40" rx="6" class="wf-panel wf-line"/><text x="302" y="93" class="wf-t">Command logs</text><text x="302" y="112" class="wf-tb wf-big">0</text><circle cx="373" cy="93" r="6" class="wf-line wf-bg"/><rect x="98" y="128" width="288" height="124" rx="6" class="wf-bg wf-line"/><rect x="106" y="136" width="110" height="12" rx="6" class="wf-panel wf-line"/><rect x="320" y="136" width="58" height="12" rx="6" class="wf-ink"/><rect x="106" y="154" width="272" height="14" rx="3" class="wf-panel"/><text x="110" y="164" class="wf-t">Session</text><text x="160" y="164" class="wf-t">Student</text><text x="210" y="164" class="wf-t">Station</text><text x="258" y="164" class="wf-t">Started</text><text x="306" y="164" class="wf-t">Status</text><text x="350" y="164" class="wf-t"></text><rect x="110" y="180" width="30" height="4" rx="2.0" class="wf-bar"/><rect x="160" y="180" width="36" height="4" rx="2.0" class="wf-bar"/><rect x="210" y="180" width="26" height="4" rx="2.0" class="wf-bar"/><rect x="258" y="180" width="32" height="4" rx="2.0" class="wf-bar"/><rect x="306" y="177" width="28" height="10" rx="5" class="wf-acc"/><rect x="350" y="180" width="18" height="4" rx="2.0" class="wf-ink"/><line x1="106" y1="189" x2="378" y2="189" class="wf-line"/><rect x="110" y="196" width="30" height="4" rx="2.0" class="wf-bar"/><rect x="160" y="196" width="36" height="4" rx="2.0" class="wf-bar"/><rect x="210" y="196" width="26" height="4" rx="2.0" class="wf-bar"/><rect x="258" y="196" width="32" height="4" rx="2.0" class="wf-bar"/><rect x="306" y="193" width="28" height="10" rx="5" class="wf-acc"/><rect x="350" y="196" width="18" height="4" rx="2.0" class="wf-ink"/><line x1="106" y1="205" x2="378" y2="205" class="wf-line"/><rect x="110" y="212" width="30" height="4" rx="2.0" class="wf-bar"/><rect x="160" y="212" width="36" height="4" rx="2.0" class="wf-bar"/><rect x="210" y="212" width="26" height="4" rx="2.0" class="wf-bar"/><rect x="258" y="212" width="32" height="4" rx="2.0" class="wf-bar"/><rect x="306" y="209" width="28" height="10" rx="5" class="wf-fill"/><rect x="350" y="212" width="18" height="4" rx="2.0" class="wf-ink"/><line x1="106" y1="221" x2="378" y2="221" class="wf-line"/><rect x="110" y="228" width="30" height="4" rx="2.0" class="wf-bar"/><rect x="160" y="228" width="36" height="4" rx="2.0" class="wf-bar"/><rect x="210" y="228" width="26" height="4" rx="2.0" class="wf-bar"/><rect x="258" y="228" width="32" height="4" rx="2.0" class="wf-bar"/><rect x="306" y="225" width="28" height="10" rx="5" class="wf-fill"/><rect x="350" y="228" width="18" height="4" rx="2.0" class="wf-ink"/><line x1="106" y1="237" x2="378" y2="237" class="wf-line"/></symbol>
+    <symbol id="wf-deployment" viewBox="0 0 400 260"><rect x="0.75" y="0.75" width="398.5" height="258.5" rx="10" class="wf-bg wf-line"/><path d="M10.75 0.75 H84 V259.25 H10.75 A10 10 0 0 1 0.75 249.25 V10.75 A10 10 0 0 1 10.75 0.75 Z" class="wf-panel"/><line x1="84" y1="0.75" x2="84" y2="259.25" class="wf-line"/><circle cx="42" cy="22" r="9" class="wf-line wf-bg"/><rect x="24" y="38" width="36" height="3" rx="1.5" class="wf-ink"/><rect x="28" y="45" width="28" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="61" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="62" width="30" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="80" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="81" width="37" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="99" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="100" width="30" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="118" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="119" width="37" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="137" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="138" width="30" height="4" rx="2.0" class="wf-bar"/><rect x="8" y="152" width="68" height="14" rx="4" class="wf-acc"/><rect x="26" y="157" width="34" height="4" rx="2.0" class="wf-on-acc"/><rect x="14" y="156" width="6" height="6" rx="1.5" class="wf-on-acc"/><rect x="14" y="175" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="176" width="30" height="4" rx="2.0" class="wf-bar"/><line x1="84" y1="24" x2="399.25" y2="24" class="wf-line"/><rect x="98" y="10" width="10" height="2" rx="1.0" class="wf-ink"/><rect x="98" y="14" width="10" height="2" rx="1.0" class="wf-ink"/><rect x="300" y="9" width="36" height="3" rx="1.5" class="wf-ink"/><rect x="306" y="15" width="24" height="4" rx="2.0" class="wf-bar"/><circle cx="350" cy="12" r="6" class="wf-line wf-bg"/><rect x="362" y="6" width="28" height="12" rx="6" class="wf-line wf-bg"/><text x="98" y="44" class="wf-tb wf-h">Deployment Hub</text><rect x="98" y="50" width="130" height="4" rx="2.0" class="wf-bar"/><rect x="98" y="58" width="288" height="18" rx="5" class="wf-warn"/><rect x="105" y="63" width="8" height="8" rx="2" class="wf-ink"/><rect x="118" y="65" width="160" height="4" rx="2.0" class="wf-ink"/><rect x="98" y="84" width="168" height="168" rx="6" class="wf-panel wf-line"/><text x="106" y="98" class="wf-tb">Client package</text><text x="106" y="114" class="wf-t">Product</text><rect x="186" y="110" width="50" height="4" rx="2.0" class="wf-ink"/><line x1="106" y1="121" x2="258" y2="121" class="wf-line"/><text x="106" y="134" class="wf-t">Client version</text><rect x="186" y="130" width="50" height="4" rx="2.0" class="wf-ink"/><line x1="106" y1="141" x2="258" y2="141" class="wf-line"/><text x="106" y="154" class="wf-t">Server version</text><rect x="186" y="150" width="50" height="4" rx="2.0" class="wf-ink"/><line x1="106" y1="161" x2="258" y2="161" class="wf-line"/><text x="106" y="174" class="wf-t">Installer size</text><rect x="186" y="170" width="50" height="4" rx="2.0" class="wf-ink"/><line x1="106" y1="181" x2="258" y2="181" class="wf-line"/><text x="106" y="194" class="wf-t">SHA-256</text><rect x="186" y="190" width="70" height="4" rx="2.0" class="wf-mono"/><line x1="106" y1="201" x2="258" y2="201" class="wf-line"/><rect x="106" y="222" width="44" height="14" rx="7" class="wf-acc"/><text x="128.0" y="232" class="wf-t wf-on-acc-t" text-anchor="middle">Installer</text><rect x="155" y="222" width="44" height="14" rx="7" class="wf-line wf-bg"/><text x="177.0" y="232" class="wf-t" text-anchor="middle">Manifest</text><rect x="204" y="222" width="52" height="14" rx="7" class="wf-line wf-bg"/><text x="230.0" y="232" class="wf-t" text-anchor="middle">Root CER</text><rect x="272" y="84" width="114" height="168" rx="6" class="wf-panel wf-line"/><text x="280" y="98" class="wf-tb">HTTPS certificate</text><rect x="280" y="104" width="52" height="11" rx="5.5" class="wf-bg wf-line"/><text x="280" y="132" class="wf-t">Subject</text><rect x="280" y="138" width="60" height="4" rx="2.0" class="wf-ink"/><text x="280" y="160" class="wf-t">Thumbprint</text><rect x="280" y="166" width="92" height="4" rx="2.0" class="wf-mono"/><text x="280" y="188" class="wf-t">SHA-256</text><rect x="280" y="194" width="92" height="4" rx="2.0" class="wf-mono"/><text x="280" y="216" class="wf-t">Expires</text><rect x="280" y="222" width="60" height="4" rx="2.0" class="wf-ink"/></symbol>
+    <symbol id="wf-signin" viewBox="0 0 400 260"><rect x="0.75" y="0.75" width="398.5" height="258.5" rx="10" class="wf-bg wf-line"/><rect x="0.75" y="0.75" width="398.5" height="258.5" rx="10" class="wf-panel"/><rect x="130" y="22" width="140" height="216" rx="10" class="wf-bg wf-line"/><path d="M140 22.5 H260 A9.5 9.5 0 0 1 269.5 32 V92 H130.5 V32 A9.5 9.5 0 0 1 140 22.5 Z" class="wf-panel"/><line x1="130.5" y1="92" x2="269.5" y2="92" class="wf-line"/><circle cx="200" cy="50" r="15" class="wf-bg wf-line"/><circle cx="200" cy="50" r="8" class="wf-fill"/><text x="200" y="78" class="wf-tb" text-anchor="middle">CAMS Portal</text><rect x="170" y="84" width="60" height="4" rx="2.0" class="wf-bar"/><text x="142" y="108" class="wf-t">Username</text><rect x="142" y="113" width="116" height="18" rx="5" class="wf-bg wf-acc-line"/><rect x="149" y="120" width="70" height="4" rx="2.0" class="wf-bar"/><text x="142" y="146" class="wf-t">Password</text><rect x="142" y="151" width="116" height="18" rx="5" class="wf-bg wf-line"/><rect x="149" y="158" width="50" height="4" rx="2.0" class="wf-bar"/><circle cx="249" cy="160" r="3" class="wf-bar"/><rect x="142" y="180" width="116" height="18" rx="9" class="wf-acc"/><text x="200" y="192" class="wf-t wf-on-acc-t" text-anchor="middle">Sign in</text><rect x="152" y="210" width="96" height="4" rx="2.0" class="wf-bar"/><rect x="170" y="218" width="60" height="4" rx="2.0" class="wf-bar"/><rect x="160" y="246" width="80" height="4" rx="2.0" class="wf-bar"/></symbol>
+    <symbol id="wf-utilization" viewBox="0 0 400 260"><rect x="0.75" y="0.75" width="398.5" height="258.5" rx="10" class="wf-bg wf-line"/><path d="M10.75 0.75 H84 V259.25 H10.75 A10 10 0 0 1 0.75 249.25 V10.75 A10 10 0 0 1 10.75 0.75 Z" class="wf-panel"/><line x1="84" y1="0.75" x2="84" y2="259.25" class="wf-line"/><circle cx="42" cy="22" r="9" class="wf-line wf-bg"/><rect x="24" y="38" width="36" height="3" rx="1.5" class="wf-ink"/><rect x="28" y="45" width="28" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="61" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="62" width="30" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="80" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="81" width="37" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="99" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="100" width="30" height="4" rx="2.0" class="wf-bar"/><rect x="8" y="114" width="68" height="14" rx="4" class="wf-acc"/><rect x="26" y="119" width="34" height="4" rx="2.0" class="wf-on-acc"/><rect x="14" y="118" width="6" height="6" rx="1.5" class="wf-on-acc"/><rect x="14" y="137" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="138" width="30" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="156" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="157" width="37" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="175" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="176" width="30" height="4" rx="2.0" class="wf-bar"/><line x1="84" y1="24" x2="399.25" y2="24" class="wf-line"/><rect x="98" y="10" width="10" height="2" rx="1.0" class="wf-ink"/><rect x="98" y="14" width="10" height="2" rx="1.0" class="wf-ink"/><rect x="300" y="9" width="36" height="3" rx="1.5" class="wf-ink"/><rect x="306" y="15" width="24" height="4" rx="2.0" class="wf-bar"/><circle cx="350" cy="12" r="6" class="wf-line wf-bg"/><rect x="362" y="6" width="28" height="12" rx="6" class="wf-line wf-bg"/><text x="98" y="44" class="wf-tb wf-h">Lab Utilization</text><rect x="98" y="50" width="170" height="4" rx="2.0" class="wf-bar"/><text x="98" y="66" class="wf-t">From</text><rect x="98" y="70" width="50" height="13" rx="4" class="wf-bg wf-line"/><text x="154" y="66" class="wf-t">To</text><rect x="154" y="70" width="50" height="13" rx="4" class="wf-bg wf-line"/><text x="210" y="66" class="wf-t">Station</text><rect x="210" y="70" width="62" height="13" rx="4" class="wf-bg wf-line"/><text x="278" y="66" class="wf-t">Class</text><rect x="278" y="70" width="50" height="13" rx="4" class="wf-bg wf-line"/><rect x="340" y="70" width="46" height="13" rx="6.5" class="wf-acc"/><text x="363" y="79.5" class="wf-t wf-on-acc-t" text-anchor="middle">Apply</text><rect x="98" y="90" width="67" height="34" rx="6" class="wf-panel wf-line"/><text x="104" y="102" class="wf-t">Utilization</text><rect x="104" y="109" width="28" height="6" rx="3.0" class="wf-ink"/><rect x="171" y="90" width="67" height="34" rx="6" class="wf-panel wf-line"/><text x="177" y="102" class="wf-t">Active time</text><rect x="177" y="109" width="28" height="6" rx="3.0" class="wf-ink"/><rect x="244" y="90" width="67" height="34" rx="6" class="wf-panel wf-line"/><text x="250" y="102" class="wf-t">Idle share</text><rect x="250" y="109" width="28" height="6" rx="3.0" class="wf-ink"/><rect x="317" y="90" width="67" height="34" rx="6" class="wf-panel wf-line"/><text x="323" y="102" class="wf-t">Coverage</text><rect x="323" y="109" width="28" height="6" rx="3.0" class="wf-ink"/><rect x="98" y="132" width="186" height="120" rx="6" class="wf-panel wf-line"/><text x="106" y="146" class="wf-tb">Workstation utilization</text><rect x="110" y="188" width="12" height="52" rx="2" class="wf-fill"/><rect x="131" y="166" width="12" height="74" rx="2" class="wf-fill"/><rect x="152" y="202" width="12" height="38" rx="2" class="wf-fill"/><rect x="173" y="152" width="12" height="88" rx="2" class="wf-acc"/><rect x="194" y="180" width="12" height="60" rx="2" class="wf-fill"/><rect x="215" y="194" width="12" height="46" rx="2" class="wf-fill"/><rect x="236" y="160" width="12" height="80" rx="2" class="wf-fill"/><rect x="257" y="210" width="12" height="30" rx="2" class="wf-fill"/><line x1="106" y1="240.5" x2="276" y2="240.5" class="wf-line"/><rect x="290" y="132" width="96" height="120" rx="6" class="wf-panel wf-line"/><text x="298" y="146" class="wf-tb">Daily load</text><rect x="298" y="160" width="40" height="4" rx="2.0" class="wf-ink"/><rect x="358" y="156" width="20" height="10" rx="5" class="wf-bg wf-line"/><rect x="298" y="168" width="80" height="3" rx="1.5" class="wf-fill"/><rect x="298" y="168" width="20" height="3" rx="1.5" class="wf-acc"/><rect x="298" y="183" width="40" height="4" rx="2.0" class="wf-ink"/><rect x="358" y="179" width="20" height="10" rx="5" class="wf-bg wf-line"/><rect x="298" y="191" width="80" height="3" rx="1.5" class="wf-fill"/><rect x="298" y="191" width="32" height="3" rx="1.5" class="wf-acc"/><rect x="298" y="206" width="40" height="4" rx="2.0" class="wf-ink"/><rect x="358" y="202" width="20" height="10" rx="5" class="wf-bg wf-line"/><rect x="298" y="214" width="80" height="3" rx="1.5" class="wf-fill"/><rect x="298" y="214" width="44" height="3" rx="1.5" class="wf-acc"/><rect x="298" y="229" width="40" height="4" rx="2.0" class="wf-ink"/><rect x="358" y="225" width="20" height="10" rx="5" class="wf-bg wf-line"/><rect x="298" y="237" width="80" height="3" rx="1.5" class="wf-fill"/><rect x="298" y="237" width="56" height="3" rx="1.5" class="wf-acc"/></symbol>
+    <symbol id="wf-admin" viewBox="0 0 400 260"><rect x="0.75" y="0.75" width="398.5" height="258.5" rx="10" class="wf-bg wf-line"/><path d="M10.75 0.75 H84 V259.25 H10.75 A10 10 0 0 1 0.75 249.25 V10.75 A10 10 0 0 1 10.75 0.75 Z" class="wf-panel"/><line x1="84" y1="0.75" x2="84" y2="259.25" class="wf-line"/><circle cx="42" cy="22" r="9" class="wf-line wf-bg"/><rect x="24" y="38" width="36" height="3" rx="1.5" class="wf-ink"/><rect x="28" y="45" width="28" height="4" rx="2.0" class="wf-bar"/><rect x="8" y="57" width="68" height="14" rx="4" class="wf-acc"/><rect x="26" y="62" width="34" height="4" rx="2.0" class="wf-on-acc"/><rect x="14" y="61" width="6" height="6" rx="1.5" class="wf-on-acc"/><rect x="14" y="80" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="81" width="37" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="99" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="100" width="30" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="118" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="119" width="37" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="137" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="138" width="30" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="156" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="157" width="37" height="4" rx="2.0" class="wf-bar"/><rect x="14" y="175" width="6" height="6" rx="1.5" class="wf-bar"/><rect x="26" y="176" width="30" height="4" rx="2.0" class="wf-bar"/><line x1="84" y1="24" x2="399.25" y2="24" class="wf-line"/><rect x="98" y="10" width="10" height="2" rx="1.0" class="wf-ink"/><rect x="98" y="14" width="10" height="2" rx="1.0" class="wf-ink"/><rect x="300" y="9" width="36" height="3" rx="1.5" class="wf-ink"/><rect x="306" y="15" width="24" height="4" rx="2.0" class="wf-bar"/><circle cx="350" cy="12" r="6" class="wf-line wf-bg"/><rect x="362" y="6" width="28" height="12" rx="6" class="wf-line wf-bg"/><rect x="98" y="34" width="288" height="112" rx="6" class="wf-panel wf-line"/><text x="108" y="50" class="wf-tb wf-h">Finish setting up CAMS</text><text x="108" y="62" class="wf-t">4 of 6 done</text><circle cx="113" cy="77" r="5" class="wf-acc"/><path d="M110.5 77 l2 2 l3.5 -4" class="wf-check"/><text x="123" y="80" class="wf-t">Add a teacher</text><circle cx="113" cy="97" r="5" class="wf-acc"/><path d="M110.5 97 l2 2 l3.5 -4" class="wf-check"/><text x="123" y="100" class="wf-t">Create a class</text><circle cx="113" cy="117" r="5" class="wf-acc"/><path d="M110.5 117 l2 2 l3.5 -4" class="wf-check"/><text x="123" y="120" class="wf-t">Register a workstation</text><circle cx="255" cy="77" r="5" class="wf-bg wf-line"/><text x="265" y="80" class="wf-tb">Stage the client installer</text><circle cx="255" cy="97" r="5" class="wf-acc"/><path d="M252.5 97 l2 2 l3.5 -4" class="wf-check"/><text x="265" y="100" class="wf-t">Publish the root certificate</text><circle cx="255" cy="117" r="5" class="wf-bg wf-line"/><text x="265" y="120" class="wf-tb">Connect the first workstation</text><text x="98" y="164" class="wf-tb wf-h">Global operations dashboard</text><rect x="98" y="170" width="140" height="4" rx="2.0" class="wf-bar"/><rect x="98" y="180" width="288" height="30" rx="6" class="wf-panel wf-line"/><text x="106" y="193" class="wf-tb">Lab-wide session control</text><rect x="106" y="199" width="160" height="4" rx="2.0" class="wf-bar"/><rect x="98" y="216" width="67" height="40" rx="6" class="wf-panel wf-line"/><text x="106" y="229" class="wf-t">Students</text><text x="106" y="248" class="wf-tb wf-big">0</text><circle cx="152" cy="229" r="6" class="wf-line wf-bg"/><rect x="171" y="216" width="67" height="40" rx="6" class="wf-panel wf-line"/><text x="179" y="229" class="wf-t">Teachers</text><text x="179" y="248" class="wf-tb wf-big">0</text><circle cx="225" cy="229" r="6" class="wf-line wf-bg"/><rect x="244" y="216" width="67" height="40" rx="6" class="wf-panel wf-line"/><text x="252" y="229" class="wf-t">Stations</text><text x="252" y="248" class="wf-tb wf-big">0</text><circle cx="298" cy="229" r="6" class="wf-line wf-bg"/><rect x="317" y="216" width="69" height="40" rx="6" class="wf-panel wf-line"/><text x="325" y="229" class="wf-t">Sessions</text><text x="325" y="248" class="wf-tb wf-big">0</text><circle cx="373" cy="229" r="6" class="wf-line wf-bg"/></symbol>
+  </svg>
+
   <a class="skip-link" href="#main-content">Skip to content</a>
 
   <header class="site-header" data-header>
     <div class="shell header-inner">
-      <a class="brand" href="#top" aria-label="CAMS home">
-        <img src="assets/cams-mark.png" width="40" height="45" alt="">
-        <span><strong>CAMS</strong><small>Classroom systems, locally controlled</small></span>
+      <a class="brand pill-surface" href="#top" aria-label="CAMS home">
+        <img src="assets/cams-mark.png" width="22" height="25" alt="">
+        <strong>CAMS</strong>
       </a>
-      <button class="menu-button" type="button" aria-expanded="false" aria-controls="site-nav" data-menu-button>
+      <button class="menu-button pill-surface" type="button" aria-expanded="false" aria-controls="site-nav" data-menu-button>
         <span class="sr-only">Open navigation</span>
-        <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+        <span aria-hidden="true"></span><span aria-hidden="true"></span>
       </button>
-      <nav class="site-nav" id="site-nav" aria-label="Primary" data-menu>
+      <nav class="site-nav pill-surface" id="site-nav" aria-label="Primary" data-menu>
         <a href="#capabilities">Capabilities</a>
         <a href="#privacy">Privacy</a>
         <a href="#architecture">Architecture</a>
         <a href="#install">Install</a>
         <a href="#support">Support</a>
-        <a class="nav-download" href="#downloads">Get v<span data-version>2.20.4</span></a>
+        <a class="nav-cta" href="#downloads"><span>Download v<span data-version>2.20.4</span></span></a>
       </nav>
     </div>
   </header>
 
   <main id="main-content">
     <section class="hero" id="top" aria-labelledby="hero-title">
-      <div class="hero-grid" aria-hidden="true"></div>
       <div class="shell hero-layout">
         <div class="hero-copy">
-          <p class="eyebrow"><span></span> Windows classroom operations, without the cloud</p>
-          <h1 id="hero-title">See the lab.<br><em>Keep control local.</em></h1>
+          <a class="release-chip" href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest">
+            <span class="chip-dot" aria-hidden="true"></span>Release notes
+            <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"></use></svg>
+          </a>
+          <h1 id="hero-title">See the lab.<br>Keep control <em>local.</em></h1>
           <p class="hero-lead">CAMS brings live workstation visibility, timed sessions, policy enforcement, and accountable remote actions into one private LAN deployment.</p>
           <div class="hero-actions">
-            <a class="button button-primary" href="#downloads">Download v<span data-version>2.20.4</span></a>
-            <a class="button button-quiet" href="#install">Read installation guide</a>
+            <a class="button button-primary" href="#downloads">
+              <span>Download v<span data-version>2.20.4</span></span>
+              <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"></use></svg>
+            </a>
+            <a class="button button-quiet" href="#install">
+              <span>Installation guide</span>
+              <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"></use></svg>
+            </a>
           </div>
-          <ul class="trust-line">
-            <li>Local SQLite</li>
-            <li>HTTPS SignalR</li>
-            <li>Role-scoped access</li>
-          </ul>
         </div>
 
-        <section class="command-panel" aria-label="CAMS deployment summary">
-          <div class="panel-topline"><span class="status-dot"></span> LAB CONTROL / ONLINE <span>v<span data-version>2.20.4</span></span></div>
-          <div class="lab-map">
-            <div class="station station-wide"><small>SERVER</small><strong>Teacher console</strong><span>HTTPS :5000</span></div>
-            <div class="signal-line"><i></i><i></i><i></i></div>
-            <div class="stations">
-              <div class="station"><small>PC-01</small><strong>Active</strong><span class="live">Live</span></div>
-              <div class="station"><small>PC-02</small><strong>Idle</strong><span>03:42</span></div>
-              <div class="station"><small>PC-03</small><strong>Active</strong><span class="live">Live</span></div>
-              <div class="station"><small>PC-04</small><strong>Paused</strong><span>Session</span></div>
+        <div class="reel" data-reel aria-roledescription="carousel" aria-label="Wireframes of CAMS screens">
+          <div class="reel-col">
+            <div class="reel-track">
+              <figure class="wf-card"><svg role="img" aria-label="Wireframe of the teacher dashboard: session, student and status counts above six laboratory operation shortcuts." viewBox="0 0 400 260"><use href="#wf-dashboard"></use></svg><figcaption>Teacher dashboard</figcaption></figure>
+              <figure class="wf-card"><svg role="img" aria-label="Wireframe of session control: resume, pause and end actions, session counts, and a table of running sessions." viewBox="0 0 400 260"><use href="#wf-sessions"></use></svg><figcaption>Session control</figcaption></figure>
+              <figure class="wf-card"><svg role="img" aria-label="Wireframe of the CAMS Portal sign-in form with username, password and a sign-in button." viewBox="0 0 400 260"><use href="#wf-signin"></use></svg><figcaption>Portal sign-in</figcaption></figure>
+              <figure class="wf-card"><svg role="img" aria-label="Wireframe of lab utilization: date, station and class filters, four usage figures, a workstation bar chart and daily load." viewBox="0 0 400 260"><use href="#wf-utilization"></use></svg><figcaption>Lab utilization</figcaption></figure>
+              <!-- Second copy keeps the loop seamless; hidden from assistive technology. -->
+              <figure class="wf-card" aria-hidden="true"><svg viewBox="0 0 400 260"><use href="#wf-dashboard"></use></svg><figcaption>Teacher dashboard</figcaption></figure>
+              <figure class="wf-card" aria-hidden="true"><svg viewBox="0 0 400 260"><use href="#wf-sessions"></use></svg><figcaption>Session control</figcaption></figure>
+              <figure class="wf-card" aria-hidden="true"><svg viewBox="0 0 400 260"><use href="#wf-signin"></use></svg><figcaption>Portal sign-in</figcaption></figure>
+              <figure class="wf-card" aria-hidden="true"><svg viewBox="0 0 400 260"><use href="#wf-utilization"></use></svg><figcaption>Lab utilization</figcaption></figure>
             </div>
           </div>
-          <div class="panel-metrics">
-            <div><strong>LAN</strong><span>Data boundary</span></div>
-            <div><strong>TLS</strong><span>Transport</span></div>
-            <div><strong>3</strong><span>User roles</span></div>
+          <div class="reel-col reel-col-b">
+            <div class="reel-track">
+              <figure class="wf-card"><svg role="img" aria-label="Wireframe of the live monitoring wall: bulk warn, broadcast, lock and log out controls over a grid of eight student station screens." viewBox="0 0 400 260"><use href="#wf-monitoring"></use></svg><figcaption>Live monitoring</figcaption></figure>
+              <figure class="wf-card"><svg role="img" aria-label="Wireframe of the Deployment Hub: a readiness banner, client package details with download buttons, and the active HTTPS certificate." viewBox="0 0 400 260"><use href="#wf-deployment"></use></svg><figcaption>Deployment Hub</figcaption></figure>
+              <figure class="wf-card"><svg role="img" aria-label="Wireframe of the administrator setup checklist and global operations dashboard." viewBox="0 0 400 260"><use href="#wf-admin"></use></svg><figcaption>Admin setup</figcaption></figure>
+              <figure class="wf-card" aria-hidden="true"><svg viewBox="0 0 400 260"><use href="#wf-monitoring"></use></svg><figcaption>Live monitoring</figcaption></figure>
+              <figure class="wf-card" aria-hidden="true"><svg viewBox="0 0 400 260"><use href="#wf-deployment"></use></svg><figcaption>Deployment Hub</figcaption></figure>
+              <figure class="wf-card" aria-hidden="true"><svg viewBox="0 0 400 260"><use href="#wf-admin"></use></svg><figcaption>Admin setup</figcaption></figure>
+            </div>
           </div>
-        </section>
+          <button class="reel-toggle pill-surface" type="button" aria-pressed="false" data-reel-toggle>
+            <svg class="icon icon-pause" aria-hidden="true"><use href="#i-pause"></use></svg>
+            <svg class="icon icon-play" aria-hidden="true"><use href="#i-play"></use></svg>
+            <span data-reel-label>Pause</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="facts" aria-labelledby="facts-title">
+      <div class="shell">
+        <h2 class="facts-title" id="facts-title">Runs entirely on your classroom network</h2>
+        <ul class="facts-list">
+          <li><span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="#i-database"></use></svg></span><strong>Local SQLite</strong><span>Records stay on your server</span></li>
+          <li><span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="#i-lock-key"></use></svg></span><strong>HTTPS SignalR</strong><span>Encrypted LAN transport</span></li>
+          <li><span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="#i-users-three"></use></svg></span><strong>Role-scoped access</strong><span>Admin, Teacher, Student</span></li>
+          <li><span class="icon-tile"><svg class="icon" aria-hidden="true"><use href="#i-windows-logo"></use></svg></span><strong>Windows x64</strong><span>No separate .NET runtime</span></li>
+        </ul>
       </div>
     </section>
 
     <section class="section overview" aria-labelledby="overview-title">
-      <div class="shell split-heading">
-        <div>
-          <p class="section-kicker">Purpose-built for computer laboratories</p>
-          <h2 id="overview-title">One operational picture, from first login to final logout.</h2>
+      <div class="shell">
+        <div class="section-heading" data-reveal>
+          <h2 id="overview-title">One operational <em>picture</em>, from first login to final logout.</h2>
+          <p>CAMS replaces paper logs and disconnected utilities with a coordinated server, browser portal, and Windows workstation agent. Active teachers can monitor and control all connected student workstations and manage shared accounts, classes, and policies. Administrators retain deployment and system administration.</p>
         </div>
-        <p>CAMS replaces paper logs and disconnected utilities with a coordinated server, browser portal, and Windows workstation agent. Active teachers can monitor and control all connected student workstations and manage shared accounts, classes, and policies. Administrators retain deployment and system administration.</p>
-      </div>
-      <div class="shell outcome-strip">
-        <article><span>01</span><h3>Observe</h3><p>Authenticated live screen grids, active app state, idle status, and alerts.</p></article>
-        <article><span>02</span><h3>Guide</h3><p>Warnings, screen broadcast, timed sessions, and global classroom policies.</p></article>
-        <article><span>03</span><h3>Act</h3><p>Authorized lock, unlock, logout, restart, shutdown, and remote input.</p></article>
-        <article><span>04</span><h3>Account</h3><p>Local attendance, activity timelines, reports, and audit records.</p></article>
+        <ul class="verbs">
+          <li class="card" data-reveal><span class="icon-tile icon-tile-dark"><svg class="icon" aria-hidden="true"><use href="#i-monitor"></use></svg></span><h3>Observe</h3><p>Authenticated live screen grids, active app state, idle status, and alerts.</p></li>
+          <li class="card" data-reveal><span class="icon-tile icon-tile-dark"><svg class="icon" aria-hidden="true"><use href="#i-megaphone"></use></svg></span><h3>Guide</h3><p>Warnings, screen broadcast, timed sessions, and global classroom policies.</p></li>
+          <li class="card" data-reveal><span class="icon-tile icon-tile-dark"><svg class="icon" aria-hidden="true"><use href="#i-lock-simple"></use></svg></span><h3>Act</h3><p>Authorized lock, unlock, logout, restart, shutdown, and remote input.</p></li>
+          <li class="card" data-reveal><span class="icon-tile icon-tile-dark"><svg class="icon" aria-hidden="true"><use href="#i-clipboard-text"></use></svg></span><h3>Account</h3><p>Local attendance, activity timelines, reports, and audit records.</p></li>
+        </ul>
       </div>
     </section>
 
-    <section class="section section-dark" id="capabilities" aria-labelledby="capabilities-title">
+    <section class="section capabilities" id="capabilities" aria-labelledby="capabilities-title">
       <div class="shell">
-        <div class="section-heading">
-          <p class="section-kicker">Roles and capabilities</p>
-          <h2 id="capabilities-title">Clear authority at every layer.</h2>
+        <div class="section-heading" data-reveal>
+          <h2 id="capabilities-title">Clear authority at every <em>layer.</em></h2>
           <p>Each interface is shaped around the work that role is allowed to perform.</p>
         </div>
-        <div class="role-grid">
-          <article class="role-card role-admin">
-            <div class="role-index">A</div><p class="role-label">Administrator</p>
-            <h3>Configure the environment</h3>
-            <ul>
-              <li>Manage accounts, classes, computers, and mappings</li>
-              <li>Set global restrictions and session rules</li>
-              <li>Review audit, usage, session, and system records</li>
-              <li>Back up, validate, and stage restore of local SQLite data</li>
-              <li>Prepare trusted packages in the local Deployment Hub</li>
-            </ul>
+        <div class="role-bento">
+          <article class="card role-cell role-teacher" data-reveal>
+            <div class="role-text">
+              <p class="role-label"><svg class="icon" aria-hidden="true"><use href="#i-chalkboard-teacher"></use></svg> Teacher</p>
+              <h3>Run the active laboratory</h3>
+              <ul class="check-list">
+                <li>Monitor all connected student workstations in a live grid</li>
+                <li>Start the lab session for every student at once, then pause, resume, or end it</li>
+                <li>Send warnings and broadcast the teacher screen</li>
+                <li>Use permitted workstation and remote controls</li>
+                <li>Review scoped alerts, records, and exports</li>
+              </ul>
+            </div>
+            <svg class="role-wf" role="img" aria-label="Wireframe of the live monitoring wall with bulk controls over a grid of student stations." viewBox="0 0 400 260"><use href="#wf-monitoring"></use></svg>
           </article>
-          <article class="role-card">
-            <div class="role-index">T</div><p class="role-label">Teacher</p>
-            <h3>Run the active laboratory</h3>
-            <ul>
-              <li>Monitor all connected student workstations in a live grid</li>
-              <li>Start the lab session for every student at once, then pause, resume, or end it</li>
-              <li>Send warnings and broadcast the teacher screen</li>
-              <li>Use permitted workstation and remote controls</li>
-              <li>Review scoped alerts, records, and exports</li>
-            </ul>
+          <article class="card role-cell role-admin" data-reveal>
+            <div class="role-text">
+              <p class="role-label"><svg class="icon" aria-hidden="true"><use href="#i-wrench"></use></svg> Administrator</p>
+              <h3>Configure the environment</h3>
+              <ul class="check-list">
+                <li>Manage accounts, classes, computers, and mappings</li>
+                <li>Set global restrictions and session rules</li>
+                <li>Review audit, usage, session, and system records</li>
+                <li>Back up, validate, and stage restore of local SQLite data</li>
+                <li>Prepare trusted packages in the local Deployment Hub</li>
+              </ul>
+            </div>
+            <svg class="role-wf" role="img" aria-label="Wireframe of the administrator setup checklist." viewBox="0 0 400 260"><use href="#wf-admin"></use></svg>
           </article>
-          <article class="role-card">
-            <div class="role-index">S</div><p class="role-label">Student</p>
-            <h3>Enter a managed session</h3>
-            <ul>
-              <li>Sign in once the teacher starts the lab session</li>
-              <li>See unit, identity, and elapsed session time</li>
-              <li>Receive policy notices and teacher messages</li>
-              <li>Review alerts in the student portal</li>
-              <li>Return to the locked sign-in screen when the session ends</li>
-            </ul>
+          <article class="card card-dark role-cell role-student" data-reveal>
+            <div class="role-text">
+              <p class="role-label"><svg class="icon" aria-hidden="true"><use href="#i-student"></use></svg> Student</p>
+              <h3>Enter a managed <em>session.</em></h3>
+              <ul class="check-list">
+                <li>Sign in once the teacher starts the lab session</li>
+                <li>See unit, identity, and elapsed session time</li>
+                <li>Receive policy notices and teacher messages</li>
+                <li>Review alerts in the student portal</li>
+                <li>Return to the locked sign-in screen when the session ends</li>
+              </ul>
+            </div>
+            <svg class="role-wf" role="img" aria-label="Wireframe of the CAMS Portal sign-in form." viewBox="0 0 400 260"><use href="#wf-signin"></use></svg>
           </article>
         </div>
       </div>
     </section>
 
     <section class="section privacy" id="privacy" aria-labelledby="privacy-title">
-      <div class="shell privacy-layout">
-        <div class="privacy-statement">
-          <p class="section-kicker">Privacy boundary</p>
-          <h2 id="privacy-title">Monitoring with a defined edge.</h2>
-          <p>CAMS is designed for supervised classroom sessions on a private local network. Operational records remain on the CAMS server's local SQLite database; there is no required CAMS cloud service.</p>
-          <p>Live screen frames show visible display content, including any browser pages on screen.</p>
-          <div class="boundary-badge"><span>Data boundary</span><strong>Your classroom LAN</strong></div>
+      <div class="shell">
+        <div class="privacy-head" data-reveal>
+          <div class="section-heading">
+            <h2 id="privacy-title">Monitoring with a defined <em>edge.</em></h2>
+            <p>CAMS is designed for supervised classroom sessions on a private local network. Operational records remain on the CAMS server's local SQLite database; there is no required CAMS cloud service.</p>
+            <p>Live screen frames show visible display content, including any browser pages on screen.</p>
+          </div>
+          <div class="boundary-badge card"><span class="icon-tile icon-tile-dark"><svg class="icon" aria-hidden="true"><use href="#i-shield-check"></use></svg></span><span>Data boundary</span><strong>Your classroom LAN</strong></div>
         </div>
         <div class="boundary-grid">
-          <article class="boundary-card collected">
-            <p>Used for classroom operations</p>
+          <article class="card boundary-card collected" data-reveal>
+            <h3>Used for classroom operations</h3>
             <ul>
-              <li>Live screen frames during authenticated sessions</li>
-              <li>Active application and idle status</li>
-              <li>Normalized browser domain and policy status</li>
-              <li>Session, alert, attendance, and command events</li>
-              <li>Bounded client telemetry queued during brief outages</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>Live screen frames during authenticated sessions</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>Active application and idle status</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>Normalized browser domain and policy status</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>Session, alert, attendance, and command events</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>Bounded client telemetry queued during brief outages</li>
             </ul>
           </article>
-          <article class="boundary-card excluded">
-            <p>Outside the product boundary</p>
+          <article class="card boundary-card excluded" data-reveal>
+            <h3>Outside the product boundary</h3>
             <ul>
-              <li>No keystroke logging or clipboard capture</li>
-              <li>No microphone, camera, or ambient recording</li>
-              <li>No browser credentials, cookies, or page content in telemetry</li>
-              <li>No full URL paths, queries, or fragments in telemetry</li>
-              <li>No required third-party analytics or cloud upload</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>No keystroke logging or clipboard capture</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>No microphone, camera, or ambient recording</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>No browser credentials, cookies, or page content in telemetry</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>No full URL paths, queries, or fragments in telemetry</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>No required third-party analytics or cloud upload</li>
             </ul>
           </article>
         </div>
@@ -179,102 +253,146 @@
 
     <section class="section architecture" id="architecture" aria-labelledby="architecture-title">
       <div class="shell">
-        <div class="section-heading">
-          <p class="section-kicker">Deployment architecture</p>
-          <h2 id="architecture-title">A compact system with explicit trust paths.</h2>
+        <div class="section-heading" data-reveal>
+          <h2 id="architecture-title">A compact system with explicit trust <em>paths.</em></h2>
           <p>Run the self-contained server on the teacher or lab control PC. Student agents discover it on the LAN or use a manually configured HTTPS endpoint.</p>
         </div>
-        <div class="architecture-board" role="img" aria-label="CAMS server connects to teacher browser portals and student Windows clients over a private network">
-          <article class="node teacher-node"><span>CONTROL SURFACE</span><strong>Teacher / Admin browser</strong><small>Authenticated role portals</small></article>
-          <div class="connector connector-a"><span>HTTPS</span></div>
-          <article class="node server-node"><span>CAMS SERVER</span><strong>ASP.NET Core + SignalR</strong><small>EF Core / local SQLite</small><b>TCP 5000</b></article>
-          <div class="connector connector-b"><span>HTTPS + UDP discovery</span></div>
-          <article class="node client-node"><span>WORKSTATIONS</span><strong>Windows student clients</strong><small>Self-contained .NET 8 agents</small><b>UDP 5001</b></article>
+        <div class="architecture-board" role="img" aria-label="CAMS server connects to teacher browser portals and student Windows clients over a private network" data-reveal>
+          <div class="node card">
+            <span class="node-kicker">Control surface</span>
+            <strong>Teacher / Admin browser</strong>
+            <small>Authenticated role portals</small>
+          </div>
+          <div class="connector"><span>HTTPS</span></div>
+          <div class="node card card-dark node-server">
+            <span class="node-kicker">CAMS server</span>
+            <strong>ASP.NET Core + SignalR</strong>
+            <small>EF Core / local SQLite</small>
+            <b>TCP 5000</b>
+          </div>
+          <div class="connector"><span>HTTPS + UDP discovery</span></div>
+          <div class="node card">
+            <span class="node-kicker">Workstations</span>
+            <strong>Windows student clients</strong>
+            <small>Self-contained .NET 8 agents</small>
+            <b>UDP 5001</b>
+          </div>
         </div>
         <div class="architecture-notes">
           <p><strong>Traffic:</strong> Authenticated screen and control messages travel over HTTPS SignalR. UDP broadcast assists discovery only.</p>
           <p><strong>Fallback:</strong> If a network blocks broadcast, configure <code>https://&lt;server-ip&gt;:5000/remoteMonitoringHub</code> manually.</p>
         </div>
-      </div>
-    </section>
 
-    <section class="certificate-warning" aria-labelledby="certificate-title">
-      <div class="shell warning-inner">
-        <div class="warning-symbol" aria-hidden="true">!</div>
-        <div>
-          <p class="warning-label">Deployment certificate warning</p>
-          <h2 id="certificate-title"><code>CAMS-Server-Root.cer</code> never comes from this public site.</h2>
-          <p>That public trust certificate is unique to your CAMS server. Download it only after signing in to your own local server at <code>/Admin/Deployment</code>. Never distribute either <code>.pfx</code> private-key file.</p>
-        </div>
-        <button class="copy-button" type="button" data-copy="/Admin/Deployment" data-copy-label="Copy local path">Copy local path</button>
+        <aside class="certificate-warning" aria-labelledby="certificate-title" data-reveal>
+          <svg class="icon warning-icon" aria-hidden="true"><use href="#i-warning"></use></svg>
+          <div>
+            <p class="warning-label">Deployment certificate warning</p>
+            <h2 id="certificate-title"><code>CAMS-Server-Root.cer</code> never comes from this public site.</h2>
+            <p>That public trust certificate is unique to your CAMS server. Download it only after signing in to your own local server at <code>/Admin/Deployment</code>. Never distribute either <code>.pfx</code> private-key file.</p>
+          </div>
+          <button class="copy-button" type="button" data-copy="/Admin/Deployment" data-copy-label="Copy local path">
+            <svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg><span data-copy-text>Copy local path</span>
+          </button>
+        </aside>
       </div>
     </section>
 
     <section class="section install" id="install" aria-labelledby="install-title">
       <div class="shell install-layout">
         <div class="install-intro">
-          <p class="section-kicker">Step-by-step installation</p>
-          <h2 id="install-title">From clean PC to managed lab.</h2>
+          <h2 id="install-title">From clean PC to managed <em>lab.</em></h2>
           <p>Plan one Windows control PC for the server and one CAMS client installation per student workstation. Keep every machine on the same trusted, non-guest network.</p>
-          <div class="requirements">
-            <span>Windows x64</span><span>TCP 5000</span><span>UDP 5001</span><span>No separate .NET runtime</span>
+          <div class="note card">
+            <p><strong>Requirements:</strong> Windows x64, inbound TCP 5000 on the server, UDP 5001 on student PCs for discovery. No separate .NET runtime.</p>
           </div>
+          <div class="command">
+            <span class="command-prompt" aria-hidden="true">&gt;</span>
+            <code>https://&lt;server-ip&gt;:5000/remoteMonitoringHub</code>
+            <button class="command-copy" type="button" data-copy="https://&lt;server-ip&gt;:5000/remoteMonitoringHub" data-copy-label="Copy">
+              <span data-copy-text>Copy</span><svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg>
+            </button>
+          </div>
+          <p class="command-caption">The manual client endpoint, for networks that block discovery.</p>
         </div>
         <ol class="steps">
-          <li><div><span>01</span></div><article><h3>Prepare the server PC</h3><p>Set a protected <code>Cams__InitialAdminPassword</code> environment variable before first launch. Do not reuse a classroom account password.</p></article></li>
-          <li><div><span>02</span></div><article><h3>Install CAMS Server</h3><p>Download and run <a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Setup.exe">CAMS-Server-Setup.exe</a>. The installer configures the application and refreshes its TCP 5000 firewall rule.</p></article></li>
-          <li><div><span>03</span></div><article><h3>Start on the target network</h3><p>Connect the control PC to the classroom LAN first, then start CAMS. Local CA mode creates a server certificate covering the current machine name and LAN addresses.</p></article></li>
-          <li><div><span>04</span></div><article><h3>Use the authenticated Deployment Hub</h3><p>Sign in as administrator and open <code>https://&lt;server-ip&gt;:5000/Admin/Deployment</code>. Confirm the endpoint is certificate-compatible; download the local trust certificate or prepare the verified workstation bundle there.</p></article></li>
-          <li><div><span>05</span></div><article><h3>Install each student client</h3><p>Run <a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe">CAMS-Client-Setup.exe</a>, enter the displayed SignalR endpoint, and select only the <code>CAMS-Server-Root.cer</code> obtained from your local Deployment Hub.</p></article></li>
-          <li><div><span>06</span></div><article><h3>Verify before class</h3><p>Start a lab session from Session Control, then sign in with a test student account, confirm the workstation appears in the teacher monitoring grid, and test a permitted warning or lock action before enrolling the full lab.</p></article></li>
+          <li class="card" data-reveal><h3>Prepare the server PC</h3><p>Set a protected <code>Cams__InitialAdminPassword</code> environment variable before first launch. Do not reuse a classroom account password.</p></li>
+          <li class="card" data-reveal><h3>Install CAMS Server</h3><p>Download and run <a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Setup.exe">CAMS-Server-Setup.exe</a>. The installer configures the application and refreshes its TCP 5000 firewall rule.</p></li>
+          <li class="card" data-reveal><h3>Start on the target network</h3><p>Connect the control PC to the classroom LAN first, then start CAMS. Local CA mode creates a server certificate covering the current machine name and LAN addresses.</p></li>
+          <li class="card" data-reveal><h3>Use the authenticated Deployment Hub</h3><p>Sign in as administrator and open <code>https://&lt;server-ip&gt;:5000/Admin/Deployment</code>. Confirm the endpoint is certificate-compatible; download the local trust certificate or prepare the verified workstation bundle there.</p></li>
+          <li class="card" data-reveal><h3>Install each student client</h3><p>Run <a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe">CAMS-Client-Setup.exe</a>, enter the displayed SignalR endpoint, and select only the <code>CAMS-Server-Root.cer</code> obtained from your local Deployment Hub.</p></li>
+          <li class="card" data-reveal><h3>Verify before class</h3><p>Start a lab session from Session Control, then sign in with a test student account, confirm the workstation appears in the teacher monitoring grid, and test a permitted warning or lock action before enrolling the full lab.</p></li>
         </ol>
       </div>
     </section>
 
     <section class="section downloads" id="downloads" aria-labelledby="downloads-title">
       <div class="shell">
-        <div class="download-heading">
-          <div><p class="section-kicker">Current stable release</p><h2 id="downloads-title">CAMS v<span data-version>2.20.4</span></h2></div>
+        <div class="section-heading" data-reveal>
+          <h2 id="downloads-title">CAMS <em>v<span data-version>2.20.4</span></em></h2>
           <p>Release downloads are hosted by GitHub. Verify each installer against its published SHA-256 file before deployment.</p>
         </div>
-        <div class="download-grid">
-          <article class="download-card primary-download"><span class="file-type">SERVER / EXE</span><h3>CAMS Server Setup</h3><p>Teacher or lab control PC. Self-contained Windows x64 installer.</p><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Setup.exe">Download server <span aria-hidden="true">-&gt;</span></a></article>
-          <article class="download-card primary-download"><span class="file-type">CLIENT / EXE</span><h3>CAMS Client Setup</h3><p>Student workstations. Self-contained Windows x64 installer.</p><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe">Download client <span aria-hidden="true">-&gt;</span></a></article>
-          <article class="download-card"><span class="file-type">SERVER / SHA256</span><h3>Server checksum</h3><p>Published digest for independent installer integrity verification.</p><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Setup.exe.sha256">Get checksum <span aria-hidden="true">-&gt;</span></a></article>
-          <article class="download-card"><span class="file-type">CLIENT / SHA256</span><h3>Client checksum</h3><p>Published digest for independent installer integrity verification.</p><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe.sha256">Get checksum <span aria-hidden="true">-&gt;</span></a></article>
-          <article class="download-card manifest-card"><span class="file-type">METADATA / JSON</span><h3>Release manifest</h3><p>Machine-readable product, version, file, size, and digest metadata.</p><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/release-manifest.json">Open manifest <span aria-hidden="true">-&gt;</span></a></article>
+        <div class="installer-grid">
+          <a class="card installer" href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Setup.exe" data-reveal>
+            <span class="installer-preview"><svg aria-hidden="true" viewBox="0 0 400 260"><use href="#wf-dashboard"></use></svg></span>
+            <span class="installer-meta">
+              <span><strong>Download server</strong><small>CAMS-Server-Setup.exe</small><span class="installer-note">Teacher or lab control PC. Self-contained Windows x64 installer.</span></span>
+              <span class="round-button"><svg class="icon" aria-hidden="true"><use href="#i-download-simple"></use></svg></span>
+            </span>
+          </a>
+          <a class="card installer" href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe" data-reveal>
+            <span class="installer-preview"><svg aria-hidden="true" viewBox="0 0 400 260"><use href="#wf-signin"></use></svg></span>
+            <span class="installer-meta">
+              <span><strong>Download client</strong><small>CAMS-Client-Setup.exe</small><span class="installer-note">Student workstations. Self-contained Windows x64 installer.</span></span>
+              <span class="round-button"><svg class="icon" aria-hidden="true"><use href="#i-download-simple"></use></svg></span>
+            </span>
+          </a>
         </div>
-        <div class="verify-box">
-          <div><span>VERIFY ON WINDOWS</span><code>Get-FileHash .\CAMS-Client-Setup.exe -Algorithm SHA256</code></div>
-          <button class="copy-button copy-dark" type="button" data-copy="Get-FileHash .\CAMS-Client-Setup.exe -Algorithm SHA256" data-copy-label="Copy command">Copy command</button>
+        <div class="verify" data-reveal>
+          <div class="command">
+            <span class="command-prompt" aria-hidden="true">PS&gt;</span>
+            <code>Get-FileHash .\CAMS-Client-Setup.exe -Algorithm SHA256</code>
+            <button class="command-copy" type="button" data-copy="Get-FileHash .\CAMS-Client-Setup.exe -Algorithm SHA256" data-copy-label="Copy">
+              <span data-copy-text>Copy</span><svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg>
+            </button>
+          </div>
+          <ul class="verify-links">
+            <li><a class="card" href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Setup.exe.sha256"><span><strong>Server checksum</strong>Published SHA-256 digest for the server installer</span><svg class="icon" aria-hidden="true"><use href="#i-arrow-up-right"></use></svg></a></li>
+            <li><a class="card" href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe.sha256"><span><strong>Client checksum</strong>Published SHA-256 digest for the client installer</span><svg class="icon" aria-hidden="true"><use href="#i-arrow-up-right"></use></svg></a></li>
+            <li><a class="card" href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/release-manifest.json"><span><strong>Release manifest</strong>Machine-readable product, version, file, size, and digest metadata</span><svg class="icon" aria-hidden="true"><use href="#i-arrow-up-right"></use></svg></a></li>
+          </ul>
         </div>
         <p class="release-link">Need notes or an older build? <a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest">View the complete GitHub release</a>.</p>
       </div>
     </section>
 
     <section class="section trust" aria-labelledby="trust-title">
-      <div class="shell trust-layout">
-        <div><p class="section-kicker">Security and trust</p><h2 id="trust-title">Trust is established at deployment, not assumed.</h2></div>
+      <div class="shell">
+        <div class="section-heading" data-reveal>
+          <h2 id="trust-title">Trust is established at <em>deployment</em>, not assumed.</h2>
+        </div>
         <div class="trust-grid">
-          <article><span>01</span><h3>Authenticated roles</h3><p>Admin, teacher, and student identities enter through role-aware authorization. Live monitoring and bulk session controls are lab-wide. Individual session actions, analytics, and records retain teacher/class checks.</p></article>
-          <article><span>02</span><h3>Encrypted local transport</h3><p>Web portals and SignalR traffic use HTTPS. The endpoint must match the active certificate before clients are deployed.</p></article>
-          <article><span>03</span><h3>Private keys stay private</h3><p>Local CA private keys remain on the server. Student PCs receive only the deployment-specific public root certificate.</p></article>
-          <article><span>04</span><h3>Verifiable packages</h3><p>GitHub release checksums and manifest metadata let administrators verify downloads before execution or redistribution.</p></article>
+          <article class="card" data-reveal><span class="icon-tile icon-tile-dark"><svg class="icon" aria-hidden="true"><use href="#i-users-three"></use></svg></span><h3>Authenticated roles</h3><p>Admin, teacher, and student identities enter through role-aware authorization. Live monitoring and bulk session controls are lab-wide. Individual session actions, analytics, and records retain teacher/class checks.</p></article>
+          <article class="card" data-reveal><span class="icon-tile icon-tile-dark"><svg class="icon" aria-hidden="true"><use href="#i-lock-key"></use></svg></span><h3>Encrypted local transport</h3><p>Web portals and SignalR traffic use HTTPS. The endpoint must match the active certificate before clients are deployed.</p></article>
+          <article class="card" data-reveal><span class="icon-tile icon-tile-dark"><svg class="icon" aria-hidden="true"><use href="#i-certificate"></use></svg></span><h3>Private keys stay private</h3><p>Local CA private keys remain on the server. Student PCs receive only the deployment-specific public root certificate.</p></article>
+          <article class="card" data-reveal><span class="icon-tile icon-tile-dark"><svg class="icon" aria-hidden="true"><use href="#i-seal-check"></use></svg></span><h3>Verifiable packages</h3><p>GitHub release checksums and manifest metadata let administrators verify downloads before execution or redistribution.</p></article>
         </div>
       </div>
     </section>
 
     <section class="section support" id="support" aria-labelledby="support-title">
-      <div class="shell support-layout">
-        <div class="support-intro"><p class="section-kicker">Troubleshooting</p><h2 id="support-title">Resolve the network first.</h2><p>Most onboarding issues come from endpoint selection, certificate mismatch, firewall policy, or Wi-Fi client isolation.</p></div>
+      <div class="shell">
+        <div class="section-heading" data-reveal>
+          <h2 id="support-title">Resolve the network <em>first.</em></h2>
+          <p>Most onboarding issues come from endpoint selection, certificate mismatch, firewall policy, or Wi-Fi client isolation.</p>
+        </div>
         <div class="faq-list">
-          <details><summary>The client cannot discover the server.<span aria-hidden="true">+</span></summary><p>Confirm both PCs are on the same non-guest subnet. Allow UDP 5001 on student PCs, or skip discovery and enter <code>https://&lt;server-ip&gt;:5000/remoteMonitoringHub</code> manually.</p></details>
-          <details><summary>The browser or client reports an untrusted certificate.<span aria-hidden="true">+</span></summary><p>Do not bypass the warning. Sign in to the local CAMS server, open <code>/Admin/Deployment</code>, and install that deployment's public <code>CAMS-Server-Root.cer</code> for the current Windows user.</p></details>
-          <details><summary>The certificate does not match the server IP.<span aria-hidden="true">+</span></summary><p>Connect the server PC to the target network and restart CAMS so local CA mode can issue a certificate for the current LAN address. Use an endpoint marked compatible in the Deployment Hub.</p></details>
-          <details><summary>A phone hotspot connects devices but CAMS cannot reach them.<span aria-hidden="true">+</span></summary><p>Some hotspots isolate clients or block broadcast. Disable client isolation if available, use the teacher PC's Wi-Fi IPv4 address instead of <code>localhost</code>, and verify TCP 5000 is reachable.</p></details>
-          <details><summary>A student sees "No session yet" when signing in.<span aria-hidden="true">+</span></summary><p>Students can only sign in while a lab session is running. In the teacher portal, open Session Control, choose Start New Session, and pick a session rule; the waiting students can then press Login again.</p></details>
-          <details><summary>An installer hash does not match.<span aria-hidden="true">+</span></summary><p>Do not run the file. Delete it, download the installer and checksum again from the same GitHub release, and repeat SHA-256 verification.</p></details>
-          <details><summary>The server moved to another network.<span aria-hidden="true">+</span></summary><p>Restart CAMS after joining the new network. Confirm the new compatible endpoint in <code>/Admin/Deployment</code>; update clients if the saved server address changed.</p></details>
+          <details class="card"><summary>The client cannot discover the server.<svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></summary><p>Confirm both PCs are on the same non-guest subnet. Allow UDP 5001 on student PCs, or skip discovery and enter <code>https://&lt;server-ip&gt;:5000/remoteMonitoringHub</code> manually.</p></details>
+          <details class="card"><summary>The browser or client reports an untrusted certificate.<svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></summary><p>Do not bypass the warning. Sign in to the local CAMS server, open <code>/Admin/Deployment</code>, and install that deployment's public <code>CAMS-Server-Root.cer</code> for the current Windows user.</p></details>
+          <details class="card"><summary>The certificate does not match the server IP.<svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></summary><p>Connect the server PC to the target network and restart CAMS so local CA mode can issue a certificate for the current LAN address. Use an endpoint marked compatible in the Deployment Hub.</p></details>
+          <details class="card"><summary>A phone hotspot connects devices but CAMS cannot reach them.<svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></summary><p>Some hotspots isolate clients or block broadcast. Disable client isolation if available, use the teacher PC's Wi-Fi IPv4 address instead of <code>localhost</code>, and verify TCP 5000 is reachable.</p></details>
+          <details class="card"><summary>A student sees "No session yet" when signing in.<svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></summary><p>Students can only sign in while a lab session is running. In the teacher portal, open Session Control, choose Start New Session, and pick a session rule; the waiting students can then press Login again.</p></details>
+          <details class="card"><summary>An installer hash does not match.<svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></summary><p>Do not run the file. Delete it, download the installer and checksum again from the same GitHub release, and repeat SHA-256 verification.</p></details>
+          <details class="card"><summary>The server moved to another network.<svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></summary><p>Restart CAMS after joining the new network. Confirm the new compatible endpoint in <code>/Admin/Deployment</code>; update clients if the saved server address changed.</p></details>
         </div>
       </div>
     </section>
@@ -282,8 +400,16 @@
 
   <footer class="site-footer">
     <div class="shell footer-main">
-      <div class="footer-brand"><div><strong>CAMS</strong><span>Computer laboratory operations on your network.</span></div></div>
-      <div class="footer-links"><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale">Source repository</a><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest">Release notes</a><a href="#privacy">Privacy boundary</a><a href="#install">Installation</a></div>
+      <div class="footer-brand">
+        <img src="assets/cams-mark.png" width="22" height="25" alt="">
+        <div><strong>CAMS</strong><span>Computer laboratory operations on your network.</span></div>
+      </div>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale"><svg class="icon" aria-hidden="true"><use href="#i-github-logo"></use></svg>Source repository</a>
+        <a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest">Release notes</a>
+        <a href="#privacy">Privacy boundary</a>
+        <a href="#install">Installation</a>
+      </nav>
     </div>
     <div class="shell footer-base"><span>CAMS v<span data-version>2.20.4</span></span><span>MIT licensed</span><span>Static portal: no analytics, cookies, remote fonts, or CDN assets.</span></div>
   </footer>
