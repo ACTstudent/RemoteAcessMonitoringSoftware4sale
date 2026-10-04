@@ -103,7 +103,7 @@ Active teachers can monitor and control all connected student clients and use la
 1. On `/Teacher/Sessions`, start a session for a student in one of your active classes, optionally selecting an available workstation and active session rule.
 2. Pause displays a full-screen waiting screen on every monitor of the affected student PC and stops its session timer. Resume removes the screen, releases keyboard/mouse input, and continues the timer. The global Pause button freezes all active sessions across teachers; the individual Pause action still respects its session rule.
 3. End closes the affected session records and requests a restart of the connected student PCs after 10 seconds. The global End button targets every connected student client. Open applications are forced closed, so the confirmation warns that unsaved work can be lost. Ordinary logout, account deactivation, and automatic timeout keep their existing logout/lock behavior. See [session control details](docs/improvements/SESSION-CONTROLS.md).
-4. Monitor every connected Student client, including screen frames, connectivity, active application, browser status, and idle state.
+4. Monitor every connected Student client, including screen frames, connectivity, the website open in the browser, browser status, and idle state.
 5. Globally use lock, release CAMS lock state, force logout, restart, shutdown, warning, notification, broadcast, and remote support/input commands.
 
 The capture loop targets a 50 ms delay with one frame in flight. This is not a 20 FPS guarantee; capture and network conditions determine observed updates.

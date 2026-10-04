@@ -12,7 +12,7 @@ Open any `.drawio` file at [app.diagrams.net](https://app.diagrams.net) with **F
 
 | File | Notation | Contents |
 | --- | --- | --- |
-| [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio) | UML use case | 25 module boxes, 84 use cases, 3 actors, ADMIN a generalization of TEACHER in the shared modules, one page |
+| [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio) | UML use case | 26 system use case boxes, 91 use cases, 3 actors, one "Admin / Teacher" actor in the twelve boxes the two share, one page |
 | [`CAMS-Class-Model.drawio`](CAMS-Class-Model.drawio) | UML class | 23 classes, 119 attributes, 61 operations, 24 connectors |
 | [`CAMS-Database-Schema.drawio`](CAMS-Database-Schema.drawio) | Crow's foot | All 28 tables, every column with its SQLite type |
 | [`CAMS-Crowsfoot-ERD.drawio`](CAMS-Crowsfoot-ERD.drawio) | Crow's foot | The 15 tables the Chen diagram covers, 110 columns, plus a notes page |
@@ -36,10 +36,10 @@ It deliberately names two or three attributes per entity. The full attribute lis
 
 | File | Contents |
 | --- | --- |
-| [`CAMS-Use-Case-Specifications.pdf`](CAMS-Use-Case-Specifications.pdf) | The written use cases, ready to read or print. 88 pages, US Letter, Times New Roman, double spaced, each module drawn with a numbered figure caption |
+| [`CAMS-Use-Case-Specifications.pdf`](CAMS-Use-Case-Specifications.pdf) | The written use cases, ready to read or print. 50 pages, US Letter, Times New Roman, each box drawn with a numbered figure caption (Figures 3.3 to 3.28) and its written use cases set single spaced beneath it |
 | [`CAMS-Use-Case-Specifications.docx`](CAMS-Use-Case-Specifications.docx) | The same document in Word, for pasting into a manuscript |
 | [`Use-Case-Specifications.md`](Use-Case-Specifications.md) | The same content in Markdown, so it renders on GitHub and diffs cleanly |
-| [`usecase-images/`](usecase-images) | The 25 module drawings the documents embed, one PNG each |
+| [`usecase-images/`](usecase-images) | The 26 box drawings the documents embed, one PNG each |
 | [`ERD.md`](ERD.md) | The entity model in Mermaid, and the notes explaining both ERDs |
 | [`Use-Case-Diagram.md`](Use-Case-Diagram.md) | Scope, actor boundaries, and how the diagram was derived |
 | [`SignalR-Message-Flow.md`](SignalR-Message-Flow.md) | How the server and the workstation clients talk to each other |
@@ -47,7 +47,7 @@ It deliberately names two or three attributes per entity. The full attribute lis
 | [`Menu-Structure-Diagram.md`](Menu-Structure-Diagram.md) | The navigation tree behind each role |
 | [`CAMS-Appendices.md`](CAMS-Appendices.md) | Appendices | Flow of the system, the application prototype with 17 screens, and sample program code |
 
-Each specification follows the ten fields the course handout sets out: **use case name, purpose, actors, input parameters, output parameters, pre-condition, post-condition, successful scenario, exception scenario, additional remarks.** All three files carry the same 84 written use cases, laid out the way the course handout lays out its worked example: no tables, a bold field label ending in a colon with the value on the same line, numbered steps and a bulleted list of exceptions, in Times New Roman twelve point, double spaced and justified on US Letter, which is how a thesis chapter is set. Each module is drawn first, with an italic numbered caption beneath the drawing - *Figure 3.1: System Use Case for Process Log In* - and the use cases inside that module follow.
+Each written use case follows the ten fields the course handout sets out: **use case name, purpose, actors, input parameters, output parameters, pre-condition, post-condition, successful scenario, exception scenario, additional remarks.** All three files carry the same 48 written use cases, one for every base use case - a use case an actor starts. A box is drawn first, with an italic numbered caption beneath the drawing - *Figure 3.3: System Use Case for Process Log In* - and the written use cases of that box follow, each opening with "Written Use Case:" naming the box and "Use Case Name:" naming the base use case. What extends or is included by a base use case - Edit, Delete, Export and the like - is written inside that base's steps. There are no tables: a bold field label, bullet lists for the fields, numbered steps and "If ...:" exceptions, in Times New Roman twelve point on US Letter with the written use cases single spaced. The figures are numbered from 3.3 because Figures 3.1 and 3.2 come before them in Chapter III of the manuscript.
 
 The write-ups are kept short and in plain words, so they read easily in a defense. What they say - the fields a user enters, the checks CAMS makes and the error cases - still comes from the source code rather than from memory.
 
@@ -57,7 +57,7 @@ The write-ups are kept short and in plain words, so they read easily in a defens
 
 **Administrator**, **Teacher** and **Student**. Nothing else — the workstation client and the hosted background workers are parts of the system, not actors, so what they do is drawn as included behaviour of the case a person actually starts.
 
-The division between the administrator and the teacher is read off the code rather than assumed. `AdminController` is `[Authorize(Roles = AdminOrTeacher)]`, and its authorization filter admits a teacher only to actions marked `[TeacherSharedAction]`. Fifty-six actions carry that attribute — peer teacher accounts, student accounts, workstations, classes, rosters, restriction rules, lists, categories, session rules, and laboratory-wide pause, resume and end — so the diagram draws that shared surface once, for the **Teacher**, with the **Administrator** as a generalization of the Teacher that inherits those use cases, instead of repeating it for each.
+The division between the administrator and the teacher is read off the code rather than assumed. `AdminController` is `[Authorize(Roles = AdminOrTeacher)]`, and its authorization filter admits a teacher only to actions marked `[TeacherSharedAction]`. Sixty actions carry that attribute — peer teacher accounts, student accounts, computers, classes and their teacher, rosters, restriction rules, lists, categories, session rules, and laboratory-wide pause, resume and end — so the diagram draws that shared surface once, in twelve boxes that each have one actor named **Admin / Teacher**, instead of repeating it for each. A use case only one of them has stays in that actor's own boxes.
 
 The administrator keeps what is not shared: administrator accounts, reports, audit and system logs, and everything in `AdminDatabaseController` and `AdminDeploymentController`.
 
@@ -69,9 +69,9 @@ The administrator keeps what is not shared: administrator accounts, reports, aud
 
 **Use case diagram.** A plain line from an actor is an association. A dashed arrow with an open head marked `<<include>>` runs **from** the base case to behaviour it always performs. One marked `<<extend>>` runs the other way — **from** the optional case back **at** the base — because the base is complete and meaningful without it, and the extension is what only sometimes happens. Exporting the audit log as a CSV file extends viewing it; the audit log is complete without the file.
 
-A solid line with a hollow triangle is a generalization: in each shared module ADMIN points at TEACHER, so the Admin inherits every use case the Teacher has there.
+No generalization is drawn. Where the Admin and the Teacher share a box, one actor named Admin / Teacher stands beside it and is joined to every use case they start in it.
 
-Every use case names what the actor gets done, verb first, and still maps to the functions that implement it; the module caption names the declaring type. A page that only shows information is drawn only where an export extends it. Deletes are drawn only where CAMS really deletes - restriction rules, blacklist entries and whitelist entries; everything else is switched off with TOGGLE … STATUS, the deactivation or archive that keeps the record and its history - `AdminController.DeleteComputer` archives a workstation and `UpdateComputer` brings it back, so the two together are TOGGLE COMPUTER STATUS. Actions that reach the same goal are one use case: enrolling one student, several, or a brand-new one is ENROLL STUDENTS. Captions run from two to five words, and none is a single word.
+Every use case names what the actor gets done, verb first, in at most three words and with no "to", "and" or "or" (VIEW STUDENT LIVE FRAME is the one four-word name), and still maps to the functions that implement it. A page that lists records is a VIEW use case joined to the actor, and what is done to a record on that list - Edit, Delete, Export, Enroll, Assign - extends it; Create, Import, Add and Register are started from the page itself, so they are base use cases of their own. A page that only shows information, with nothing to extend it, is not drawn. Deletes are drawn only for the policies CAMS really deletes - restriction rules, blacklist entries, whitelist entries and categories. Accounts, classes, computers and session rules are deactivated or archived instead, and of those only an account's Deactivate / Activate button is drawn, as TOGGLE TEACHER STATUS, TOGGLE STUDENT STATUS and TOGGLE ADMIN STATUS. Actions that reach the same goal are one use case: enrolling one student, several, or a brand-new one is ENROLL STUDENTS.
 
 **Crow's foot.** The parent end is a double bar when the child's foreign key is `NOT NULL` and a bar with a circle when it is nullable. The child end is always a crow's foot with a circle, because no foreign key can oblige a parent to have children — a teacher with no classes yet is perfectly valid. Six of the twenty-five relationships have a mandatory parent end.
 
@@ -86,8 +86,8 @@ Nothing here is hand-placed. The drawings are emitted from the source by generat
 | Check | What it asserts |
 | --- | --- |
 | Structural | The XML parses in a real browser, no connector points at a shape that does not exist, no two shapes overlap |
-| Coverage | Every controller action and hub method a person starts that changes something or produces a file appears in the use case diagram. Left out, and named in [`Use-Case-Diagram.md`](Use-Case-Diagram.md): pages that only show information, the hard deletes of accounts, classes and workstations that the status toggles replace, the fixed roles, actions nothing in the interface calls, error pages, SignalR lifecycle callbacks, the closed student web portal and the client agent's own background calls |
-| Naming | All 83 distinct use case captions resolve to real functions in the source, and none is a single word |
+| Coverage | Every controller action and hub method a person starts that changes something or produces a file appears in the use case diagram. Left out, and named in [`Use-Case-Diagram.md`](Use-Case-Diagram.md): pages that only show information, the deletes, archives and unlocks of accounts, classes and computers, logging out of the portal, the fixed roles, actions nothing in the interface calls, error pages, SignalR lifecycle callbacks, the closed student web portal and the client agent's own background calls |
+| Naming | All 90 distinct use case names resolve to real functions in the source; none is a single word, none is longer than three words bar VIEW STUDENT LIVE FRAME, and none keeps a joining word |
 | Cardinality | Every relationship in both ERDs matches the nullability of the foreign key behind it |
 | Attributes | Every column in the schema diagrams and every attribute in the class model exists in the model, and none is missing |
 | Arrows | Every `<<extend>>` terminates on its base case, every `<<include>>` on the included behaviour |
