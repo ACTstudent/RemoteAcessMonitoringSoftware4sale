@@ -17,6 +17,11 @@ namespace Server.Services;
 /// own. The records a teacher reads back - alerts, histories, the timeline -
 /// are together rather than under "My Classes", and a person's own Account
 /// Settings closes each menu, which the name in the page header also opens.
+///
+/// A menu reads top to bottom as single links, then the groups, then Account
+/// Settings. A link standing alone between two dropdowns looks like a stray,
+/// so Classes - a page on its own - sits with the single links at the top
+/// rather than between People and the group after it.
 /// </summary>
 public static class NavigationBuilder
 {
@@ -94,14 +99,19 @@ public static class NavigationBuilder
         // teacher shares with the administrator.
         Sections: new NavSection[]
         {
+            // The teacher's own page leads: it is where a teacher lands after
+            // logging in. The lab-wide Dashboard and the lab-wide Classes,
+            // which the administrator's menu opens with, follow it.
+            //
             // "My Classroom" rather than a bare "Dashboard": the lab-wide
             // overview beneath it is also a dashboard, and two links both
             // reading Dashboard told a teacher nothing about which one they
             // wanted.
             new NavSection(null, new[]
             {
+                new NavItem("My Classroom", "speedometer2", "Dashboard", "Teacher"),
                 LabDashboard,
-                new NavItem("My Classroom", "speedometer2", "Dashboard", "Teacher")
+                LabClasses
             }),
             new NavSection("Laboratory Control", new[]
             {
@@ -131,7 +141,6 @@ public static class NavigationBuilder
                 new NavItem("Lab Utilization", "bar-chart-fill", "LabUtilization", "Teacher")
             }),
             new NavSection("People", new[] { Teachers, Students }),
-            new NavSection(null, new[] { LabClasses }),
             PoliciesSection(),
             new NavSection(null, new[] { AccountSettings(Teacher) })
         })
@@ -165,14 +174,13 @@ public static class NavigationBuilder
         // audience, which told an administrator nothing about where to look.
         var sections = new List<NavSection>
         {
-            new NavSection(null, new[] { LabDashboard }),
+            new NavSection(null, new[] { LabDashboard, LabClasses }),
             new NavSection("People", new[]
             {
                 Teachers,
                 Students,
                 new NavItem("Admin Accounts", "shield-lock-fill", "AdminAccounts", "Admin")
             }),
-            new NavSection(null, new[] { LabClasses }),
             new NavSection("Laboratory", new[]
             {
                 LabComputers,

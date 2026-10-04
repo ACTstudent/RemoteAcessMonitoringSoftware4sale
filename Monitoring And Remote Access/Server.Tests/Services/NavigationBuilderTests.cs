@@ -101,6 +101,30 @@ public class NavigationBuilderTests
         Assert.Equal(new[] { "My Class List", "My Students", "Class Restrictions" }, mine.Items.Select(item => item.Text));
     }
 
+    // A link standing alone between two dropdowns reads as a stray. Each menu
+    // is its single links, then its groups, then Account Settings.
+    [Theory]
+    [MemberData(nameof(Portals))]
+    public void SingleLinksLead_ThenTheGroups(string portal)
+    {
+        var sections = Menu(portal).Sections;
+
+        Assert.Null(sections[0].Label);
+        Assert.Null(sections[^1].Label);
+        Assert.All(sections.Skip(1).Take(sections.Count - 2), section => Assert.NotNull(section.Label));
+    }
+
+    // The teacher's own page leads their menu; the administrator's opens with
+    // the lab-wide Dashboard. Classes follows in both.
+    [Fact]
+    public void EachMenu_OpensWithThatRolesHomePage()
+    {
+        Assert.Equal(new[] { "My Classroom", "Dashboard", "Classes" },
+            Menu(NavigationBuilder.Teacher).Sections[0].Items.Select(item => item.Text));
+        Assert.Equal(new[] { "Dashboard", "Classes" },
+            Menu(NavigationBuilder.Admin).Sections[0].Items.Select(item => item.Text));
+    }
+
     [Theory]
     [MemberData(nameof(Portals))]
     public void NoPageIsListedTwice(string portal)
