@@ -22,7 +22,9 @@ public class AnalyticsServiceTests
         db.Students.Add(student);
         db.LabSessions.Add(new LabSession { StudentId = 4, TeacherId = 7, StartTime = from, EndTime = from.AddMinutes(20), Status = "Ended", PCName = "PC-1" });
         db.IdleIntervals.Add(new IdleInterval { StudentId = "S-4", ConnectionId = "c", PcName = "PC-1", StartedAt = from.AddMinutes(5), EndedAt = from.AddMinutes(10) });
+        // A row an agent wrote before applications stopped being recorded, and a website visit.
         db.ActivityEvents.Add(new ActivityEvent { StudentId = "S-4", ConnectionId = "c", PcName = "PC-1", EventType = "ApplicationUsed", ApplicationName = "editor", Timestamp = from.AddMinutes(1) });
+        db.ActivityEvents.Add(new ActivityEvent { StudentId = "S-4", ConnectionId = "c", PcName = "PC-1", EventType = "WebsiteUsed", Details = "example.org", Timestamp = from.AddMinutes(2) });
         await db.SaveChangesAsync();
 
         var report = await new AnalyticsService(db).GetStudentReportAsync(4, 7, from, from.AddMinutes(20));
@@ -30,7 +32,11 @@ public class AnalyticsServiceTests
         Assert.NotNull(report);
         Assert.Equal(15, report!.Durations.ActiveMinutes, 1);
         Assert.Equal(5, report.Durations.IdleMinutes, 1);
-        Assert.Equal(19, report.Durations.ApplicationMinutes, 1);
+        Assert.Equal(18, report.Durations.WebsiteMinutes, 1);
+        // Usage is websites only: the application row is left out of the timeline.
+        var visit = Assert.Single(report.Timeline);
+        Assert.Equal("WebsiteUsed", visit.EventType);
+        Assert.Equal("example.org", visit.Details);
     }
 
     [Fact]

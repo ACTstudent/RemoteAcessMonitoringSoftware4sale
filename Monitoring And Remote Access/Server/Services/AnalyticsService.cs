@@ -29,6 +29,14 @@ public sealed class AnalyticsService : IAnalyticsService
 {
     private readonly ApplicationDbContext _db;
 
+    /// <summary>
+    /// The activity event an agent used to send every few seconds for the
+    /// application in front of a student. Usage is websites only now, so
+    /// nothing writes it any more; a database that already holds these rows
+    /// keeps them, and the timelines leave them out.
+    /// </summary>
+    private const string ApplicationUsageEvent = "ApplicationUsed";
+
     public AnalyticsService(ApplicationDbContext db) => _db = db;
 
     public async Task<StudentAnalyticsReport?> GetStudentReportAsync(int studentId, int teacherId, DateTime from, DateTime to, CancellationToken cancellationToken = default)
@@ -59,12 +67,13 @@ public sealed class AnalyticsService : IAnalyticsService
         var range = NormalizeRange(from, to);
         var query = _db.ActivityEvents.AsNoTracking()
             .Where(e => e.StudentId == student.StudentNumber && e.Timestamp >= range.From && e.Timestamp < range.To)
+            .Where(e => e.EventType != ApplicationUsageEvent)
             .Where(e => string.IsNullOrEmpty(eventType) || e.EventType == eventType);
         var total = await query.CountAsync(cancellationToken);
         page = NormalizePage(page, pageSize, total);
         var items = await query.OrderByDescending(e => e.Timestamp).ThenByDescending(e => e.ActivityEventId)
             .Skip((page - 1) * pageSize).Take(pageSize)
-            .Select(e => new ActivityTimelineItem(e.Timestamp, e.EventType, e.ApplicationName, e.Details, e.PcName))
+            .Select(e => new ActivityTimelineItem(e.Timestamp, e.EventType, e.Details, e.PcName))
             .ToListAsync(cancellationToken);
         return new PagedResult<ActivityTimelineItem>(items, page, pageSize, total);
     }
@@ -338,13 +347,13 @@ public sealed class AnalyticsService : IAnalyticsService
         {
             var activities = await _db.ActivityEvents.AsNoTracking()
                 .Where(e => targetStudentNumbers.Contains(e.StudentId) && e.Timestamp >= range.From && e.Timestamp < range.To)
+                .Where(e => e.EventType != ApplicationUsageEvent)
                 .ToListAsync(cancellationToken);
             foreach (var activity in activities.Where(a => EventMatches(filter.EventType, a.EventType)))
             {
                 if (!studentByNumber.TryGetValue(activity.StudentId, out var student)) continue;
-                var title = string.IsNullOrWhiteSpace(activity.ApplicationName) ? activity.EventType : activity.ApplicationName;
                 items.Add(TimelineItem(activity.Timestamp, "Activity", activity.EventType, student, activity.PcName,
-                    title!, activity.Details, null, null, $"activity:{activity.ActivityEventId}"));
+                    activity.EventType, activity.Details, null, null, $"activity:{activity.ActivityEventId}"));
             }
         }
 
@@ -530,9 +539,8 @@ public sealed class AnalyticsService : IAnalyticsService
             .ToListAsync(cancellationToken);
         var sessionDuration = SumRanges(sessionRanges, from, to).TotalSeconds;
         var idleDuration = SumRanges(idleRanges, from, to).TotalSeconds;
-        var application = DurationFor(events, "ApplicationUsed", from, to, sessionRanges);
         var website = DurationFor(events, "WebsiteUsed", from, to, sessionRanges);
-        return new DurationSummary(TimeSpan.FromSeconds(application), TimeSpan.FromSeconds(website),
+        return new DurationSummary(TimeSpan.FromSeconds(website),
             TimeSpan.FromSeconds(idleDuration), TimeSpan.FromSeconds(Math.Max(0, sessionDuration - idleDuration)));
     }
 

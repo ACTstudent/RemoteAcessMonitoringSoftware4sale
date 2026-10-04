@@ -121,16 +121,41 @@ public sealed class RemoteMonitoringHubSecurityTests
                 "https://user:secret@example.com/private", "Chrome", timestamp))
         }));
 
+        // Both items count as processed, so an agent that still sends the
+        // application in front of the student has its queue drained; only the
+        // website is recorded, under the connection's own identity.
         Assert.Equal(2, result.ProcessedCount);
         Assert.NotNull(recorded);
-        Assert.Equal("student-connection", recorded![0].ActiveApp!.ConnectionId);
-        Assert.Equal("student-1", recorded[0].ActiveApp!.StudentId);
-        Assert.Equal("PC-01", recorded[0].ActiveApp!.PcName);
-        Assert.Equal("chrome", recorded[0].ActiveApp!.ApplicationName);
-        Assert.Equal(timestamp, recorded[0].ActiveApp!.Timestamp);
-        Assert.Equal("example.com", recorded[1].WebsiteActivity!.Domain);
-        Assert.Equal("chrome", recorded[1].WebsiteActivity!.Browser);
-        Assert.Single(monitoring.ActiveApps);
+        var website = Assert.Single(recorded!).WebsiteActivity;
+        Assert.NotNull(website);
+        Assert.Equal("student-connection", website!.ConnectionId);
+        Assert.Equal("student-1", website.StudentId);
+        Assert.Equal("PC-01", website.PcName);
+        Assert.Equal("example.com", website.Domain);
+        Assert.Equal("chrome", website.Browser);
+        Assert.Equal(timestamp, website.Timestamp);
+    }
+
+    [Fact]
+    public async Task ApplicationReports_AreAcceptedAndDropped()
+    {
+        await using var provider = CreateProvider();
+        var monitoring = new MonitoringService();
+        monitoring.RegisterStudent("student-connection", "student-1", "PC-01");
+        var telemetry = new Mock<ITelemetryService>(MockBehavior.Strict);
+        var hub = CreateHub(provider, monitoring, "student-connection", "Student", "1",
+            clientAgent: true, telemetryService: telemetry.Object);
+
+        // Usage is websites only. An agent installed before that still reports
+        // the application in front of the student; it is neither refused nor kept.
+        await hub.ReportActiveApp(new ActiveAppMessage("spoofed", "spoofed", "spoofed", "chrome", DateTime.UtcNow));
+        var result = await hub.ReportTelemetryBatch(new TelemetryBatchMessage(new[]
+        {
+            TelemetryBatchItem.From(new ActiveAppMessage("spoofed", "spoofed", "spoofed", "chrome", DateTime.UtcNow))
+        }));
+
+        Assert.Equal(1, result.ProcessedCount);
+        telemetry.VerifyNoOtherCalls();
     }
 
     [Fact]
@@ -397,7 +422,6 @@ public sealed class RemoteMonitoringHubSecurityTests
         var monitoring = new MonitoringService();
         monitoring.RegisterStudent("student-connection", "student-1", "PC-01");
         monitoring.ReportIdleStatus(new IdleStatusMessage("student-connection", "student-1", "PC-01", true, DateTime.UtcNow));
-        monitoring.ReportActiveApp(new ActiveAppMessage("student-connection", "student-1", "PC-01", "app.exe", DateTime.UtcNow));
         var hub = CreateHub(provider, monitoring, "teacher-connection", "Teacher", "1");
         await hub.StartRemoteControl("student-connection");
 
@@ -405,7 +429,6 @@ public sealed class RemoteMonitoringHubSecurityTests
 
         Assert.Single(monitoring.ActiveStudents);
         Assert.Single(monitoring.IdleStatus);
-        Assert.Single(monitoring.ActiveApps);
         await using var scope = provider.CreateAsyncScope();
         var session = await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().RemoteControlSessions.SingleAsync();
         Assert.False(session.IsActive);

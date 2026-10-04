@@ -127,18 +127,15 @@ public class TeacherControllerTests
         var monitoring = new MonitoringService();
         monitoring.RegisterStudent("own-connection", "OWN", "PC-01");
         monitoring.RegisterStudent("foreign-connection", "FOREIGN", "PC-02");
-        monitoring.ReportActiveApp(new Shared.Contracts.ActiveAppMessage(
-            "foreign-connection", "FOREIGN", "PC-02", "browser", DateTime.UtcNow));
 
         var result = Assert.IsType<JsonResult>(CreateController(db, monitoring: monitoring).LiveState());
         var students = Assert.IsAssignableFrom<IEnumerable<Shared.Contracts.StudentConnectionMessage>>(
             result.Value!.GetType().GetProperty("Students")!.GetValue(result.Value));
-        var apps = Assert.IsAssignableFrom<IEnumerable<Shared.Contracts.ActiveAppMessage>>(
-            result.Value.GetType().GetProperty("Apps")!.GetValue(result.Value));
 
         Assert.Equal(2, students.Count());
         Assert.Contains(students, student => student.StudentId == "FOREIGN");
-        Assert.Contains(apps, app => app.StudentId == "FOREIGN");
+        // The application in front of a student is no longer part of the live state.
+        Assert.Null(result.Value.GetType().GetProperty("Apps"));
     }
 
     [Fact]
@@ -449,30 +446,25 @@ public class TeacherControllerTests
     }
 
     [Fact]
-    public async Task UpdateComputer_StatusUpdated()
+    public void Computers_SendsTheTeacherToTheOneComputersPage()
     {
         using var db = GetDbContext();
-        var controller = CreateController(db);
 
-        var student = new Student
-        {
-            StudentNumber = "STU-COMP-1",
-            FullName = "Accessible Student",
-            Username = "accessible-computer-student",
-            PasswordHash = "hash",
-            AdviserId = 1
-        };
-        db.Students.Add(student);
-        await db.SaveChangesAsync();
-        var comp = new Computer { LaboratoryStation = "Station-05", Status = "Available", AssignedTo = student.Id.ToString() };
-        db.Computers.Add(comp);
-        await db.SaveChangesAsync();
+        // A teacher used to have a second computers page, "Workstation
+        // Profiles". Its address still answers, by leading to the page the
+        // teacher shares with the administrator.
+        var redirect = Assert.IsType<RedirectToActionResult>(CreateController(db).Computers());
 
-        var result = await controller.UpdateComputer(new Computer { ComputerId = comp.ComputerId, LaboratoryStation = "Station-05", Status = "Maintenance" });
-        Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Computers", redirect.ActionName);
+        Assert.Equal("Admin", redirect.ControllerName);
+    }
 
-        var updated = await db.Computers.FindAsync(comp.ComputerId);
-        Assert.Equal("Maintenance", updated?.Status);
+    [Fact]
+    public void TheTeacherHasNoComputerEditOfTheirOwn()
+    {
+        // Editing a computer is the shared page's UpdateComputer (AdminController,
+        // marked [TeacherSharedAction]); a second copy here would let the two drift.
+        Assert.Null(typeof(TeacherController).GetMethod("UpdateComputer"));
     }
 
     [Fact]
@@ -701,51 +693,6 @@ public class TeacherControllerTests
     }
 
     [Fact]
-    public async Task Computers_AndUpdatesCoverEveryStudentGlobally()
-    {
-        using var db = GetDbContext();
-        var controller = CreateController(db);
-        var accessibleStudent = new Student { StudentNumber = "S-1", FullName = "Own Student", Username = "own-student", PasswordHash = "hash", AdviserId = 1 };
-        var foreignStudent = new Student { StudentNumber = "S-2", FullName = "Other Student", Username = "other-student", PasswordHash = "hash", AdviserId = 2 };
-        db.Students.AddRange(accessibleStudent, foreignStudent);
-        await db.SaveChangesAsync();
-        var accessibleComputer = new Computer { LaboratoryStation = "OWN-PC", Status = "Available", AssignedTo = accessibleStudent.Id.ToString() };
-        var foreignComputer = new Computer { LaboratoryStation = "OTHER-PC", Status = "Available", AssignedTo = foreignStudent.Id.ToString() };
-        db.Computers.AddRange(accessibleComputer, foreignComputer);
-        await db.SaveChangesAsync();
-
-        // Global access: every workstation is visible to every teacher.
-        var listResult = Assert.IsType<ViewResult>(await controller.Computers());
-        var computers = Assert.IsAssignableFrom<IEnumerable<Computer>>(listResult.Model).ToList();
-        Assert.Equal(2, computers.Count);
-        Assert.Contains(computers, c => c.ComputerId == accessibleComputer.ComputerId);
-        Assert.Contains(computers, c => c.ComputerId == foreignComputer.ComputerId);
-
-        // And any teacher can update any workstation.
-        var updatedForeign = await controller.UpdateComputer(new Computer
-        {
-            ComputerId = foreignComputer.ComputerId,
-            LaboratoryStation = "OTHER-PC-EDITED",
-            Status = "Maintenance"
-        });
-        Assert.IsType<RedirectToActionResult>(updatedForeign);
-        Assert.Equal("OTHER-PC-EDITED", (await db.Computers.FindAsync(foreignComputer.ComputerId))?.LaboratoryStation);
-
-        var saved = await controller.UpdateComputer(new Computer
-        {
-            ComputerId = accessibleComputer.ComputerId,
-            LaboratoryStation = "OWN-PC-EDITED",
-            Status = "Maintenance",
-            AssignedTo = foreignStudent.Id.ToString()
-        });
-        Assert.IsType<RedirectToActionResult>(saved);
-        var updated = await db.Computers.FindAsync(accessibleComputer.ComputerId);
-        Assert.Equal("OWN-PC-EDITED", updated?.LaboratoryStation);
-        Assert.Equal("Maintenance", updated?.Status);
-        Assert.Equal(accessibleStudent.Id.ToString(), updated?.AssignedTo);
-    }
-
-    [Fact]
     public async Task EnrollStudent_AnyStudentCanBeEnrolledGlobally()
     {
         using var db = GetDbContext();
@@ -761,5 +708,126 @@ public class TeacherControllerTests
 
         Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal(cls.ClassId, (await db.Students.FindAsync(student.Id))?.ClassId);
+    }
+
+
+    // ---------- Account settings: the signed-in teacher's own account ----------
+
+    private static Teacher SignedInTeacher() => new()
+    {
+        TeacherId = 1, FirstName = "Maria", LastName = "Santos", Username = "msantos",
+        Email = "msantos@pardo.edu.ph", ContactNumber = "0917-555-0101", PasswordHash = "hash", Status = "Active"
+    };
+
+    [Fact]
+    public async Task Settings_ShowsTheSignedInTeachersOwnAccount()
+    {
+        using var db = GetDbContext();
+        db.Teachers.Add(SignedInTeacher());
+        await db.SaveChangesAsync();
+
+        var view = Assert.IsType<ViewResult>(await CreateController(db).Settings());
+
+        var settings = Assert.IsType<AccountSettingsViewModel>(view.Model);
+        Assert.True(settings.IsTeacher);
+        Assert.Equal("Teacher", settings.Controller);
+        Assert.Equal("Maria", settings.Profile.FirstName);
+        Assert.Equal("Santos", settings.Profile.LastName);
+        Assert.Equal("msantos", settings.Profile.Username);
+        Assert.Equal("msantos@pardo.edu.ph", settings.Profile.Email);
+        Assert.Equal("0917-555-0101", settings.Profile.ContactNumber);
+    }
+
+    [Fact]
+    public async Task UpdateProfile_SavesTheTeachersOwnDetails()
+    {
+        using var db = GetDbContext();
+        db.Teachers.Add(SignedInTeacher());
+        await db.SaveChangesAsync();
+        var controller = CreateController(db);
+
+        var result = await controller.UpdateProfile(new AccountProfileInput
+        {
+            FirstName = " Ana ", LastName = "Reyes", Username = "areyes", Email = "areyes@pardo.edu.ph", ContactNumber = "0918-555-0102"
+        });
+
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(TeacherController.Settings), redirect.ActionName);
+        var teacher = await db.Teachers.SingleAsync();
+        Assert.Equal("Ana", teacher.FirstName);
+        Assert.Equal("Reyes", teacher.LastName);
+        Assert.Equal("areyes", teacher.Username);
+        Assert.Equal("areyes@pardo.edu.ph", teacher.Email);
+        Assert.Equal("0918-555-0102", teacher.ContactNumber);
+        // Their own details, never whether the account is active.
+        Assert.Equal("Active", teacher.Status);
+        // The page header shows the session's name, so it follows the change.
+        Assert.Equal("Ana Reyes", controller.HttpContext.Session.GetString("TeacherName"));
+        Assert.NotNull(await db.AuditLogs.SingleOrDefaultAsync(log => log.Action == "UpdateOwnProfile" && log.UserType == "Teacher"));
+    }
+
+    [Theory]
+    [InlineData("", "Santos", "msantos", "")]
+    [InlineData("Maria", "", "msantos", "")]
+    [InlineData("Maria", "Santos", "", "")]
+    [InlineData("Maria", "Santos", "taken", "")]
+    [InlineData("Maria", "Santos", "msantos", "not-an-email")]
+    public async Task UpdateProfile_RefusesWhatCannotBeSaved(string firstName, string lastName, string username, string email)
+    {
+        using var db = GetDbContext();
+        db.Teachers.Add(SignedInTeacher());
+        db.Admins.Add(new Admin { Username = "taken", FullName = "An Admin", PasswordHash = "hash" });
+        await db.SaveChangesAsync();
+        var controller = CreateController(db);
+
+        await controller.UpdateProfile(new AccountProfileInput { FirstName = firstName, LastName = lastName, Username = username, Email = email });
+
+        var teacher = await db.Teachers.SingleAsync();
+        Assert.Equal("Maria", teacher.FirstName);
+        Assert.Equal("Santos", teacher.LastName);
+        Assert.Equal("msantos", teacher.Username);
+        Assert.Equal("msantos@pardo.edu.ph", teacher.Email);
+        Assert.NotNull(controller.TempData["ErrorMessage"]);
+        Assert.Empty(await db.AuditLogs.ToListAsync());
+    }
+
+    // ---------- Classroom Records: CSV files, and website usage only ----------
+
+    [Fact]
+    public async Task ExportWebsiteActivityCsv_ListsEachVisit()
+    {
+        using var db = GetDbContext();
+        var student = new Student { StudentNumber = "W-1", FullName = "Web Student", Username = "webstudent", PasswordHash = "hash" };
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+        db.WebsiteUsageLogs.Add(new WebsiteUsageLog { StudentId = student.Id, Domain = "example.org", Browser = "chrome", Timestamp = DateTime.UtcNow });
+        await db.SaveChangesAsync();
+
+        var file = Assert.IsType<FileContentResult>(await CreateController(db).ExportWebsiteActivityCsv());
+        var csv = System.Text.Encoding.UTF8.GetString(file.FileContents);
+
+        Assert.Equal("text/csv; charset=utf-8", file.ContentType);
+        Assert.StartsWith("CAMS-Website-Activity-", file.FileDownloadName);
+        Assert.StartsWith("Recorded At,Student Number,Student Name,Username,Website,Browser", csv);
+        Assert.Contains("\"W-1\",\"Web Student\",\"webstudent\",\"example.org\",\"chrome\"", csv);
+    }
+
+    [Fact]
+    public async Task Records_ListsWebsiteActivityAndNoApplicationActivity()
+    {
+        using var db = GetDbContext();
+        var student = new Student { StudentNumber = "W-2", FullName = "Web Student", Username = "webstudent2", PasswordHash = "hash" };
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+        db.UsageLogs.Add(new UsageLog { StudentId = student.Id, AppName = "game.exe", PcName = "PC-1", Timestamp = DateTime.UtcNow });
+        db.WebsiteUsageLogs.Add(new WebsiteUsageLog { StudentId = student.Id, Domain = "example.org", Browser = "chrome", Timestamp = DateTime.UtcNow });
+        await db.SaveChangesAsync();
+        var controller = CreateController(db);
+
+        Assert.IsType<ViewResult>(await controller.Records());
+
+        var visits = Assert.IsAssignableFrom<IEnumerable<WebsiteUsageLog>>((object)controller.ViewBag.WebsiteUsage);
+        Assert.Equal("example.org", Assert.Single(visits).Domain);
+        Assert.Null((object?)controller.ViewBag.ApplicationUsage);
     }
 }

@@ -16,8 +16,8 @@ namespace Client.Services;
 /// </summary>
 public sealed class TelemetryGate
 {
-    /// <summary>How often the foreground application may be reported.</summary>
-    public static readonly TimeSpan ActiveAppInterval = TimeSpan.FromSeconds(5);
+    /// <summary>How often the foreground browser is looked at for the website it shows.</summary>
+    public static readonly TimeSpan ForegroundSampleInterval = TimeSpan.FromSeconds(5);
 
     /// <summary>How long the same infraction stays quiet after being reported.</summary>
     public static readonly TimeSpan InfractionCooldown = TimeSpan.FromSeconds(30);
@@ -28,7 +28,7 @@ public sealed class TelemetryGate
     // assumed. Reporting the starting state would arguably be better, but this
     // is an extraction and changing what goes over the wire is not part of it.
     private bool _lastIdle;
-    private DateTime _lastActiveApp = DateTime.MinValue;
+    private DateTime _lastForegroundSample = DateTime.MinValue;
     private string _lastWebsite = string.Empty;
     private readonly Dictionary<string, string> _lastBrowserStatus = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, DateTime> _lastInfraction = new(StringComparer.OrdinalIgnoreCase);
@@ -42,13 +42,14 @@ public sealed class TelemetryGate
     }
 
     /// <summary>
-    /// The foreground application is reported on an interval rather than on
-    /// change: it is a sample of what the student is doing, not an event.
+    /// The foreground browser is looked at on an interval, to see which website
+    /// it shows. The application in front of the student is not reported: usage
+    /// is websites only.
     /// </summary>
-    public bool ShouldReportActiveApp(DateTime utcNow)
+    public bool ShouldSampleForeground(DateTime utcNow)
     {
-        if (utcNow - _lastActiveApp <= ActiveAppInterval) return false;
-        _lastActiveApp = utcNow;
+        if (utcNow - _lastForegroundSample <= ForegroundSampleInterval) return false;
+        _lastForegroundSample = utcNow;
         return true;
     }
 
@@ -103,7 +104,7 @@ public sealed class TelemetryGate
     public void Reset()
     {
         _lastIdle = false;
-        _lastActiveApp = DateTime.MinValue;
+        _lastForegroundSample = DateTime.MinValue;
         _lastWebsite = string.Empty;
         _lastBrowserStatus.Clear();
         _lastInfraction.Clear();

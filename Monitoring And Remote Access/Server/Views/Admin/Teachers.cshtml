@@ -21,7 +21,7 @@
     <div class="d-flex gap-2 flex-wrap justify-content-end">
         @if (!User.IsInRole("Teacher"))
         {
-            <a href="/Admin/Settings" class="btn btn-emerald rounded-pill px-3 py-2 fw-semibold">
+            <a href="/Admin/AdminAccounts" class="btn btn-emerald rounded-pill px-3 py-2 fw-semibold">
                 <i class="bi bi-shield-lock me-1"></i> Admin Accounts
             </a>
         }
@@ -206,14 +206,8 @@
                             <input id="teachers-contact-number" type="text" name="ContactNumber" class="form-control filter-control" placeholder="0917XXXXXXX" />
                         </div>
                     </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small" for="teachers-account-status">Account Status</label>
-                        <select id="teachers-account-status" name="Status" class="form-select filter-control">
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                        </select>
-                    </div>
+                    @* No status field: a new account starts active, and the row's
+                       Deactivate / Activate button is the one place it changes. *@
                 </div>
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
@@ -272,14 +266,8 @@
                                 <input id="teachers-contact-number-@t.TeacherId" type="text" name="ContactNumber" class="form-control filter-control" value="@t.ContactNumber" />
                             </div>
                         </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold text-muted small" for="teachers-status-@t.TeacherId">Status</label>
-                            <select id="teachers-status-@t.TeacherId" name="Status" class="form-select filter-control">
-                                <option value="Active" selected="@(t.Status == "Active")">Active</option>
-                                <option value="Inactive" selected="@(t.Status == "Inactive")">Inactive</option>
-                            </select>
-                        </div>
+                        @* Active or inactive is not edited here; the row's
+                           Deactivate / Activate button changes it. *@
                     </div>
                     <div class="modal-footer border-0 pt-0">
                         <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>

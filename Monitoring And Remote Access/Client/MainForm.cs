@@ -1370,7 +1370,7 @@ namespace Client
             if (_isLocked) return;
 
             var rules = Volatile.Read(ref _restrictionRules);
-            // Applications are monitored, never policed: CAMS does not close
+            // Applications are neither reported nor policed: CAMS does not close
             // anything on the desktop, and application rules raise no violation.
             // Only websites are enforced, by the session proxy and the
             // foreground check below.
@@ -1459,7 +1459,10 @@ namespace Client
             }
         }
 
-        // Reports idle/active status and the active foreground app periodically.
+        // Reports idle/active status and the website in the foreground browser
+        // periodically. Usage is websites only: the application in front of the
+        // student is not reported, which used to send a row every five seconds
+        // for whatever window had the focus.
         private async Task StatusReportLoop(CancellationToken token)
         {
             while (_isStreaming && !token.IsCancellationRequested)
@@ -1481,32 +1484,22 @@ namespace Client
                                 Timestamp: DateTime.UtcNow));
                         }
 
-                        if (_telemetry.ShouldReportActiveApp(DateTime.UtcNow))
+                        if (_telemetry.ShouldSampleForeground(DateTime.UtcNow))
                         {
-                            var appName = ActiveAppInfo.Get();
-                            if (!string.IsNullOrEmpty(appName))
+                            var website = BrowserUrlCollector.TryGetForegroundWebsite();
+                            _lastForegroundWebsite = website is { Status: BrowserMonitoringStatus.Captured, Domain: not null }
+                                ? website
+                                : null;
+                            if (website is { Status: BrowserMonitoringStatus.Captured, Domain: not null } &&
+                                _telemetry.ShouldReportWebsite(website.Browser, website.Domain))
                             {
-                                await _hubClient.ReportActiveAppAsync(new ActiveAppMessage(
-                                    ConnectionId: "",
-                                    StudentId: "",
-                                    PcName: Environment.MachineName,
-                                    ApplicationName: appName,
-                                    Timestamp: DateTime.UtcNow));
-                                var website = BrowserUrlCollector.TryGetForegroundWebsite();
-                                _lastForegroundWebsite = website is { Status: BrowserMonitoringStatus.Captured, Domain: not null }
-                                    ? website
-                                    : null;
-                                if (website is { Status: BrowserMonitoringStatus.Captured, Domain: not null } &&
-                                    _telemetry.ShouldReportWebsite(website.Browser, website.Domain))
-                                {
-                                    await _hubClient.ReportWebsiteActivityAsync(new WebsiteActivityMessage(
-                                        "", "", Environment.MachineName, website.Domain, website.Browser, DateTime.UtcNow));
-                                }
-                                // Clearing the remembered site means returning to it
-                                // after leaving reports again.
-                                if (_lastForegroundWebsite is null) _telemetry.ShouldReportWebsite(null, null);
-                                await ReportBrowserMonitoringStatusAsync(website);
+                                await _hubClient.ReportWebsiteActivityAsync(new WebsiteActivityMessage(
+                                    "", "", Environment.MachineName, website.Domain, website.Browser, DateTime.UtcNow));
                             }
+                            // Clearing the remembered site means returning to it
+                            // after leaving reports again.
+                            if (_lastForegroundWebsite is null) _telemetry.ShouldReportWebsite(null, null);
+                            await ReportBrowserMonitoringStatusAsync(website);
                         }
                     }
                 }
@@ -2359,31 +2352,6 @@ namespace Client
             _ = _hubClient?.DisposeAsync();
             base.OnFormClosing(e);
         }
-    }
-
-    internal static class ActiveAppInfo
-    {
-        public static string Get()
-        {
-            IntPtr hwnd = NativeMethods.GetForegroundWindow();
-            if (hwnd == IntPtr.Zero) return string.Empty;
-
-            uint pid;
-            NativeMethods.GetWindowThreadProcessId(hwnd, out pid);
-
-            try
-            {
-                using var process = Process.GetProcessById((int)pid);
-                return string.IsNullOrWhiteSpace(process.MainWindowTitle)
-                    ? process.ProcessName
-                    : $"{process.ProcessName} - {process.MainWindowTitle}";
-            }
-            catch
-            {
-                return string.Empty;
-            }
-        }
-
     }
 
     internal static class NativeMethods

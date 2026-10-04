@@ -103,26 +103,73 @@ namespace Server.Controllers
 
         private IActionResult AccountManagementRedirect(AccountRole accountRole) => accountRole switch
         {
-            AccountRole.Admin => RedirectToAction(nameof(Settings)),
+            AccountRole.Admin => RedirectToAction(nameof(AdminAccounts)),
             AccountRole.Teacher => RedirectToAction(nameof(Teachers)),
             AccountRole.Student => RedirectToAction(nameof(Students)),
             _ => BadRequest()
         };
 
-        private async Task LoadAdminAccountsAsync()
-        {
-            ViewBag.Admins = await _context.Admins
-                .AsNoTracking()
-                .OrderBy(admin => admin.Username)
-                .ToListAsync();
-        }
-
-        // ---------- Account settings and lockout management ----------
+        // ---------- Account settings ----------
+        // The signed-in administrator's own account: their details and their
+        // password. It used to be a "Change My Password" card at the foot of
+        // the administrator accounts list, which is not where anyone looks for
+        // their own settings; the list is now AdminAccounts, and the name and
+        // avatar in the page header lead here.
         public async Task<IActionResult> Settings()
         {
             if (!CheckAccess()) return Denied();
-            await LoadAdminAccountsAsync();
-            return View(new PasswordChangeInput());
+            var settings = await BuildAccountSettingsAsync();
+            return settings is null ? Denied() : View(settings);
+        }
+
+        private async Task<AccountSettingsViewModel?> BuildAccountSettingsAsync(PasswordChangeInput? password = null)
+        {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+            if (!adminId.HasValue) return null;
+            var admin = await _context.Admins.AsNoTracking().FirstOrDefaultAsync(a => a.Id == adminId.Value);
+            if (admin is null) return null;
+            return new AccountSettingsViewModel
+            {
+                IsTeacher = false,
+                Profile = new AccountProfileInput { FullName = admin.FullName, Username = admin.Username },
+                Password = password ?? new PasswordChangeInput()
+            };
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateProfile([Bind("FullName,Username")] AccountProfileInput input)
+        {
+            if (!CheckAccess()) return Denied();
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+            var admin = adminId.HasValue ? await _context.Admins.FindAsync(adminId.Value) : null;
+            if (admin is null) return Denied();
+
+            var fullName = input.FullName?.Trim() ?? string.Empty;
+            var username = input.Username?.Trim() ?? string.Empty;
+            if (fullName.Length == 0 || username.Length == 0)
+            {
+                TempData["ErrorMessage"] = "Enter your full name and a username.";
+                return RedirectToAction(nameof(Settings));
+            }
+            if (fullName.Length > 100 || username.Length > 50)
+            {
+                TempData["ErrorMessage"] = "The full name can have up to 100 characters and the username up to 50.";
+                return RedirectToAction(nameof(Settings));
+            }
+            if (await LoginIdentifierInUseAsync(username, AccountRole.Admin, admin.Id))
+            {
+                TempData["ErrorMessage"] = $"The username '{username}' is already in use.";
+                return RedirectToAction(nameof(Settings));
+            }
+
+            admin.FullName = fullName;
+            admin.Username = username;
+            await _context.SaveChangesAsync();
+            // The page header shows the name the session holds.
+            HttpContext.Session.SetString("AdminName", admin.FullName);
+            await AuditAsync("UpdateOwnProfile", $"Administrator {admin.Username} updated their own account details");
+            TempData["Message"] = "Your account details were saved.";
+            return RedirectToAction(nameof(Settings));
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -134,8 +181,8 @@ namespace Server.Controllers
 
             if (!ModelState.IsValid)
             {
-                await LoadAdminAccountsAsync();
-                return View("Settings", input);
+                var invalid = await BuildAccountSettingsAsync(input);
+                return invalid is null ? Denied() : View("Settings", invalid);
             }
 
             var changed = await _authentication.ChangeAdminPasswordAsync(
@@ -146,12 +193,28 @@ namespace Server.Controllers
             if (!changed)
             {
                 ModelState.AddModelError(nameof(input.CurrentPassword), "The current password is incorrect.");
-                await LoadAdminAccountsAsync();
-                return View("Settings", input);
+                var refused = await BuildAccountSettingsAsync(input);
+                return refused is null ? Denied() : View("Settings", refused);
             }
 
             TempData["Message"] = "Your password was changed successfully.";
             return RedirectToAction(nameof(Settings));
+        }
+
+        // ---------- Administrator accounts and lockout management ----------
+        private async Task LoadAdminAccountsAsync()
+        {
+            ViewBag.Admins = await _context.Admins
+                .AsNoTracking()
+                .OrderBy(admin => admin.Username)
+                .ToListAsync();
+        }
+
+        public async Task<IActionResult> AdminAccounts()
+        {
+            if (!CheckAccess()) return Denied();
+            await LoadAdminAccountsAsync();
+            return View();
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -228,7 +291,7 @@ namespace Server.Controllers
                     if (!isActive && account.IsActive && await _context.Admins.CountAsync(admin => admin.IsActive) <= 1)
                     {
                         TempData["ErrorMessage"] = "The last active administrator cannot be deactivated.";
-                        return RedirectToAction(nameof(Settings));
+                        return RedirectToAction(nameof(AdminAccounts));
                     }
 
                     account.IsActive = isActive;
@@ -285,19 +348,19 @@ namespace Server.Controllers
             if (string.IsNullOrWhiteSpace(admin.Username))
             {
                 TempData["ErrorMessage"] = "Username is required.";
-                return RedirectToAction(nameof(Settings));
+                return RedirectToAction(nameof(AdminAccounts));
             }
             if (string.IsNullOrWhiteSpace(admin.PasswordHash))
             {
                 TempData["ErrorMessage"] = "A password is required for a new administrator.";
-                return RedirectToAction(nameof(Settings));
+                return RedirectToAction(nameof(AdminAccounts));
             }
 
             admin.Username = admin.Username.Trim();
             if (await LoginIdentifierInUseAsync(admin.Username))
             {
                 TempData["ErrorMessage"] = $"The username '{admin.Username}' is already in use.";
-                return RedirectToAction(nameof(Settings));
+                return RedirectToAction(nameof(AdminAccounts));
             }
 
             admin.FullName = string.IsNullOrWhiteSpace(admin.FullName) ? "System Administrator" : admin.FullName.Trim();
@@ -310,7 +373,7 @@ namespace Server.Controllers
             await _context.SaveChangesAsync();
             await AuditAsync("CreateAdmin", $"Created administrator {admin.Username}");
             TempData["Message"] = $"Administrator '{admin.Username}' created successfully.";
-            return RedirectToAction(nameof(Settings));
+            return RedirectToAction(nameof(AdminAccounts));
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -318,13 +381,13 @@ namespace Server.Controllers
         {
             if (!CheckAccess()) return Denied();
             var existing = await _context.Admins.FindAsync(admin.Id);
-            if (existing == null) return RedirectToAction(nameof(Settings));
+            if (existing == null) return RedirectToAction(nameof(AdminAccounts));
 
             var requestedUsername = string.IsNullOrWhiteSpace(admin.Username) ? existing.Username : admin.Username.Trim();
             if (await LoginIdentifierInUseAsync(requestedUsername, AccountRole.Admin, existing.Id))
             {
                 TempData["ErrorMessage"] = $"The username '{requestedUsername}' is already in use.";
-                return RedirectToAction(nameof(Settings));
+                return RedirectToAction(nameof(AdminAccounts));
             }
 
             existing.Username = requestedUsername;
@@ -339,9 +402,13 @@ namespace Server.Controllers
             }
 
             await _context.SaveChangesAsync();
+            // An administrator editing their own row: the page header shows
+            // the name the session holds, so it follows the change.
+            if (existing.Id == HttpContext.Session.GetInt32("AdminId"))
+                HttpContext.Session.SetString("AdminName", existing.FullName);
             await AuditAsync("UpdateAdmin", $"Updated administrator {existing.Username}");
             TempData["Message"] = $"Administrator '{existing.Username}' updated successfully.";
-            return RedirectToAction(nameof(Settings));
+            return RedirectToAction(nameof(AdminAccounts));
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -353,26 +420,26 @@ namespace Server.Controllers
             if (currentAdminId == id)
             {
                 TempData["ErrorMessage"] = "You cannot delete the administrator account you are signed in as.";
-                return RedirectToAction(nameof(Settings));
+                return RedirectToAction(nameof(AdminAccounts));
             }
 
             var admin = await _context.Admins.FindAsync(id);
             if (admin == null)
             {
-                return RedirectToAction(nameof(Settings));
+                return RedirectToAction(nameof(AdminAccounts));
             }
 
             if (admin.IsActive && await _context.Admins.CountAsync(a => a.IsActive) <= 1)
             {
                 TempData["ErrorMessage"] = "The last active administrator cannot be deleted.";
-                return RedirectToAction(nameof(Settings));
+                return RedirectToAction(nameof(AdminAccounts));
             }
 
             _context.Admins.Remove(admin);
             await _context.SaveChangesAsync();
             await AuditAsync("DeleteAdmin", $"Deleted administrator {admin.Username}");
             TempData["Message"] = $"Administrator '{admin.Username}' deleted successfully.";
-            return RedirectToAction(nameof(Settings));
+            return RedirectToAction(nameof(AdminAccounts));
         }
 
         // ---------- Dashboard ----------
@@ -470,7 +537,7 @@ namespace Server.Controllers
 
         [HttpPost]
         [TeacherSharedAction]
-        public async Task<IActionResult> CreateTeacher([Bind("FirstName,LastName,Email,Username,PasswordHash,ContactNumber,Status")] Teacher teacher)
+        public async Task<IActionResult> CreateTeacher([Bind("FirstName,LastName,Email,Username,PasswordHash,ContactNumber")] Teacher teacher)
         {
             if (!CheckAccess()) return Denied();
             
@@ -494,7 +561,10 @@ namespace Server.Controllers
 
             teacher.FirstName = string.IsNullOrWhiteSpace(teacher.FirstName) ? teacher.Username : teacher.FirstName.Trim();
             teacher.LastName = string.IsNullOrWhiteSpace(teacher.LastName) ? "Teacher" : teacher.LastName.Trim();
-            teacher.Status = string.IsNullOrWhiteSpace(teacher.Status) ? "Active" : teacher.Status.Trim();
+            // A new account starts active. Whether it stays that way is the
+            // Deactivate / Activate button's business (SetAccountActive), not
+            // a field on this form.
+            teacher.Status = RecordStatus.Active;
             teacher.PasswordHash = _hasher.HashPassword(new object(), teacher.PasswordHash.Trim());
             
             (teacher.CreatedByType, teacher.CreatedById) = Actor;
@@ -507,7 +577,7 @@ namespace Server.Controllers
 
         [HttpPost]
         [TeacherSharedAction]
-        public async Task<IActionResult> UpdateTeacher([Bind("TeacherId,FirstName,LastName,Email,Username,ContactNumber,Status")] Teacher teacher, string? newPassword)
+        public async Task<IActionResult> UpdateTeacher([Bind("TeacherId,FirstName,LastName,Email,Username,ContactNumber")] Teacher teacher, string? newPassword)
         {
             if (!CheckAccess()) return Denied();
             if (IsTeacherSelf(teacher.TeacherId))
@@ -525,27 +595,16 @@ namespace Server.Controllers
                 return RedirectToAction("Teachers");
             }
 
-            var requestedStatus = string.IsNullOrWhiteSpace(teacher.Status) ? existing.Status : teacher.Status.Trim();
-            if (string.Equals(requestedStatus, "Inactive", StringComparison.OrdinalIgnoreCase) &&
-                await _context.Classes.AnyAsync(c => c.TeacherId == existing.TeacherId && !c.IsArchived))
-            {
-                TempData["ErrorMessage"] = "Reassign or archive this teacher's active classes before deactivating the account.";
-                return RedirectToAction("Teachers");
-            }
-            var existingIsActive = existing.Status == RecordStatus.Active || string.IsNullOrEmpty(existing.Status);
-            if (IsTeacherActor && string.Equals(requestedStatus, "Inactive", StringComparison.OrdinalIgnoreCase) &&
-                existingIsActive && await ActiveTeacherCountAsync() <= 1)
-            {
-                TempData["ErrorMessage"] = "The last active teacher cannot be deactivated.";
-                return RedirectToAction(nameof(Teachers));
-            }
-
+            // The account's status is left alone: editing changes who the
+            // teacher is, and the Deactivate / Activate button
+            // (SetAccountActive) is the one place that changes whether they
+            // can log in, with its own checks on active classes and the last
+            // active teacher.
             existing.FirstName = string.IsNullOrWhiteSpace(teacher.FirstName) ? existing.FirstName : teacher.FirstName.Trim();
             existing.LastName = string.IsNullOrWhiteSpace(teacher.LastName) ? existing.LastName : teacher.LastName.Trim();
             existing.Username = requestedUsername;
             existing.Email = string.IsNullOrWhiteSpace(teacher.Email) ? existing.Email : teacher.Email.Trim();
             existing.ContactNumber = string.IsNullOrWhiteSpace(teacher.ContactNumber) ? existing.ContactNumber : teacher.ContactNumber.Trim();
-            existing.Status = requestedStatus;
 
             if (!string.IsNullOrWhiteSpace(newPassword))
             {
@@ -637,7 +696,7 @@ namespace Server.Controllers
 
         [HttpPost]
         [TeacherSharedAction]
-        public async Task<IActionResult> UpdateStudent([Bind("Id,StudentNumber,FirstName,LastName,FullName,Username,Status,GradeSection,ClassId,AdviserId")] Student student, string? newPassword)
+        public async Task<IActionResult> UpdateStudent([Bind("Id,StudentNumber,FirstName,LastName,FullName,Username")] Student student, string? newPassword)
         {
             if (!CheckAccess()) return Denied();
             var existing = await _context.Students.FindAsync(student.Id);
@@ -652,12 +711,15 @@ namespace Server.Controllers
                 return RedirectToAction("Students");
             }
 
+            // Only what the Edit form holds. This used to bind Status, ClassId,
+            // AdviserId and GradeSection as well, none of which the form
+            // posts, so they arrived as their defaults: saving a corrected
+            // name set the account back to Active, took the student out of
+            // their class and cleared their adviser. The status belongs to
+            // the Deactivate / Activate button and the class to the Class
+            // Assignment control beside it.
             existing.StudentNumber = requestedStudentNumber;
             existing.Username = requestedUsername;
-            existing.Status = string.IsNullOrWhiteSpace(student.Status) ? existing.Status : student.Status.Trim();
-            existing.GradeSection = student.GradeSection?.Trim() ?? string.Empty;
-            existing.ClassId = student.ClassId;
-            existing.AdviserId = student.AdviserId;
 
             if (!string.IsNullOrWhiteSpace(student.FullName))
             {
@@ -1167,7 +1229,7 @@ namespace Server.Controllers
             computer.LaboratoryStation = computer.LaboratoryStation.Trim();
             if (await _context.Computers.AnyAsync(c => c.LaboratoryStation.ToLower() == computer.LaboratoryStation.ToLower()))
             {
-                TempData["ErrorMessage"] = "A workstation with that station name already exists.";
+                TempData["ErrorMessage"] = "A computer with that station name already exists.";
                 return RedirectToAction(nameof(Computers));
             }
             computer.Status = string.IsNullOrWhiteSpace(computer.Status) ? "Available" : computer.Status;
@@ -1177,7 +1239,7 @@ namespace Server.Controllers
             _context.Computers.Add(computer);
             await _context.SaveChangesAsync();
             await AuditAsync("CreateComputer", $"Added {computer.LaboratoryStation}");
-            TempData["Message"] = $"Workstation '{computer.LaboratoryStation}' added!";
+            TempData["Message"] = $"Computer '{computer.LaboratoryStation}' added!";
             return RedirectToAction("Computers");
         }
 
@@ -1193,7 +1255,7 @@ namespace Server.Controllers
                 var station = string.IsNullOrWhiteSpace(computer.LaboratoryStation) ? existing.LaboratoryStation : computer.LaboratoryStation.Trim();
                 if (await _context.Computers.AnyAsync(c => c.ComputerId != existing.ComputerId && c.LaboratoryStation.ToLower() == station.ToLower()))
                 {
-                    TempData["ErrorMessage"] = "A workstation with that station name already exists.";
+                    TempData["ErrorMessage"] = "A computer with that station name already exists.";
                     return RedirectToAction(nameof(Computers));
                 }
                 var assignment = await ResolveAssignmentAsync(computer.AssignedTo, existing.ComputerId);
@@ -1211,7 +1273,7 @@ namespace Server.Controllers
                     });
                 await _context.SaveChangesAsync();
                 await AuditAsync("UpdateComputer", $"Updated computer {existing.LaboratoryStation}");
-                TempData["Message"] = $"Workstation '{existing.LaboratoryStation}' updated successfully!";
+                TempData["Message"] = $"Computer '{existing.LaboratoryStation}' updated successfully!";
             }
             return RedirectToAction("Computers");
         }
@@ -1226,14 +1288,14 @@ namespace Server.Controllers
             {
                 if (await _context.LabSessions.AnyAsync(s => s.ComputerId == id && s.IsActive))
                 {
-                    TempData["ErrorMessage"] = "End the active lab session before archiving this workstation.";
+                    TempData["ErrorMessage"] = "End the active lab session before archiving this computer.";
                     return RedirectToAction(nameof(Computers));
                 }
                 computer.Status = WorkstationStatus.Archived;
                 computer.AssignedTo = null;
                 await _context.SaveChangesAsync();
                 await AuditAsync("ArchiveComputer", $"Archived {computer.LaboratoryStation}; historical records retained");
-                TempData["Message"] = $"Workstation '{computer.LaboratoryStation}' archived. Historical records were retained.";
+                TempData["Message"] = $"Computer '{computer.LaboratoryStation}' archived. Historical records were retained.";
             }
             return RedirectToAction(nameof(Computers));
         }
@@ -1249,14 +1311,14 @@ namespace Server.Controllers
             var computer = await _context.Computers.FindAsync(id);
             if (computer == null)
             {
-                TempData["ErrorMessage"] = "This workstation no longer exists.";
+                TempData["ErrorMessage"] = "This computer no longer exists.";
                 return RedirectToAction(nameof(Computers));
             }
 
             var sessions = await _context.LabSessions.Where(s => s.ComputerId == id).ToListAsync();
             if (sessions.Any(s => s.IsActive))
             {
-                TempData["ErrorMessage"] = "End the active lab session before deleting this workstation.";
+                TempData["ErrorMessage"] = "End the active lab session before deleting this computer.";
                 return RedirectToAction(nameof(Computers));
             }
 
@@ -1270,7 +1332,7 @@ namespace Server.Controllers
             await AuditAsync("DeleteComputer", $"Permanently deleted workstation {id}: {computer.LaboratoryStation}; removed {history.Count} status records; retained {sessions.Count} lab sessions");
             await transaction.CommitAsync();
 
-            TempData["Message"] = $"Workstation '{computer.LaboratoryStation}' deleted. Past lab sessions were retained.";
+            TempData["Message"] = $"Computer '{computer.LaboratoryStation}' deleted. Past lab sessions were retained.";
             return RedirectToAction(nameof(Computers));
         }
 
@@ -1288,17 +1350,17 @@ namespace Server.Controllers
                 if (selected is null) return NotFound();
                 if (selected.Status == WorkstationStatus.Archived)
                 {
-                    TempData["ErrorMessage"] = "Archived workstations cannot be assigned.";
+                    TempData["ErrorMessage"] = "Archived computers cannot be assigned.";
                     return RedirectToAction(nameof(Students));
                 }
                 if (!string.IsNullOrWhiteSpace(selected.AssignedTo) && selected.AssignedTo != studentId.ToString())
                 {
-                    TempData["ErrorMessage"] = "That workstation is already assigned to another student.";
+                    TempData["ErrorMessage"] = "That computer is already assigned to another student.";
                     return RedirectToAction(nameof(Students));
                 }
                 if (await _context.LabSessions.AnyAsync(session => session.ComputerId == selected.ComputerId && session.IsActive && session.Status != LabSessionStatus.Ended))
                 {
-                    TempData["ErrorMessage"] = "That workstation is currently in use.";
+                    TempData["ErrorMessage"] = "That computer is currently in use.";
                     return RedirectToAction(nameof(Students));
                 }
             }
@@ -1319,7 +1381,7 @@ namespace Server.Controllers
             await _context.SaveChangesAsync();
             await AuditAsync("AssignComputer",
                 computerId.HasValue ? $"Assigned student {studentId} to workstation {computerId}" : $"Unassigned student {studentId}");
-            TempData["Message"] = "Workstation assignment updated successfully!";
+            TempData["Message"] = "Computer assignment updated successfully!";
             return RedirectToAction("Students");
         }
 
@@ -1683,10 +1745,14 @@ namespace Server.Controllers
                 .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
             var summarySessions = await sessionQuery.AsNoTracking().ToListAsync();
 
-            var usage = await _context.UsageLogs
+            // Usage is the websites students opened. The application in front of
+            // a student is no longer recorded, so the report counts websites.
+            var websiteVisits = await _context.WebsiteUsageLogs
+                .AsNoTracking()
                 .Where(u => u.Timestamp >= fromDate && u.Timestamp < toDate)
                 .OrderByDescending(u => u.Timestamp)
-                .Take(500)
+                .Take(5000)
+                .Select(u => u.Domain)
                 .ToListAsync();
 
             ViewBag.FromDate = fromDate.ToString("yyyy-MM-dd");
@@ -1703,13 +1769,13 @@ namespace Server.Controllers
             ViewBag.Classes = await _context.Classes.Where(c => !c.IsArchived).OrderBy(c => c.ClassName).ToListAsync();
             ViewBag.Stations = await _context.Computers.AsNoTracking().OrderBy(c => c.LaboratoryStation).ToListAsync();
             ViewBag.SelectedStation = station;
-            ViewBag.TopApps = usage
-                .GroupBy(u => u.AppName)
+            ViewBag.TopWebsites = websiteVisits
+                .GroupBy(domain => domain, StringComparer.OrdinalIgnoreCase)
                 .OrderByDescending(g => g.Count())
+                .ThenBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
                 .Take(10)
-                .Select(g => new { App = g.Key, Count = g.Count() })
+                .Select(g => new TopWebsite(g.Key, g.Count()))
                 .ToList();
-            ViewBag.UsageLogs = usage;
             ViewBag.SessionsByStation = summarySessions
                 .GroupBy(s => s.Computer?.LaboratoryStation ?? s.PCName ?? "Unknown")
                 .ToDictionary(g => g.Key, g => g.Count());
@@ -1826,22 +1892,27 @@ namespace Server.Controllers
             return CsvExport.Result("RemoteCommands", csv.ToString());
         }
 
+        // The usage export is the websites students opened, one row per visit.
+        // It used to list the application in front of each student every few
+        // seconds, which is no longer recorded.
         [HttpGet]
         public async Task<IActionResult> ExportUsageCsv(DateTime? from, DateTime? to)
         {
             if (!CheckAccess()) return Denied();
             var fromDate = from ?? DateTime.UtcNow.AddDays(-30);
             var toDate = to ?? DateTime.UtcNow.AddDays(1);
-            var logs = await _context.UsageLogs
+            var logs = await _context.WebsiteUsageLogs
+                .AsNoTracking()
+                .Include(u => u.Student)
                 .Where(u => u.Timestamp >= fromDate && u.Timestamp < toDate)
                 .OrderByDescending(u => u.Timestamp)
-                .Take(1000)
+                .Take(5000)
                 .ToListAsync();
 
             var csv = new System.Text.StringBuilder();
-            csv.AppendLine("Timestamp,Student ID,PC,Application");
+            csv.AppendLine("Timestamp,Student Number,Student Name,Website,Browser");
             foreach (var l in logs)
-                csv.AppendLine($"{l.Timestamp:yyyy-MM-dd HH:mm:ss},{l.StudentId},{Csv(l.PcName)},{Csv(l.AppName)}");
+                csv.AppendLine($"{l.Timestamp:yyyy-MM-dd HH:mm:ss},{Csv(l.Student?.StudentNumber)},{Csv(l.Student?.FullName)},{Csv(l.Domain)},{Csv(l.Browser)}");
 
             // UTC, like the other three exports. This one used DateTime.Now, so
             // files downloaded seconds apart carried timestamps hours apart and

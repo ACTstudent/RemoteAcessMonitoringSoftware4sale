@@ -73,13 +73,11 @@ public class MonitoringServiceTests
         var service = new MonitoringService();
         service.RegisterStudent("conn1", "s1", "PC1");
         service.ReportIdleStatus(new IdleStatusMessage("conn1", "s1", "PC1", true, DateTime.Now));
-        service.ReportActiveApp(new ActiveAppMessage("conn1", "s1", "PC1", "chrome.exe", DateTime.Now));
 
         var removed = service.UnregisterStudent("conn1");
         Assert.NotNull(removed);
         Assert.Empty(service.ActiveStudents);
         Assert.Empty(service.IdleStatus);
-        Assert.Empty(service.ActiveApps);
     }
 
     [Fact]
@@ -114,29 +112,6 @@ public class MonitoringServiceTests
     }
 
     [Fact]
-    public void ReportActiveApp_UpdatesApp()
-    {
-        var service = new MonitoringService();
-        var msg = new ActiveAppMessage("conn1", "s1", "PC1", "notepad.exe", DateTime.Now);
-        service.ReportActiveApp(msg);
-
-        var app = service.ActiveApps.First();
-        Assert.Equal("conn1", app.ConnectionId);
-        Assert.Equal("notepad.exe", app.ApplicationName);
-    }
-
-    [Fact]
-    public void ReportActiveApp_OverwritesPrevious()
-    {
-        var service = new MonitoringService();
-        service.ReportActiveApp(new ActiveAppMessage("conn1", "s1", "PC1", "notepad.exe", DateTime.Now));
-        service.ReportActiveApp(new ActiveAppMessage("conn1", "s1", "PC1", "excel.exe", DateTime.Now));
-
-        Assert.Single(service.ActiveApps);
-        Assert.Equal("excel.exe", service.ActiveApps.First().ApplicationName);
-    }
-
-    [Fact]
     public async Task ConcurrentConnections_CanRegisterReportAndDisconnectWithoutLeakingState()
     {
         var service = new MonitoringService();
@@ -146,13 +121,11 @@ public class MonitoringServiceTests
         {
             service.RegisterStudent(connectionId, connectionId, $"PC-{connectionId}");
             service.ReportIdleStatus(new IdleStatusMessage(connectionId, connectionId, $"PC-{connectionId}", true, DateTime.UtcNow));
-            service.ReportActiveApp(new ActiveAppMessage(connectionId, connectionId, $"PC-{connectionId}", "app.exe", DateTime.UtcNow));
             return ValueTask.CompletedTask;
         });
 
         Assert.Equal(connections.Length, service.ActiveStudents.Count);
         Assert.Equal(connections.Length, service.IdleStatus.Count);
-        Assert.Equal(connections.Length, service.ActiveApps.Count);
 
         await Parallel.ForEachAsync(connections, (connectionId, _) =>
         {
@@ -162,6 +135,5 @@ public class MonitoringServiceTests
 
         Assert.Empty(service.ActiveStudents);
         Assert.Empty(service.IdleStatus);
-        Assert.Empty(service.ActiveApps);
     }
 }

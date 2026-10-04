@@ -18,13 +18,13 @@
     <div class="d-flex align-items-center gap-3">
         <div>
             <h2 class="page-title">Student Management</h2>
-            <p class="text-muted mb-0 small">Manage student profiles and workstation assignments</p>
+            <p class="text-muted mb-0 small">Manage student profiles and computer assignments</p>
         </div>
     </div>
     <div class="d-flex gap-2 flex-wrap justify-content-end">
         @if (!User.IsInRole("Teacher"))
         {
-            <a href="/Admin/Settings" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-semibold">
+            <a href="/Admin/AdminAccounts" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-semibold">
                 <i class="bi bi-shield-lock me-1"></i> Admin Accounts
             </a>
         }
@@ -105,7 +105,7 @@
                     <th>Username</th>
                     <th>Account Status</th>
                     <th>Class Assignment</th>
-                    <th>Assigned Workstation</th>
+                    <th>Assigned Computer</th>
                     <th class="text-end">Actions</th>
                 </tr>
             </thead>
@@ -166,7 +166,7 @@
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="studentId" value="@s.Id" />
                                 @* Saves on choice; there is no Map button. *@
-                                <select aria-label="Workstation for @s.FullName" name="computerId" class="form-select filter-control py-1 px-2" style="font-size: 0.85rem; width: 180px;" data-auto-submit>
+                                <select aria-label="Computer for @s.FullName" name="computerId" class="form-select filter-control py-1 px-2" style="font-size: 0.85rem; width: 180px;" data-auto-submit>
                                     <option value="">-- Unassigned --</option>
                                     @foreach (var c in computers.Where(c => c.AssignedTo == s.Id.ToString() || c.AssignedTo == null))
                                     {

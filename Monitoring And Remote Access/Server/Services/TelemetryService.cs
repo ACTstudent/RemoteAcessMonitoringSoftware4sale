@@ -17,16 +17,6 @@ public sealed class TelemetryService : ITelemetryService
         _db = db;
     }
 
-    public async Task RecordApplicationUsageAsync(string connectionId, string studentId, string pcName,
-        string applicationName, DateTime timestamp, CancellationToken cancellationToken = default)
-    {
-        var values = ValidateIdentity(connectionId, studentId, pcName, timestamp);
-        var app = NormalizeApplicationName(applicationName);
-
-        await AddApplicationUsageCoreAsync(values, app, cancellationToken);
-        await _db.SaveChangesAsync(cancellationToken);
-    }
-
     public async Task RecordIdleStatusAsync(string connectionId, string studentId, string pcName,
         bool isIdle, DateTime timestamp, CancellationToken cancellationToken = default)
     {
@@ -96,10 +86,10 @@ public sealed class TelemetryService : ITelemetryService
                 var values = ValidateIdentity(idle.ConnectionId, idle.StudentId, idle.PcName, idle.Timestamp);
                 await AddIdleStatusCoreAsync(values, idle.IsIdle, cancellationToken);
             }
-            else if (item.ActiveApp is { } app)
+            else if (item.ActiveApp is not null)
             {
-                var values = ValidateIdentity(app.ConnectionId, app.StudentId, app.PcName, app.Timestamp);
-                await AddApplicationUsageCoreAsync(values, NormalizeApplicationName(app.ApplicationName), cancellationToken);
+                // Not recorded. Usage is the websites a student opens; the
+                // application in front of them is not kept.
             }
             else if (item.WebsiteActivity is { } website)
             {
@@ -138,19 +128,6 @@ public sealed class TelemetryService : ITelemetryService
             Detail = BrowserMonitoringStatusMessage.NormalizeDetail(status.Detail),
             Timestamp = values.Timestamp
         });
-    }
-
-    private async Task AddApplicationUsageCoreAsync(Identity values, string applicationName,
-        CancellationToken cancellationToken)
-    {
-        _db.UsageLogs.Add(new UsageLog
-        {
-            StudentId = await ResolveStudentIdAsync(values.StudentId, cancellationToken),
-            PcName = values.PcName,
-            AppName = applicationName,
-            Timestamp = values.Timestamp
-        });
-        await RecordActivityEventCoreAsync(values, "ApplicationUsed", applicationName, null, cancellationToken);
     }
 
     private async Task AddIdleStatusCoreAsync(Identity values, bool isIdle, CancellationToken cancellationToken)
@@ -225,10 +202,9 @@ public sealed class TelemetryService : ITelemetryService
 
         if (item.IdleStatus is { } idle)
             _ = ValidateIdentity(idle.ConnectionId, idle.StudentId, idle.PcName, idle.Timestamp);
-        else if (item.ActiveApp is { } app)
+        else if (item.ActiveApp is not null)
         {
-            _ = ValidateIdentity(app.ConnectionId, app.StudentId, app.PcName, app.Timestamp);
-            _ = NormalizeApplicationName(app.ApplicationName);
+            // Dropped unread: see RecordBatchAsync.
         }
         else if (item.WebsiteActivity is { } website)
         {

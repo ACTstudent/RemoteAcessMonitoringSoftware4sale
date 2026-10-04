@@ -746,18 +746,16 @@ public sealed class RemoteMonitoringHub : Hub
         await PublishIdleStatusAsync(canonicalStatus);
     }
 
-    public async Task ReportActiveApp(ActiveAppMessage app)
+    /// <summary>
+    /// Accepted and dropped. Usage is the websites a student opens; the
+    /// application in front of them is neither recorded nor shown. The current
+    /// agent no longer calls this, and it stays only so an agent installed
+    /// before that change is not refused.
+    /// </summary>
+    public Task ReportActiveApp(ActiveAppMessage app)
     {
-        var student = RequireStudent();
-        var canonicalApp = CanonicalizeActiveApp(student, app);
-
-        await TryRecordTelemetryAsync(() => _telemetryService.RecordApplicationUsageAsync(
-            canonicalApp.ConnectionId,
-            canonicalApp.StudentId,
-            canonicalApp.PcName,
-            canonicalApp.ApplicationName,
-            canonicalApp.Timestamp));
-        await PublishActiveAppAsync(canonicalApp);
+        RequireStudent();
+        return Task.CompletedTask;
     }
 
     public async Task ReportWebsiteActivity(WebsiteActivityMessage website)
@@ -789,6 +787,10 @@ public sealed class RemoteMonitoringHub : Hub
         try
         {
             var canonicalItems = new List<TelemetryBatchItem>(batch.Items.Count);
+            // Application reports from an agent installed before they stopped
+            // being sent. They are counted as processed, so that agent's queue
+            // drains, and otherwise dropped.
+            var droppedApplicationReports = 0;
             foreach (var item in batch.Items)
             {
                 if (item is null || item.PayloadCount != 1)
@@ -796,8 +798,8 @@ public sealed class RemoteMonitoringHub : Hub
 
                 if (item.IdleStatus is { } idle)
                     canonicalItems.Add(TelemetryBatchItem.From(CanonicalizeIdleStatus(student, idle)));
-                else if (item.ActiveApp is { } app)
-                    canonicalItems.Add(TelemetryBatchItem.From(CanonicalizeActiveApp(student, app)));
+                else if (item.ActiveApp is not null)
+                    droppedApplicationReports++;
                 else if (item.WebsiteActivity is { } website)
                     canonicalItems.Add(TelemetryBatchItem.From(CanonicalizeWebsiteActivity(student, website)));
                 else if (item.BrowserMonitoringStatus is { } browserStatus)
@@ -807,13 +809,12 @@ public sealed class RemoteMonitoringHub : Hub
             }
 
             // Durable clients acknowledge a batch only after SQLite commits it successfully.
-            await _telemetryService.RecordBatchAsync(canonicalItems);
+            if (canonicalItems.Count > 0)
+                await _telemetryService.RecordBatchAsync(canonicalItems);
             foreach (var item in canonicalItems)
             {
                 if (item.IdleStatus is { } idle)
                     await PublishIdleStatusAsync(idle);
-                else if (item.ActiveApp is { } app)
-                    await PublishActiveAppAsync(app);
                 else if (item.WebsiteActivity is { } website)
                     await PublishWebsiteActivityAsync(website);
                 else if (item.BrowserMonitoringStatus is { } browserStatus)
@@ -822,7 +823,7 @@ public sealed class RemoteMonitoringHub : Hub
                     await PersistAndPublishInfractionAsync(student, infraction);
             }
 
-            return new TelemetryBatchResult(canonicalItems.Count);
+            return new TelemetryBatchResult(canonicalItems.Count + droppedApplicationReports);
         }
         finally
         {
@@ -839,19 +840,6 @@ public sealed class RemoteMonitoringHub : Hub
             ConnectionId = Context.ConnectionId,
             StudentId = student.StudentId,
             PcName = student.PcName
-        };
-    }
-
-    private ActiveAppMessage CanonicalizeActiveApp(StudentConnectionMessage student, ActiveAppMessage? app)
-    {
-        if (app is null || !TelemetryValueNormalizer.TryNormalizeApplicationName(app.ApplicationName, out var applicationName))
-            throw new HubException("The active application report is invalid.");
-        return app with
-        {
-            ConnectionId = Context.ConnectionId,
-            StudentId = student.StudentId,
-            PcName = student.PcName,
-            ApplicationName = applicationName
         };
     }
 
@@ -893,14 +881,6 @@ public sealed class RemoteMonitoringHub : Hub
         var student = _monitoringService.FindStudent(status.ConnectionId);
         if (student is null) return;
         await TeacherViewers.SendAsync(HubEventNames.IdleStatusReceived, status);
-    }
-
-    private async Task PublishActiveAppAsync(ActiveAppMessage app)
-    {
-        _monitoringService.ReportActiveApp(app);
-        var student = _monitoringService.FindStudent(app.ConnectionId);
-        if (student is null) return;
-        await TeacherViewers.SendAsync(HubEventNames.ActiveAppReceived, app);
     }
 
     private async Task PublishWebsiteActivityAsync(WebsiteActivityMessage website)

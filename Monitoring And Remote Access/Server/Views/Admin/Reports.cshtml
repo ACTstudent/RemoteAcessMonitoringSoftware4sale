@@ -9,7 +9,7 @@
     <div class="d-flex align-items-center gap-3">
         <div>
             <h2 class="page-title">Administrative Analytics & Reports</h2>
-            <p class="text-muted mb-0 small">Export session logs, workstation allocation, and active application usage</p>
+            <p class="text-muted mb-0 small">Export session logs, computer allocation, and website usage</p>
         </div>
     </div>
     <div class="d-flex gap-2">
@@ -74,36 +74,36 @@
 </div>
 
 <div class="row g-4 mb-4">
-    <!-- Top Apps Card -->
+    <!-- Top Websites Card -->
     <div class="col-md-6">
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
             <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                <h5 class="fw-bold mb-0 text-dark">Most Active Applications</h5>
-                <i class="bi bi-window-stack text-muted"></i>
+                <h5 class="fw-bold mb-0 text-dark">Most Visited Websites</h5>
+                <i class="bi bi-globe2 text-muted"></i>
             </div>
             <div class="table-responsive">
-                <table data-crud-table="applications" class="table custom-table align-middle mb-0">
+                <table data-crud-table="websites" class="table custom-table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>Application Name</th>
-                            <th class="text-end">Launch Count</th>
+                            <th>Website</th>
+                            <th class="text-end">Visits</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @if (ViewBag.TopApps != null)
-                        {
-                            foreach (var app in ViewBag.TopApps)
-                            {
-                                <tr>
-                                    <td class="fw-bold text-dark font-monospace">@app.App</td>
-                                    <td class="text-end font-monospace text-emerald-700 fw-bold">@app.Count</td>
-                                </tr>
-                            }
+                        @{
+                            var topWebsites = ViewBag.TopWebsites as IReadOnlyList<Server.Models.TopWebsite> ?? Array.Empty<Server.Models.TopWebsite>();
                         }
-                        else
+                        @foreach (var site in topWebsites)
                         {
                             <tr>
-                                <td colspan="2" class="text-center empty-state"><i class="bi bi-bar-chart empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No application usage data in selected range.</span></td>
+                                <td class="fw-bold text-dark font-monospace">@site.Website</td>
+                                <td class="text-end font-monospace text-emerald-700 fw-bold">@site.Visits</td>
+                            </tr>
+                        }
+                        @if (topWebsites.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="2" class="text-center empty-state"><i class="bi bi-globe2 empty-state-icon" aria-hidden="true"></i><span class="empty-state-message">No website usage in the selected range.</span></td>
                             </tr>
                         }
                     </tbody>

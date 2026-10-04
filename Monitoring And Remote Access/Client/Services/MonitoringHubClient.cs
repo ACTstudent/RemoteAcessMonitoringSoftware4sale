@@ -159,11 +159,6 @@ public class MonitoringHubClient : IMonitoringHubClient
         await QueueTelemetryAsync(TelemetryBatchItem.From(status));
     }
 
-    public async Task ReportActiveAppAsync(ActiveAppMessage app)
-    {
-        await QueueTelemetryAsync(TelemetryBatchItem.From(app));
-    }
-
     public async Task ReportWebsiteActivityAsync(WebsiteActivityMessage website)
     {
         await QueueTelemetryAsync(TelemetryBatchItem.From(website));

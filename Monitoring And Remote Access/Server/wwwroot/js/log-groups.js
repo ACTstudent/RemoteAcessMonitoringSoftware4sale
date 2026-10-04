@@ -11,20 +11,15 @@
         const detail = row.nextElementSibling;
         if (!toggle || !detail?.hasAttribute('data-log-detail')) return;
 
-        // Selection controls inside a closed group are disabled, not merely
-        // hidden. A disabled checkbox does not submit and cannot be reached by a
-        // select-all, so a teacher can never bulk-acknowledge alerts that are
-        // folded out of sight. Closing a group also clears what it had ticked.
-        const selectors = detail.querySelectorAll('input[type="checkbox"]');
-
+        // Opening and closing only shows and hides the detail. It used to
+        // disable the checkboxes inside a closed group and clear what they had
+        // ticked, which left the Alerts page's "select all" and its bulk
+        // buttons with nothing to act on; the row's own checkbox now shows
+        // what is selected inside it (see alert-bulk.js).
         function setOpen(open) {
             detail.hidden = !open;
             toggle.setAttribute('aria-expanded', String(open));
             row.classList.toggle('log-group-open', open);
-            selectors.forEach(box => {
-                if (!open) box.checked = false;
-                box.disabled = !open;
-            });
         }
 
         // The button is the accessible control, so it gets Enter and Space for

@@ -4,9 +4,6 @@ namespace Server.Services;
 
 public interface ITelemetryService
 {
-    Task RecordApplicationUsageAsync(string connectionId, string studentId, string pcName,
-        string applicationName, DateTime timestamp, CancellationToken cancellationToken = default);
-
     Task RecordIdleStatusAsync(string connectionId, string studentId, string pcName,
         bool isIdle, DateTime timestamp, CancellationToken cancellationToken = default);
 

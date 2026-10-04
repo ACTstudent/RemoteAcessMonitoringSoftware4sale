@@ -23,7 +23,6 @@ public interface IMonitoringHubClient
     Task StartAsync(string serverUrl, CancellationToken cancellationToken = default);
     Task SendScreenFrameAsync(ScreenFrameMessage frame);
     Task ReportIdleStatusAsync(IdleStatusMessage status);
-    Task ReportActiveAppAsync(ActiveAppMessage app);
     Task ReportWebsiteActivityAsync(WebsiteActivityMessage website);
     Task ReportBrowserMonitoringStatusAsync(BrowserMonitoringStatusMessage status);
     Task FetchRestrictionsAsync();

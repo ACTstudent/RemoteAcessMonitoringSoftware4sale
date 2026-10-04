@@ -1,0 +1,105 @@
+@model Server.Models.AccountSettingsViewModel
+@*
+    Account Settings, for an administrator and for a teacher: the account's own
+    details and its password. Each portal's Settings view renders this inside
+    its own layout; the forms post back to that portal's controller.
+*@
+@{
+    var profile = Model.Profile;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="page-title">Account Settings</h2>
+        <p class="text-muted mb-0 small">Your own @Model.RoleLabel.ToLowerInvariant() account: your details and your password</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h5 class="fw-bold mb-0"><i class="bi bi-person-lines-fill me-2 text-emerald-700" aria-hidden="true"></i>My Profile</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" action="@Url.Action("UpdateProfile", Model.Controller)">
+                    @Html.AntiForgeryToken()
+                    @if (Model.IsTeacher)
+                    {
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="profileFirstName">First Name</label>
+                                <input id="profileFirstName" type="text" name="FirstName" class="form-control filter-control" value="@profile.FirstName" maxlength="100" autocomplete="given-name" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="profileLastName">Last Name</label>
+                                <input id="profileLastName" type="text" name="LastName" class="form-control filter-control" value="@profile.LastName" maxlength="100" autocomplete="family-name" required />
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold" for="profileFullName">Full Name</label>
+                            <input id="profileFullName" type="text" name="FullName" class="form-control filter-control" value="@profile.FullName" maxlength="100" autocomplete="name" required />
+                        </div>
+                    }
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="profileUsername">Username</label>
+                        <input id="profileUsername" type="text" name="Username" class="form-control filter-control" value="@profile.Username" maxlength="50" autocomplete="username" required />
+                        <div class="form-text">You log in with this username.</div>
+                    </div>
+                    @if (Model.IsTeacher)
+                    {
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="profileEmail">Email Address</label>
+                                <input id="profileEmail" type="email" name="Email" class="form-control filter-control" value="@profile.Email" maxlength="100" autocomplete="email" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="profileContactNumber">Contact Number</label>
+                                <input id="profileContactNumber" type="text" name="ContactNumber" class="form-control filter-control" value="@profile.ContactNumber" maxlength="50" autocomplete="tel" />
+                            </div>
+                        </div>
+                    }
+                    <div class="mb-4">
+                        <span class="form-label fw-semibold d-block">Role</span>
+                        <span class="badge @(Model.IsTeacher ? "bg-success" : "bg-primary")">@Model.RoleLabel</span>
+                    </div>
+                    <button type="submit" class="btn btn-emerald rounded-pill px-4 text-white">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h5 class="fw-bold mb-0"><i class="bi bi-shield-lock me-2 text-emerald-700" aria-hidden="true"></i>Change Password</h5>
+            </div>
+            <div class="card-body p-4">
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    @Html.ValidationSummary(false, "Please correct the following:", new { @class = "alert alert-danger" })
+                }
+                <form method="post" action="@Url.Action("ChangePassword", Model.Controller)">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="settingsCurrentPassword">Current Password</label>
+                        <input id="settingsCurrentPassword" type="password" name="CurrentPassword" class="form-control filter-control" autocomplete="current-password" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="settingsNewPassword">New Password</label>
+                        <input id="settingsNewPassword" type="password" name="NewPassword" class="form-control filter-control" minlength="8" autocomplete="new-password" required />
+                        <div class="form-text">Use at least 8 characters.</div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold" for="settingsConfirmPassword">Confirm New Password</label>
+                        <input id="settingsConfirmPassword" type="password" name="ConfirmPassword" class="form-control filter-control" minlength="8" autocomplete="new-password" required />
+                    </div>
+                    <button type="submit" class="btn btn-emerald rounded-pill px-4 text-white">Change Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

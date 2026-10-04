@@ -16,20 +16,31 @@ public class TelemetryServiceTests
     }
 
     [Fact]
-    public async Task RecordApplicationUsage_PersistsUsageAndActivity()
+    public async Task RecordBatch_KeepsNoApplicationUsage()
     {
         await using var db = CreateContext();
         var service = new TelemetryService(db);
         var timestamp = DateTime.UtcNow.AddMinutes(-1);
 
-        await service.RecordApplicationUsageAsync("connection-1", "42", "PC-01", "code.exe", timestamp);
+        // Usage is websites only. The application in front of a student is not
+        // recorded, whatever an agent sends: not as a usage row, and not on the
+        // activity timeline.
+        await service.RecordBatchAsync(new[]
+        {
+            TelemetryBatchItem.From(new ActiveAppMessage("connection-1", "42", "PC-01", "code.exe", timestamp)),
+            TelemetryBatchItem.From(new WebsiteActivityMessage("connection-1", "42", "PC-01", "example.com", "chrome", timestamp))
+        });
 
-        var usage = await db.UsageLogs.SingleAsync();
+        Assert.Empty(await db.UsageLogs.ToListAsync());
         var activity = await db.ActivityEvents.SingleAsync();
-        Assert.Equal(42, usage.StudentId);
-        Assert.Equal("code.exe", usage.AppName);
-        Assert.Equal("ApplicationUsed", activity.EventType);
-        Assert.Equal("connection-1", activity.ConnectionId);
+        Assert.Equal("WebsiteUsed", activity.EventType);
+        Assert.Equal("example.com", (await db.WebsiteUsageLogs.SingleAsync()).Domain);
+    }
+
+    [Fact]
+    public void TheServiceHasNoWayToRecordAnApplication()
+    {
+        Assert.Null(typeof(ITelemetryService).GetMethod("RecordApplicationUsageAsync"));
     }
 
     [Fact]
@@ -141,8 +152,8 @@ public class TelemetryServiceTests
         await using var db = CreateContext();
         var service = new TelemetryService(db);
 
-        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => service.RecordApplicationUsageAsync(
-            "connection-1", "student-1", "PC-01", "app.exe", DateTime.UtcNow.AddMinutes(6)));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => service.RecordWebsiteUsageAsync(
+            "connection-1", "student-1", "PC-01", "example.com", "browser", DateTime.UtcNow.AddMinutes(6)));
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => service.RecordWebsiteUsageAsync(
             "connection-1", "student-1", "PC-01", "example.com", "browser", DateTime.UtcNow.AddDays(-8)));
         Assert.Empty(await db.ActivityEvents.ToListAsync());
@@ -184,12 +195,13 @@ public class TelemetryServiceTests
 
         var interval = await db.IdleIntervals.SingleAsync();
         Assert.Equal(ended, interval.EndedAt);
-        Assert.Equal("chrome", (await db.UsageLogs.SingleAsync()).AppName);
+        // The application item is dropped: no usage row, and no event for it.
+        Assert.Empty(await db.UsageLogs.ToListAsync());
         Assert.Equal("example.com", (await db.WebsiteUsageLogs.SingleAsync()).Domain);
         var browserStatus = await db.BrowserMonitoringRecords.SingleAsync();
         Assert.Equal(BrowserMonitoringMode.ManagedProtocol, browserStatus.Mode);
         Assert.Equal("chrome", browserStatus.Browser);
-        Assert.Equal(4, await db.ActivityEvents.CountAsync());
+        Assert.Equal(3, await db.ActivityEvents.CountAsync());
     }
 
     [Fact]

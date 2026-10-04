@@ -80,7 +80,10 @@
             <label for="dismissal-reason" class="form-label small text-muted mb-1">Dismissal reason (applies only to Dismiss)</label>
             <input id="dismissal-reason" name="reason" form="bulk-alert-form" maxlength="500" class="form-control" placeholder="Optional operational note" />
         </div>
-        <div class="d-flex flex-wrap gap-2">
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            @* What the three buttons will act on. The boxes are ticked per
+               student or per alert; see alert-bulk.js. *@
+            <span class="small text-muted me-1" data-alert-selected-count role="status" aria-live="polite">No alerts selected</span>
             <button type="submit" form="bulk-alert-form" formaction="@Url.Action("BulkAcknowledgeAlerts", "Teacher")" class="btn btn-emerald"><i class="bi bi-check2-circle me-1"></i>Acknowledge</button>
             <button type="submit" form="bulk-alert-form" formaction="@Url.Action("BulkDismissAlerts", "Teacher")" class="btn btn-outline-secondary rounded-pill"><i class="bi bi-archive me-1"></i>Dismiss</button>
             <button type="submit" form="bulk-alert-form" formaction="@Url.Action("BulkReopenAlerts", "Teacher")" class="btn btn-outline-warning rounded-pill"><i class="bi bi-arrow-counterclockwise me-1"></i>Reopen</button>
@@ -113,7 +116,7 @@
                 var stations = string.Join(", ", group.Alerts.Select(alert => alert.PcName).Where(name => !string.IsNullOrWhiteSpace(name)).Distinct());
 
                 <tr data-log-group>
-                    <td class="ps-3"></td>
+                    <td class="ps-3"><input class="form-check-input" type="checkbox" data-alert-select-student aria-label="Select every alert for student @group.Student" /></td>
                     <td class="log-group-toggle-cell">
                         <button type="button" class="log-group-toggle" aria-expanded="false" aria-controls="@panelId">
                             <i class="bi bi-chevron-right" aria-hidden="true"></i>
@@ -151,7 +154,7 @@
                                         _ => "text-bg-secondary"
                                     };
                                     <tr>
-                                        <td class="ps-3"><input class="form-check-input alert-selector" type="checkbox" data-alert-select name="alertIds" value="@alert.MonitoringAlertId" form="bulk-alert-form" aria-label="Select @alert.Title" disabled /></td>
+                                        <td class="ps-3"><input class="form-check-input alert-selector" type="checkbox" data-alert-select name="alertIds" value="@alert.MonitoringAlertId" form="bulk-alert-form" aria-label="Select @alert.Title" /></td>
                                         <td><span class="badge rounded-pill bg-light text-dark border mb-1">@alert.Severity</span><strong class="d-block">@alert.Title</strong><small class="text-muted">@alert.Message</small></td>
                                         <td><span class="fs-5 fw-bold">@alert.OccurrenceCount</span></td>
                                         <td><span class="d-block">@alert.FirstSeenAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</span><small class="text-muted">Last: @alert.LastSeenAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</small></td>
@@ -179,6 +182,17 @@
                                                 <partial name="_AlertFilterFields" model="filter" />
                                                 <button class="btn btn-sm @(status == MonitoringAlertStatus.Open ? "btn-success" : "btn-outline-warning") rounded-pill" type="submit">@(status == MonitoringAlertStatus.Open ? "Acknowledge" : "Reopen")</button>
                                             </form>
+                                            @if (status != MonitoringAlertStatus.Dismissed)
+                                            {
+                                                @* One alert can be dismissed from its own row. Dismiss used to exist only
+                                                   as a bulk button, which meant ticking the row first. *@
+                                                <form class="d-inline" method="post" asp-action="BulkDismissAlerts">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="alertIds" value="@alert.MonitoringAlertId" />
+                                                    <partial name="_AlertFilterFields" model="filter" />
+                                                    <button class="btn btn-sm btn-outline-secondary rounded-pill" type="submit">Dismiss</button>
+                                                </form>
+                                            }
                                         </td>
                                     </tr>
                                 }

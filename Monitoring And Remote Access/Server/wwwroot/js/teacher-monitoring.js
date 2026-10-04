@@ -39,7 +39,7 @@ function applyStationFilters() {
             || (stationFilter === "active" && unit.activityKnown && !unit.isIdle)
             || (stationFilter === "idle" && unit.isIdle)
             || (stationFilter === "attention" && unit.hasAlert);
-        const matchesSearch = searchMatches(`${unit.pcName} ${unit.studentId} ${unit.applicationName}`);
+        const matchesSearch = searchMatches(`${unit.pcName} ${unit.studentId} ${unit.activityLabel}`);
         column.style.display = matchesState && matchesSearch ? "" : "none";
         if (matchesState && matchesSearch) visible++;
     });
@@ -93,7 +93,11 @@ function createWorkstationCard(connectionId, studentId, pcName, displayName) {
     }
 
     document.getElementById("emptyState")?.remove();
-    activeUnits.set(connectionId, { studentId, displayName, pcName, lastFrame: null, lastFrameAt: 0, applicationName: "Unknown", activityKnown: false, isIdle: false, hasAlert: false, browsers: {} });
+    // A connected student counts as active until their computer reports idle. The
+    // tile used to wait for the first report of the application in front, which is
+    // no longer sent; its activity line now names the website in front, or says
+    // Active or Idle.
+    activeUnits.set(connectionId, { studentId, displayName, pcName, lastFrame: null, lastFrameAt: 0, activityLabel: "", activityKnown: true, isIdle: false, hasAlert: false, browsers: {} });
 
     const column = document.createElement("div");
     column.className = "col-xl-4 col-sm-6 unit-col";
@@ -120,7 +124,7 @@ function createWorkstationCard(connectionId, studentId, pcName, displayName) {
     const online = document.createElement("span");
     online.className = "badge badge-active ms-2";
     online.id = `status-${connectionId}`;
-    online.textContent = "Online";
+    online.textContent = "Active";
     header.append(name, online);
 
     const stream = document.createElement("div");
@@ -136,7 +140,7 @@ function createWorkstationCard(connectionId, studentId, pcName, displayName) {
     const activity = document.createElement("span");
     activity.id = `activity-${connectionId}`;
     activity.className = "workstation-card-activity small text-dark text-truncate";
-    activity.textContent = "Activity unavailable";
+    activity.textContent = "Active";
     const timestamp = document.createElement("span");
     timestamp.id = `time-${connectionId}`;
     timestamp.className = "small text-muted";
@@ -548,14 +552,14 @@ async function bulkCommand(method, label) {
     }
 }
 
-function updateActivity(connectionId, applicationName, isIdle) {
+function updateActivity(connectionId, activityLabel, isIdle) {
     const unit = activeUnits.get(connectionId);
     if (!unit) return;
     unit.activityKnown = true;
-    if (applicationName) unit.applicationName = applicationName;
+    if (activityLabel) unit.activityLabel = activityLabel;
     if (typeof isIdle === "boolean") unit.isIdle = isIdle;
     const activity = document.getElementById(`activity-${connectionId}`);
-    if (activity) activity.textContent = unit.isIdle ? "Idle" : unit.applicationName || "Active";
+    if (activity) activity.textContent = unit.isIdle ? "Idle" : unit.activityLabel || "Active";
     const card = document.getElementById(`unit-card-${connectionId}`)?.querySelector(".workstation-card");
     card?.classList.toggle("station-idle", unit.isIdle);
     const status = document.getElementById(`status-${connectionId}`);
@@ -622,9 +626,6 @@ async function loadLiveState() {
             const connectionId = valueOf(student, "connectionId", "ConnectionId");
             createWorkstationCard(connectionId, valueOf(student, "studentId", "StudentId"), valueOf(student, "pcName", "PcName"), valueOf(student, "displayName", "DisplayName"));
         }
-        for (const app of (state.apps ?? state.Apps ?? [])) {
-            updateActivity(valueOf(app, "connectionId", "ConnectionId"), valueOf(app, "applicationName", "ApplicationName"), false);
-        }
         for (const idle of (state.idle ?? state.Idle ?? [])) {
             updateActivity(valueOf(idle, "connectionId", "ConnectionId"), null, Boolean(valueOf(idle, "isIdle", "IsIdle")));
         }
@@ -671,8 +672,9 @@ function reviewFrameFreshness() {
 }
 
 setInterval(reviewFrameFreshness, 1000);
-hub.on("ActiveAppReceived", app => updateActivity(valueOf(app, "connectionId", "ConnectionId"), valueOf(app, "applicationName", "ApplicationName"), false));
-hub.on("WebsiteActivityReceived", website => updateActivity(valueOf(website, "connectionId", "ConnectionId"), `Web: ${valueOf(website, "domain", "Domain")}`, false));
+// A website is reported when it changes, not while it stays open, so the tile
+// names the last one seen rather than claiming it is still in front.
+hub.on("WebsiteActivityReceived", website => updateActivity(valueOf(website, "connectionId", "ConnectionId"), `Last website: ${valueOf(website, "domain", "Domain")}`, false));
 hub.on("BrowserMonitoringStatusReceived", updateBrowserStatus);
 hub.on("IdleStatusReceived", idle => updateActivity(valueOf(idle, "connectionId", "ConnectionId"), null, Boolean(valueOf(idle, "isIdle", "IsIdle"))));
 hub.on("InfractionDetected", infraction => {
