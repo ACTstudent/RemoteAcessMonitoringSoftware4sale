@@ -55,6 +55,23 @@
     }).observe(heroTitle);
   }
 
+  // The wireframe reel moves on its own, so it gets a pause control (WCAG 2.2.2).
+  // With reduced motion it never moves and the control is hidden.
+  const reel = document.querySelector('[data-reel]');
+  const reelToggle = document.querySelector('[data-reel-toggle]');
+  if (reel && reelToggle) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      reelToggle.hidden = true;
+    } else {
+      const reelLabel = reelToggle.querySelector('[data-reel-label]');
+      reelToggle.addEventListener('click', () => {
+        const paused = reel.classList.toggle('is-paused');
+        reelToggle.setAttribute('aria-pressed', String(paused));
+        reelLabel.textContent = paused ? 'Play' : 'Pause';
+      });
+    }
+  }
+
   // Sections ease in as they enter the viewport. Content is visible by default;
   // it is only hidden first when motion is allowed and the observer exists.
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

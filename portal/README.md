@@ -2,7 +2,7 @@
 
 Dependency-free static product, download, deployment, and trust portal for GitHub Pages.
 
-The page follows the system light or dark preference. Its brand colours and the self-hosted Plus Jakarta Sans font come from the CAMS server UI, and the screenshots in `assets/img/` are WebP crops of `DIAGRAMS/prototype-images/`. Icons are an inline sprite of [Phosphor Icons](https://phosphoricons.com) (MIT). Nothing is loaded from another origin.
+The page follows the system light or dark preference. Its look follows tasteskill.dev, with the CAMS green as the accent. Manrope and Playfair Display (both OFL) are self-hosted in `assets/fonts/`. The screens in the hero carousel and elsewhere are low-fidelity wireframes drawn as SVG `<symbol>`s inside `index.html`, styled by the `.wf-*` rules in `styles.css`. Icons are an inline sprite of [Phosphor Icons](https://phosphoricons.com) (MIT). Nothing is loaded from another origin.
 
 ## Local preview
 
