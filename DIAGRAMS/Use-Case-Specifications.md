@@ -1,17 +1,17 @@
 # CAMS Written Use Cases
 
-The system use cases in [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio): **27 system use cases** holding 89 use cases, with **49 written use cases**, one for every base use case.
+The system use cases in [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.drawio): **26 system use cases** holding 91 use cases, with **48 written use cases**, one for every base use case.
 
 - Each system use case is shown first as a diagram, and its written use cases follow: one for every base use case, which is a use case an actor starts. A written use case has ten parts: use case name, purpose, actors, input parameters, output parameters, pre-condition, post-condition, successful scenario, exception scenario and additional remarks.
 - The admin and the teacher share many use cases, so these are shown only once, under **ADMIN / TEACHER**, with one actor named Admin / Teacher.
 - A page with a list is shown as a View use case. Editing, deleting or exporting on that list extends it, so it is written inside the View use case. Creating a new record is a base use case of its own.
-- DELETE is used only for restriction rules, the blacklist and the whitelist, because these are really deleted. Other records are not deleted, so their records are kept.
+- DELETE is used only for restriction rules, the blacklist, the whitelist and the categories, because these are really deleted. Other records are not deleted, so their records are kept.
 - «include» means a use case always does the other use case. «extend» means the other use case is optional.
 
 | Actor | System use cases | Use cases in the diagrams | Written use cases |
 | --- | ---: | ---: | ---: |
-| Admin / Teacher (shared) | 12 | 44 | 25 |
-| Admin only | 6 | 17 | 10 |
+| Admin / Teacher (shared) | 12 | 47 | 25 |
+| Admin only | 5 | 16 | 9 |
 | Teacher only | 6 | 22 | 10 |
 | Student | 3 | 6 | 4 |
 
@@ -35,7 +35,6 @@ The system use cases in [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.d
 
 **ADMIN**  
 - Manage Admin Account — Create Admin, View Admin List
-- Manage Class Teacher — Assign Class Teacher
 - Manage Reports — View Report List
 - Manage Logs — View Audit Log, View System Log
 - Manage Database — Create Backup, View Backup List
@@ -60,7 +59,7 @@ The system use cases in [`CAMS-Use-Case-Diagram.drawio`](CAMS-Use-Case-Diagram.d
 
 The admin and the teacher can both do the use cases in these system use cases, so each diagram shows one actor named Admin / Teacher.
 
-A use case only one of them has is in that actor's own section: Assign Class Teacher is under ADMIN (Manage Class Teacher), and Start Lab Session is under TEACHER (Control Student Session).
+A use case only one of them has is in that actor's own section: Start Lab Session is under TEACHER (Control Student Session).
 
 ## Process Log In
 
@@ -80,7 +79,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Output Parameters:**
 
-- User dashboard
+- Dashboard (Admin) or My Classroom (Teacher)
 - Login error message
 
 **Pre-Condition:**
@@ -89,7 +88,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Post-Condition:**
 
-- The user is directed to the Admin or Teacher dashboard based on their role.
+- The Admin is directed to the Dashboard, and the Teacher to My Classroom.
 
 **Successful Scenario:**
 
@@ -98,7 +97,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 3. The user clicks the “Log in” button.
 4. The system validates the entered username and password.
 5. The system checks the role of the account.
-6. The user is logged in and directed to the Admin or Teacher dashboard.
+6. The user is logged in and the system displays the Dashboard for an Admin, or My Classroom for a Teacher.
 
 **Exception Scenario:**
 
@@ -299,6 +298,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 - Student ID or LRN
 - Username
 - Password
+- Class (optional)
 
 **Output Parameters:**
 
@@ -385,13 +385,14 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Written Use Case:** Manage Student Account  
 **Use Case Name:** View Student List  
-**Purpose:** To allow the Admin and Teacher to view the student accounts in CAMS, and to edit a student, change the status or assign a computer on the list.  
+**Purpose:** To allow the Admin and Teacher to view the student accounts in CAMS, and to edit a student, change the status, or assign a class or a computer on the list.  
 **Actors:** Admin, Teacher
 
 **Input Parameters:**
 
 - Selected student account
 - Updated student information
+- Selected class
 - Selected computer
 
 **Output Parameters:**
@@ -406,7 +407,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Post-Condition:**
 
 - The student list is displayed in the system.
-- If the user edits a student, changes the status or assigns a computer, the change is saved.
+- If the user edits a student, changes the status, or assigns a class or a computer, the change is saved.
 
 **Successful Scenario:**
 
@@ -415,23 +416,28 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 3. To edit a student, the user clicks Edit on the student.
 4. The user updates the student information and clicks the “Save Changes” button.
 5. To change the status of a student, the user clicks Deactivate or Activate on the student and confirms.
-6. To assign a computer, the user selects a computer in the student's row.
-7. The system saves the change and displays the updated student list.
+6. To assign a class, the user selects a class in the student's row.
+7. To assign a computer, the user selects a computer in the student's row.
+8. The system saves the change and displays the updated student list.
 
 **Exception Scenario:**
 
 - If the student ID or username is already used:
     - The system displays an error message.
     - The changes are not saved.
+- If the student is already in another class:
+    - The system asks the user to confirm the move.
+- If the class is not active or has no teacher:
+    - The system does not assign the class to the student.
 - If the computer is archived, already assigned or in use:
     - The system does not assign the computer to the student.
 
 **Additional Remarks:**
 
 - Both the Admin and the Teacher can use this function.
-- Editing a student, changing the status and assigning a computer are optional.
+- Editing a student, changing the status, and assigning a class or a computer are optional.
 - An inactive student cannot log in on a lab computer.
-- Choosing no computer clears the student's assigned computer.
+- Choosing no class or no computer clears the one the student had.
 
 ## Manage Computer Profile
 
@@ -448,6 +454,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 - Station name
 - Status
+- Assigned student (optional)
 
 **Output Parameters:**
 
@@ -467,7 +474,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 1. The user navigates to the Computers page.
 2. The user clicks the “Add Computer” button.
-3. The user enters the station name and selects the status.
+3. The user enters the station name, selects the status and may select the assigned student.
 4. The user clicks the “Save Station” button.
 5. The system validates the information and saves the computer.
 6. The system displays the updated computer list.
@@ -493,6 +500,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 - Selected computer
 - Station name
 - Status
+- Assigned student (optional)
 
 **Output Parameters:**
 
@@ -506,14 +514,14 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Post-Condition:**
 
 - The computer list is displayed in the system.
-- If the user edits a computer, the new name or status is saved.
+- If the user edits a computer, the change is saved.
 
 **Successful Scenario:**
 
 1. The user navigates to the Computers page.
 2. The system displays the list of lab computers.
 3. To edit a computer, the user clicks Edit on the computer.
-4. The user changes the station name or the status and clicks the “Save Changes” button.
+4. The user changes the station name, the status or the assigned student and clicks the “Save Changes” button.
 5. The system saves the changes and displays the updated computer list.
 
 **Exception Scenario:**
@@ -547,6 +555,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 - Subject
 - Schedule
 - School year
+- Teacher of the class (optional)
 
 **Output Parameters:**
 
@@ -580,8 +589,8 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Additional Remarks:**
 
 - Both the Admin and the Teacher can use this function.
-- A class made by a teacher belongs to that teacher.
-- Only the Admin can choose the teacher of a class.
+- The teacher of the class can be chosen on the form, or assigned later on the class page.
+- A Teacher can also create a class on the My Class List page. That class belongs to the Teacher.
 
 **Written Use Case:** Manage Class  
 **Use Case Name:** View Class List  
@@ -620,23 +629,23 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 - If the same class already exists for that school year:
     - The system displays an error message.
     - The changes are not saved.
-- If a teacher tries to edit a class that is not theirs:
-    - The system does not allow the action.
 
 **Additional Remarks:**
 
 - Both the Admin and the Teacher can use this function.
 - Editing a class is optional.
+- On the My Class List page, a Teacher sees and edits only their own classes.
 
 **Written Use Case:** Manage Class  
 **Use Case Name:** View Class Student  
-**Purpose:** To allow the Admin and Teacher to view the students of a class, and to enroll students in the class or remove them.  
+**Purpose:** To allow the Admin and Teacher to view the students of a class, and to enroll students, remove a student or assign the teacher of the class.  
 **Actors:** Admin, Teacher
 
 **Input Parameters:**
 
 - Selected class
 - Selected students
+- Selected teacher
 
 **Output Parameters:**
 
@@ -651,7 +660,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Post-Condition:**
 
 - The students of the class are displayed in the system.
-- If the user enrolls or removes students, the change is saved.
+- If the user enrolls or removes students, or assigns the teacher, the change is saved.
 
 **Successful Scenario:**
 
@@ -660,7 +669,8 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 3. The system displays the list of students in the class.
 4. To enroll students, the user clicks “Enroll”, selects the students and clicks “Enroll selected”.
 5. To remove a student, the user clicks “Remove” on the student and confirms.
-6. The system saves the change and displays the updated list of students.
+6. To assign the teacher of the class, the user clicks “Manage teacher”, selects a teacher and clicks “Save assignment”.
+7. The system saves the change and displays the updated class page.
 
 **Exception Scenario:**
 
@@ -670,12 +680,16 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
     - The system asks the user to confirm the move.
 - If the class is not active or has no teacher:
     - The system does not enroll the students.
+- If no active teacher is selected:
+    - The system displays an error message.
+    - The teacher of the class is not changed.
 
 **Additional Remarks:**
 
 - Both the Admin and the Teacher can use this function.
-- Enrolling and removing students are optional.
+- Enrolling students, removing a student and assigning the teacher are optional.
 - Removing a student from a class keeps the student account.
+- The class appears on the class list of its teacher.
 
 ## Manage Restriction Rule
 
@@ -723,11 +737,15 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 - If the rule type, block or allow, or the target is missing:
     - The system displays an error message.
     - The rule is not saved.
+- If a website address is entered as an app rule:
+    - The system asks the user to choose Website as the rule type.
+    - The rule is not saved.
 
 **Additional Remarks:**
 
 - Both the Admin and the Teacher can use this function.
 - Only websites are blocked. A rule for an app is saved but is not enforced.
+- A Teacher can also add a rule of their own on the Class Restrictions page.
 
 **Written Use Case:** Manage Restriction Rule  
 **Use Case Name:** View Restriction Rule  
@@ -765,8 +783,8 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Exception Scenario:**
 
-- If a teacher tries to edit or delete a rule that is not theirs:
-    - The system does not allow the action.
+- If the target is missing:
+    - The system does not save the changes.
 - If the rule is already gone:
     - Nothing changes.
 
@@ -775,6 +793,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 - Both the Admin and the Teacher can use this function.
 - Editing and deleting a rule are optional.
 - A deleted rule cannot be brought back. A rule that is turned off is kept but ignored.
+- On the Class Restrictions page, a Teacher can edit or delete only their own rules.
 
 ## Manage Blacklist
 
@@ -865,7 +884,6 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Exception Scenario:**
 
 - If the value is missing:
-    - The system displays an error message.
     - The changes are not saved.
 - If the entry is already gone:
     - Nothing changes.
@@ -889,7 +907,8 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Input Parameters:**
 
-- Website
+- Entry type (website or app)
+- Target website
 - Description
 
 **Output Parameters:**
@@ -910,7 +929,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 1. The user navigates to the Whitelist page.
 2. The user clicks the “Add whitelist rule” button.
-3. The user enters the website.
+3. The user selects the entry type and enters the website.
 4. The user clicks the “Add rule” button.
 5. The system validates the information and saves the entry.
 6. The system displays the updated whitelist.
@@ -925,6 +944,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 - Both the Admin and the Teacher can use this function.
 - A website on the blacklist stays blocked even if it is on the whitelist.
+- Only websites are enforced. An app entry is kept on the list but is not enforced.
 
 **Written Use Case:** Manage Whitelist  
 **Use Case Name:** View Whitelist Entry  
@@ -963,7 +983,6 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Exception Scenario:**
 
 - If the website is missing:
-    - The system displays an error message.
     - The changes are not saved.
 - If the entry is already gone:
     - Nothing changes.
@@ -973,6 +992,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 - Both the Admin and the Teacher can use this function.
 - Editing and deleting an entry are optional.
 - When the whitelist is empty, it does not limit the websites students can open.
+- An entry that is turned off leaves the whitelist. It is kept on the Restriction Rules page.
 
 ## Manage Category
 
@@ -1018,8 +1038,8 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Exception Scenario:**
 
 - If the name or the pattern is missing:
-    - The system displays an error message.
     - The category is not saved.
+    - The system displays the Restriction Rules page again.
 
 **Additional Remarks:**
 
@@ -1028,7 +1048,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Written Use Case:** Manage Category  
 **Use Case Name:** View Category List  
-**Purpose:** To allow the Admin and Teacher to view the categories in CAMS, and to edit a category on the list.  
+**Purpose:** To allow the Admin and Teacher to view the categories in CAMS, and to edit or delete a category on the list.  
 **Actors:** Admin, Teacher
 
 **Input Parameters:**
@@ -1048,20 +1068,22 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Post-Condition:**
 
 - The category list is displayed in the system.
-- If the user edits a category, the updated information is saved.
+- If the user edits or deletes a category, student computers follow the change.
 
 **Successful Scenario:**
 
 1. The user navigates to the Restriction Rules page.
-2. The system displays the list of categories.
+2. The system displays the list of app categories and the list of website categories.
 3. To edit a category, the user clicks Edit on the category.
 4. The user changes the category, or turns it on or off, and clicks the “Save” button.
-5. The system saves the changes and displays the updated category list.
+5. To delete a category, the user clicks Delete on the category.
+6. The system asks the user to confirm the deletion.
+7. The user confirms the deletion.
+8. The system saves or deletes the category and displays the updated category list.
 
 **Exception Scenario:**
 
 - If the name or the pattern is missing:
-    - The system displays an error message.
     - The changes are not saved.
 - If the category is already gone:
     - Nothing changes.
@@ -1069,8 +1091,8 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Additional Remarks:**
 
 - Both the Admin and the Teacher can use this function.
-- Editing a category is optional.
-- A category that is turned off is kept but ignored.
+- Editing and deleting a category are optional.
+- A deleted category cannot be brought back. A category that is turned off is kept but ignored.
 
 ## Manage Session Rule
 
@@ -1200,8 +1222,8 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Successful Scenario:**
 
-1. The user navigates to the dashboard (Admin) or the Sessions page (Teacher).
-2. The user clicks the button to pause all sessions.
+1. The user navigates to the Dashboard.
+2. The user clicks the “Pause all” button.
 3. The user confirms the action.
 4. The system pauses every running session.
 5. The student computers display a pause screen and the timers stop.
@@ -1217,6 +1239,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 - Both the Admin and the Teacher can use this function.
 - Paused time is not counted in the time limit.
+- A Teacher can also do this on the Sessions page, with the “Pause all sessions” button.
 
 **Written Use Case:** Control Laboratory Session  
 **Use Case Name:** Resume Lab Session  
@@ -1243,8 +1266,8 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Successful Scenario:**
 
-1. The user navigates to the dashboard (Admin) or the Sessions page (Teacher).
-2. The user clicks the button to resume all sessions.
+1. The user navigates to the Dashboard.
+2. The user clicks the “Resume paused” button.
 3. The user confirms the action.
 4. The system resumes every paused session.
 5. The pause screens close and the timers continue.
@@ -1260,6 +1283,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 - Both the Admin and the Teacher can use this function.
 - After the lab is resumed, the students can use their computers again.
+- A Teacher can also do this on the Sessions page, with the “Resume all sessions” button.
 
 **Written Use Case:** Control Laboratory Session  
 **Use Case Name:** End Lab Session  
@@ -1287,7 +1311,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Successful Scenario:**
 
-1. The user navigates to the dashboard (Admin) or the Sessions page (Teacher).
+1. The user navigates to the Dashboard.
 2. The user clicks the “End & restart PCs” button.
 3. The user confirms the action.
 4. The system ends every session and saves the end time.
@@ -1304,6 +1328,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 - Both the Admin and the Teacher can use this function.
 - An ended session cannot be resumed.
+- A Teacher can also do this on the Sessions page.
 - Only the Teacher can start a lab session.
 
 # ADMIN
@@ -1405,65 +1430,11 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 - An inactive admin cannot log in.
 - Only the Admin can manage admin accounts.
 
-## Manage Class Teacher
-
-![Manage Class Teacher](usecase-images/admin-manage-class-teacher.png)
-
-*Figure 3.16: System Use Case for Manage Class Teacher*
-
-**Written Use Case:** Manage Class Teacher  
-**Use Case Name:** Assign Class Teacher  
-**Purpose:** To allow the Admin to choose the teacher in charge of a class, change the teacher, or leave the class without one.  
-**Actors:** Admin
-
-**Input Parameters:**
-
-- Selected class
-- Selected teacher, or none
-
-**Output Parameters:**
-
-- Class page showing its teacher
-- Success or error message
-
-**Pre-Condition:**
-
-- The Admin must be logged in to the system.
-- The class must exist.
-
-**Post-Condition:**
-
-- The chosen teacher is in charge of the class.
-- The class appears on that teacher's class list.
-- The change is saved in the audit trail.
-
-**Successful Scenario:**
-
-1. The Admin navigates to the Classes page and opens the class.
-2. The Admin clicks the “Manage teacher” button.
-3. The Admin selects a teacher for the class, or none.
-4. The Admin clicks the “Save assignment” button.
-5. The system checks that the teacher is active.
-6. The system saves the teacher for the class and displays the class page.
-
-**Exception Scenario:**
-
-- If the chosen teacher is inactive:
-    - The system displays an error message.
-    - The Admin is asked to select an active teacher.
-- If the class is not found:
-    - The system displays an error message.
-    - Nothing changes.
-
-**Additional Remarks:**
-
-- Only the Admin can assign the teacher of a class.
-
 ## Manage Reports
 
 ![Manage Reports](usecase-images/admin-manage-reports.png)
 
-*Figure 3.17: System Use Case for Manage Reports*
+*Figure 3.16: System Use Case for Manage Reports*
 
 **Written Use Case:** Manage Reports  
 **Use Case Name:** View Report List  
@@ -1492,7 +1463,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Successful Scenario:**
 
 1. The Admin navigates to the Reports page.
-2. The Admin sets the date range, and may select a class or a computer.
+2. The Admin sets the date range, may select a class or a computer, and clicks the “Filter Analytics” button.
 3. The system displays the lab sessions, the most visited websites and the computers used.
 4. To download a report, the Admin clicks “Session CSV”, “Usage CSV”, “Attendance CSV” or “Remote CSV”.
 5. The system creates the CSV file and the browser downloads it.
@@ -1512,7 +1483,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 ![Manage Logs](usecase-images/admin-manage-logs.png)
 
-*Figure 3.18: System Use Case for Manage Logs*
+*Figure 3.17: System Use Case for Manage Logs*
 
 **Written Use Case:** Manage Logs  
 **Use Case Name:** View Audit Log  
@@ -1598,7 +1569,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 ![Manage Database](usecase-images/admin-manage-database.png)
 
-*Figure 3.19: System Use Case for Manage Database*
+*Figure 3.18: System Use Case for Manage Database*
 
 **Written Use Case:** Manage Database  
 **Use Case Name:** Create Backup  
@@ -1685,13 +1656,14 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 - Restoring a backup is optional.
 - The system always checks a backup before restoring it.
+- A backup can also be checked alone, with the “Validate” button on the backup.
 - The restore takes effect only after the server restarts.
 
 ## Manage Deployment
 
 ![Manage Deployment](usecase-images/admin-manage-deployment.png)
 
-*Figure 3.20: System Use Case for Manage Deployment*
+*Figure 3.19: System Use Case for Manage Deployment*
 
 **Written Use Case:** Manage Deployment  
 **Use Case Name:** Download Deployment Files  
@@ -1776,7 +1748,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 ![Control Student Session](usecase-images/teacher-control-student-session.png)
 
-*Figure 3.21: System Use Case for Control Student Session*
+*Figure 3.20: System Use Case for Control Student Session*
 
 **Written Use Case:** Control Student Session  
 **Use Case Name:** View Session List  
@@ -1833,7 +1805,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 ![Monitor Student Screen](usecase-images/teacher-monitor-student-screen.png)
 
-*Figure 3.22: System Use Case for Monitor Student Screen*
+*Figure 3.21: System Use Case for Monitor Student Screen*
 
 **Written Use Case:** Monitor Student Screen  
 **Use Case Name:** Open Monitoring Wall  
@@ -1878,7 +1850,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 ![Control Student Workstation](usecase-images/teacher-control-student-workstation.png)
 
-*Figure 3.23: System Use Case for Control Student Workstation*
+*Figure 3.22: System Use Case for Control Student Workstation*
 
 **Written Use Case:** Control Student Workstation  
 **Use Case Name:** View Student Live Frame  
@@ -1930,7 +1902,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 ![Send Student Message](usecase-images/teacher-send-student-message.png)
 
-*Figure 3.24: System Use Case for Send Student Message*
+*Figure 3.23: System Use Case for Send Student Message*
 
 **Written Use Case:** Send Student Message  
 **Use Case Name:** Send Warning Popup  
@@ -2019,7 +1991,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 ![Manage Monitoring Alert](usecase-images/teacher-manage-monitoring-alert.png)
 
-*Figure 3.25: System Use Case for Manage Monitoring Alert*
+*Figure 3.24: System Use Case for Manage Monitoring Alert*
 
 **Written Use Case:** Manage Monitoring Alert  
 **Use Case Name:** View Alert List  
@@ -2075,7 +2047,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 ![Manage Records](usecase-images/teacher-manage-records.png)
 
-*Figure 3.26: System Use Case for Manage Records*
+*Figure 3.25: System Use Case for Manage Records*
 
 **Written Use Case:** Manage Records  
 **Use Case Name:** View Classroom Records  
@@ -2206,13 +2178,12 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 **Written Use Case:** Manage Records  
 **Use Case Name:** View Student Activity  
-**Purpose:** To allow the Teacher to view the activity of one student, and to download it as a CSV file.  
+**Purpose:** To allow the Teacher to view the activity of one student for the day, and to download it as a CSV file.  
 **Actors:** Teacher
 
 **Input Parameters:**
 
 - Selected student
-- Date range (optional)
 
 **Output Parameters:**
 
@@ -2232,22 +2203,22 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 **Successful Scenario:**
 
 1. The Teacher navigates to the My Students page.
-2. The Teacher opens the activity of a student.
-3. The Teacher may set the date range.
-4. The system displays the student's sessions and activity.
-5. To download the activity, the Teacher clicks the “Export CSV” button.
-6. The system creates the CSV file and the browser downloads it.
+2. The Teacher clicks “Student analytics” on a student.
+3. The system displays the student's activity for the day: the active and idle time, the websites, the activity timeline and the alerts.
+4. To download the activity, the Teacher clicks the “Export CSV” button.
+5. The system creates the CSV file and the browser downloads it.
 
 **Exception Scenario:**
 
 - If the student is not one of the Teacher's students:
     - The system does not display the activity.
-- If nothing is recorded in the date range:
-    - The system displays an empty list.
+- If nothing is recorded for the day:
+    - The system displays an empty timeline.
 
 **Additional Remarks:**
 
 - Downloading the activity is optional.
+- The page shows the activity of the current day.
 
 # STUDENT
 
@@ -2255,7 +2226,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 ![Log In at Workstation](usecase-images/student-log-in-at-workstation.png)
 
-*Figure 3.27: System Use Case for Log In at Workstation*
+*Figure 3.26: System Use Case for Log In at Workstation*
 
 **Written Use Case:** Log In at Workstation  
 **Use Case Name:** Log In Workstation  
@@ -2313,7 +2284,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 ![Log Out at Workstation](usecase-images/student-log-out-at-workstation.png)
 
-*Figure 3.28: System Use Case for Log Out at Workstation*
+*Figure 3.27: System Use Case for Log Out at Workstation*
 
 **Written Use Case:** Log Out at Workstation  
 **Use Case Name:** Log Out Workstation  
@@ -2395,7 +2366,7 @@ A use case only one of them has is in that actor's own section: Assign Class Tea
 
 ![Change Password at Workstation](usecase-images/student-change-password-at-workstation.png)
 
-*Figure 3.29: System Use Case for Change Password at Workstation*
+*Figure 3.28: System Use Case for Change Password at Workstation*
 
 **Written Use Case:** Change Password at Workstation  
 **Use Case Name:** Change Password  
