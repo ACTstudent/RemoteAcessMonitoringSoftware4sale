@@ -5,26 +5,56 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CAMS | Secure classroom computer management</title>
   <meta name="description" content="CAMS is a local-first classroom monitoring and computer laboratory management system for Windows networks.">
-  <meta name="theme-color" content="#071d15">
-  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#f5f7f2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0c1511" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
   <meta property="og:title" content="CAMS | Classroom computer management">
   <meta property="og:description" content="Deploy, monitor, and manage classroom Windows workstations on your own local network.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://actstudent.github.io/RemoteAcessMonitoringSoftware4sale/">
   <meta property="og:site_name" content="CAMS">
-  <meta name="twitter:card" content="summary">
+  <meta property="og:image" content="https://actstudent.github.io/RemoteAcessMonitoringSoftware4sale/assets/img/teacher-dashboard.webp">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="canonical" href="https://actstudent.github.io/RemoteAcessMonitoringSoftware4sale/">
   <link rel="icon" href="assets/cams-mark.png" type="image/png">
+  <link rel="preload" href="assets/fonts/plus-jakarta-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/styles.css">
   <script src="assets/app.js" defer></script>
 </head>
 <body>
+  <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+    <!-- Icons: Phosphor Icons (regular weight), MIT licensed, https://phosphoricons.com -->
+    <symbol id="i-monitor" viewBox="0 0 256 256"><path d="M208,40H48A24,24,0,0,0,24,64V176a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V64A24,24,0,0,0,208,40Zm8,136a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V64a8,8,0,0,1,8-8H208a8,8,0,0,1,8,8Zm-48,48a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,224Z"/></symbol>
+    <symbol id="i-megaphone" viewBox="0 0 256 256"><path d="M248,120a48.05,48.05,0,0,0-48-48H160.2c-2.91-.17-53.62-3.74-101.91-44.24A16,16,0,0,0,32,40V200a16,16,0,0,0,26.29,12.25c37.77-31.68,77-40.76,93.71-43.3v31.72A16,16,0,0,0,159.12,214l11,7.33A16,16,0,0,0,194.5,212l11.77-44.36A48.07,48.07,0,0,0,248,120ZM48,199.93V40h0c42.81,35.91,86.63,45,104,47.24v65.48C134.65,155,90.84,164.07,48,199.93Zm131,8,0,.11-11-7.33V168h21.6ZM200,152H168V88h32a32,32,0,1,1,0,64Z"/></symbol>
+    <symbol id="i-lock-simple" viewBox="0 0 256 256"><path d="M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96ZM208,208H48V96H208V208Z"/></symbol>
+    <symbol id="i-clipboard-text" viewBox="0 0 256 256"><path d="M168,152a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,152Zm-8-40H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16Zm56-64V216a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V48A16,16,0,0,1,56,32H92.26a47.92,47.92,0,0,1,71.48,0H200A16,16,0,0,1,216,48ZM96,64h64a32,32,0,0,0-64,0ZM200,48H173.25A47.93,47.93,0,0,1,176,64v8a8,8,0,0,1-8,8H88a8,8,0,0,1-8-8V64a47.93,47.93,0,0,1,2.75-16H56V216H200Z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/></symbol>
+    <symbol id="i-x" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></symbol>
+    <symbol id="i-download-simple" viewBox="0 0 256 256"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 256 256"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></symbol>
+    <symbol id="i-shield-check" viewBox="0 0 256 256"><path d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z"/></symbol>
+    <symbol id="i-lock-key" viewBox="0 0 256 256"><path d="M128,112a28,28,0,0,0-8,54.83V184a8,8,0,0,0,16,0V166.83A28,28,0,0,0,128,112Zm0,40a12,12,0,1,1,12-12A12,12,0,0,1,128,152Zm80-72H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96ZM208,208H48V96H208V208Z"/></symbol>
+    <symbol id="i-certificate" viewBox="0 0 256 256"><path d="M128,136a8,8,0,0,1-8,8H72a8,8,0,0,1,0-16h48A8,8,0,0,1,128,136Zm-8-40H72a8,8,0,0,0,0,16h48a8,8,0,0,0,0-16Zm112,65.47V224A8,8,0,0,1,220,231l-24-13.74L172,231A8,8,0,0,1,160,224V200H40a16,16,0,0,1-16-16V56A16,16,0,0,1,40,40H216a16,16,0,0,1,16,16V86.53a51.88,51.88,0,0,1,0,74.94ZM160,184V161.47A52,52,0,0,1,216,76V56H40V184Zm56-12a51.88,51.88,0,0,1-40,0v38.22l16-9.16a8,8,0,0,1,7.94,0l16,9.16Zm16-48a36,36,0,1,0-36,36A36,36,0,0,0,232,124Z"/></symbol>
+    <symbol id="i-seal-check" viewBox="0 0 256 256"><path d="M225.86,102.82c-3.77-3.94-7.67-8-9.14-11.57-1.36-3.27-1.44-8.69-1.52-13.94-.15-9.76-.31-20.82-8-28.51s-18.75-7.85-28.51-8c-5.25-.08-10.67-.16-13.94-1.52-3.56-1.47-7.63-5.37-11.57-9.14C146.28,23.51,138.44,16,128,16s-18.27,7.51-25.18,14.14c-3.94,3.77-8,7.67-11.57,9.14C88,40.64,82.56,40.72,77.31,40.8c-9.76.15-20.82.31-28.51,8S41,67.55,40.8,77.31c-.08,5.25-.16,10.67-1.52,13.94-1.47,3.56-5.37,7.63-9.14,11.57C23.51,109.72,16,117.56,16,128s7.51,18.27,14.14,25.18c3.77,3.94,7.67,8,9.14,11.57,1.36,3.27,1.44,8.69,1.52,13.94.15,9.76.31,20.82,8,28.51s18.75,7.85,28.51,8c5.25.08,10.67.16,13.94,1.52,3.56,1.47,7.63,5.37,11.57,9.14C109.72,232.49,117.56,240,128,240s18.27-7.51,25.18-14.14c3.94-3.77,8-7.67,11.57-9.14,3.27-1.36,8.69-1.44,13.94-1.52,9.76-.15,20.82-.31,28.51-8s7.85-18.75,8-28.51c.08-5.25.16-10.67,1.52-13.94,1.47-3.56,5.37-7.63,9.14-11.57C232.49,146.28,240,138.44,240,128S232.49,109.73,225.86,102.82Zm-11.55,39.29c-4.79,5-9.75,10.17-12.38,16.52-2.52,6.1-2.63,13.07-2.73,19.82-.1,7-.21,14.33-3.32,17.43s-10.39,3.22-17.43,3.32c-6.75.1-13.72.21-19.82,2.73-6.35,2.63-11.52,7.59-16.52,12.38S132,224,128,224s-9.15-4.92-14.11-9.69-10.17-9.75-16.52-12.38c-6.1-2.52-13.07-2.63-19.82-2.73-7-.1-14.33-.21-17.43-3.32s-3.22-10.39-3.32-17.43c-.1-6.75-.21-13.72-2.73-19.82-2.63-6.35-7.59-11.52-12.38-16.52S32,132,32,128s4.92-9.15,9.69-14.11,9.75-10.17,12.38-16.52c2.52-6.1,2.63-13.07,2.73-19.82.1-7,.21-14.33,3.32-17.43S70.51,56.9,77.55,56.8c6.75-.1,13.72-.21,19.82-2.73,6.35-2.63,11.52-7.59,16.52-12.38S124,32,128,32s9.15,4.92,14.11,9.69,10.17,9.75,16.52,12.38c6.1,2.52,13.07,2.63,19.82,2.73,7,.1,14.33.21,17.43,3.32s3.22,10.39,3.32,17.43c.1,6.75.21,13.72,2.73,19.82,2.63,6.35,7.59,11.52,12.38,16.52S224,124,224,128,219.08,137.15,214.31,142.11ZM173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34Z"/></symbol>
+    <symbol id="i-warning" viewBox="0 0 256 256"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 256 256"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/></symbol>
+    <symbol id="i-github-logo" viewBox="0 0 256 256"><path d="M208.31,75.68A59.78,59.78,0,0,0,202.93,28,8,8,0,0,0,196,24a59.75,59.75,0,0,0-48,24H124A59.75,59.75,0,0,0,76,24a8,8,0,0,0-6.93,4,59.78,59.78,0,0,0-5.38,47.68A58.14,58.14,0,0,0,56,104v8a56.06,56.06,0,0,0,48.44,55.47A39.8,39.8,0,0,0,96,192v8H72a24,24,0,0,1-24-24A40,40,0,0,0,8,136a8,8,0,0,0,0,16,24,24,0,0,1,24,24,40,40,0,0,0,40,40H96v16a8,8,0,0,0,16,0V192a24,24,0,0,1,48,0v40a8,8,0,0,0,16,0V192a39.8,39.8,0,0,0-8.44-24.53A56.06,56.06,0,0,0,216,112v-8A58.14,58.14,0,0,0,208.31,75.68ZM200,112a40,40,0,0,1-40,40H112a40,40,0,0,1-40-40v-8a41.74,41.74,0,0,1,6.9-22.48A8,8,0,0,0,80,73.83a43.81,43.81,0,0,1,.79-33.58,43.88,43.88,0,0,1,32.32,20.06A8,8,0,0,0,119.82,64h32.35a8,8,0,0,0,6.74-3.69,43.87,43.87,0,0,1,32.32-20.06A43.81,43.81,0,0,1,192,73.83a8.09,8.09,0,0,0,1,7.65A41.72,41.72,0,0,1,200,104Z"/></symbol>
+    <symbol id="i-chalkboard-teacher" viewBox="0 0 256 256"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H53.39a8,8,0,0,0,7.23-4.57,48,48,0,0,1,86.76,0,8,8,0,0,0,7.23,4.57H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM80,144a24,24,0,1,1,24,24A24,24,0,0,1,80,144Zm136,56H159.43a64.39,64.39,0,0,0-28.83-26.16,40,40,0,1,0-53.2,0A64.39,64.39,0,0,0,48.57,200H40V56H216ZM56,96V80a8,8,0,0,1,8-8H192a8,8,0,0,1,8,8v96a8,8,0,0,1-8,8H176a8,8,0,0,1,0-16h8V88H72v8a8,8,0,0,1-16,0Z"/></symbol>
+    <symbol id="i-student" viewBox="0 0 256 256"><path d="M226.53,56.41l-96-32a8,8,0,0,0-5.06,0l-96,32A8,8,0,0,0,24,64v80a8,8,0,0,0,16,0V75.1L73.59,86.29a64,64,0,0,0,20.65,88.05c-18,7.06-33.56,19.83-44.94,37.29a8,8,0,1,0,13.4,8.74C77.77,197.25,101.57,184,128,184s50.23,13.25,65.3,36.37a8,8,0,0,0,13.4-8.74c-11.38-17.46-27-30.23-44.94-37.29a64,64,0,0,0,20.65-88l44.12-14.7a8,8,0,0,0,0-15.18ZM176,120A48,48,0,1,1,89.35,91.55l36.12,12a8,8,0,0,0,5.06,0l36.12-12A47.89,47.89,0,0,1,176,120ZM128,87.57,57.3,64,128,40.43,198.7,64Z"/></symbol>
+    <symbol id="i-wrench" viewBox="0 0 256 256"><path d="M226.76,69a8,8,0,0,0-12.84-2.88l-40.3,37.19-17.23-3.7-3.7-17.23,37.19-40.3A8,8,0,0,0,187,29.24,72,72,0,0,0,88,96,72.34,72.34,0,0,0,94,124.94L33.79,177c-.15.12-.29.26-.43.39a32,32,0,0,0,45.26,45.26c.13-.13.27-.28.39-.42L131.06,162A72,72,0,0,0,232,96,71.56,71.56,0,0,0,226.76,69ZM160,152a56.14,56.14,0,0,1-27.07-7,8,8,0,0,0-9.92,1.77L67.11,211.51a16,16,0,0,1-22.62-22.62L109.18,133a8,8,0,0,0,1.77-9.93,56,56,0,0,1,58.36-82.31l-31.2,33.81a8,8,0,0,0-1.94,7.1L141.83,108a8,8,0,0,0,6.14,6.14l26.35,5.66a8,8,0,0,0,7.1-1.94l33.81-31.2A56.06,56.06,0,0,1,160,152Z"/></symbol>
+    <symbol id="i-database" viewBox="0 0 256 256"><path d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64ZM69.61,53.08C85.07,44.65,105.81,40,128,40s42.93,4.65,58.39,13.08C200.12,60.57,208,70.38,208,80s-7.88,19.43-21.61,26.92C170.93,115.35,150.19,120,128,120s-42.93-4.65-58.39-13.08C55.88,99.43,48,89.62,48,80S55.88,60.57,69.61,53.08ZM186.39,202.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z"/></symbol>
+    <symbol id="i-plugs-connected" viewBox="0 0 256 256"><path d="M237.66,18.34a8,8,0,0,0-11.32,0l-52.4,52.41-5.37-5.38a32.05,32.05,0,0,0-45.26,0L100,88.69l-6.34-6.35A8,8,0,0,0,82.34,93.66L88.69,100,65.37,123.31a32,32,0,0,0,0,45.26l5.38,5.37-52.41,52.4a8,8,0,0,0,11.32,11.32l52.4-52.41,5.37,5.38a32,32,0,0,0,45.26,0L156,167.31l6.34,6.35a8,8,0,0,0,11.32-11.32L167.31,156l23.32-23.31a32,32,0,0,0,0-45.26l-5.38-5.37,52.41-52.4A8,8,0,0,0,237.66,18.34Zm-116.29,161a16,16,0,0,1-22.62,0L76.69,157.25a16,16,0,0,1,0-22.62L100,111.31,144.69,156Zm57.94-57.94L156,144.69,111.31,100l23.32-23.31a16,16,0,0,1,22.62,0l22.06,22A16,16,0,0,1,179.31,121.37ZM88.57,35A8,8,0,0,1,103.43,29l8,20A8,8,0,0,1,96.57,55ZM24.57,93A8,8,0,0,1,35,88.57l20,8A8,8,0,0,1,49,111.43l-20-8A8,8,0,0,1,24.57,93ZM231.43,163a8,8,0,0,1-10.4,4.46l-20-8A8,8,0,1,1,207,144.57l20,8A8,8,0,0,1,231.43,163Zm-64,58.06A8,8,0,0,1,152.57,227l-8-20A8,8,0,0,1,159.43,201Z"/></symbol>
+    <symbol id="i-windows-logo" viewBox="0 0 256 256"><path d="M208,136H128a8,8,0,0,0-8,8v57.45a8,8,0,0,0,6.57,7.88l80,14.54A7.61,7.61,0,0,0,208,224a8,8,0,0,0,8-8V144A8,8,0,0,0,208,136Zm-8,70.41-64-11.63V152h64ZM96,136H32a8,8,0,0,0-8,8v40a8,8,0,0,0,6.57,7.87l64,11.64a8.54,8.54,0,0,0,1.43.13,8,8,0,0,0,8-8V144A8,8,0,0,0,96,136Zm-8,50.05-48-8.73V152H88ZM213.13,33.86a8,8,0,0,0-6.56-1.73l-80,14.55A8,8,0,0,0,120,54.55V112a8,8,0,0,0,8,8h80a8,8,0,0,0,8-8V40A8,8,0,0,0,213.13,33.86ZM200,104H136V61.22l64-11.63ZM101.13,54.22a8,8,0,0,0-6.56-1.73l-64,11.64A8,8,0,0,0,24,72v40a8,8,0,0,0,8,8H96a8,8,0,0,0,8-8V60.36A8,8,0,0,0,101.13,54.22ZM88,104H40V78.68L88,70Z"/></symbol>
+    <symbol id="i-users-three" viewBox="0 0 256 256"><path d="M244.8,150.4a8,8,0,0,1-11.2-1.6A51.6,51.6,0,0,0,192,128a8,8,0,0,1-7.37-4.89,8,8,0,0,1,0-6.22A8,8,0,0,1,192,112a24,24,0,1,0-23.24-30,8,8,0,1,1-15.5-4A40,40,0,1,1,219,117.51a67.94,67.94,0,0,1,27.43,21.68A8,8,0,0,1,244.8,150.4ZM190.92,212a8,8,0,1,1-13.84,8,57,57,0,0,0-98.16,0,8,8,0,1,1-13.84-8,72.06,72.06,0,0,1,33.74-29.92,48,48,0,1,1,58.36,0A72.06,72.06,0,0,1,190.92,212ZM128,176a32,32,0,1,0-32-32A32,32,0,0,0,128,176ZM72,120a8,8,0,0,0-8-8A24,24,0,1,1,87.24,82a8,8,0,1,0,15.5-4A40,40,0,1,0,37,117.51,67.94,67.94,0,0,0,9.6,139.19a8,8,0,1,0,12.8,9.61A51.6,51.6,0,0,1,64,128,8,8,0,0,0,72,120Z"/></symbol>
+  </svg>
+
   <a class="skip-link" href="#main-content">Skip to content</a>
 
   <header class="site-header" data-header>
     <div class="shell header-inner">
       <a class="brand" href="#top" aria-label="CAMS home">
-        <img src="assets/cams-mark.png" width="40" height="45" alt="">
+        <img src="assets/cams-mark.png" width="32" height="36" alt="">
         <span><strong>CAMS</strong><small>Classroom systems, locally controlled</small></span>
       </a>
       <button class="menu-button" type="button" aria-expanded="false" aria-controls="site-nav" data-menu-button>
@@ -37,140 +67,142 @@
         <a href="#architecture">Architecture</a>
         <a href="#install">Install</a>
         <a href="#support">Support</a>
-        <a class="nav-download" href="#downloads">Get v<span data-version>2.20.4</span></a>
+        <a class="button button-primary button-small" href="#downloads"><span>Download v<span data-version>2.20.4</span></span></a>
       </nav>
     </div>
   </header>
 
   <main id="main-content">
     <section class="hero" id="top" aria-labelledby="hero-title">
-      <div class="hero-grid" aria-hidden="true"></div>
       <div class="shell hero-layout">
         <div class="hero-copy">
-          <p class="eyebrow"><span></span> Windows classroom operations, without the cloud</p>
+          <p class="eyebrow">Windows classroom operations, without the cloud</p>
           <h1 id="hero-title">See the lab.<br><em>Keep control local.</em></h1>
           <p class="hero-lead">CAMS brings live workstation visibility, timed sessions, policy enforcement, and accountable remote actions into one private LAN deployment.</p>
           <div class="hero-actions">
-            <a class="button button-primary" href="#downloads">Download v<span data-version>2.20.4</span></a>
-            <a class="button button-quiet" href="#install">Read installation guide</a>
+            <a class="button button-primary" href="#downloads">
+              <svg class="icon" aria-hidden="true"><use href="#i-download-simple"></use></svg>
+              <span>Download v<span data-version>2.20.4</span></span>
+            </a>
+            <a class="button button-quiet" href="#install">Installation guide</a>
           </div>
-          <ul class="trust-line">
-            <li>Local SQLite</li>
-            <li>HTTPS SignalR</li>
-            <li>Role-scoped access</li>
-          </ul>
         </div>
-
-        <section class="command-panel" aria-label="CAMS deployment summary">
-          <div class="panel-topline"><span class="status-dot"></span> LAB CONTROL / ONLINE <span>v<span data-version>2.20.4</span></span></div>
-          <div class="lab-map">
-            <div class="station station-wide"><small>SERVER</small><strong>Teacher console</strong><span>HTTPS :5000</span></div>
-            <div class="signal-line"><i></i><i></i><i></i></div>
-            <div class="stations">
-              <div class="station"><small>PC-01</small><strong>Active</strong><span class="live">Live</span></div>
-              <div class="station"><small>PC-02</small><strong>Idle</strong><span>03:42</span></div>
-              <div class="station"><small>PC-03</small><strong>Active</strong><span class="live">Live</span></div>
-              <div class="station"><small>PC-04</small><strong>Paused</strong><span>Session</span></div>
-            </div>
-          </div>
-          <div class="panel-metrics">
-            <div><strong>LAN</strong><span>Data boundary</span></div>
-            <div><strong>TLS</strong><span>Transport</span></div>
-            <div><strong>3</strong><span>User roles</span></div>
-          </div>
-        </section>
+        <figure class="hero-shot">
+          <img src="assets/img/teacher-dashboard.webp" width="1600" height="762" fetchpriority="high"
+               alt="The CAMS teacher dashboard, showing running lab sessions, connected students, system status, and shortcuts to live monitoring, session control, student profiles, workstations, access restrictions, and classroom records.">
+        </figure>
       </div>
+    </section>
+
+    <section class="facts" aria-label="Deployment facts">
+      <ul class="shell facts-list">
+        <li><svg class="icon" aria-hidden="true"><use href="#i-database"></use></svg><span><strong>Local SQLite</strong> Records stay on your server</span></li>
+        <li><svg class="icon" aria-hidden="true"><use href="#i-lock-key"></use></svg><span><strong>HTTPS SignalR</strong> Encrypted LAN transport</span></li>
+        <li><svg class="icon" aria-hidden="true"><use href="#i-users-three"></use></svg><span><strong>Role-scoped access</strong> Admin, Teacher, Student</span></li>
+        <li><svg class="icon" aria-hidden="true"><use href="#i-windows-logo"></use></svg><span><strong>Windows x64</strong> No separate .NET runtime</span></li>
+      </ul>
     </section>
 
     <section class="section overview" aria-labelledby="overview-title">
-      <div class="shell split-heading">
-        <div>
-          <p class="section-kicker">Purpose-built for computer laboratories</p>
+      <div class="shell">
+        <div class="section-heading" data-reveal>
           <h2 id="overview-title">One operational picture, from first login to final logout.</h2>
+          <p>CAMS replaces paper logs and disconnected utilities with a coordinated server, browser portal, and Windows workstation agent. Active teachers can monitor and control all connected student workstations and manage shared accounts, classes, and policies. Administrators retain deployment and system administration.</p>
         </div>
-        <p>CAMS replaces paper logs and disconnected utilities with a coordinated server, browser portal, and Windows workstation agent. Active teachers can monitor and control all connected student workstations and manage shared accounts, classes, and policies. Administrators retain deployment and system administration.</p>
-      </div>
-      <div class="shell outcome-strip">
-        <article><span>01</span><h3>Observe</h3><p>Authenticated live screen grids, active app state, idle status, and alerts.</p></article>
-        <article><span>02</span><h3>Guide</h3><p>Warnings, screen broadcast, timed sessions, and global classroom policies.</p></article>
-        <article><span>03</span><h3>Act</h3><p>Authorized lock, unlock, logout, restart, shutdown, and remote input.</p></article>
-        <article><span>04</span><h3>Account</h3><p>Local attendance, activity timelines, reports, and audit records.</p></article>
+        <ul class="verbs">
+          <li data-reveal><svg class="icon" aria-hidden="true"><use href="#i-monitor"></use></svg><h3>Observe</h3><p>Authenticated live screen grids, active app state, idle status, and alerts.</p></li>
+          <li data-reveal><svg class="icon" aria-hidden="true"><use href="#i-megaphone"></use></svg><h3>Guide</h3><p>Warnings, screen broadcast, timed sessions, and global classroom policies.</p></li>
+          <li data-reveal><svg class="icon" aria-hidden="true"><use href="#i-lock-simple"></use></svg><h3>Act</h3><p>Authorized lock, unlock, logout, restart, shutdown, and remote input.</p></li>
+          <li data-reveal><svg class="icon" aria-hidden="true"><use href="#i-clipboard-text"></use></svg><h3>Account</h3><p>Local attendance, activity timelines, reports, and audit records.</p></li>
+        </ul>
       </div>
     </section>
 
-    <section class="section section-dark" id="capabilities" aria-labelledby="capabilities-title">
+    <section class="section capabilities" id="capabilities" aria-labelledby="capabilities-title">
       <div class="shell">
-        <div class="section-heading">
-          <p class="section-kicker">Roles and capabilities</p>
+        <div class="section-heading" data-reveal>
           <h2 id="capabilities-title">Clear authority at every layer.</h2>
           <p>Each interface is shaped around the work that role is allowed to perform.</p>
         </div>
-        <div class="role-grid">
-          <article class="role-card role-admin">
-            <div class="role-index">A</div><p class="role-label">Administrator</p>
-            <h3>Configure the environment</h3>
-            <ul>
-              <li>Manage accounts, classes, computers, and mappings</li>
-              <li>Set global restrictions and session rules</li>
-              <li>Review audit, usage, session, and system records</li>
-              <li>Back up, validate, and stage restore of local SQLite data</li>
-              <li>Prepare trusted packages in the local Deployment Hub</li>
-            </ul>
+        <div class="role-bento">
+          <article class="role-cell role-teacher" data-reveal>
+            <div class="role-text">
+              <p class="role-label"><svg class="icon" aria-hidden="true"><use href="#i-chalkboard-teacher"></use></svg> Teacher</p>
+              <h3>Run the active laboratory</h3>
+              <ul class="check-list">
+                <li>Monitor all connected student workstations in a live grid</li>
+                <li>Start the lab session for every student at once, then pause, resume, or end it</li>
+                <li>Send warnings and broadcast the teacher screen</li>
+                <li>Use permitted workstation and remote controls</li>
+                <li>Review scoped alerts, records, and exports</li>
+              </ul>
+            </div>
+            <img class="role-shot" src="assets/img/teacher-monitoring.webp" width="1400" height="799" loading="lazy" decoding="async"
+                 alt="The Laboratory Control Panel, with counts of units online, active students, idle units, and restriction alerts above the live station monitor and its Warn all, Broadcast screen, Lock visible, and Log out visible controls.">
           </article>
-          <article class="role-card">
-            <div class="role-index">T</div><p class="role-label">Teacher</p>
-            <h3>Run the active laboratory</h3>
-            <ul>
-              <li>Monitor all connected student workstations in a live grid</li>
-              <li>Start the lab session for every student at once, then pause, resume, or end it</li>
-              <li>Send warnings and broadcast the teacher screen</li>
-              <li>Use permitted workstation and remote controls</li>
-              <li>Review scoped alerts, records, and exports</li>
-            </ul>
+          <article class="role-cell role-admin" data-reveal>
+            <div class="role-text">
+              <p class="role-label"><svg class="icon" aria-hidden="true"><use href="#i-wrench"></use></svg> Administrator</p>
+              <h3>Configure the environment</h3>
+              <ul class="check-list">
+                <li>Manage accounts, classes, computers, and mappings</li>
+                <li>Set global restrictions and session rules</li>
+                <li>Review audit, usage, session, and system records</li>
+                <li>Back up, validate, and stage restore of local SQLite data</li>
+                <li>Prepare trusted packages in the local Deployment Hub</li>
+              </ul>
+            </div>
+            <img class="role-shot" src="assets/img/admin-dashboard.webp" width="1100" height="604" loading="lazy" decoding="async"
+                 alt="The administrator setup checklist, tracking teachers, classes, workstations, the client installer, the root certificate, and the first connected workstation.">
           </article>
-          <article class="role-card">
-            <div class="role-index">S</div><p class="role-label">Student</p>
-            <h3>Enter a managed session</h3>
-            <ul>
-              <li>Sign in once the teacher starts the lab session</li>
-              <li>See unit, identity, and elapsed session time</li>
-              <li>Receive policy notices and teacher messages</li>
-              <li>Review alerts in the student portal</li>
-              <li>Return to the locked sign-in screen when the session ends</li>
-            </ul>
+          <article class="role-cell role-student" data-reveal>
+            <div class="role-text">
+              <p class="role-label"><svg class="icon" aria-hidden="true"><use href="#i-student"></use></svg> Student</p>
+              <h3>Enter a managed session</h3>
+              <ul class="check-list">
+                <li>Sign in once the teacher starts the lab session</li>
+                <li>See unit, identity, and elapsed session time</li>
+                <li>Receive policy notices and teacher messages</li>
+                <li>Review alerts in the student portal</li>
+                <li>Return to the locked sign-in screen when the session ends</li>
+              </ul>
+            </div>
+            <img class="role-shot" src="assets/img/student-login.webp" width="560" height="780" loading="lazy" decoding="async"
+                 alt="The CAMS Portal sign-in form, asking for a username or student number and a password.">
           </article>
         </div>
       </div>
     </section>
 
     <section class="section privacy" id="privacy" aria-labelledby="privacy-title">
-      <div class="shell privacy-layout">
-        <div class="privacy-statement">
-          <p class="section-kicker">Privacy boundary</p>
-          <h2 id="privacy-title">Monitoring with a defined edge.</h2>
-          <p>CAMS is designed for supervised classroom sessions on a private local network. Operational records remain on the CAMS server's local SQLite database; there is no required CAMS cloud service.</p>
-          <p>Live screen frames show visible display content, including any browser pages on screen.</p>
-          <div class="boundary-badge"><span>Data boundary</span><strong>Your classroom LAN</strong></div>
+      <div class="shell">
+        <div class="privacy-head" data-reveal>
+          <div class="section-heading">
+            <h2 id="privacy-title">Monitoring with a defined edge.</h2>
+            <p>CAMS is designed for supervised classroom sessions on a private local network. Operational records remain on the CAMS server's local SQLite database; there is no required CAMS cloud service.</p>
+            <p>Live screen frames show visible display content, including any browser pages on screen.</p>
+          </div>
+          <div class="boundary-badge"><svg class="icon" aria-hidden="true"><use href="#i-shield-check"></use></svg><span>Data boundary</span><strong>Your classroom LAN</strong></div>
         </div>
         <div class="boundary-grid">
-          <article class="boundary-card collected">
-            <p>Used for classroom operations</p>
+          <article class="boundary-card collected" data-reveal>
+            <h3>Used for classroom operations</h3>
             <ul>
-              <li>Live screen frames during authenticated sessions</li>
-              <li>Active application and idle status</li>
-              <li>Normalized browser domain and policy status</li>
-              <li>Session, alert, attendance, and command events</li>
-              <li>Bounded client telemetry queued during brief outages</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>Live screen frames during authenticated sessions</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>Active application and idle status</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>Normalized browser domain and policy status</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>Session, alert, attendance, and command events</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>Bounded client telemetry queued during brief outages</li>
             </ul>
           </article>
-          <article class="boundary-card excluded">
-            <p>Outside the product boundary</p>
+          <article class="boundary-card excluded" data-reveal>
+            <h3>Outside the product boundary</h3>
             <ul>
-              <li>No keystroke logging or clipboard capture</li>
-              <li>No microphone, camera, or ambient recording</li>
-              <li>No browser credentials, cookies, or page content in telemetry</li>
-              <li>No full URL paths, queries, or fragments in telemetry</li>
-              <li>No required third-party analytics or cloud upload</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>No keystroke logging or clipboard capture</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>No microphone, camera, or ambient recording</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>No browser credentials, cookies, or page content in telemetry</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>No full URL paths, queries, or fragments in telemetry</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>No required third-party analytics or cloud upload</li>
             </ul>
           </article>
         </div>
@@ -179,74 +211,108 @@
 
     <section class="section architecture" id="architecture" aria-labelledby="architecture-title">
       <div class="shell">
-        <div class="section-heading">
-          <p class="section-kicker">Deployment architecture</p>
+        <div class="section-heading" data-reveal>
           <h2 id="architecture-title">A compact system with explicit trust paths.</h2>
           <p>Run the self-contained server on the teacher or lab control PC. Student agents discover it on the LAN or use a manually configured HTTPS endpoint.</p>
         </div>
-        <div class="architecture-board" role="img" aria-label="CAMS server connects to teacher browser portals and student Windows clients over a private network">
-          <article class="node teacher-node"><span>CONTROL SURFACE</span><strong>Teacher / Admin browser</strong><small>Authenticated role portals</small></article>
-          <div class="connector connector-a"><span>HTTPS</span></div>
-          <article class="node server-node"><span>CAMS SERVER</span><strong>ASP.NET Core + SignalR</strong><small>EF Core / local SQLite</small><b>TCP 5000</b></article>
-          <div class="connector connector-b"><span>HTTPS + UDP discovery</span></div>
-          <article class="node client-node"><span>WORKSTATIONS</span><strong>Windows student clients</strong><small>Self-contained .NET 8 agents</small><b>UDP 5001</b></article>
+        <div class="architecture-board" role="img" aria-label="CAMS server connects to teacher browser portals and student Windows clients over a private network" data-reveal>
+          <div class="node">
+            <span class="node-kicker">Control surface</span>
+            <strong>Teacher / Admin browser</strong>
+            <small>Authenticated role portals</small>
+          </div>
+          <div class="connector"><span>HTTPS</span></div>
+          <div class="node node-server">
+            <span class="node-kicker">CAMS server</span>
+            <strong>ASP.NET Core + SignalR</strong>
+            <small>EF Core / local SQLite</small>
+            <b>TCP 5000</b>
+          </div>
+          <div class="connector"><span>HTTPS + UDP discovery</span></div>
+          <div class="node">
+            <span class="node-kicker">Workstations</span>
+            <strong>Windows student clients</strong>
+            <small>Self-contained .NET 8 agents</small>
+            <b>UDP 5001</b>
+          </div>
         </div>
         <div class="architecture-notes">
           <p><strong>Traffic:</strong> Authenticated screen and control messages travel over HTTPS SignalR. UDP broadcast assists discovery only.</p>
           <p><strong>Fallback:</strong> If a network blocks broadcast, configure <code>https://&lt;server-ip&gt;:5000/remoteMonitoringHub</code> manually.</p>
         </div>
-      </div>
-    </section>
 
-    <section class="certificate-warning" aria-labelledby="certificate-title">
-      <div class="shell warning-inner">
-        <div class="warning-symbol" aria-hidden="true">!</div>
-        <div>
-          <p class="warning-label">Deployment certificate warning</p>
-          <h2 id="certificate-title"><code>CAMS-Server-Root.cer</code> never comes from this public site.</h2>
-          <p>That public trust certificate is unique to your CAMS server. Download it only after signing in to your own local server at <code>/Admin/Deployment</code>. Never distribute either <code>.pfx</code> private-key file.</p>
-        </div>
-        <button class="copy-button" type="button" data-copy="/Admin/Deployment" data-copy-label="Copy local path">Copy local path</button>
+        <aside class="certificate-warning" aria-labelledby="certificate-title" data-reveal>
+          <svg class="icon warning-icon" aria-hidden="true"><use href="#i-warning"></use></svg>
+          <div>
+            <p class="warning-label">Deployment certificate warning</p>
+            <h2 id="certificate-title"><code>CAMS-Server-Root.cer</code> never comes from this public site.</h2>
+            <p>That public trust certificate is unique to your CAMS server. Download it only after signing in to your own local server at <code>/Admin/Deployment</code>. Never distribute either <code>.pfx</code> private-key file.</p>
+          </div>
+          <button class="copy-button" type="button" data-copy="/Admin/Deployment" data-copy-label="Copy local path">
+            <svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg><span data-copy-text>Copy local path</span>
+          </button>
+        </aside>
       </div>
     </section>
 
     <section class="section install" id="install" aria-labelledby="install-title">
       <div class="shell install-layout">
         <div class="install-intro">
-          <p class="section-kicker">Step-by-step installation</p>
           <h2 id="install-title">From clean PC to managed lab.</h2>
           <p>Plan one Windows control PC for the server and one CAMS client installation per student workstation. Keep every machine on the same trusted, non-guest network.</p>
-          <div class="requirements">
-            <span>Windows x64</span><span>TCP 5000</span><span>UDP 5001</span><span>No separate .NET runtime</span>
-          </div>
+          <ul class="requirements" aria-label="Requirements">
+            <li>Windows x64</li><li>TCP 5000</li><li>UDP 5001</li><li>No separate .NET runtime</li>
+          </ul>
         </div>
         <ol class="steps">
-          <li><div><span>01</span></div><article><h3>Prepare the server PC</h3><p>Set a protected <code>Cams__InitialAdminPassword</code> environment variable before first launch. Do not reuse a classroom account password.</p></article></li>
-          <li><div><span>02</span></div><article><h3>Install CAMS Server</h3><p>Download and run <a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Setup.exe">CAMS-Server-Setup.exe</a>. The installer configures the application and refreshes its TCP 5000 firewall rule.</p></article></li>
-          <li><div><span>03</span></div><article><h3>Start on the target network</h3><p>Connect the control PC to the classroom LAN first, then start CAMS. Local CA mode creates a server certificate covering the current machine name and LAN addresses.</p></article></li>
-          <li><div><span>04</span></div><article><h3>Use the authenticated Deployment Hub</h3><p>Sign in as administrator and open <code>https://&lt;server-ip&gt;:5000/Admin/Deployment</code>. Confirm the endpoint is certificate-compatible; download the local trust certificate or prepare the verified workstation bundle there.</p></article></li>
-          <li><div><span>05</span></div><article><h3>Install each student client</h3><p>Run <a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe">CAMS-Client-Setup.exe</a>, enter the displayed SignalR endpoint, and select only the <code>CAMS-Server-Root.cer</code> obtained from your local Deployment Hub.</p></article></li>
-          <li><div><span>06</span></div><article><h3>Verify before class</h3><p>Start a lab session from Session Control, then sign in with a test student account, confirm the workstation appears in the teacher monitoring grid, and test a permitted warning or lock action before enrolling the full lab.</p></article></li>
+          <li data-reveal><h3>Prepare the server PC</h3><p>Set a protected <code>Cams__InitialAdminPassword</code> environment variable before first launch. Do not reuse a classroom account password.</p></li>
+          <li data-reveal><h3>Install CAMS Server</h3><p>Download and run <a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Setup.exe">CAMS-Server-Setup.exe</a>. The installer configures the application and refreshes its TCP 5000 firewall rule.</p></li>
+          <li data-reveal><h3>Start on the target network</h3><p>Connect the control PC to the classroom LAN first, then start CAMS. Local CA mode creates a server certificate covering the current machine name and LAN addresses.</p></li>
+          <li data-reveal><h3>Use the authenticated Deployment Hub</h3><p>Sign in as administrator and open <code>https://&lt;server-ip&gt;:5000/Admin/Deployment</code>. Confirm the endpoint is certificate-compatible; download the local trust certificate or prepare the verified workstation bundle there.</p></li>
+          <li data-reveal><h3>Install each student client</h3><p>Run <a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe">CAMS-Client-Setup.exe</a>, enter the displayed SignalR endpoint, and select only the <code>CAMS-Server-Root.cer</code> obtained from your local Deployment Hub.</p></li>
+          <li data-reveal><h3>Verify before class</h3><p>Start a lab session from Session Control, then sign in with a test student account, confirm the workstation appears in the teacher monitoring grid, and test a permitted warning or lock action before enrolling the full lab.</p></li>
         </ol>
       </div>
     </section>
 
     <section class="section downloads" id="downloads" aria-labelledby="downloads-title">
       <div class="shell">
-        <div class="download-heading">
-          <div><p class="section-kicker">Current stable release</p><h2 id="downloads-title">CAMS v<span data-version>2.20.4</span></h2></div>
+        <div class="section-heading" data-reveal>
+          <p class="eyebrow">Current stable release</p>
+          <h2 id="downloads-title">CAMS v<span data-version>2.20.4</span></h2>
           <p>Release downloads are hosted by GitHub. Verify each installer against its published SHA-256 file before deployment.</p>
         </div>
-        <div class="download-grid">
-          <article class="download-card primary-download"><span class="file-type">SERVER / EXE</span><h3>CAMS Server Setup</h3><p>Teacher or lab control PC. Self-contained Windows x64 installer.</p><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Setup.exe">Download server <span aria-hidden="true">-&gt;</span></a></article>
-          <article class="download-card primary-download"><span class="file-type">CLIENT / EXE</span><h3>CAMS Client Setup</h3><p>Student workstations. Self-contained Windows x64 installer.</p><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe">Download client <span aria-hidden="true">-&gt;</span></a></article>
-          <article class="download-card"><span class="file-type">SERVER / SHA256</span><h3>Server checksum</h3><p>Published digest for independent installer integrity verification.</p><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Setup.exe.sha256">Get checksum <span aria-hidden="true">-&gt;</span></a></article>
-          <article class="download-card"><span class="file-type">CLIENT / SHA256</span><h3>Client checksum</h3><p>Published digest for independent installer integrity verification.</p><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe.sha256">Get checksum <span aria-hidden="true">-&gt;</span></a></article>
-          <article class="download-card manifest-card"><span class="file-type">METADATA / JSON</span><h3>Release manifest</h3><p>Machine-readable product, version, file, size, and digest metadata.</p><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/release-manifest.json">Open manifest <span aria-hidden="true">-&gt;</span></a></article>
+        <div class="installer-grid">
+          <article class="installer" data-reveal>
+            <svg class="icon installer-icon" aria-hidden="true"><use href="#i-chalkboard-teacher"></use></svg>
+            <h3>CAMS Server Setup</h3>
+            <p>Teacher or lab control PC. Self-contained Windows x64 installer.</p>
+            <a class="button button-primary" href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Setup.exe">
+              <svg class="icon" aria-hidden="true"><use href="#i-download-simple"></use></svg><span>Download server</span>
+            </a>
+          </article>
+          <article class="installer" data-reveal>
+            <svg class="icon installer-icon" aria-hidden="true"><use href="#i-monitor"></use></svg>
+            <h3>CAMS Client Setup</h3>
+            <p>Student workstations. Self-contained Windows x64 installer.</p>
+            <a class="button button-primary" href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe">
+              <svg class="icon" aria-hidden="true"><use href="#i-download-simple"></use></svg><span>Download client</span>
+            </a>
+          </article>
         </div>
-        <div class="verify-box">
-          <div><span>VERIFY ON WINDOWS</span><code>Get-FileHash .\CAMS-Client-Setup.exe -Algorithm SHA256</code></div>
-          <button class="copy-button copy-dark" type="button" data-copy="Get-FileHash .\CAMS-Client-Setup.exe -Algorithm SHA256" data-copy-label="Copy command">Copy command</button>
+        <div class="verify" data-reveal>
+          <h3>Verify before you run</h3>
+          <ul class="verify-links">
+            <li><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Server-Setup.exe.sha256"><span><strong>Server checksum</strong>Published SHA-256 digest for the server installer</span><svg class="icon" aria-hidden="true"><use href="#i-arrow-right"></use></svg></a></li>
+            <li><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/CAMS-Client-Setup.exe.sha256"><span><strong>Client checksum</strong>Published SHA-256 digest for the client installer</span><svg class="icon" aria-hidden="true"><use href="#i-arrow-right"></use></svg></a></li>
+            <li><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest/download/release-manifest.json"><span><strong>Release manifest</strong>Machine-readable product, version, file, size, and digest metadata</span><svg class="icon" aria-hidden="true"><use href="#i-arrow-right"></use></svg></a></li>
+          </ul>
+          <div class="verify-box">
+            <div><span>Verify on Windows</span><code>Get-FileHash .\CAMS-Client-Setup.exe -Algorithm SHA256</code></div>
+            <button class="copy-button" type="button" data-copy="Get-FileHash .\CAMS-Client-Setup.exe -Algorithm SHA256" data-copy-label="Copy command">
+              <svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg><span data-copy-text>Copy command</span>
+            </button>
+          </div>
         </div>
         <p class="release-link">Need notes or an older build? <a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest">View the complete GitHub release</a>.</p>
       </div>
@@ -254,27 +320,30 @@
 
     <section class="section trust" aria-labelledby="trust-title">
       <div class="shell trust-layout">
-        <div><p class="section-kicker">Security and trust</p><h2 id="trust-title">Trust is established at deployment, not assumed.</h2></div>
+        <h2 id="trust-title" data-reveal>Trust is established at deployment, not assumed.</h2>
         <div class="trust-grid">
-          <article><span>01</span><h3>Authenticated roles</h3><p>Admin, teacher, and student identities enter through role-aware authorization. Live monitoring and bulk session controls are lab-wide. Individual session actions, analytics, and records retain teacher/class checks.</p></article>
-          <article><span>02</span><h3>Encrypted local transport</h3><p>Web portals and SignalR traffic use HTTPS. The endpoint must match the active certificate before clients are deployed.</p></article>
-          <article><span>03</span><h3>Private keys stay private</h3><p>Local CA private keys remain on the server. Student PCs receive only the deployment-specific public root certificate.</p></article>
-          <article><span>04</span><h3>Verifiable packages</h3><p>GitHub release checksums and manifest metadata let administrators verify downloads before execution or redistribution.</p></article>
+          <article data-reveal><svg class="icon" aria-hidden="true"><use href="#i-users-three"></use></svg><h3>Authenticated roles</h3><p>Admin, teacher, and student identities enter through role-aware authorization. Live monitoring and bulk session controls are lab-wide. Individual session actions, analytics, and records retain teacher/class checks.</p></article>
+          <article data-reveal><svg class="icon" aria-hidden="true"><use href="#i-lock-key"></use></svg><h3>Encrypted local transport</h3><p>Web portals and SignalR traffic use HTTPS. The endpoint must match the active certificate before clients are deployed.</p></article>
+          <article data-reveal><svg class="icon" aria-hidden="true"><use href="#i-certificate"></use></svg><h3>Private keys stay private</h3><p>Local CA private keys remain on the server. Student PCs receive only the deployment-specific public root certificate.</p></article>
+          <article data-reveal><svg class="icon" aria-hidden="true"><use href="#i-seal-check"></use></svg><h3>Verifiable packages</h3><p>GitHub release checksums and manifest metadata let administrators verify downloads before execution or redistribution.</p></article>
         </div>
       </div>
     </section>
 
     <section class="section support" id="support" aria-labelledby="support-title">
       <div class="shell support-layout">
-        <div class="support-intro"><p class="section-kicker">Troubleshooting</p><h2 id="support-title">Resolve the network first.</h2><p>Most onboarding issues come from endpoint selection, certificate mismatch, firewall policy, or Wi-Fi client isolation.</p></div>
+        <div class="section-heading" data-reveal>
+          <h2 id="support-title">Resolve the network first.</h2>
+          <p>Most onboarding issues come from endpoint selection, certificate mismatch, firewall policy, or Wi-Fi client isolation.</p>
+        </div>
         <div class="faq-list">
-          <details><summary>The client cannot discover the server.<span aria-hidden="true">+</span></summary><p>Confirm both PCs are on the same non-guest subnet. Allow UDP 5001 on student PCs, or skip discovery and enter <code>https://&lt;server-ip&gt;:5000/remoteMonitoringHub</code> manually.</p></details>
-          <details><summary>The browser or client reports an untrusted certificate.<span aria-hidden="true">+</span></summary><p>Do not bypass the warning. Sign in to the local CAMS server, open <code>/Admin/Deployment</code>, and install that deployment's public <code>CAMS-Server-Root.cer</code> for the current Windows user.</p></details>
-          <details><summary>The certificate does not match the server IP.<span aria-hidden="true">+</span></summary><p>Connect the server PC to the target network and restart CAMS so local CA mode can issue a certificate for the current LAN address. Use an endpoint marked compatible in the Deployment Hub.</p></details>
-          <details><summary>A phone hotspot connects devices but CAMS cannot reach them.<span aria-hidden="true">+</span></summary><p>Some hotspots isolate clients or block broadcast. Disable client isolation if available, use the teacher PC's Wi-Fi IPv4 address instead of <code>localhost</code>, and verify TCP 5000 is reachable.</p></details>
-          <details><summary>A student sees "No session yet" when signing in.<span aria-hidden="true">+</span></summary><p>Students can only sign in while a lab session is running. In the teacher portal, open Session Control, choose Start New Session, and pick a session rule; the waiting students can then press Login again.</p></details>
-          <details><summary>An installer hash does not match.<span aria-hidden="true">+</span></summary><p>Do not run the file. Delete it, download the installer and checksum again from the same GitHub release, and repeat SHA-256 verification.</p></details>
-          <details><summary>The server moved to another network.<span aria-hidden="true">+</span></summary><p>Restart CAMS after joining the new network. Confirm the new compatible endpoint in <code>/Admin/Deployment</code>; update clients if the saved server address changed.</p></details>
+          <details><summary>The client cannot discover the server.<svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></summary><p>Confirm both PCs are on the same non-guest subnet. Allow UDP 5001 on student PCs, or skip discovery and enter <code>https://&lt;server-ip&gt;:5000/remoteMonitoringHub</code> manually.</p></details>
+          <details><summary>The browser or client reports an untrusted certificate.<svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></summary><p>Do not bypass the warning. Sign in to the local CAMS server, open <code>/Admin/Deployment</code>, and install that deployment's public <code>CAMS-Server-Root.cer</code> for the current Windows user.</p></details>
+          <details><summary>The certificate does not match the server IP.<svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></summary><p>Connect the server PC to the target network and restart CAMS so local CA mode can issue a certificate for the current LAN address. Use an endpoint marked compatible in the Deployment Hub.</p></details>
+          <details><summary>A phone hotspot connects devices but CAMS cannot reach them.<svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></summary><p>Some hotspots isolate clients or block broadcast. Disable client isolation if available, use the teacher PC's Wi-Fi IPv4 address instead of <code>localhost</code>, and verify TCP 5000 is reachable.</p></details>
+          <details><summary>A student sees "No session yet" when signing in.<svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></summary><p>Students can only sign in while a lab session is running. In the teacher portal, open Session Control, choose Start New Session, and pick a session rule; the waiting students can then press Login again.</p></details>
+          <details><summary>An installer hash does not match.<svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></summary><p>Do not run the file. Delete it, download the installer and checksum again from the same GitHub release, and repeat SHA-256 verification.</p></details>
+          <details><summary>The server moved to another network.<svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></summary><p>Restart CAMS after joining the new network. Confirm the new compatible endpoint in <code>/Admin/Deployment</code>; update clients if the saved server address changed.</p></details>
         </div>
       </div>
     </section>
@@ -282,8 +351,16 @@
 
   <footer class="site-footer">
     <div class="shell footer-main">
-      <div class="footer-brand"><div><strong>CAMS</strong><span>Computer laboratory operations on your network.</span></div></div>
-      <div class="footer-links"><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale">Source repository</a><a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest">Release notes</a><a href="#privacy">Privacy boundary</a><a href="#install">Installation</a></div>
+      <div class="footer-brand">
+        <img src="assets/cams-mark.png" width="32" height="36" alt="">
+        <div><strong>CAMS</strong><span>Computer laboratory operations on your network.</span></div>
+      </div>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale"><svg class="icon" aria-hidden="true"><use href="#i-github-logo"></use></svg>Source repository</a>
+        <a href="https://github.com/ACTstudent/RemoteAcessMonitoringSoftware4sale/releases/latest">Release notes</a>
+        <a href="#privacy">Privacy boundary</a>
+        <a href="#install">Installation</a>
+      </nav>
     </div>
     <div class="shell footer-base"><span>CAMS v<span data-version>2.20.4</span></span><span>MIT licensed</span><span>Static portal: no analytics, cookies, remote fonts, or CDN assets.</span></div>
   </footer>

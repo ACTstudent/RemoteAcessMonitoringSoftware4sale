@@ -32,17 +32,50 @@
   });
 
   document.querySelectorAll('[data-copy]').forEach((button) => {
+    // Only the label changes, so the button's icon survives the feedback.
+    const label = button.querySelector('[data-copy-text]') || button;
     button.addEventListener('click', async () => {
       const originalLabel = button.dataset.copyLabel || 'Copy';
       try {
         await navigator.clipboard.writeText(button.dataset.copy);
-        button.textContent = 'Copied';
+        label.textContent = 'Copied';
       } catch {
-        button.textContent = 'Copy unavailable';
+        label.textContent = 'Copy unavailable';
       }
-      window.setTimeout(() => { button.textContent = originalLabel; }, 1800);
+      window.setTimeout(() => { label.textContent = originalLabel; }, 1800);
     });
   });
+
+  // The header gains its bottom rule once the hero heading has scrolled away.
+  const header = document.querySelector('[data-header]');
+  const heroTitle = document.getElementById('hero-title');
+  if (header && heroTitle && 'IntersectionObserver' in window) {
+    new IntersectionObserver(([entry]) => {
+      header.classList.toggle('is-scrolled', !entry.isIntersecting);
+    }).observe(heroTitle);
+  }
+
+  // Sections ease in as they enter the viewport. Content is visible by default;
+  // it is only hidden first when motion is allowed and the observer exists.
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduceMotion && 'IntersectionObserver' in window) {
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-visible');
+        revealObserver.unobserve(entry.target);
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });
+
+    document.querySelectorAll('[data-reveal]').forEach((element) => {
+      // Siblings that enter together arrive in sequence rather than all at once.
+      const siblings = [...element.parentElement.children].filter((child) => child.hasAttribute('data-reveal'));
+      const index = siblings.indexOf(element);
+      if (index > 0) element.style.setProperty('--reveal-delay', `${Math.min(index, 5) * 70}ms`);
+      revealObserver.observe(element);
+    });
+    document.documentElement.classList.add('has-reveal');
+  }
 
   fetch('version.json', { cache: 'no-cache' })
     .then((response) => response.ok ? response.json() : Promise.reject())
